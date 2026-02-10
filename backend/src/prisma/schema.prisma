@@ -1,0 +1,210 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// System Admin (for bootstrapping and global management)
+model User {
+  id                     String           @id @default(uuid())
+  name                   String
+  username               String           @unique
+  email                  String?          @unique
+  mobile                 String?          @unique
+  passwordHash           String?
+  role                   String           @default("ADMIN") // Only "ADMIN" lives here now
+  isActive               Boolean          @default(true)
+  isOtpVerified          Boolean          @default(false)
+  isProfileCompleted     Boolean          @default(false)
+  isApprovedBySuperAdmin Boolean          @default(false)
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+  
+  sessions               UserSession[]
+  otpVerifications       OtpVerification[]
+  businessDetails        BusinessDetail?
+
+  @@map("users")
+}
+
+model BusinessDetail {
+  id              String   @id @default(uuid())
+  adminId         String   @unique
+  businessName    String
+  addressLine     String
+  area            String
+  city            String
+  state           String
+  pincode         String
+  proofOfBusiness String
+  udyogAadhar     String?
+  gstCertificate  String?
+  otherDocument   String?
+  createdAt       DateTime @default(now())
+
+  user            User     @relation(fields: [adminId], references: [id])
+
+  @@map("admin_business_details")
+}
+
+enum FacilityStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Facility {
+  id            String         @id @default(uuid())
+  name          String         @db.VarChar(150)
+  location      String         @db.VarChar(150)
+  address       String
+  totalMachines Int
+  gstNumber     String?        @db.VarChar(15)
+  status        FacilityStatus @default(ACTIVE)
+  isDeleted     Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  administrators Administrator[]
+  operators      Operator[]
+
+  @@map("facilities")
+}
+
+model Administrator {
+  id           String   @id @default(uuid())
+  name         String
+  username     String   @unique
+  passwordHash String?
+  mobile       String?
+  facilityId   String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  facility     Facility @relation(fields: [facilityId], references: [id])
+  permissions  AdministratorPermission[]
+
+  @@map("administrators")
+}
+
+model Operator {
+  id           String   @id @default(uuid())
+  name         String
+  username     String   @unique
+  passwordHash String?
+  mobile       String?
+  facilityId   String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  facility     Facility @relation(fields: [facilityId], references: [id])
+  permissions  OperatorPermission[]
+
+  @@map("operators")
+}
+
+model Module {
+  id                     String                    @id @default(uuid())
+  name                   String                    @unique // Dashboard, Users, Facilities, Reports, Billing, Settings
+  administratorPermissions AdministratorPermission[]
+  operatorPermissions    OperatorPermission[]
+
+  @@map("modules")
+}
+
+model AdministratorPermission {
+  id              String        @id @default(uuid())
+  administratorId String
+  moduleId        String
+  canView         Boolean       @default(false)
+  canCreate       Boolean       @default(false)
+  canUpdate       Boolean       @default(false)
+  canDelete       Boolean       @default(false)
+
+  administrator   Administrator @relation(fields: [administratorId], references: [id], onDelete: Cascade)
+  module          Module        @relation(fields: [moduleId], references: [id])
+
+  @@unique([administratorId, moduleId])
+  @@map("administrator_permissions")
+}
+
+model OtpVerification {
+  id        String   @id @default(uuid())
+  userId    String
+  otp       String
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("otp_verifications")
+}
+
+model OperatorPermission {
+  id          String   @id @default(uuid())
+  operatorId  String
+  moduleId    String
+  canView     Boolean  @default(false)
+  canCreate   Boolean  @default(false)
+  canUpdate   Boolean  @default(false)
+  canDelete   Boolean  @default(false)
+
+  operator    Operator @relation(fields: [operatorId], references: [id], onDelete: Cascade)
+  module      Module   @relation(fields: [moduleId], references: [id])
+
+  @@unique([operatorId, moduleId])
+  @@map("operator_permissions")
+}
+
+// Retaining UserSession for simplified session management across all user types (by ID)
+model UserSession {
+  id               String   @id @default(uuid())
+  userId           String   // Maps to User.id, Administrator.id, or Operator.id
+  jti              String   @unique
+  refreshTokenHash String
+  expiresAt        DateTime
+  isRevoked        Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  // Note: No Relation here because it's polymorphic (User/Admin/Operator). 
+  // We'll manage relation logic in application code.
+  user             User?     @relation(fields: [userId], references: [id], map: "UserSession_User_fkey") 
+  // FK constraints might fail if we enforce relation to User. 
+  // For proper polymorphic, we should remove foreign key or make it loose. 
+  // BUT to keep User bootstrap working, I'll keep relation optional or remove it.
+  // REMOVING relation to generic "User" to support multi-table auth.
+  
+  // @@map("user_sessions")
+}
+
+// Redefining UserSession without direct FK to support multiple tables
+model Session {
+  id               String   @id @default(uuid())
+  userId           String   // UUID from any User table
+  userType         String   // ADMIN, ADMINISTRATOR, OPERATOR
+  jti              String   @unique
+  refreshTokenHash String
+  expiresAt        DateTime
+  isRevoked        Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  @@map("sessions")
+}
+
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  action    String
+  resource  String
+  ip        String?
+  userAgent String?
+  details   Json?
+  createdAt DateTime @default(now())
+
+  @@map("audit_logs")
+}
