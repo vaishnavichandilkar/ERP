@@ -1,2 +1,7 @@
+# build output
+dist/
+*.tsbuildinfo
+
+# deps & env
 node_modules/
 .env
