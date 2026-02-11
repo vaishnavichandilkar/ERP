@@ -30,8 +30,13 @@ let PermissionGuard = class PermissionGuard {
             console.log('PermissionGuard: No user found in request');
             return false;
         }
-        if (user.role === 'ADMIN' || user.role === 'SUPERADMIN') {
+        if (user.role === 'SUPERADMIN') {
             return true;
+        }
+        if (user.role === 'ADMIN') {
+            if (user.status === 'ACTIVE') {
+                return true;
+            }
         }
         const { moduleName, action } = this.mapLegacyPermission(requiredPermission);
         if (!moduleName || !action) {

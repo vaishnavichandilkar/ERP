@@ -5,10 +5,12 @@ export declare class AuthController {
     constructor(authService: AuthService);
     registerAdmin(dto: RegisterDto): Promise<{
         adminId: string;
-        accessToken: string;
+        message: string;
     }>;
     verifyOtp(dto: VerifyAdminOtpDto): Promise<{
         message: string;
+        accessToken: string;
+        nextStep: string;
     }>;
     login(dto: LoginDto): Promise<{
         accessToken: string;

@@ -11,12 +11,12 @@ export declare class AuditService {
         details?: any;
     }): Promise<{
         id: string;
+        createdAt: Date;
         userId: string | null;
         action: string;
-        resource: string;
         ip: string | null;
+        resource: string;
         userAgent: string | null;
-        details: import(".prisma/client").Prisma.JsonValue | null;
-        createdAt: Date;
+        details: import("@prisma/client/runtime/library").JsonValue | null;
     }>;
 }

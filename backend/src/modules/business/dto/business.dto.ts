@@ -32,23 +32,19 @@ export class CreateBusinessDetailsDto {
     @IsNotEmpty()
     pincode: string;
 
-    @ApiProperty()
-    @IsString()
-    @IsNotEmpty()
-    proofOfBusiness: string;
+    @ApiProperty({ type: 'string', format: 'binary', description: 'Proof of Business (PDF)' })
+    @IsOptional() // Handled by FileInterceptor
+    proofOfBusiness: any;
 
-    @ApiProperty()
-    @IsString()
+    @ApiProperty({ type: 'string', format: 'binary', required: false, description: 'Udyog Aadhar (PDF)' })
     @IsOptional()
-    udyogAadhar?: string;
+    udyogAadhar?: any;
 
-    @ApiProperty()
-    @IsString()
+    @ApiProperty({ type: 'string', format: 'binary', required: false, description: 'GST Certificate (PDF)' })
     @IsOptional()
-    gstCertificate?: string;
+    gstCertificate?: any;
 
-    @ApiProperty()
-    @IsString()
+    @ApiProperty({ type: 'string', format: 'binary', required: false, description: 'Other Document (PDF)' })
     @IsOptional()
-    otherDocument?: string;
+    otherDocument?: any;
 }

@@ -25,6 +25,7 @@ async function main() {
                 username: adminUsername,
                 passwordHash: passwordHash,
                 role: 'SUPER_ADMIN',
+                status: 'ACTIVE',
                 isActive: true,
                 isOtpVerified: true,
                 isProfileCompleted: true,
@@ -38,6 +39,7 @@ async function main() {
             where: { username: adminUsername },
             data: {
                 role: 'SUPER_ADMIN',
+                status: 'ACTIVE',
                 isOtpVerified: true,
                 isProfileCompleted: true,
                 isApprovedBySuperAdmin: true,

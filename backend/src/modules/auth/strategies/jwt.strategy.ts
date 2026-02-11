@@ -24,10 +24,19 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         });
 
         if (user) {
+            // Check Status for Admin
+            if (user.role === 'ADMIN') {
+                const allowedStatus = ['ACTIVE', 'PENDING_PROFILE'];
+                if (!allowedStatus.includes(user.status)) {
+                    throw new UnauthorizedException(`Account status: ${user.status}`);
+                }
+            }
+
             return {
                 id: user.id,
                 username: user.username,
                 role: user.role,
+                status: user.status, // Pass status to request user
                 isOtpVerified: user.isOtpVerified,
                 isProfileCompleted: user.isProfileCompleted,
                 isApprovedBySuperAdmin: user.isApprovedBySuperAdmin,

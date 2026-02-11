@@ -1,20 +1,20 @@
 # WeighPro Testing Guide
 
-This guide provides a comprehensive walkthrough to test the **WeighPro Backend** using **Swagger UI**.
+This guide provides a comprehensive step-by-step walkthrough to test the **WeighPro Backend** using **Swagger UI**.
 
 **Prerequisites**:
 1.  **Server Running**: `npm run start:dev`
-2.  **Database Seeded**: `npx prisma db seed` (Creates default Super Admin: `admin` / `admin123`)
+2.  **Database Seeded**: `npx ts-node src/prisma/seed.ts` (Creates default Super Admin: `admin` / `admin123`)
 3.  **Swagger URL**: [http://localhost:3000/api/docs](http://localhost:3000/api/docs)
 
 ---
 
-## 🚀 Phase 1: Admin Registration Flow (Business Onboarding)
+## 🚀 Phase 1: Admin Onboarding (Strict Flow)
 
-**Goal**: Register a new Business Admin, verify OTP, complete profile, and get approval from Super Admin.
+**Goal**: Register a new Admin, verify OTP, complete business profile, and wait for approval. Use the **Response Body** from each step for the next.
 
 ### 1. Register New Admin
-*   **Endpoint**: `POST /auth/register-admin`
+*   **Endpoint**: `POST /auth/register` (Section: Auth)
 *   **Payload**:
     ```json
     {
@@ -24,7 +24,9 @@ This guide provides a comprehensive walkthrough to test the **WeighPro Backend**
       "password": "password123"
     }
     ```
-*   **Response**: Returns `adminId` and a temporary `accessToken`. Check server console for the **OTP**.
+*   **Result**: Returns `adminId` and `message`. **No Token** is returned. You cannot login yet.
+*   **Console**: Check terminal for the **OTP** (e.g., `[OTP] Sent 123456 to 9876543210`)
+*   **Status Check (DB)**: `current_status = PENDING_OTP`.
 
 ### 2. Verify OTP
 *   **Endpoint**: `POST /auth/verify-otp`
@@ -33,41 +35,44 @@ This guide provides a comprehensive walkthrough to test the **WeighPro Backend**
     {
       "adminId": "UUID_FROM_STEP_1",
       "mobile": "9876543210",
-      "otp": "123456" // Check server console
+      "otp": "123456" // Use OTP from console
     }
     ```
-*   **Result**: Status `201 Created`. User `isOtpVerified` = true.
+*   **Result**: Returns `accessToken`.
+*   **Note**: This token has limited access (Status: `PENDING_PROFILE`). You can ONLY create a business profile.
+*   **Action**: Click **Authorize** button in Swagger and paste this token (`Bearer <token>`).
 
 ### 3. Complete Business Profile
-*   **Auth**: Click **Authorize** -> Enter the `accessToken` from Step 1.
-*   **Endpoint**: `POST /admin/business-details`
+*   **Endpoint**: `POST /admin/business-details` (Section: Admin Business)
+*   **Type**: `multipart/form-data`
 *   **Payload**:
-    ```json
-    {
-      "businessName": "John Weighing Solutions",
-      "addressLine": "123 Market St",
-      "area": "Downtown",
-      "city": "Metropolis",
-      "state": "NY",
-      "pincode": "10001",
-      "proofOfBusiness": "license.pdf"
-    }
-    ```
-*   **Result**: Business details saved. User status: `PENDING_SUPERADMIN_APPROVAL`.
+    *   `businessName`: "John Weighing Solutions"
+    *   `addressLine`: "123 Market St"
+    *   `area`: "Downtown"
+    *   `city`: "Metropolis"
+    *   `state`: "NY"
+    *   `pincode`: "10001"
+    *   `proofOfBusiness`: [Upload File] (Required PDF)
+    *   `udyogAadhar`: [Upload File] (Optional PDF)
+    *   `gstCertificate`: [Upload File] (Optional PDF)
+    *   `otherDocument`: [Upload File] (Optional PDF)
+*   **Result**: Business details saved with file paths.
+*   **Status Check (DB)**: `isProfileCompleted = true`, `isApprovedBySuperAdmin = false`.
+*   **Note**: Your access is now paused. You cannot perform further actions until approved.
 
-### 4. login as Admin (Restricted)
+### 4. Verify Login Restriction
 *   **Endpoint**: `POST /auth/login`
-*   **Payload**: `mobile: 9876543210`, `password: password123`.
-*   **Check**: Call `GET /auth/me`. You will see `isApprovedBySuperAdmin: false`.
-*   **Try Dashboard**: Attempting to access protected resources (e.g., `GET /facilities`) may be forbidden based on guard rules.
+*   **Payload**: `username: 9876543210`, `password: password123`.
+*   **Result**: Should fail with `401 Unauthorized` and message `Account not active. Status: PENDING_APPROVAL`.
 
 ---
 
 ## 🛡️ Phase 2: Super Admin Approval
 
-**Goal**: Approve the pending Business Admin.
+**Goal**: As Super Admin, review and approve the pending Sub-Admin.
 
 ### 1. Login as Super Admin
+*   **Action**: Logout from Swagger (or clear token).
 *   **Endpoint**: `POST /auth/login`
 *   **Payload**:
     ```json
@@ -76,98 +81,65 @@ This guide provides a comprehensive walkthrough to test the **WeighPro Backend**
       "password": "admin123"
     }
     ```
-*   **Response**: Copy the `accessToken`.
-*   **Auth**: **Logout** in Swagger, then **Authorize** with this Super Admin token.
+*   **Result**: Returns Super Admin `accessToken`.
+*   **Action**: Authorize in Swagger with this new token.
 
 ### 2. List Pending Approvals
-*   **Endpoint**: `GET /superadmin/pending-admins`
-*   **Result**: Should list "John Business" (from Phase 1).
+*   **Endpoint**: `GET /superadmin/pending-admins` (Section: Super Admin)
+*   **Result**: Should list "John Business" with status `PENDING_APPROVAL`. Copy their `id`.
 
 ### 3. Approve Admin
 *   **Endpoint**: `POST /superadmin/approve-admin`
 *   **Payload**:
     ```json
     {
-      "adminId": "UUID_OF_JOHN_BUSINESS"
+      "adminId": "UUID_FROM_STEP_2"
     }
     ```
-*   **Result**: Admin is now approved (`isApprovedBySuperAdmin: true`).
+*   **Result**: `{ "message": "Admin approved successfully" }`.
+*   **Status Check (DB)**: `current_status = ACTIVE `.
 
 ---
 
-## 🏭 Phase 3: Facility & User Management (By Business Admin)
+## 🚀 Phase 3: Active Admin Access
 
-**Goal**: The now-approved Admin creates facilities and sub-users (Administrators/Operators).
+**Goal**: Now that the Admin is active, they can login and manage their facility.
 
-### 1. Login as Business Admin
-*   **Action**: Login again as `john@business.com` (or mobile) to get a full-access token.
-*   **Auth**: Update Swagger Authorization.
+### 1. Login as Approved Admin
+*   **Action**: Logout Super Admin.
+*   **Endpoint**: `POST /auth/login`
+*   **Payload**: `username: 9876543210`, `password: password123`.
+*   **Result**: Success! Returns `accessToken`.
+*   **Check**: `user.status` in response should be `ACTIVE`.
 
-### 2. Create a Facility
-*   **Endpoint**: `POST /facilities`
-*   **Payload**:
-    ```json
-    {
-      "name": "Main Warehouse",
-      "location": "Sector 5",
-      "address": "123 Industrial Area",
-      "totalMachines": 5
-    }
-    ```
-*   **Result**: Copy the `id` (Facility ID).
+### 2. Verify Dashboard Access
+*   **Endpoint**: `GET /auth/me`
+*   **Result**: Returns full profile.
 
-### 3. Create a Sub-Administrator (Manager)
-*   **Endpoint**: `POST /administrators`
-*   **Payload**:
-    ```json
-    {
-      "name": "Site Manager",
-      "username": "manager1",
-      "password": "password123",
-      "facilityId": "FACILITY_UUID",
-      "permissions": {
-        "facilityManagement_view": true,
-        "facilityManagement_edit": true,
-        "userManagement_add": true,
-        "userManagement_view": true
-      }
-    }
-    ```
+---
 
-### 4. Create an Operator
-*   **Endpoint**: `POST /operators`
-*   **Payload**:
+## 🏭 Phase 4: User Management (By Admin)
+
+**Goal**: The Active Admin creates sub-users (Administrators/Operators).
+
+### 1. Create a Sub-User
+*   **Authorize**: Ensure you are logged in as "John Business" (Step 3.1).
+*   **Endpoint**: `POST /users/create`
+*   **Payload** (Create an Operator):
     ```json
     {
       "name": "Weighbridge Op 1",
       "username": "op1",
+      "mobile": "5555555555",
       "password": "password123",
-      "facilityId": "FACILITY_UUID",
-      "permissions": {
-        "facilityManagement_view": true,
-        "inventoryManagement_view": true
-      }
+      "role": "OPERATOR",
+      "facilityId": "FACILITY-UUID-IF-EXISTS-OR-NULL", // Note: Logic requires Facility creation first usually
+      "permissions": [
+         { "module": "Dashboard", "action": "VIEW" }
+      ]
     }
     ```
-
----
-
-## 🔐 Phase 4: RBAC Verification
-
-**Goal**: Verify permissions for different roles.
-
-### 1. Test Administrator Access
-*   **Login**: as `manager1`.
-*   **Test**:
-    *   `GET /facilities` -> **Success** (Has view permission).
-    *   `POST /operators` -> **Success** (Has user add permission).
-    *   `DELETE /facilities/{id}` -> **Forbidden** (No delete permission).
-
-### 2. Test Operator Access
-*   **Login**: as `op1`.
-*   **Test**:
-    *   `GET /facilities` -> **Success** (Has view permission).
-    *   `POST /administrators` -> **Forbidden** (Operators cannot manage users).
+*   **Note**: If `facilityId` is required by logic, you might need to create a facility first (if Facility module is implemented) or pass a mock ID if validation allows. (Current `UsersService` enforces `facilityId` for Operators).
 
 ---
 
@@ -175,9 +147,7 @@ This guide provides a comprehensive walkthrough to test the **WeighPro Backend**
 
 ### 1. File Upload
 *   **Endpoint**: `POST /upload`
-*   **Type**: `multipart/form-data`.
 *   **Result**: JSON with file path.
 
 ### 2. Audit Logs
 *   **Check Database**: `SELECT * FROM audit_logs ORDER BY "createdAt" DESC;`
-*   **Verify**: All login, create, and update actions should be logged with `userId` and `action`.

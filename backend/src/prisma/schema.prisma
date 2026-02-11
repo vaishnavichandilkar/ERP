@@ -8,6 +8,14 @@ datasource db {
 }
 
 // System Admin (for bootstrapping and global management)
+enum AdminStatus {
+  PENDING_OTP
+  PENDING_PROFILE
+  PENDING_APPROVAL
+  ACTIVE
+  REJECTED
+}
+
 model User {
   id                     String           @id @default(uuid())
   name                   String
@@ -16,6 +24,7 @@ model User {
   mobile                 String?          @unique
   passwordHash           String?
   role                   String           @default("ADMIN") // Only "ADMIN" lives here now
+  status                 AdminStatus      @default(PENDING_OTP)
   isActive               Boolean          @default(true)
   isOtpVerified          Boolean          @default(false)
   isProfileCompleted     Boolean          @default(false)

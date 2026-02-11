@@ -35,18 +35,20 @@ export class AuthService {
         const expiresAt = new Date();
         expiresAt.setMinutes(expiresAt.getMinutes() + 5);
 
-        // Create Admin
+        // Create Admin with Status PENDING_OTP
         const user = await this.prisma.user.create({
             data: {
                 name: dto.name,
-                username: dto.mobile, // Use mobile as username for now to satisfy unique constraint
+                username: dto.mobile,
                 email: dto.email,
                 mobile: dto.mobile,
                 passwordHash,
                 role: 'ADMIN',
+                status: 'PENDING_OTP', // Set initial status
                 isOtpVerified: false,
                 isProfileCompleted: false,
                 isApprovedBySuperAdmin: false,
+                // isActive: false, // Default is true in schema, but status governs login now.
                 otpVerifications: {
                     create: {
                         otp,
@@ -59,16 +61,16 @@ export class AuthService {
         // Send OTP (Mock)
         console.log(`[OTP] Sent ${otp} to ${dto.mobile}`);
 
-        // Generate Temporary Token (allows access to verify-otp and business-details)
-        const tokens = await this.generateTokens(user, 'ADMIN');
+        // DO NOT generate token here based on requirement: "Login must NOT be allowed yet"
+        // Return ID for next step (verify-otp)
 
         return {
             adminId: user.id,
-            accessToken: tokens.accessToken
+            message: 'OTP sent successfully. Please verify OTP to proceed.'
         };
     }
 
-    async verifyOtp(dto: any) { // Use any or specific DTO
+    async verifyOtp(dto: any) {
         const { adminId, mobile, otp } = dto;
 
         const otpRecord = await this.prisma.otpVerification.findFirst({
@@ -83,7 +85,6 @@ export class AuthService {
 
         if (!otpRecord) throw new BadRequestException('Invalid or expired OTP');
 
-        // Verify Mobile Match (User)
         const user = await this.prisma.user.findUnique({ where: { id: adminId } });
         if (!user || user.mobile !== mobile) throw new BadRequestException('Invalid User/Mobile');
 
@@ -93,13 +94,31 @@ export class AuthService {
             data: { isUsed: true }
         });
 
-        // Mark User as Verified
+        // Advance Status
+        let newStatus = user.status;
+        if (user.status === 'PENDING_OTP') {
+            newStatus = 'PENDING_PROFILE';
+        }
+
+        // Update User
         await this.prisma.user.update({
             where: { id: adminId },
-            data: { isOtpVerified: true }
+            data: {
+                isOtpVerified: true,
+                status: newStatus
+            }
         });
 
-        return { message: 'OTP Verified successfully' };
+        // Generate Token to allow Profile Creation
+        // This token is valid but Login endpoint blocks regular login.
+        // Frontend uses this token to call POST /business/profile
+        const tokens = await this.generateTokens(user, 'ADMIN');
+
+        return {
+            message: 'OTP Verified. Please complete Business Profile.',
+            accessToken: tokens.accessToken,
+            nextStep: 'CREATE_BUSINESS_PROFILE'
+        };
     }
 
     async login(dto: LoginDto) {
@@ -140,6 +159,15 @@ export class AuthService {
         if (!isMatch) throw new UnauthorizedException('Invalid credentials');
 
         if (!user.isActive) throw new UnauthorizedException('User is inactive');
+
+        // NEW: Check Admin Status
+        if (roleType === 'ADMIN') {
+            if (user.status !== 'ACTIVE') {
+                // Throw forbidden with specific status so frontend knows what to do?
+                // Requirement: "Admin login must be blocked until... Super Admin approval"
+                throw new UnauthorizedException(`Account not active. Status: ${user.status}`);
+            }
+        }
 
         return this.generateTokens(user, roleType);
     }

@@ -5,6 +5,7 @@ export declare class SuperAdminService {
     getPendingAdmins(): Promise<({
         businessDetails: {
             id: string;
+            createdAt: Date;
             adminId: string;
             businessName: string;
             addressLine: string;
@@ -16,24 +17,27 @@ export declare class SuperAdminService {
             udyogAadhar: string | null;
             gstCertificate: string | null;
             otherDocument: string | null;
-            createdAt: Date;
         };
     } & {
         id: string;
+        createdAt: Date;
         name: string;
-        username: string;
         email: string | null;
         mobile: string | null;
+        username: string;
         passwordHash: string | null;
         role: string;
+        status: import(".prisma/client").$Enums.AdminStatus;
         isActive: boolean;
         isOtpVerified: boolean;
         isProfileCompleted: boolean;
         isApprovedBySuperAdmin: boolean;
-        createdAt: Date;
         updatedAt: Date;
     })[]>;
     approveAdmin(adminId: string): Promise<{
+        message: string;
+    }>;
+    rejectAdmin(adminId: string): Promise<{
         message: string;
     }>;
 }

@@ -30,6 +30,7 @@ async function main() {
                 username: adminUsername,
                 passwordHash: passwordHash,
                 role: 'SUPER_ADMIN',
+                status: 'ACTIVE', // NEW: Set status to ACTIVE
                 isActive: true,
                 isOtpVerified: true,
                 isProfileCompleted: true,
@@ -42,6 +43,7 @@ async function main() {
             where: { username: adminUsername },
             data: {
                 role: 'SUPER_ADMIN',
+                status: 'ACTIVE', // NEW: Update status to ACTIVE
                 isOtpVerified: true,
                 isProfileCompleted: true,
                 isApprovedBySuperAdmin: true,

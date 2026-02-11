@@ -47,6 +47,7 @@ let AuthService = class AuthService {
                 mobile: dto.mobile,
                 passwordHash,
                 role: 'ADMIN',
+                status: 'PENDING_OTP',
                 isOtpVerified: false,
                 isProfileCompleted: false,
                 isApprovedBySuperAdmin: false,
@@ -59,10 +60,9 @@ let AuthService = class AuthService {
             }
         });
         console.log(`[OTP] Sent ${otp} to ${dto.mobile}`);
-        const tokens = await this.generateTokens(user, 'ADMIN');
         return {
             adminId: user.id,
-            accessToken: tokens.accessToken
+            message: 'OTP sent successfully. Please verify OTP to proceed.'
         };
     }
     async verifyOtp(dto) {
@@ -85,11 +85,23 @@ let AuthService = class AuthService {
             where: { id: otpRecord.id },
             data: { isUsed: true }
         });
+        let newStatus = user.status;
+        if (user.status === 'PENDING_OTP') {
+            newStatus = 'PENDING_PROFILE';
+        }
         await this.prisma.user.update({
             where: { id: adminId },
-            data: { isOtpVerified: true }
+            data: {
+                isOtpVerified: true,
+                status: newStatus
+            }
         });
-        return { message: 'OTP Verified successfully' };
+        const tokens = await this.generateTokens(user, 'ADMIN');
+        return {
+            message: 'OTP Verified. Please complete Business Profile.',
+            accessToken: tokens.accessToken,
+            nextStep: 'CREATE_BUSINESS_PROFILE'
+        };
     }
     async login(dto) {
         let user = null;
@@ -126,6 +138,11 @@ let AuthService = class AuthService {
             throw new common_1.UnauthorizedException('Invalid credentials');
         if (!user.isActive)
             throw new common_1.UnauthorizedException('User is inactive');
+        if (roleType === 'ADMIN') {
+            if (user.status !== 'ACTIVE') {
+                throw new common_1.UnauthorizedException(`Account not active. Status: ${user.status}`);
+            }
+        }
         return this.generateTokens(user, roleType);
     }
     async resendOtp(dto) {

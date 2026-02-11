@@ -9,8 +9,7 @@ export class SuperAdminService {
         return this.prisma.user.findMany({
             where: {
                 role: 'ADMIN',
-                isProfileCompleted: true,
-                isApprovedBySuperAdmin: false
+                status: 'PENDING_APPROVAL',
             },
             include: {
                 businessDetails: true
@@ -22,13 +21,35 @@ export class SuperAdminService {
         const user = await this.prisma.user.findUnique({ where: { id: adminId } });
         if (!user) throw new BadRequestException('User not found');
         if (user.role !== 'ADMIN') throw new BadRequestException('Not an Admin user');
+        if (user.status !== 'PENDING_APPROVAL') throw new BadRequestException('User is not pending approval');
 
         await this.prisma.user.update({
             where: { id: adminId },
-            data: { isApprovedBySuperAdmin: true }
+            data: {
+                status: 'ACTIVE',
+                isActive: true,
+                isApprovedBySuperAdmin: true
+            }
         });
 
-        // Optionally send email notification?
         return { message: 'Admin approved successfully' };
+    }
+
+    async rejectAdmin(adminId: string) {
+        const user = await this.prisma.user.findUnique({ where: { id: adminId } });
+        if (!user) throw new BadRequestException('User not found');
+        if (user.role !== 'ADMIN') throw new BadRequestException('Not an Admin user');
+        if (user.status !== 'PENDING_APPROVAL') throw new BadRequestException('User is not pending approval');
+
+        await this.prisma.user.update({
+            where: { id: adminId },
+            data: {
+                status: 'REJECTED',
+                isActive: false,
+                isApprovedBySuperAdmin: false
+            }
+        });
+
+        return { message: 'Admin rejected successfully' };
     }
 }

@@ -31,7 +31,7 @@ let UsersController = class UsersController {
 exports.UsersController = UsersController;
 __decorate([
     (0, common_1.Post)('create'),
-    (0, swagger_1.ApiOperation)({ summary: 'Create a new user (ADMINISTRATOR / OPERATOR)' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Create a new sub-user (ADMINISTRATOR / OPERATOR)' }),
     (0, swagger_1.ApiResponse)({ status: 201, description: 'User created successfully.' }),
     (0, swagger_1.ApiResponse)({ status: 403, description: 'Forbidden. Requires userManagement_add permission.' }),
     (0, swagger_1.ApiResponse)({ status: 409, description: 'Username already exists.' }),
@@ -42,7 +42,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "createUser", null);
 exports.UsersController = UsersController = __decorate([
-    (0, swagger_1.ApiTags)('Users'),
+    (0, swagger_1.ApiTags)('Users (Onboarding & Management)'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, permission_guard_1.PermissionGuard),
     (0, common_1.Controller)('users'),

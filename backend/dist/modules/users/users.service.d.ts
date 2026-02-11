@@ -5,13 +5,13 @@ export declare class UsersService {
     constructor(prisma: PrismaService);
     createUser(dto: CreateUserDto): Promise<{
         id: string;
+        createdAt: Date;
         name: string;
+        mobile: string | null;
         username: string;
         passwordHash: string | null;
-        mobile: string | null;
-        facilityId: string;
         isActive: boolean;
-        createdAt: Date;
         updatedAt: Date;
+        facilityId: string;
     }>;
 }

@@ -5,8 +5,8 @@ export declare class CreateBusinessDetailsDto {
     city: string;
     state: string;
     pincode: string;
-    proofOfBusiness: string;
-    udyogAadhar?: string;
-    gstCertificate?: string;
-    otherDocument?: string;
+    proofOfBusiness: any;
+    udyogAadhar?: any;
+    gstCertificate?: any;
+    otherDocument?: any;
 }

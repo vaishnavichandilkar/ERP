@@ -12,6 +12,7 @@ export declare class JwtStrategy extends JwtStrategy_base {
         id: any;
         username: any;
         role: any;
+        status: any;
         isOtpVerified: any;
         isProfileCompleted: any;
         isApprovedBySuperAdmin: any;
@@ -23,6 +24,7 @@ export declare class JwtStrategy extends JwtStrategy_base {
         role: string;
         facilityId: any;
         permissions: any;
+        status?: undefined;
         isOtpVerified?: undefined;
         isProfileCompleted?: undefined;
         isApprovedBySuperAdmin?: undefined;

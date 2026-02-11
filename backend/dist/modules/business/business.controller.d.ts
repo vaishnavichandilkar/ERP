@@ -6,4 +6,7 @@ export declare class BusinessController {
         name: string;
         license: string;
     }>;
+    createProfile(dto: any, req: any): Promise<{
+        message: string;
+    }>;
 }

@@ -6,6 +6,7 @@ export declare class SuperAdminController {
     getPendingAdmins(req: any): Promise<({
         businessDetails: {
             id: string;
+            createdAt: Date;
             adminId: string;
             businessName: string;
             addressLine: string;
@@ -17,21 +18,21 @@ export declare class SuperAdminController {
             udyogAadhar: string | null;
             gstCertificate: string | null;
             otherDocument: string | null;
-            createdAt: Date;
         };
     } & {
         id: string;
+        createdAt: Date;
         name: string;
-        username: string;
         email: string | null;
         mobile: string | null;
+        username: string;
         passwordHash: string | null;
         role: string;
+        status: import(".prisma/client").$Enums.AdminStatus;
         isActive: boolean;
         isOtpVerified: boolean;
         isProfileCompleted: boolean;
         isApprovedBySuperAdmin: boolean;
-        createdAt: Date;
         updatedAt: Date;
     })[]>;
     approveAdmin(req: any, dto: ApproveAdminDto): Promise<{

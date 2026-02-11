@@ -11,10 +11,12 @@ export declare class AuthService {
     constructor(prisma: PrismaService, jwtService: JwtService, otpService: OtpService, configService: ConfigService);
     registerAdmin(dto: RegisterDto): Promise<{
         adminId: string;
-        accessToken: string;
+        message: string;
     }>;
     verifyOtp(dto: any): Promise<{
         message: string;
+        accessToken: string;
+        nextStep: string;
     }>;
     login(dto: LoginDto): Promise<{
         accessToken: string;

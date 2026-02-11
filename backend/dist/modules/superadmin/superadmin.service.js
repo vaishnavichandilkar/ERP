@@ -20,8 +20,7 @@ let SuperAdminService = class SuperAdminService {
         return this.prisma.user.findMany({
             where: {
                 role: 'ADMIN',
-                isProfileCompleted: true,
-                isApprovedBySuperAdmin: false
+                status: 'PENDING_APPROVAL',
             },
             include: {
                 businessDetails: true
@@ -34,11 +33,35 @@ let SuperAdminService = class SuperAdminService {
             throw new common_1.BadRequestException('User not found');
         if (user.role !== 'ADMIN')
             throw new common_1.BadRequestException('Not an Admin user');
+        if (user.status !== 'PENDING_APPROVAL')
+            throw new common_1.BadRequestException('User is not pending approval');
         await this.prisma.user.update({
             where: { id: adminId },
-            data: { isApprovedBySuperAdmin: true }
+            data: {
+                status: 'ACTIVE',
+                isActive: true,
+                isApprovedBySuperAdmin: true
+            }
         });
         return { message: 'Admin approved successfully' };
+    }
+    async rejectAdmin(adminId) {
+        const user = await this.prisma.user.findUnique({ where: { id: adminId } });
+        if (!user)
+            throw new common_1.BadRequestException('User not found');
+        if (user.role !== 'ADMIN')
+            throw new common_1.BadRequestException('Not an Admin user');
+        if (user.status !== 'PENDING_APPROVAL')
+            throw new common_1.BadRequestException('User is not pending approval');
+        await this.prisma.user.update({
+            where: { id: adminId },
+            data: {
+                status: 'REJECTED',
+                isActive: false,
+                isApprovedBySuperAdmin: false
+            }
+        });
+        return { message: 'Admin rejected successfully' };
     }
 };
 exports.SuperAdminService = SuperAdminService;

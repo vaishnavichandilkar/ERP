@@ -30,10 +30,17 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
             where: { id: payload.sub },
         });
         if (user) {
+            if (user.role === 'ADMIN') {
+                const allowedStatus = ['ACTIVE', 'PENDING_PROFILE'];
+                if (!allowedStatus.includes(user.status)) {
+                    throw new common_1.UnauthorizedException(`Account status: ${user.status}`);
+                }
+            }
             return {
                 id: user.id,
                 username: user.username,
                 role: user.role,
+                status: user.status,
                 isOtpVerified: user.isOtpVerified,
                 isProfileCompleted: user.isProfileCompleted,
                 isApprovedBySuperAdmin: user.isApprovedBySuperAdmin,

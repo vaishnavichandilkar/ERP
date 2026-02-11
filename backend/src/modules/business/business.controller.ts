@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { BusinessService } from './business.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -16,5 +16,16 @@ export class BusinessController {
     @ApiResponse({ status: 401, description: 'Unauthorized.' })
     getProfile() {
         return this.businessService.getBusinessProfile();
+    }
+
+    @Post('profile')
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard)
+    @ApiOperation({ summary: 'Create/Update business profile' })
+    @ApiResponse({ status: 201, description: 'Business profile created. Account pending approval.' })
+    createProfile(@Body() dto: any, @Request() req) {
+        // In a real app, use DTO. For now using any as placeholder or import DTO
+        // We need userId from req.user (injected by JwtStrategy)
+        return this.businessService.createBusinessDetails(req.user.id, dto);
     }
 }

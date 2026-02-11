@@ -25,14 +25,17 @@ let BusinessService = class BusinessService {
             throw new common_1.BadRequestException('User not found');
         if (!user.isOtpVerified)
             throw new common_1.BadRequestException('OTP not verified');
-        if (user.isProfileCompleted)
-            throw new common_1.BadRequestException('Profile already completed');
-        const details = await this.prisma.businessDetail.create({
-            data: Object.assign({ adminId: userId }, dto)
+        const details = await this.prisma.businessDetail.upsert({
+            where: { adminId: userId },
+            update: Object.assign({}, dto),
+            create: Object.assign({ adminId: userId }, dto)
         });
         await this.prisma.user.update({
             where: { id: userId },
-            data: { isProfileCompleted: true }
+            data: {
+                isProfileCompleted: true,
+                isApprovedBySuperAdmin: false
+            }
         });
         return { message: 'Business details saved. Pending Super Admin approval.' };
     }

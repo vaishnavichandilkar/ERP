@@ -52,27 +52,23 @@ __decorate([
     __metadata("design:type", String)
 ], CreateBusinessDetailsDto.prototype, "pincode", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)(),
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    __metadata("design:type", String)
+    (0, swagger_1.ApiProperty)({ type: 'string', format: 'binary', description: 'Proof of Business (PDF)' }),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Object)
 ], CreateBusinessDetailsDto.prototype, "proofOfBusiness", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)(),
-    (0, class_validator_1.IsString)(),
+    (0, swagger_1.ApiProperty)({ type: 'string', format: 'binary', required: false, description: 'Udyog Aadhar (PDF)' }),
     (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", String)
+    __metadata("design:type", Object)
 ], CreateBusinessDetailsDto.prototype, "udyogAadhar", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)(),
-    (0, class_validator_1.IsString)(),
+    (0, swagger_1.ApiProperty)({ type: 'string', format: 'binary', required: false, description: 'GST Certificate (PDF)' }),
     (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", String)
+    __metadata("design:type", Object)
 ], CreateBusinessDetailsDto.prototype, "gstCertificate", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)(),
-    (0, class_validator_1.IsString)(),
+    (0, swagger_1.ApiProperty)({ type: 'string', format: 'binary', required: false, description: 'Other Document (PDF)' }),
     (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", String)
+    __metadata("design:type", Object)
 ], CreateBusinessDetailsDto.prototype, "otherDocument", void 0);
 //# sourceMappingURL=business.dto.js.map

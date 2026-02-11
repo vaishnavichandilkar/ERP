@@ -7,14 +7,14 @@ export declare class AccessController {
         role: string;
         permissions: any;
         id: string;
+        createdAt: Date;
         name: string;
+        mobile: string | null;
         username: string;
         passwordHash: string | null;
-        mobile: string | null;
-        facilityId: string;
         isActive: boolean;
-        createdAt: Date;
         updatedAt: Date;
+        facilityId: string;
     }[]>;
     getUserPermissions(id: string): Promise<any>;
     updateUserPermissions(id: string, dto: UpdateUserPermissionsDto): Promise<{
