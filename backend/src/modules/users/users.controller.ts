@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Param, Patch } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Param, Patch, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -19,8 +19,10 @@ export class UsersController {
     @ApiResponse({ status: 403, description: 'Forbidden. Requires userManagement_add permission.' })
     @ApiResponse({ status: 409, description: 'Username already exists.' })
     @RequirePermission('userManagement_add')
-    createUser(@Body() dto: CreateUserDto) {
-        return this.usersService.createUser(dto);
+    createUser(@Body() dto: CreateUserDto, @Request() req: any) {
+        // If user is SELLER, restrict creation to their own facilities
+        const sellerId = req.user.role === 'SELLER' ? req.user.id : undefined;
+        return this.usersService.createUser(dto, sellerId);
     }
 
 

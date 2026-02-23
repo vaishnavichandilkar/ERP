@@ -4,150 +4,181 @@ This guide provides a comprehensive step-by-step walkthrough to test the **Weigh
 
 **Prerequisites**:
 1.  **Server Running**: `npm run start:dev`
-2.  **Database Seeded**: `npx ts-node src/prisma/seed.ts` (Creates default Super Admin: `admin` / `admin123`)
+2.  **Database Seeded**: `npx ts-node src/prisma/seed.ts` (Creates default Super Admin with phone: `admin_phone`)
 3.  **Swagger URL**: [http://localhost:3000/api/docs](http://localhost:3000/api/docs)
 
 ---
 
-## 🚀 Phase 1: Admin Onboarding (Strict Flow)
+## 🚀 Phase 1: Seller Onboarding (Strict 6-Step Flow)
 
-**Goal**: Register a new Admin, verify OTP, complete business profile, and wait for approval. Use the **Response Body** from each step for the next.
+**Goal**: Register as a new Seller, provide all business evidence, and wait for Superadmin approval.
 
-### 1. Register New Admin
-*   **Endpoint**: `POST /auth/register` (Section: Auth)
+### Step 1: Mobile Registration
+*   **Endpoint**: `POST /onboarding/step1-mobile`
 *   **Payload**:
     ```json
     {
-      "name": "John Business",
-      "email": "john@business.com",
-      "mobile": "9876543210",
-      "password": "password123"
+      "phone": "9876543210"
     }
     ```
-*   **Result**: Returns `adminId` and `message`. **No Token** is returned. You cannot login yet.
-*   **Console**: Check terminal for the **OTP** (e.g., `[OTP] Sent 123456 to 9876543210`)
-*   **Status Check (DB)**: `current_status = PENDING_OTP`.
+*   **Result**: Returns `message: OTP sent successfully`.
+*   **Console**: Check your server terminal for the **OTP** (e.g., `[ONBOARDING OTP] Sent 123456 to 9876543210`).
+*   **DB Status**: User created/updated with role `seller`.
 
-### 2. Verify OTP
-*   **Endpoint**: `POST /auth/verify-otp`
+### Step 2: Verify OTP
+*   **Endpoint**: `POST /onboarding/step1-verify`
 *   **Payload**:
     ```json
     {
-      "adminId": "UUID_FROM_STEP_1",
-      "mobile": "9876543210",
-      "otp": "123456" // Use OTP from console
+      "phone": "9876543210",
+      "otp": "123456" 
     }
     ```
 *   **Result**: Returns `accessToken`.
-*   **Note**: This token has limited access (Status: `PENDING_PROFILE`). You can ONLY create a business profile.
-*   **Action**: Click **Authorize** button in Swagger and paste this token (`Bearer <token>`).
+*   **Action**: Click **Authorize** in Swagger and paste this token (`Bearer <token>`). This token allows you to complete the next 5 steps.
 
-### 3. Complete Business Profile
-*   **Endpoint**: `POST /admin/business-details` (Section: Admin Business)
-*   **Type**: `multipart/form-data`
+### Step 3: Personal Details
+*   **Endpoint**: `PUT /onboarding/step2-details`
 *   **Payload**:
-    *   `businessName`: "John Weighing Solutions"
-    *   `addressLine`: "123 Market St"
-    *   `area`: "Downtown"
-    *   `city`: "Metropolis"
-    *   `state`: "NY"
-    *   `pincode`: "10001"
-    *   `proofOfBusiness`: [Upload File] (Required PDF)
-    *   `udyogAadhar`: [Upload File] (Optional PDF)
-    *   `gstCertificate`: [Upload File] (Optional PDF)
-    *   `otherDocument`: [Upload File] (Optional PDF)
-*   **Result**: Business details saved with file paths.
-*   **Status Check (DB)**: `isProfileCompleted = true`, `isApprovedBySuperAdmin = false`.
-*   **Note**: Your access is now paused. You cannot perform further actions until approved.
+    ```json
+    {
+      "first_name": "John",
+      "last_name": "Doe",
+      "email": "john.doe@example.com"
+    }
+    ```
+*   **Result**: Profile updated.
 
-### 4. Verify Login Restriction
-*   **Endpoint**: `POST /auth/login`
-*   **Payload**: `username: 9876543210`, `password: password123`.
-*   **Result**: Should fail with `401 Unauthorized` and message `Account not active. Status: PENDING_APPROVAL`.
+### Step 4: Business Verification (DOC UPLOADS)
+*   **Endpoint**: `POST /onboarding/step3-business`
+*   **Type**: `multipart/form-data`
+*   **Form Data**:
+    *   `udyogAadharNumber`: "UDYOG-12345"
+    *   `gstNumber`: "22AAAAA0000A1Z5"
+    *   `udyogAadharCertificate`: [Upload PDF]
+    *   `gstCertificate`: [Upload PDF]
+    *   `businessProof`: [Upload PDF] (Optional)
+*   **Result**: Evidence documents saved and linked to seller.
+
+### Step 5: Shop Details
+*   **Endpoint**: `POST /onboarding/step4-shop`
+*   **Type**: `multipart/form-data`
+*   **Form Data**:
+    *   `shopName`: "Doe Weighing Solutions"
+    *   `address`: "123 Industrial Area"
+    *   `village`: "Rosewood" (Optional)
+    *   `pinCode`: "400001"
+    *   `state`: "Maharashtra"
+    *   `district`: "Mumbai"
+    *   `shopActLicense`: [Upload PDF]
+*   **Result**: Shop model updated and license PDF stored.
+
+### Step 6: Bank Details
+*   **Endpoint**: `POST /onboarding/step5-bank`
+*   **Type**: `multipart/form-data`
+*   **Form Data**:
+    *   `holderName`: "John Doe"
+    *   `accountNo`: "123456789012"
+    *   `ifsc`: "IFSC0001234"
+    *   `bankName`: "Industrial Bank"
+    *   `panNumber`: "ABCDE1234F"
+    *   `cancelledCheque`: [Upload PDF]
+    *   `panCard`: [Upload PDF]
+*   **Result**: Bank records updated and verification documents stored.
+
+### Step 7: Finalize
+*   **Endpoint**: `POST /onboarding/step6-complete`
+*   **Result**: `{ "message": "Onboarding complete. Your account is pending Superadmin approval." }`.
+*   **Status**: `onboarded_at` is set in DB. Login is still restricted until approved.
 
 ---
 
 ## 🛡️ Phase 2: Super Admin Approval
 
-**Goal**: As Super Admin, review and approve the pending Sub-Admin.
+**Goal**: As Super Admin, review the seller's documentation and approve/reject.
 
-### 1. Login as Super Admin
-*   **Action**: Logout from Swagger (or clear token).
-*   **Endpoint**: `POST /auth/login`
-*   **Payload**:
+### 1. Super Admin Login (Mobile + OTP)
+*   **Action**: Clear current Bearer Token.
+*   **Step A**: `POST /auth/send-login-otp` with `{ "phone": "admin_phone" }`.
+*   **Step B**: Check console for OTP.
+*   **Step C**: `POST /auth/login` with `{ "phone": "admin_phone", "otp": "..." }`.
+*   **Step D**: Authorize in Swagger with the Super Admin token.
+
+### 2. Review and Approve
+*   **Get Pending**: `GET /superadmin/pending-sellers`. Confirm "John Doe" is in the list. Copy their `id`.
+*   **Approve**: `POST /superadmin/approve-seller`
     ```json
     {
-      "username": "admin",
-      "password": "admin123"
+      "sellerId": "UUID_FROM_LIST"
     }
     ```
-*   **Result**: Returns Super Admin `accessToken`.
-*   **Action**: Authorize in Swagger with this new token.
-
-### 2. List Pending Approvals
-*   **Endpoint**: `GET /superadmin/pending-admins` (Section: Super Admin)
-*   **Result**: Should list "John Business" with status `PENDING_APPROVAL`. Copy their `id`.
-
-### 3. Approve Admin
-*   **Endpoint**: `POST /superadmin/approve-admin`
-*   **Payload**:
-    ```json
-    {
-      "adminId": "UUID_FROM_STEP_2"
-    }
-    ```
-*   **Result**: `{ "message": "Admin approved successfully" }`.
-*   **Status Check (DB)**: `current_status = ACTIVE `.
+*   **Status**: `isApproved` set to `true` in DB.
 
 ---
 
-## 🚀 Phase 3: Active Admin Access
+## � Phase 3: Regular Seller Login
 
-**Goal**: Now that the Admin is active, they can login and manage their facility.
+**Goal**: Approved seller logs in to manage their business.
 
-### 1. Login as Approved Admin
-*   **Action**: Logout Super Admin.
-*   **Endpoint**: `POST /auth/login`
-*   **Payload**: `username: 9876543210`, `password: password123`.
-*   **Result**: Success! Returns `accessToken`.
-*   **Check**: `user.status` in response should be `ACTIVE`.
-
-### 2. Verify Dashboard Access
-*   **Endpoint**: `GET /auth/me`
-*   **Result**: Returns full profile.
+*   **Step 1**: `POST /auth/send-login-otp` with `{ "phone": "9876543210" }`.
+*   **Step 2**: `POST /auth/login` with OTP.
+*   **Result**: Returns tokens and user object with `role: "SELLER"`.
+*   **Action**: Authorize in Swagger.
 
 ---
 
-## 🏭 Phase 4: User Management (By Admin)
+## 🏗️ Phase 4: Business Setup (Facilities & Staff)
 
-**Goal**: The Active Admin creates sub-users (Administrators/Operators).
+**Goal**: Seller sets up their first weighing facility and hires staff.
 
-### 1. Create a Sub-User
-*   **Authorize**: Ensure you are logged in as "John Business" (Step 3.1).
+### 1. Create Facility
+*   **Endpoint**: `POST /facilities`
+*   **Payload**:
+    ```json
+    {
+      "name": "East Weighbridge",
+      "location": "Eastern Port",
+      "address": "Gate 4, Port Area",
+      "totalMachines": 2
+    }
+    ```
+*   **Copy Result**: Copy the `id` of the new facility.
+
+### 2. Create Staff (Administrator/Operator)
 *   **Endpoint**: `POST /users/create`
-*   **Payload** (Create an Operator):
+*   **Payload**:
     ```json
     {
-      "name": "Weighbridge Op 1",
-      "username": "op1",
-      "mobile": "5555555555",
+      "name": "Op Sam",
+      "username": "opsam",
       "password": "password123",
-      "role": "OPERATOR",
-      "facilityId": "FACILITY-UUID-IF-EXISTS-OR-NULL", // Note: Logic requires Facility creation first usually
-      "permissions": [
-         { "module": "Dashboard", "action": "VIEW" }
-      ]
+      "mobile": "5555566666",
+      "role": "operator",
+      "facilityId": "FACILITY_UUID_FROM_STEP_4.1"
     }
     ```
-*   **Note**: If `facilityId` is required by logic, you might need to create a facility first (if Facility module is implemented) or pass a mock ID if validation allows. (Current `UsersService` enforces `facilityId` for Operators).
+*   **Validation**: Ensure you are logged in as the Seller who owns the facility.
 
 ---
 
-## 📂 Phase 5: Utilities
+## 👨‍💻 Phase 5: Staff Login (Traditional)
 
-### 1. File Upload
-*   **Endpoint**: `POST /upload`
-*   **Result**: JSON with file path.
+**Goal**: Sub-users (Administrators/Operators) log in via their mobile number.
+
+*   **Note**: Staff members also use the Mobile + OTP flow for maximum security.
+*   **Step 1**: `POST /auth/send-login-otp` with `{ "phone": "5555566666" }`.
+*   **Step 2**: `POST /auth/login` with OTP.
+*   **Result**: Success! Token returned with `role: "OPERATOR"`.
+*   **Check**: Facilities list should only show the facility they are assigned to.
+
+---
+
+## 📂 Phase 6: Utilities & Audits
+
+### 1. Profile Check
+*   **Endpoint**: `GET /auth/me`
+*   **Check**: Verify `req.user` contains correct roles and permissions.
 
 ### 2. Audit Logs
-*   **Check Database**: `SELECT * FROM audit_logs ORDER BY "createdAt" DESC;`
+*   **Check DB**: `SELECT * FROM audit_logs ORDER BY "createdAt" DESC;`
+*   **Verify**: Actions like `approve-seller`, `facility creation`, and `logins` are recorded.

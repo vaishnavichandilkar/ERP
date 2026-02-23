@@ -16,40 +16,38 @@ async function main() {
     }
     console.log('Modules seeded.');
 
-    // 2. Seed System Admin
-    const adminUsername = 'admin';
+    // 2. Seed System Admin (Superadmin)
+    const adminPhone = 'admin_phone'; // Since username is gone, using phone as identifier
     const existingAdmin = await prisma.user.findUnique({
-        where: { username: adminUsername }
+        where: { phone: adminPhone }
     });
 
+    const passwordHash = await bcrypt.hash('admin123', 10);
+
     if (!existingAdmin) {
-        const passwordHash = await bcrypt.hash('admin123', 10);
         await prisma.user.create({
             data: {
-                name: 'System Admin',
-                username: adminUsername,
-                passwordHash: passwordHash,
-                role: 'SUPER_ADMIN',
-                status: 'ACTIVE', // NEW: Set status to ACTIVE
-                isActive: true,
-                isOtpVerified: true,
-                isProfileCompleted: true,
-                isApprovedBySuperAdmin: true,
+                first_name: 'System',
+                last_name: 'Admin',
+                phone: adminPhone,
+                email: 'admin@weighpro.com',
+                password: passwordHash,
+                role: 'superadmin',
+                isApproved: true,
+                onboarded_at: new Date(),
             }
         });
-        console.log('Default Admin user created (admin/admin123).');
+        console.log('Default Superadmin user created.');
     } else {
         await prisma.user.update({
-            where: { username: adminUsername },
+            where: { phone: adminPhone },
             data: {
-                role: 'SUPER_ADMIN',
-                status: 'ACTIVE', // NEW: Update status to ACTIVE
-                isOtpVerified: true,
-                isProfileCompleted: true,
-                isApprovedBySuperAdmin: true,
+                role: 'superadmin',
+                isApproved: true,
+                onboarded_at: new Date(),
             }
         });
-        console.log('Admin user updated to SUPER_ADMIN.');
+        console.log('Admin user updated to superadmin.');
     }
 
     console.log('Seeding completed.');

@@ -18,34 +18,29 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     async validate(payload: any) {
-        // 1. Check User (System Admin)
+        // 1. Check User (Platform users: superadmin, seller, buyer)
         let user: any = await this.prisma.user.findUnique({
             where: { id: payload.sub },
         });
 
         if (user) {
-            // Check Status for Admin
-            if (user.role === 'ADMIN') {
-                const allowedStatus = ['ACTIVE', 'PENDING_PROFILE'];
-                if (!allowedStatus.includes(user.status)) {
-                    throw new UnauthorizedException(`Account status: ${user.status}`);
-                }
-            }
+            // Sellers can login IF they started onboarding, but their access is limited by Guards
+            // Exception: If they are blocked
+            if (user.isBlocked) throw new UnauthorizedException('Account is blocked');
 
             return {
                 id: user.id,
-                username: user.username,
-                role: user.role,
-                status: user.status, // Pass status to request user
-                isOtpVerified: user.isOtpVerified,
-                isProfileCompleted: user.isProfileCompleted,
-                isApprovedBySuperAdmin: user.isApprovedBySuperAdmin,
+                userId: user.id, // Providing both for compatibility
+                username: user.phone || user.email,
+                role: user.role.toUpperCase(),
+                isApproved: user.isApproved,
+                onboarded: !!user.onboarded_at,
                 facilityId: null,
-                permissions: null, // Admin has all
+                permissions: null,
             };
         }
 
-        // 2. Check Administrator
+        // 2. Check Administrator (Facility user)
         user = await this.prisma.administrator.findUnique({
             where: { id: payload.sub },
             include: { permissions: { include: { module: true } } },
@@ -55,6 +50,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             if (!user.isActive) throw new UnauthorizedException('User inactive');
             return {
                 id: user.id,
+                userId: user.id,
                 username: user.username,
                 role: 'ADMINISTRATOR',
                 facilityId: user.facilityId,
@@ -62,7 +58,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             };
         }
 
-        // 3. Check Operator
+        // 3. Check Operator (Facility user)
         user = await this.prisma.operator.findUnique({
             where: { id: payload.sub },
             include: { permissions: { include: { module: true } } },
@@ -72,6 +68,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             if (!user.isActive) throw new UnauthorizedException('User inactive');
             return {
                 id: user.id,
+                userId: user.id,
                 username: user.username,
                 role: 'OPERATOR',
                 facilityId: user.facilityId,
@@ -84,7 +81,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     private formatPermissions(permissions: any[]) {
         if (!permissions) return {};
-        // Convert to optimized map for Guard: { "Module": { view: true, ... } }
         return permissions.reduce((acc, curr) => {
             acc[curr.module.name] = {
                 canView: curr.canView,
@@ -96,4 +92,3 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         }, {});
     }
 }
-

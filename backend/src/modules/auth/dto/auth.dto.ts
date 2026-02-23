@@ -1,43 +1,20 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MinLength, Length } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class RegisterDto {
-    @ApiProperty({ example: 'Admin User' })
-    @IsString()
-    @IsNotEmpty()
-    name: string;
-
-    @ApiProperty({ example: 'admin@weighpro.com' })
-    @IsEmail()
-    email: string;
-
+export class SendLoginOtpDto {
     @ApiProperty({ example: '1234567890' })
     @IsString()
     @IsNotEmpty()
-    mobile: string;
-
-    @ApiProperty({ example: 'password123' })
-    @IsString()
-    @MinLength(6)
-    password: string;
+    @Length(10, 15)
+    phone: string;
 }
 
 export class LoginDto {
-    @ApiProperty({ example: 'admin_user' })
+    @ApiProperty({ example: '1234567890' })
     @IsString()
     @IsNotEmpty()
-    username: string;
-
-    @ApiProperty({ example: 'password123' })
-    @IsString()
-    @IsNotEmpty()
-    password: string;
-}
-
-export class VerifyOtpDto {
-    @ApiProperty({ example: 'admin@weighpro.com' })
-    @IsEmail()
-    email: string;
+    @Length(10, 15)
+    phone: string;
 
     @ApiProperty({ example: '123456' })
     @IsString()
@@ -50,21 +27,4 @@ export class RefreshTokenDto {
     @IsString()
     @IsNotEmpty()
     refreshToken: string;
-}
-
-export class VerifyAdminOtpDto {
-    @ApiProperty()
-    @IsString()
-    @IsNotEmpty()
-    adminId: string;
-
-    @ApiProperty()
-    @IsString()
-    @IsNotEmpty()
-    mobile: string;
-
-    @ApiProperty()
-    @IsString()
-    @IsNotEmpty()
-    otp: string;
 }

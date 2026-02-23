@@ -15,48 +15,147 @@ enum AdminStatus {
   ACTIVE
   REJECTED
 }
+// ENUMS
 
-model User {
-  id                     String           @id @default(uuid())
-  name                   String
-  username               String           @unique
-  email                  String?          @unique
-  mobile                 String?          @unique
-  passwordHash           String?
-  role                   String           @default("ADMIN") // Only "ADMIN" lives here now
-  status                 AdminStatus      @default(PENDING_OTP)
-  isActive               Boolean          @default(true)
-  isOtpVerified          Boolean          @default(false)
-  isProfileCompleted     Boolean          @default(false)
-  isApprovedBySuperAdmin Boolean          @default(false)
-  createdAt              DateTime         @default(now())
-  updatedAt              DateTime         @updatedAt
-  
-  sessions               UserSession[]
-  otpVerifications       OtpVerification[]
-  businessDetails        BusinessDetail?
+enum Role {
+  buyer
+  seller
 
-  @@map("users")
+  // COMPANY PANEL ROLES
+  superadmin
+  administrator
+  operator
 }
 
-model BusinessDetail {
-  id              String   @id @default(uuid())
-  adminId         String   @unique
-  businessName    String
-  addressLine     String
-  area            String
-  city            String
-  state           String
-  pincode         String
-  proofOfBusiness String
-  udyogAadhar     String?
-  gstCertificate  String?
-  otherDocument   String?
-  createdAt       DateTime @default(now())
+enum SellerDocumentType {
+  PAN
+  GST
+  AADHAR
+  BANK
+  OTHER
+}
 
-  user            User     @relation(fields: [adminId], references: [id])
 
-  @@map("admin_business_details")
+
+// USER MODEL
+
+model User {
+  id                 String    @id @default(uuid())
+
+  first_name         String?
+  last_name          String?
+
+  email              String?   @unique
+  phone              String?   @unique
+
+  selected_language  String?
+
+  role               Role      @default(buyer)
+
+  password           String?
+
+  refresh_token      String?
+
+  onboarded_at       DateTime?
+  isApproved         Boolean   @default(false)
+
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+  deleted_at         DateTime?
+
+  isBlocked          Boolean   @default(false)
+
+
+  // RELATIONS
+  sellerDocuments    SellerDocument[] @relation("UploadedByUser")
+  bankDetail         BankDetail?
+  shopDetail         ShopDetail?
+  otpVerifications   OtpVerification[]
+  facilities         Facility[]       @relation("SellerFacilities")
+
+  @@map("User")
+}
+
+
+
+
+// BANK DETAIL MODEL
+model BankDetail {
+  id          String    @id @default(uuid())
+  userId      String    @unique
+  holderName  String
+  accountNo   String    @unique
+  ifsc        String
+  bankName    String
+  panNumber   String?   // New field
+  createdAt   DateTime  @default(now())
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("BankDetail")
+}
+
+// SHOP DETAIL MODEL (Suggested Improvement for Step 4)
+model ShopDetail {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  shopName    String
+  address     String
+  village     String?
+  pinCode     String
+  state       String
+  district    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("ShopDetail")
+}
+
+
+
+
+// OTP MODEL
+
+model Otp {
+
+  id         Int      @id @default(autoincrement())
+
+  phone      String   @unique
+
+  otp        String
+
+  expiresAt  DateTime
+
+
+  @@map("Otp")
+
+}
+
+
+
+
+// SELLER DOCUMENT MODEL
+
+model SellerDocument {
+  id                Int      @id @default(autoincrement())
+  profileId         Int?
+  type              SellerDocumentType
+  url               String
+  category          String?
+  uploadedByUserId  String?
+
+  name              String?
+  size              BigInt   @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+
+  // RELATION WITH USER
+  uploadedByUser User? @relation("UploadedByUser", fields: [uploadedByUserId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@map("SellerDocument")
 }
 
 enum FacilityStatus {
@@ -73,9 +172,12 @@ model Facility {
   gstNumber     String?        @db.VarChar(15)
   status        FacilityStatus @default(ACTIVE)
   isDeleted     Boolean        @default(false)
+  
+  sellerId      String         @default("legacy") // Temporary default to avoid migration issues if data exists, but we'll prune it.
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
+  seller        User           @relation("SellerFacilities", fields: [sellerId], references: [id])
   administrators Administrator[]
   operators      Operator[]
 
@@ -169,26 +271,7 @@ model OperatorPermission {
   @@map("operator_permissions")
 }
 
-// Retaining UserSession for simplified session management across all user types (by ID)
-model UserSession {
-  id               String   @id @default(uuid())
-  userId           String   // Maps to User.id, Administrator.id, or Operator.id
-  jti              String   @unique
-  refreshTokenHash String
-  expiresAt        DateTime
-  isRevoked        Boolean  @default(false)
-  createdAt        DateTime @default(now())
 
-  // Note: No Relation here because it's polymorphic (User/Admin/Operator). 
-  // We'll manage relation logic in application code.
-  user             User?     @relation(fields: [userId], references: [id], map: "UserSession_User_fkey") 
-  // FK constraints might fail if we enforce relation to User. 
-  // For proper polymorphic, we should remove foreign key or make it loose. 
-  // BUT to keep User bootstrap working, I'll keep relation optional or remove it.
-  // REMOVING relation to generic "User" to support multi-table auth.
-  
-  // @@map("user_sessions")
-}
 
 // Redefining UserSession without direct FK to support multiple tables
 model Session {

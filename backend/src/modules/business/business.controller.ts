@@ -14,8 +14,8 @@ export class BusinessController {
     @ApiOperation({ summary: 'Get business profile' })
     @ApiResponse({ status: 200, description: 'Returns business profile information.' })
     @ApiResponse({ status: 401, description: 'Unauthorized.' })
-    getProfile() {
-        return this.businessService.getBusinessProfile();
+    getProfile(@Request() req) {
+        return this.businessService.getBusinessProfile(req.user.userId);
     }
 
     @Post('profile')
@@ -24,8 +24,6 @@ export class BusinessController {
     @ApiOperation({ summary: 'Create/Update business profile' })
     @ApiResponse({ status: 201, description: 'Business profile created. Account pending approval.' })
     createProfile(@Body() dto: any, @Request() req) {
-        // In a real app, use DTO. For now using any as placeholder or import DTO
-        // We need userId from req.user (injected by JwtStrategy)
-        return this.businessService.createBusinessDetails(req.user.id, dto);
+        return this.businessService.createBusinessDetails(req.user.userId, dto);
     }
 }

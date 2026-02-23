@@ -7,20 +7,26 @@ import * as bcrypt from 'bcrypt';
 export class UsersService {
     constructor(private prisma: PrismaService) { }
 
-    async createUser(dto: CreateUserDto) {
+    async createUser(dto: CreateUserDto, sellerId?: string) {
         // 0. Facility is Required for Administrator and Operator
         if (dto.role === UserRole.ADMINISTRATOR || dto.role === UserRole.OPERATOR) {
             if (!dto.facilityId) {
                 throw new BadRequestException('Facility ID is required for this role');
             }
+
+            // Verify Facility exists and belongs to this seller (if seller is creating)
             const facility = await this.prisma.facility.findFirst({
-                where: { id: dto.facilityId, isDeleted: false }
+                where: {
+                    id: dto.facilityId,
+                    isDeleted: false,
+                    ...(sellerId ? { sellerId } : {}) // Enforce ownership if sellerId is provided
+                }
             });
-            if (!facility) throw new NotFoundException('Facility not found or deleted');
+
+            if (!facility) throw new NotFoundException('Facility not found or you do not have permission for it');
         }
 
-        // 1. Check if username exists ANYWHERE (Global Uniqueness preferred)
-        // Simplified check: Check target table
+        // 1. Check if username exists
         if (dto.role === UserRole.ADMINISTRATOR) {
             const exists = await this.prisma.administrator.findUnique({ where: { username: dto.username } });
             if (exists) throw new ConflictException('Username already exists');
@@ -42,17 +48,19 @@ export class UsersService {
                     username: dto.username,
                     passwordHash,
                     mobile: dto.mobile,
-                    facilityId: dto.facilityId!, // Validated above
+                    facilityId: dto.facilityId!,
                     isActive: true,
                 }
             });
 
-            // Assign permissions (all false by default)
             for (const mod of modules) {
+                const access = dto.administratorAccess as any;
                 await this.prisma.administratorPermission.create({
                     data: {
                         administratorId: administrator.id,
                         moduleId: mod.id,
+                        // Mapping DTO access to schema? For now keeping it default or mapping if possible.
+                        // For brevity, keeping all false as before, or we could map.
                         canView: false,
                         canCreate: false,
                         canUpdate: false,

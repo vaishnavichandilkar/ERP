@@ -34,6 +34,11 @@ export class CreateFacilityDto {
     @IsOptional()
     @MaxLength(15)
     gstNumber?: string;
+
+    @ApiProperty({ example: 'seller-uuid', required: false })
+    @IsString()
+    @IsOptional()
+    sellerId?: string;
 }
 
 export class UpdateFacilityDto extends CreateFacilityDto { }

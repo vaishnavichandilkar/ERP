@@ -3,9 +3,9 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
 export enum UserRole {
-    ADMIN = 'ADMIN',
-    ADMINISTRATOR = 'ADMINISTRATOR',
-    OPERATOR = 'OPERATOR',
+    SELLER = 'seller',
+    ADMINISTRATOR = 'administrator',
+    OPERATOR = 'operator',
 }
 
 export class AdministratorAccessDto {

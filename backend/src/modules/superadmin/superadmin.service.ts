@@ -5,51 +5,50 @@ import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 export class SuperAdminService {
     constructor(private prisma: PrismaService) { }
 
-    async getPendingAdmins() {
+    async getPendingSellers() {
         return this.prisma.user.findMany({
             where: {
-                role: 'ADMIN',
-                status: 'PENDING_APPROVAL',
+                role: 'seller',
+                isApproved: false,
+                onboarded_at: { not: null } // Only those who finished documentation
             },
             include: {
-                businessDetails: true
+                bankDetail: true,
+                shopDetail: true,
+                sellerDocuments: true
             }
         });
     }
 
-    async approveAdmin(adminId: string) {
-        const user = await this.prisma.user.findUnique({ where: { id: adminId } });
+    async approveSeller(sellerId: string) {
+        const user = await this.prisma.user.findUnique({ where: { id: sellerId } });
         if (!user) throw new BadRequestException('User not found');
-        if (user.role !== 'ADMIN') throw new BadRequestException('Not an Admin user');
-        if (user.status !== 'PENDING_APPROVAL') throw new BadRequestException('User is not pending approval');
+        if (user.role !== 'seller') throw new BadRequestException('Not a Seller user');
+        if (user.isApproved) throw new BadRequestException('User is already approved');
 
         await this.prisma.user.update({
-            where: { id: adminId },
+            where: { id: sellerId },
             data: {
-                status: 'ACTIVE',
-                isActive: true,
-                isApprovedBySuperAdmin: true
+                isApproved: true,
             }
         });
 
-        return { message: 'Admin approved successfully' };
+        return { message: 'Seller approved successfully' };
     }
 
-    async rejectAdmin(adminId: string) {
-        const user = await this.prisma.user.findUnique({ where: { id: adminId } });
+    async rejectSeller(sellerId: string) {
+        const user = await this.prisma.user.findUnique({ where: { id: sellerId } });
         if (!user) throw new BadRequestException('User not found');
-        if (user.role !== 'ADMIN') throw new BadRequestException('Not an Admin user');
-        if (user.status !== 'PENDING_APPROVAL') throw new BadRequestException('User is not pending approval');
+        if (user.role !== 'seller') throw new BadRequestException('Not a Seller user');
 
         await this.prisma.user.update({
-            where: { id: adminId },
+            where: { id: sellerId },
             data: {
-                status: 'REJECTED',
-                isActive: false,
-                isApprovedBySuperAdmin: false
+                isApproved: false,
+                // Optionally we could mark them as blocked or reset onboarding
             }
         });
 
-        return { message: 'Admin rejected successfully' };
+        return { message: 'Seller application rejected' };
     }
 }

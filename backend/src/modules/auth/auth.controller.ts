@@ -1,7 +1,7 @@
 import { Controller, Post, Body, Get, UseGuards, Request } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { RegisterDto, LoginDto, VerifyAdminOtpDto, RefreshTokenDto } from './dto/auth.dto';
+import { LoginDto, RefreshTokenDto, SendLoginOtpDto } from './dto/auth.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
 @ApiTags('Auth')
@@ -9,26 +9,18 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 export class AuthController {
     constructor(private authService: AuthService) { }
 
-    @Post('register-admin')
-    @ApiOperation({ summary: 'Register a new Admin/Business user' })
-    @ApiResponse({ status: 201, description: 'Admin registered successfully. Returns adminId and temporary token.' })
-    @ApiResponse({ status: 409, description: 'Mobile or Email already exists.' })
-    registerAdmin(@Body() dto: RegisterDto) {
-        return this.authService.registerAdmin(dto);
-    }
-
-    @Post('verify-otp')
-    @ApiOperation({ summary: 'Verify Admin OTP' })
-    @ApiResponse({ status: 201, description: 'OTP verified successfully.' })
-    @ApiResponse({ status: 400, description: 'Invalid or expired OTP.' })
-    verifyOtp(@Body() dto: VerifyAdminOtpDto) {
-        return this.authService.verifyOtp(dto);
+    @Post('send-login-otp')
+    @ApiOperation({ summary: 'Send OTP for Login' })
+    @ApiResponse({ status: 201, description: 'OTP sent successfully.' })
+    @ApiResponse({ status: 404, description: 'User not found.' })
+    sendLoginOtp(@Body() dto: SendLoginOtpDto) {
+        return this.authService.sendLoginOtp(dto);
     }
 
     @Post('login')
-    @ApiOperation({ summary: 'Login user' })
+    @ApiOperation({ summary: 'Login using Mobile and OTP' })
     @ApiResponse({ status: 201, description: 'Login successful. Returns access and refresh tokens.' })
-    @ApiResponse({ status: 401, description: 'Invalid credentials or inactive user.' })
+    @ApiResponse({ status: 401, description: 'Invalid OTP or unauthorized user.' })
     login(@Body() dto: LoginDto) {
         return this.authService.login(dto);
     }

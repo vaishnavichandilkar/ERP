@@ -1,7 +1,14 @@
-# build output
+# build files
 dist/
-*.tsbuildinfo
 
-# deps & env
+# dependencies
 node_modules/
+
+# uploads
+uploads/
+
+# env
 .env
+
+# logs
+*.log

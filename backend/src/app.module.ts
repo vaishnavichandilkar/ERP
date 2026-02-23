@@ -15,6 +15,8 @@ import { OperatorsModule } from './modules/operators/operators.module';
 import { AdministratorsModule } from './modules/administrators/administrators.module';
 import { SuperAdminModule } from './modules/superadmin/superadmin.module';
 
+import { OnboardingModule } from './modules/onboarding/onboarding.module';
+
 @Module({
     imports: [
         ConfigModule.forRoot({
@@ -31,6 +33,7 @@ import { SuperAdminModule } from './modules/superadmin/superadmin.module';
         OperatorsModule,
         AdministratorsModule,
         SuperAdminModule,
+        OnboardingModule,
     ],
     controllers: [],
     providers: [],

@@ -2,7 +2,7 @@ import { Controller, Post, Get, Body, Param, UseGuards, Request, ForbiddenExcept
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { SuperAdminService } from './superadmin.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { ApproveAdminDto } from './dto/superadmin.dto';
+import { ApproveSellerDto } from './dto/superadmin.dto';
 
 @ApiTags('Super Admin')
 @Controller('superadmin')
@@ -11,24 +11,27 @@ import { ApproveAdminDto } from './dto/superadmin.dto';
 export class SuperAdminController {
     constructor(private superAdminService: SuperAdminService) { }
 
-    @Get('pending-admins')
-    @ApiOperation({ summary: 'Get list of pending admin approvals' })
-    @ApiResponse({ status: 200, description: 'Returns list of pending admins.' })
-    @ApiResponse({ status: 403, description: 'Forbidden: Only Super Admin can access.' })
-    @ApiResponse({ status: 401, description: 'Unauthorized.' })
-    async getPendingAdmins(@Request() req) {
-        if (req.user.role !== 'SUPER_ADMIN') throw new ForbiddenException('Only Super Admin can access this resource');
-        return this.superAdminService.getPendingAdmins();
+    @Get('pending-sellers')
+    @ApiOperation({ summary: 'Get list of pending seller approvals' })
+    @ApiResponse({ status: 200, description: 'Returns list of pending sellers.' })
+    async getPendingSellers(@Request() req) {
+        if (req.user.role !== 'SUPERADMIN') throw new ForbiddenException('Only Super Admin can access this resource');
+        return this.superAdminService.getPendingSellers();
     }
 
-    @Post('approve-admin')
-    @ApiOperation({ summary: 'Approve a pending admin' })
-    @ApiResponse({ status: 200, description: 'Admin approved successfully.' })
-    @ApiResponse({ status: 403, description: 'Forbidden: Only Super Admin can access.' })
-    @ApiResponse({ status: 401, description: 'Unauthorized.' })
-    async approveAdmin(@Request() req, @Body() dto: ApproveAdminDto) {
-        if (req.user.role !== 'SUPER_ADMIN') throw new ForbiddenException('Only Super Admin can access this resource');
-        if (!dto.adminId) throw new ForbiddenException('adminId is required');
-        return this.superAdminService.approveAdmin(dto.adminId);
+    @Post('approve-seller')
+    @ApiOperation({ summary: 'Approve a pending seller' })
+    @ApiResponse({ status: 200, description: 'Seller approved successfully.' })
+    async approveSeller(@Request() req, @Body() dto: ApproveSellerDto) {
+        if (req.user.role !== 'SUPERADMIN') throw new ForbiddenException('Only Super Admin can access this resource');
+        return this.superAdminService.approveSeller(dto.sellerId);
+    }
+
+    @Post('reject-seller')
+    @ApiOperation({ summary: 'Reject a pending seller' })
+    @ApiResponse({ status: 200, description: 'Seller rejected successfully.' })
+    async rejectSeller(@Request() req, @Body() dto: ApproveSellerDto) {
+        if (req.user.role !== 'SUPERADMIN') throw new ForbiddenException('Only Super Admin can access this resource');
+        return this.superAdminService.rejectSeller(dto.sellerId);
     }
 }

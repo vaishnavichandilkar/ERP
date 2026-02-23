@@ -1,9 +1,9 @@
 import { IsString, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class ApproveAdminDto {
+export class ApproveSellerDto {
     @ApiProperty()
     @IsString()
     @IsNotEmpty()
-    adminId: string;
+    sellerId: string;
 }

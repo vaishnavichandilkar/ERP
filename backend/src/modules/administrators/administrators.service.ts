@@ -8,11 +8,16 @@ import * as bcrypt from 'bcrypt';
 export class AdministratorsService {
     constructor(private prisma: PrismaService) { }
 
-    async create(dto: CreateAdministratorDto) {
+    async create(dto: CreateAdministratorDto, sellerId?: string) {
         // 1. Check Facility
-        const facility = await this.prisma.facility.findUnique({ where: { id: dto.facilityId } });
-        if (!facility) throw new NotFoundException('Facility not found');
-        if (facility.isDeleted) throw new BadRequestException('Facility is deleted');
+        const facility = await this.prisma.facility.findFirst({
+            where: {
+                id: dto.facilityId,
+                isDeleted: false,
+                ...(sellerId ? { sellerId } : {})
+            }
+        });
+        if (!facility) throw new NotFoundException('Facility not found or access denied');
 
         // 2. Check Username Uniqueness (in Administrators table)
         const exists = await this.prisma.administrator.findUnique({ where: { username: dto.username } });
@@ -40,8 +45,11 @@ export class AdministratorsService {
         return result;
     }
 
-    async findAll(facilityId?: string) {
-        const where = facilityId ? { facilityId } : {};
+    async findAll(facilityId?: string, sellerId?: string) {
+        const where: any = {
+            ...(facilityId ? { facilityId } : {}),
+            ...(sellerId ? { facility: { sellerId } } : {})
+        };
         const admins = await this.prisma.administrator.findMany({
             where,
             include: { facility: true },
@@ -53,15 +61,19 @@ export class AdministratorsService {
         });
     }
 
-    async findOne(id: string) {
-        const admin = await this.prisma.administrator.findUnique({
-            where: { id },
+    async findOne(id: string, sellerId?: string) {
+        const where: any = {
+            id,
+            ...(sellerId ? { facility: { sellerId } } : {})
+        };
+        const admin = await this.prisma.administrator.findFirst({
+            where,
             include: {
                 facility: true,
                 permissions: { include: { module: true } }
             }
         });
-        if (!admin) throw new NotFoundException('Administrator not found');
+        if (!admin) throw new NotFoundException('Administrator not found or access denied');
 
         const { passwordHash, ...rest } = admin;
         return {

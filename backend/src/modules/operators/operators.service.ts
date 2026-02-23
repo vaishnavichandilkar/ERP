@@ -8,10 +8,15 @@ import * as bcrypt from 'bcrypt';
 export class OperatorsService {
     constructor(private prisma: PrismaService) { }
 
-    async create(dto: CreateOperatorDto) {
-        const facility = await this.prisma.facility.findUnique({ where: { id: dto.facilityId } });
-        if (!facility) throw new NotFoundException('Facility not found');
-        if (facility.isDeleted) throw new BadRequestException('Facility is deleted');
+    async create(dto: CreateOperatorDto, sellerId?: string) {
+        const facility = await this.prisma.facility.findFirst({
+            where: {
+                id: dto.facilityId,
+                isDeleted: false,
+                ...(sellerId ? { sellerId } : {})
+            }
+        });
+        if (!facility) throw new NotFoundException('Facility not found or access denied');
 
         const exists = await this.prisma.operator.findUnique({ where: { username: dto.username } });
         if (exists) throw new ConflictException('Username already exists');
@@ -35,8 +40,11 @@ export class OperatorsService {
         return result;
     }
 
-    async findAll(facilityId?: string) {
-        const where = facilityId ? { facilityId } : {};
+    async findAll(facilityId?: string, sellerId?: string) {
+        const where: any = {
+            ...(facilityId ? { facilityId } : {}),
+            ...(sellerId ? { facility: { sellerId } } : {})
+        };
         const operators = await this.prisma.operator.findMany({
             where,
             include: { facility: true },
@@ -48,15 +56,19 @@ export class OperatorsService {
         });
     }
 
-    async findOne(id: string) {
-        const operator = await this.prisma.operator.findUnique({
-            where: { id },
+    async findOne(id: string, sellerId?: string) {
+        const where: any = {
+            id,
+            ...(sellerId ? { facility: { sellerId } } : {})
+        };
+        const operator = await this.prisma.operator.findFirst({
+            where,
             include: {
                 facility: true,
                 permissions: { include: { module: true } }
             }
         });
-        if (!operator) throw new NotFoundException('Operator not found');
+        if (!operator) throw new NotFoundException('Operator not found or access denied');
 
         const { passwordHash, ...rest } = operator;
         return {
@@ -96,7 +108,7 @@ export class OperatorsService {
 
         // Map DTO to Modules
         await upsertPerm('Facilities', { canView: permissions.facilityManagement_view });
-        await upsertPerm('Users', {}); // Operators usually don't manage users
+        await upsertPerm('Users', {});
         await upsertPerm('Products', { canView: permissions.productManagement_view });
         await upsertPerm('Inventory', { canView: permissions.inventoryManagement_view });
         await upsertPerm('Billing', { canView: permissions.billing_view });

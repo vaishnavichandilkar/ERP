@@ -78,3 +78,143 @@ Admins can modify access at any time.
     |
     +-> [Upload Module] -> Local Storage / S3
 ```
+
+backend/
+│
+├── dist/
+├── docs/
+├── node_modules/
+│
+├── src/
+│   │
+│   ├── common/
+│   │   ├── constants/
+│   │   ├── decorators/
+│   │   │   └── require-permission.decorator.ts
+│   │   ├── dto/
+│   │   │   └── global-response.dto.ts
+│   │   ├── enums/
+│   │   ├── exceptions/
+│   │   │   └── global-exception.filter.ts
+│   │   ├── guards/
+│   │   │   ├── dashboard-access.guard.ts
+│   │   │   ├── jwt-auth.guard.ts
+│   │   │   └── permission.guard.ts
+│   │   ├── interceptors/
+│   │   ├── interfaces/
+│   │   ├── middleware/
+│   │   │   └── audit.middleware.ts
+│   │   ├── pipes/
+│   │   └── utils/
+│   │
+│   ├── config/
+│   │   ├── env.config.ts
+│   │   ├── jwt.config.ts
+│   │   └── swagger.config.ts
+│   │
+│   ├── infrastructure/
+│   │   ├── logger/
+│   │   │   └── logger.service.ts
+│   │   ├── mail/
+│   │   │   └── mail.service.ts
+│   │   └── prisma/
+│   │       ├── prisma.module.ts
+│   │       └── prisma.service.ts
+│   │
+│   ├── modules/
+│   │   │
+│   │   ├── access/
+│   │   │   ├── dto/
+│   │   │   │   └── access.dto.ts
+│   │   │   ├── access.controller.ts
+│   │   │   ├── access.module.ts
+│   │   │   └── access.service.ts
+│   │   │
+│   │   ├── administrators/
+│   │   │   ├── dto/
+│   │   │   │   ├── create-administrator.dto.ts
+│   │   │   │   └── update-administrator-status.dto.ts
+│   │   │   ├── administrators.controller.ts
+│   │   │   ├── administrators.module.ts
+│   │   │   └── administrators.service.ts
+│   │   │
+│   │   ├── audit/
+│   │   │   ├── audit.entity.ts
+│   │   │   ├── audit.module.ts
+│   │   │   └── audit.service.ts
+│   │   │
+│   │   ├── auth/
+│   │   │   ├── dto/
+│   │   │   │   └── auth.dto.ts
+│   │   │   ├── strategies/
+│   │   │   │   └── jwt.strategy.ts
+│   │   │   ├── auth.controller.ts
+│   │   │   ├── auth.module.ts
+│   │   │   └── auth.service.ts
+│   │   │
+│   │   ├── business/
+│   │   │   ├── dto/
+│   │   │   │   └── business.dto.ts
+│   │   │   ├── admin-business.controller.ts
+│   │   │   ├── business-docs.config.ts
+│   │   │   ├── business.controller.ts
+│   │   │   ├── business.module.ts
+│   │   │   └── business.service.ts
+│   │   │
+│   │   ├── facilities/
+│   │   │   ├── dto/
+│   │   │   │   └── facility.dto.ts
+│   │   │   ├── facilities.controller.ts
+│   │   │   ├── facilities.module.ts
+│   │   │   └── facilities.service.ts
+│   │   │
+│   │   ├── operators/
+│   │   │   ├── dto/
+│   │   │   │   ├── create-operator.dto.ts
+│   │   │   │   └── update-operator-status.dto.ts
+│   │   │   ├── operators.controller.ts
+│   │   │   ├── operators.module.ts
+│   │   │   └── operators.service.ts
+│   │   │
+│   │   ├── otp/
+│   │   │   ├── otp.module.ts
+│   │   │   └── otp.service.ts
+│   │   │
+│   │   ├── superadmin/
+│   │   │   ├── dto/
+│   │   │   │   └── superadmin.dto.ts
+│   │   │   ├── superadmin.controller.ts
+│   │   │   ├── superadmin.module.ts
+│   │   │   └── superadmin.service.ts
+│   │   │
+│   │   ├── upload/
+│   │   │   ├── multer.config.ts
+│   │   │   ├── upload.controller.ts
+│   │   │   └── upload.module.ts
+│   │   │
+│   │   └── users/
+│   │       ├── dto/
+│   │       │   └── create-user.dto.ts
+│   │       ├── users.controller.ts
+│   │       ├── users.module.ts
+│   │       └── users.service.ts
+│   │
+│   ├── prisma/
+│   │   ├── migrations/
+│   │   ├── schema.prisma
+│   │   └── seed.ts
+│   │
+│   ├── shared/
+│   │   └── types/
+│   │
+│   ├── app.module.ts
+│   └── main.ts
+│
+├── uploads/
+│
+├── .env
+├── .gitignore
+├── nest-cli.json
+├── package.json
+├── package-lock.json
+└── tsconfig.json

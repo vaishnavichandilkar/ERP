@@ -23,20 +23,8 @@ export class PermissionGuard implements CanActivate {
             return false;
         }
 
-        // 1. Admin Bypass
-        // 1. Admin Bypass
-        if (user.role === 'SUPERADMIN') {
+        if (user.role === 'SUPERADMIN' || user.role === 'SELLER') {
             return true;
-        }
-
-        if (user.role === 'ADMIN') {
-            // Only allow bypass if status is ACTIVE
-            if (user.status === 'ACTIVE') {
-                return true;
-            }
-            // If ADMIN but not ACTIVE, they fall through to permission check.
-            // Since they usually don't have explicit permissions assigned (schema doesn't have UserPermission relation used here yet?), they will be blocked.
-            // This is desired. PENDING_PROFILE admins can only access endpoints without @RequirePermission (like BusinessProfile).
         }
 
         // 2. Map Legacy Keys to Module + Action
