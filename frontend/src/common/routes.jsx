@@ -7,7 +7,6 @@ import SignIn from '../pages/auth/SignIn';
 import VerifyOTP from '../pages/auth/VerifyOTP';
 import Success from '../pages/auth/Success';
 import SignUp from '../pages/auth/SignUp';
-import RegistrationForm from '../pages/auth/RegistrationForm';
 
 export const ROUTES = {
     LANDING: '/',
@@ -38,10 +37,6 @@ export const router = createBrowserRouter([
     {
         path: ROUTES.SUCCESS,
         element: <Success />,
-    },
-    {
-        path: ROUTES.REGISTRATION_FORM,
-        element: <RegistrationForm />,
     },
     {
         path: '*',

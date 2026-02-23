@@ -3,7 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import AuthLayout from '../../layout/auth/AuthLayout';
 import Button from '../../components/common/Button';
 import { Box, Typography } from '@mui/material';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import logo from '../../assets/images/Verified_logo.png';
+
 
 const Success = () => {
     const navigate = useNavigate();
@@ -23,30 +24,14 @@ const Success = () => {
     return (
         <AuthLayout>
             <Box sx={{ textAlign: 'center' }}>
-                <Box sx={{
-                    width: 80,
-                    height: 80,
-                    bgcolor: '#F0FDF4',
-                    color: 'primary.main',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    mx: 'auto',
-                    mb: 4
-                }}>
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="40"
-                        height="40"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                    >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                </Box>
+                <Box
+                   component="img"
+                   src={logo}
+                   alt="WeighPro Logo"
+                   sx={{ height: 90, marginLeft:'50px', mb: 2, display: 'block' }}
+                   onError={(e) => { e.target.style.display = 'none' }}
+                />
+                
 
                 <Typography variant="h2" sx={{ mb: 1 }}>
                     Successfully Verified
