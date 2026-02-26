@@ -45,7 +45,11 @@ const VerifyOTP = () => {
     };
 
     const handleVerify = () => {
-        navigate('/success', { state: { mode } });
+        if (mode === 'signup') {
+            navigate('/signup?step=1');
+        } else {
+            navigate('/success', { state: { mode } });
+        }
     };
 
     const maskedPhone = `+91 ${phone.replace(/.(?=.{4})/g, 'X')}`;
