@@ -106,6 +106,16 @@ export class AuthService {
                 secret: this.configService.get('jwt.refreshSecret'),
             });
 
+            // 1. Check Session table for validity
+            const session = await this.prisma.session.findUnique({
+                where: { jti: payload.jti }
+            });
+
+            if (!session || session.isRevoked || session.expiresAt < new Date()) {
+                throw new UnauthorizedException('Session expired or revoked');
+            }
+
+            // 2. Find User
             let user: any = await this.prisma.user.findUnique({ where: { id: payload.sub } });
             let roleType = user?.role.toUpperCase();
 
@@ -122,10 +132,12 @@ export class AuthService {
                 roleType = 'OPERATOR';
             }
 
-            if (!user) throw new UnauthorizedException();
+            if (!user) throw new UnauthorizedException('User not found');
 
+            // 3. Generate new tokens (this will revoke the current session)
             return this.generateTokens(user, roleType);
         } catch (e) {
+            if (e instanceof UnauthorizedException) throw e;
             throw new UnauthorizedException('Invalid refresh token');
         }
     }
@@ -155,7 +167,13 @@ export class AuthService {
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 7);
 
-        // Store Session
+        // 1. Invalidate old sessions for this user (Rotate)
+        await this.prisma.session.updateMany({
+            where: { userId: user.id, isRevoked: false },
+            data: { isRevoked: true },
+        });
+
+        // 2. Store New Session (Database Table)
         await this.prisma.session.create({
             data: {
                 userId: user.id,
@@ -165,6 +183,14 @@ export class AuthService {
                 expiresAt: expiresAt,
             }
         });
+
+        // 3. Save Refresh Token in User Table (As requested for Sellers/Superadmins)
+        if (roleType !== 'ADMINISTRATOR' && roleType !== 'OPERATOR') {
+            await this.prisma.user.update({
+                where: { id: user.id },
+                data: { refresh_token: refreshToken }
+            });
+        }
 
         return {
             accessToken,

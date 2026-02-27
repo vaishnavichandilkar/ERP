@@ -1,6 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
-
 const prisma = new PrismaClient();
 
 async function main() {
@@ -17,12 +15,10 @@ async function main() {
     console.log('Modules seeded.');
 
     // 2. Seed System Admin (Superadmin)
-    const adminPhone = 'admin_phone'; // Since username is gone, using phone as identifier
+    const adminPhone = 'admin_phone';
     const existingAdmin = await prisma.user.findUnique({
         where: { phone: adminPhone }
     });
-
-    const passwordHash = await bcrypt.hash('admin123', 10);
 
     if (!existingAdmin) {
         await prisma.user.create({
@@ -31,7 +27,6 @@ async function main() {
                 last_name: 'Admin',
                 phone: adminPhone,
                 email: 'admin@weighpro.com',
-                password: passwordHash,
                 role: 'superadmin',
                 isApproved: true,
                 onboarded_at: new Date(),

@@ -1,7 +1,6 @@
 import { Injectable, BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { CreateUserDto, UserRole } from './dto/create-user.dto';
-import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -35,10 +34,7 @@ export class UsersService {
             if (exists) throw new ConflictException('Username already exists');
         }
 
-        // 2. Hash password
-        const passwordHash = await bcrypt.hash(dto.password, 10);
-
-        // 3. Create Entity and Default Permissions
+        // 2. Create Entity and Default Permissions
         const modules = await this.prisma.module.findMany();
 
         if (dto.role === UserRole.ADMINISTRATOR) {
@@ -46,7 +42,6 @@ export class UsersService {
                 data: {
                     name: dto.name,
                     username: dto.username,
-                    passwordHash,
                     mobile: dto.mobile,
                     facilityId: dto.facilityId!,
                     isActive: true,
@@ -59,8 +54,6 @@ export class UsersService {
                     data: {
                         administratorId: administrator.id,
                         moduleId: mod.id,
-                        // Mapping DTO access to schema? For now keeping it default or mapping if possible.
-                        // For brevity, keeping all false as before, or we could map.
                         canView: false,
                         canCreate: false,
                         canUpdate: false,
@@ -75,7 +68,6 @@ export class UsersService {
                 data: {
                     name: dto.name,
                     username: dto.username,
-                    passwordHash,
                     mobile: dto.mobile,
                     facilityId: dto.facilityId!,
                     isActive: true,

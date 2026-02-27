@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString, IsOptional, Length } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, IsOptional, Length, IsBoolean, ValidateIf } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class Step1MobileDto {
@@ -107,4 +107,34 @@ export class Step5BankDto {
     @IsString()
     @IsNotEmpty()
     panNumber: string;
+}
+
+export class Step6MachineDto {
+    @ApiProperty({ example: true })
+    @IsBoolean()
+    @IsNotEmpty()
+    isUsingOwnMachine: boolean;
+
+    @ApiProperty({ example: 'Essae' })
+    @ValidateIf(o => o.isUsingOwnMachine === true)
+    @IsString()
+    @IsNotEmpty()
+    make: string;
+
+    @ApiProperty({ example: 'Machine 1' })
+    @IsString()
+    @IsNotEmpty()
+    machineName: string;
+
+    @ApiProperty({ example: 'HGDHJ764754675' })
+    @ValidateIf(o => o.isUsingOwnMachine === true)
+    @IsString()
+    @IsNotEmpty()
+    modelNumber: string;
+
+    @ApiProperty({ example: 'Digital' })
+    @ValidateIf(o => o.isUsingOwnMachine === true)
+    @IsString()
+    @IsNotEmpty()
+    machineType: string;
 }
