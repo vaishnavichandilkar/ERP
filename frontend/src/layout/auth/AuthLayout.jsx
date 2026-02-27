@@ -43,3 +43,6 @@ const AuthLayout = ({ children, maxWidth = 'max-w-[480px]', hideLeftPanel = fals
 };
 
 export default AuthLayout;
+
+
+
