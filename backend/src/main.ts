@@ -4,6 +4,10 @@ import { setupSwagger } from './config/swagger.config';
 import { ValidationPipe } from '@nestjs/common';
 import { GlobalExceptionFilter } from './common/exceptions/global-exception.filter';
 
+(BigInt.prototype as any).toJSON = function () {
+    return this.toString();
+};
+
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
 

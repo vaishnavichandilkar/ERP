@@ -15,6 +15,7 @@ export class SuperAdminService {
             include: {
                 bankDetail: true,
                 shopDetail: true,
+                weighingMachineDetail: true,
                 sellerDocuments: true
             }
         });

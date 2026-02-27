@@ -2,7 +2,7 @@ import { Controller, Post, Body, Put, UseInterceptors, UploadedFiles, UseGuards,
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { OnboardingService } from './onboarding.service';
-import { Step1MobileDto, Step1VerifyDto, Step2DetailsDto, Step3BusinessDto, Step4ShopDto, Step5BankDto } from './dto/onboarding.dto';
+import { Step1MobileDto, Step1VerifyDto, Step2DetailsDto, Step3BusinessDto, Step4ShopDto, Step5BankDto, Step6MachineDto } from './dto/onboarding.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { multerConfig } from '../upload/multer.config';
 
@@ -134,10 +134,31 @@ export class OnboardingController {
         return this.onboardingService.saveBankDetails(req.user.userId, dto, files);
     }
 
-    @Post('step6-complete')
+    @Post('step6-machine')
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth()
-    @ApiOperation({ summary: 'Step 6: Onboarding Completion' })
+    @ApiOperation({ summary: 'Step 6: Weighing Machine & Model Configuration' })
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                isUsingOwnMachine: { type: 'boolean' },
+                make: { type: 'string' },
+                machineName: { type: 'string' },
+                modelNumber: { type: 'string' },
+                machineType: { type: 'string' },
+            },
+            required: ['isUsingOwnMachine', 'machineName']
+        }
+    })
+    saveMachineDetails(@Request() req, @Body() dto: Step6MachineDto) {
+        return this.onboardingService.saveMachineDetails(req.user.userId, dto);
+    }
+
+    @Post('step7-complete')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Step 7: Final Onboarding Completion' })
     completeOnboarding(@Request() req) {
         return this.onboardingService.completeOnboarding(req.user.userId);
     }

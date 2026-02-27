@@ -2,7 +2,6 @@ import { Injectable, BadRequestException, ConflictException, NotFoundException }
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { CreateAdministratorDto, AdministratorPermissionsDto } from './dto/create-administrator.dto';
 import { UpdateAdministratorStatusDto } from './dto/update-administrator-status.dto';
-import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AdministratorsService {
@@ -23,26 +22,21 @@ export class AdministratorsService {
         const exists = await this.prisma.administrator.findUnique({ where: { username: dto.username } });
         if (exists) throw new ConflictException('Username already exists');
 
-        // 3. Hash Password
-        const passwordHash = await bcrypt.hash(dto.password, 10);
-
-        // 4. Create Administrator
+        // 3. Create Administrator
         const admin = await this.prisma.administrator.create({
             data: {
                 name: dto.name,
                 username: dto.username,
-                passwordHash,
                 mobile: dto.mobile,
                 facilityId: dto.facilityId,
                 isActive: true
             }
         });
 
-        // 5. Assign Permissions
+        // 4. Assign Permissions
         await this.assignPermissions(admin.id, dto.permissions);
 
-        const { passwordHash: _, ...result } = admin;
-        return result;
+        return admin;
     }
 
     async findAll(facilityId?: string, sellerId?: string) {
@@ -55,10 +49,7 @@ export class AdministratorsService {
             include: { facility: true },
             orderBy: { createdAt: 'desc' }
         });
-        return admins.map(a => {
-            const { passwordHash, ...rest } = a;
-            return rest;
-        });
+        return admins;
     }
 
     async findOne(id: string, sellerId?: string) {
@@ -75,9 +66,8 @@ export class AdministratorsService {
         });
         if (!admin) throw new NotFoundException('Administrator not found or access denied');
 
-        const { passwordHash, ...rest } = admin;
         return {
-            ...rest,
+            ...admin,
             permissions: this.formatPermissions(admin.permissions)
         };
     }

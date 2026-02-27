@@ -1,6 +1,6 @@
 # WeighPro: Seller & Onboarding API Specification (Detailed)
 
-This document is the **Single Source of Truth** for the frontend team to integrate with the WeighPro Backend. It covers Authentication, the 6-Step Onboarding process, Document Management, and Security protocols.
+This document is the **Single Source of Truth** for the frontend team to integrate with the WeighPro Backend. It covers Authentication, the 7-Step Onboarding process, Document Management, and Security protocols.
 
 ---
 
@@ -9,13 +9,13 @@ This document is the **Single Source of Truth** for the frontend team to integra
 *   **API Base URL**: `http://localhost:3000/api/v1`
 *   **Protocol**: REST via HTTPS
 *   **Format**: JSON (Request & Response)
-*   **File Uploads**: `multipart/form-data`
+*   **File Uploads**: `multipart/form-data` (Max 5MB per file, PDF preferred)
 *   **Timezone**: All timestamps are in UTC (ISO 8601).
-*   **Currency**: Fixed to INR for all billing modules.
+*   **Currency**: INR for all billing and transaction modules.
 
 ### Authentication Strategy
 WeighPro uses a **Session-based JWT Rotation** model. 
-*   **Access Token**: 1 hour lifespan (used for API authorization).
+*   **Access Token**: 1 hour lifespan (passed in `Authorization: Bearer <token>` header).
 *   **Refresh Token**: 7 days lifespan (used to get new access tokens).
 *   **Revocation**: If a user logs out, the session is invalidated in the database, rendering all associated tokens useless.
 
@@ -30,7 +30,7 @@ Sends a verification code to the registered mobile number. Use this for both Sig
 *   **Body**:
     ```json
     {
-      "phone": "9876543210"
+      "phone": "8861220023"
     }
     ```
 *   **Success (201 Created)**:
@@ -50,7 +50,7 @@ The primary login gateway.
 *   **Body**:
     ```json
     {
-      "phone": "9876543210",
+      "phone": "8861220023",
       "otp": "123456"
     }
     ```
@@ -61,15 +61,15 @@ The primary login gateway.
       "refreshToken": "eyJhbG...",
       "user": {
         "id": "550e8400-e29b-41d4-a716-446655440000",
-        "name": "ritesh honule",
-        "username": "9876543210",
+        "name": "Ritesh Honule",
+        "username": "8861220023",
         "role": "SELLER",
         "isApproved": true
       }
     }
     ```
 *   **Critical Logic (Status Checks)**:
-    *   `401 (Unauthorized)` + `"Onboarding incomplete"`: User has verified phone but failed to complete the 6 steps. Redirect to Onboarding Step 2.
+    *   `401 (Unauthorized)` + `"Onboarding incomplete"`: User has verified phone but failed to complete the 7 steps. Redirect to Onboarding Step 2.
     *   `401 (Unauthorized)` + `"Account pending Superadmin approval"`: User finished onboarding but is waiting for admin review. Show "Under Review" screen.
     *   `401 (Unauthorized)` + `"Account blocked"`: Restricted access. Show "Contact Support".
 
@@ -90,7 +90,7 @@ Frontend must call this when the `accessToken` expires.
 
 ## 3. SELLER ONBOARDING FLOW (STEP-BY-STEP)
 
-All Step 2-6 APIs require: `Authorization: Bearer <InitialAccessToken>` (received after Step 1 verification).
+All Step 2-7 APIs require: `Authorization: Bearer <InitialAccessToken>` (received after Step 1 verification).
 
 ### Step 1: Start Onboarding (Mobile Entry)
 *   **Endpoint**: `/onboarding/step1-mobile` | `POST`
@@ -107,9 +107,9 @@ All Step 2-6 APIs require: `Authorization: Bearer <InitialAccessToken>` (receive
 *   **Body**:
     ```json
     {
-      "first_name": "Rohan",
-      "last_name": "Verma",
-      "email": "rohan@company.com"
+      "first_name": "Ritesh",
+      "last_name": "Honule",
+      "email": "ritesh@gmail.com"
     }
     ```
 
@@ -117,7 +117,7 @@ All Step 2-6 APIs require: `Authorization: Bearer <InitialAccessToken>` (receive
 *   **Endpoint**: `/onboarding/step3-business` | `POST`
 *   **Headers**: `Content-Type: multipart/form-data`
 *   **Form Fields**:
-    *   `udyogAadharNumber` (text): e.g. "MH-12-000123"
+    *   `udyogAadharNumber` (text): e.g. "MH-12-UDYOG789"
     *   `gstNumber` (text): e.g. "27AAACR1234A1Z1"
     *   `udyogAadharCertificate` (file): PDF/Image (Max 5MB)
     *   `gstCertificate` (file): PDF/Image (Max 5MB)
@@ -127,22 +127,39 @@ All Step 2-6 APIs require: `Authorization: Bearer <InitialAccessToken>` (receive
 *   **Endpoint**: `/onboarding/step4-shop` | `POST`
 *   **Headers**: `Content-Type: multipart/form-data`
 *   **Form Fields**:
-    *   `shopName`: Commercial name of the weighbridge.
-    *   `address`, `village`, `pinCode`, `state`, `district`: [All Strings]
+    *   `shopName`: "Ritesh Weighing Solutions"
+    *   `address`: "123, Weighing Lane, Industrial Area"
+    *   `village`: "Koramangala"
+    *   `pinCode`: "560034"
+    *   `state`: "Karnataka"
+    *   `district`: "Bengaluru"
     *   `shopActLicense` (file): Required PDF.
 
 ### Step 5: Banking & Financials
 *   **Endpoint**: `/onboarding/step5-bank` | `POST`
 *   **Headers**: `Content-Type: multipart/form-data`
 *   **Form Fields**:
-    *   `holderName`: As per Bank Passbook.
+    *   `holderName`: "Ritesh Honule"
     *   `accountNo`, `ifsc`, `bankName`: [Strings]
     *   `panNumber`: Corporate or Individual PAN.
     *   `cancelledCheque` (file): Required PDF.
     *   `panCard` (file): Required PDF.
 
-### Step 6: Final Submission
-*   **Endpoint**: `/onboarding/step6-complete` | `POST`
+### Step 6: Machine Configuration
+*   **Endpoint**: `/onboarding/step6-machine` | `POST`
+*   **Body**:
+    ```json
+    {
+      "isUsingOwnMachine": true,
+      "make": "Essae",
+      "machineName": "High Precision Bridge A1",
+      "modelNumber": "XP-500",
+      "machineType": "Electronic"
+    }
+    ```
+
+### Step 7: Final Submission
+*   **Endpoint**: `/onboarding/step7-complete` | `POST`
 *   **Effect**: Sets `onboarded_at` timestamp. User is moved to "Pending Superadmin Review" queue.
 
 ---
@@ -157,9 +174,10 @@ Once approved (`isApproved: true`), the seller can manage their business.
     ```json
     {
       "name": "Main Yard Bridge",
-      "location": "Sector 4",
-      "address": "Warehouse 12, Terminal A",
-      "totalMachines": 1
+      "location": "Koramangala",
+      "address": "4th Block, 80ft Road",
+      "totalMachines": 2,
+      "gstNumber": "27AAACR1234A1Z1"
     }
     ```
 
@@ -170,7 +188,6 @@ Once approved (`isApproved: true`), the seller can manage their business.
     {
       "name": "Operator Sam",
       "username": "sam_ops",
-      "password": "SecurePassword123",
       "mobile": "9988776655",
       "role": "operator",
       "facilityId": "UUID_OF_FACILITY"
@@ -235,3 +252,7 @@ api.interceptors.response.use(
 1.  **PDF Rules**: All certificate uploads MUST be PDF or Image (JPEG/PNG). File size limit is **5MB** per file.
 2.  **Versioning**: Use the `v1` prefix in URLs to ensure future compatibility.
 3.  **State Management**: Store the `role` and `isApproved` flag in a global state (Redux/Zustand) to hide/show protected UI features instantly.
+4.  **BigInt Handling**: Note that file `size` fields are returned as strings (e.g. `"5048576"`) to avoid JSON serialization errors.
+
+---
+*Last Updated: February 27, 2026*

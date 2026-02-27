@@ -2,7 +2,6 @@ import { Injectable, BadRequestException, ConflictException, NotFoundException }
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { CreateOperatorDto, OperatorPermissionsDto } from './dto/create-operator.dto';
 import { UpdateOperatorStatusDto } from './dto/update-operator-status.dto';
-import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class OperatorsService {
@@ -21,13 +20,10 @@ export class OperatorsService {
         const exists = await this.prisma.operator.findUnique({ where: { username: dto.username } });
         if (exists) throw new ConflictException('Username already exists');
 
-        const passwordHash = await bcrypt.hash(dto.password, 10);
-
         const operator = await this.prisma.operator.create({
             data: {
                 name: dto.name,
                 username: dto.username,
-                passwordHash,
                 mobile: dto.mobile,
                 facilityId: dto.facilityId,
                 isActive: true
@@ -36,8 +32,7 @@ export class OperatorsService {
 
         await this.assignPermissions(operator.id, dto.permissions);
 
-        const { passwordHash: _, ...result } = operator;
-        return result;
+        return operator;
     }
 
     async findAll(facilityId?: string, sellerId?: string) {
@@ -50,10 +45,7 @@ export class OperatorsService {
             include: { facility: true },
             orderBy: { createdAt: 'desc' }
         });
-        return operators.map(o => {
-            const { passwordHash, ...rest } = o;
-            return rest;
-        });
+        return operators;
     }
 
     async findOne(id: string, sellerId?: string) {
@@ -70,9 +62,8 @@ export class OperatorsService {
         });
         if (!operator) throw new NotFoundException('Operator not found or access denied');
 
-        const { passwordHash, ...rest } = operator;
         return {
-            ...rest,
+            ...operator,
             permissions: this.formatPermissions(operator.permissions)
         };
     }

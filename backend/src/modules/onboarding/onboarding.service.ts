@@ -4,7 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import { Step1MobileDto, Step1VerifyDto, Step2DetailsDto, Step3BusinessDto, Step4ShopDto, Step5BankDto } from './dto/onboarding.dto';
+import { Step1MobileDto, Step1VerifyDto, Step2DetailsDto, Step3BusinessDto, Step4ShopDto, Step5BankDto, Step6MachineDto } from './dto/onboarding.dto';
 
 @Injectable()
 export class OnboardingService {
@@ -191,7 +191,39 @@ export class OnboardingService {
         return { message: 'Bank details saved successfully' };
     }
 
+    async saveMachineDetails(userId: string, dto: Step6MachineDto) {
+        await this.prisma.weighingMachineDetail.upsert({
+            where: { userId },
+            update: {
+                isUsingOwnMachine: dto.isUsingOwnMachine,
+                make: dto.isUsingOwnMachine ? dto.make : null,
+                machineName: dto.machineName,
+                modelNumber: dto.isUsingOwnMachine ? dto.modelNumber : null,
+                machineType: dto.isUsingOwnMachine ? dto.machineType : null,
+            },
+            create: {
+                userId,
+                isUsingOwnMachine: dto.isUsingOwnMachine,
+                make: dto.isUsingOwnMachine ? dto.make : null,
+                machineName: dto.machineName,
+                modelNumber: dto.isUsingOwnMachine ? dto.modelNumber : null,
+                machineType: dto.isUsingOwnMachine ? dto.machineType : null,
+            }
+        });
+
+        return { message: 'Weighing machine details saved successfully' };
+    }
+
     async completeOnboarding(userId: string) {
+        // Check if mandatory Step 6 is completed
+        const machineDetail = await this.prisma.weighingMachineDetail.findUnique({
+            where: { userId }
+        });
+
+        if (!machineDetail) {
+            throw new BadRequestException('Weighing machine details are mandatory for onboarding completion');
+        }
+
         await this.prisma.user.update({
             where: { id: userId },
             data: {
@@ -247,7 +279,13 @@ export class OnboardingService {
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 7);
 
-        // Store Session
+        // 1. Invalidate old sessions for this user (Rotate)
+        await this.prisma.session.updateMany({
+            where: { userId: user.id, isRevoked: false },
+            data: { isRevoked: true },
+        });
+
+        // 2. Store Session
         await this.prisma.session.create({
             data: {
                 userId: user.id,
@@ -256,6 +294,12 @@ export class OnboardingService {
                 refreshTokenHash: await bcrypt.hash(refreshToken, 10),
                 expiresAt: expiresAt,
             }
+        });
+
+        // 3. Save Refresh Token in User Table
+        await this.prisma.user.update({
+            where: { id: user.id },
+            data: { refresh_token: refreshToken }
         });
 
         return {
