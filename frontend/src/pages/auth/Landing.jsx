@@ -3,72 +3,69 @@ import { useNavigate } from 'react-router-dom';
 import AuthLayout from '../../layout/auth/AuthLayout';
 import Button from '../../components/common/Button';
 import logo from '../../assets/images/logo2.png';
-import { Box, Typography, Stack, Divider } from '@mui/material';
 
 const Landing = () => {
     const navigate = useNavigate();
 
     return (
         <AuthLayout hideLeftPanel={true}>
-            <Box sx={{ textAlign: 'left', width: '100%', boxSizing: 'border-box' }}>
-                <Box sx={{ mb: { xs: 3, md: 2 } }}>
-                    <Box
-                        component="img"
+            <div className="text-left w-full box-border">
+                <div className="mb-6 md:mb-4">
+                    <img
                         src={logo}
                         alt="WeighPro Logo"
-                        sx={{ height: 40, mb: 1.5, display: 'block' }}
+                        className="h-10 mb-3 block"
                         onError={(e) => { e.target.style.display = 'none' }}
                     />
 
-                    <Typography variant="h2" sx={{ mb: 0.5 }}>
+                    <h2 className="text-[30px] font-['Geist_Sans'] font-bold leading-tight mb-1 text-gray-900">
                         Welcome to WeighPro
-                    </Typography>
-                    <Typography variant="subtitle2" sx={{ mb: 3 }}>
+                    </h2>
+                    <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium text-gray-500 mb-6">
                         Login or create an account to continue
-                    </Typography>
-                </Box>
+                    </p>
+                </div>
 
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1.5, md: 2 } }}>
-                    <Typography variant="body1" sx={{ fontWeight: 600, color: 'text.primary', mb: 1, textAlign: 'center', display: 'block' }}>
+                <div className="flex flex-col gap-3 md:gap-4">
+                    <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-semibold text-gray-900 mb-2 text-center block">
                         Are you a GramUnati User?
-                    </Typography>
+                    </p>
 
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, width: '100%' }}>
-                        <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 500, mb: 0 }}>
+                    <div className="flex flex-col gap-2 w-full">
+                        <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium text-gray-500 m-0">
                             Yes, I am a GramUnati user
-                        </Typography>
+                        </p>
                         <Button
                             variant="primary"
                             onClick={() => navigate('/login')}
-                            fullWidth
-                            sx={{ py: 1.5 }}
+                            className="text-[16px] font-['Plus_Jakarta_Sans'] py-3"
                         >
                             Go to Login Page
                         </Button>
-                    </Box>
+                    </div>
 
-                    <Divider sx={{ my: { xs: 1.5, md: 2 }, color: '#9CA3AF', fontWeight: 500, fontSize: '14px', '&::before, &::after': { borderColor: '#E5E7EB' } }}>
-                        OR
-                    </Divider>
+                    <div className="flex items-center my-3 md:my-4">
+                        <div className="flex-1 border-t border-gray-200"></div>
+                        <span className="px-4 text-[14px] font-['Plus_Jakarta_Sans'] font-medium text-gray-400">OR</span>
+                        <div className="flex-1 border-t border-gray-200"></div>
+                    </div>
 
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, width: '100%' }}>
-                        <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 500, mb: 0 }}>
+                    <div className="flex flex-col gap-2 w-full">
+                        <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium text-gray-500 m-0">
                             No, I am a new user
-                        </Typography>
+                        </p>
                         <Button
                             variant="primary"
                             onClick={() => navigate('/signup')}
-                            fullWidth
-                            sx={{ py: 1.5 }}
+                            className="text-[16px] font-['Plus_Jakarta_Sans'] py-3"
                         >
                             Go to SignUp Page
                         </Button>
-                    </Box>
-                </Box>
-            </Box>
+                    </div>
+                </div>
+            </div>
         </AuthLayout>
     );
 };
 
 export default Landing;
-

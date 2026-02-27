@@ -2,9 +2,7 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AuthLayout from '../../layout/auth/AuthLayout';
 import Button from '../../components/common/Button';
-import { Box, Typography } from '@mui/material';
 import logo from '../../assets/images/Verified_logo.png';
-
 
 const Success = () => {
     const navigate = useNavigate();
@@ -21,33 +19,30 @@ const Success = () => {
 
     return (
         <AuthLayout hideLeftPanel={true}>
-            <Box sx={{ textAlign: 'center', pt: { xs: 4, md: 0 } }}>
-                <Box
-                    component="img"
+            <div className="text-center pt-8 md:pt-0 w-full max-w-sm mx-auto">
+                <img
                     src={logo}
                     alt="Verified Logo"
-                    sx={{ height: 90, mx: 'auto', mb: { xs: 5, md: 2 }, display: 'block' }}
+                    className="h-[90px] mx-auto mb-10 md:mb-4 block"
                     onError={(e) => { e.target.style.display = 'none' }}
                 />
 
-
-                <Typography variant="h2" sx={{ mb: 1 }}>
+                <h2 className="text-[30px] font-['Geist_Sans'] font-bold mb-2 leading-tight text-gray-900">
                     Successfully Verified
-                </Typography>
+                </h2>
 
-                <Typography variant="subtitle2" sx={{ mb: 4 }}>
+                <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium mb-8 text-gray-500">
                     {mode === 'signup'
                         ? "Your account has been successfully verified. You'll be redirected shortly to the Registration Form"
                         : "Your account has been successfully verified."}
-                </Typography>
+                </p>
 
-                <Button onClick={handleNavigation}>
-                    {mode === 'signup' ? "Select  Weighing  Machine" : "Select  Weighing  Machine"}
+                <Button onClick={handleNavigation} className="text-[16px] font-['Plus_Jakarta_Sans'] py-3 px-6 mt-4">
+                    {mode === 'signup' ? "Select Weighing Machine" : "Select Weighing Machine"}
                 </Button>
-            </Box>
+            </div>
         </AuthLayout>
     );
 };
 
 export default Success;
-

@@ -1,94 +1,45 @@
 import React from 'react';
 import illustration from '../../assets/images/waighingscale1.png';
-import { Box, Typography, Grid, Stack } from '@mui/material';
 
-const AuthLayout = ({ children, maxWidth = '480px', hideLeftPanel = false }) => {
+const AuthLayout = ({ children, maxWidth = 'max-w-[480px]', hideLeftPanel = false }) => {
     return (
-        <Grid container sx={{ height: { xs: 'auto', md: '100vh' }, minHeight: '100vh', width: '100%', overflow: { md: 'hidden', xs: 'auto' } }}>
+        <div className="flex w-full min-h-screen flex-col md:flex-row h-auto md:h-screen overflow-auto md:overflow-hidden bg-[#F8FAF0]">
             {/* Left Panel - Fixed */}
-            <Grid
-                item
-                xs={12}
-                md={4}
-                sx={{
-                    width: { xs: '100%', md: '33.05%' },
-                    flexBasis: { xs: '100%', md: '33.05%' },
-                    maxWidth: { xs: '100%', md: '33.05%' },
-                    height: { xs: 'auto', md: '100%' }, // Full height on desktop, auto on mobile
-                    background: 'linear-gradient(135deg, #9ACD32 0%, #0B3D2E 100%)',
-                    display: { xs: hideLeftPanel ? 'none' : 'flex', md: 'flex' },
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    padding: { xs: '2rem', md: '2rem 3rem' },
-                    color: 'common.white',
-                    position: 'relative',
-                    overflow: 'hidden',
-                }}
-            >
-                <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                    <Typography variant="h1" className="heading-brand" sx={{ mb: 2, color: 'inherit' }}>
-                        Enterprise-grade <Box component="span" sx={{ bgcolor: '#073318', px: 0.5, borderRadius: '4px' }}>accuracy</Box><br />
+            <div className={`
+                ${hideLeftPanel ? 'hidden' : 'flex'} md:flex 
+                w-full md:w-[33.05%] basis-full md:basis-[33.05%] md:max-w-[33.05%] 
+                h-auto md:h-full 
+                flex-col justify-center p-8 md:px-6 md:py-8 text-white relative overflow-hidden
+                bg-gradient-to-br from-[#9ACD32] to-[#0B3D2E]
+            `}>
+                <div className="w-full h-full flex flex-col justify-center relative z-10">
+                    <h1 className="text-[30px] font-['Geist_Sans'] font-bold mb-4 leading-tight tracking-tight text-white">
+                        Enterprise-grade <span className="bg-[#073318] px-2 py-0.5 rounded ml-0.5 text-white shadow-sm inline-block">accuracy</span><br />
                         for critical<br />
-                        <Box component="span" sx={{ bgcolor: '#073318', px: 0.5, borderRadius: '4px' }}>Weighing</Box> operations
-                    </Typography>
+                        <span className="bg-[#073318] px-2 py-0.5 rounded mr-0.5 text-white shadow-sm inline-block mt-1">Weighing</span> operations
+                    </h1>
 
-                    <Typography variant="subtitle1" className="subtext-brand" sx={{ mb: 4, maxWidth: '90%', color: 'inherit' }}>
+                    <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium opacity-90 max-w-[90%] mb-8 leading-relaxed text-white">
                         A reliable weighing management solution built to deliver precise measurements, secure data handling, and operational efficiency across business and industrial environments.
-                    </Typography>
+                    </p>
 
                     {/* Illustration */}
-                    <Box
-                        component="img"
+                    <img
                         src={illustration}
                         alt="Weighing Illustration"
-                        sx={{
-                            marginTop: 'auto',
-                            width: '100%', // Responsive
-                            height: 'auto',
-                            maxWidth: '100%',
-                            filter: 'drop-shadow(0 10px 15px rgba(0, 0, 0, 0.2))',
-                            display: 'block'
-                        }}
+                        className="mt-auto w-full h-auto drop-shadow-[0_10px_15px_rgba(0,0,0,0.2)] block"
                     />
-                </Box>
-            </Grid>
+                </div>
+            </div>
 
             {/* Right Panel - Scrollable */}
-            <Grid
-                item
-                xs={12}
-                md={8}
-                sx={{
-                    width: { xs: '100%', md: '66.95%' },
-                    flexBasis: { xs: '100%', md: '66.95%' },
-                    maxWidth: { xs: '100%', md: '66.95%' },
-                    height: { xs: 'auto', md: '100%' }, // Responsive height
-                    overflowY: { xs: 'visible', md: 'auto' }, // visible on mobile to allow page scroll
-                    bgcolor: 'background.default',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                }}
-            >
-                <Box
-                    sx={{
-                        width: '100%',
-                        maxWidth: { xs: '100%', md: maxWidth },
-                        p: { xs: 2, md: 4 },
-                        boxSizing: 'border-box',
-                        flexGrow: 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center',
-                        minHeight: 'min-content'
-                    }}
-                >
+            <div className="w-full md:w-[66.95%] basis-full md:basis-[66.95%] md:max-w-[66.95%] h-auto md:h-full overflow-visible md:overflow-y-auto bg-white flex flex-col items-center font-sans">
+                <div className={`w-full p-4 md:p-8 box-border grow flex flex-col justify-center min-h-min ${maxWidth}`}>
                     {children}
-                </Box>
-            </Grid>
-        </Grid>
+                </div>
+            </div>
+        </div>
     );
 };
 
 export default AuthLayout;
-

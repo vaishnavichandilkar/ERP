@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AuthLayout from '../../layout/auth/AuthLayout';
 import Button from '../../components/common/Button';
-import { Box, Typography, TextField, Stack, IconButton } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { ArrowLeft } from 'lucide-react';
 import logo from '../../assets/images/logo2.png';
 
 const VerifyOTP = () => {
@@ -31,8 +30,6 @@ const VerifyOTP = () => {
 
         // Focus next input
         if (element.nextSibling && element.value) {
-            // With MUI TextField, nextSibling might be the next root div. 
-            // Better to use refs which we are already doing.
             if (index < 5 && element.value) {
                 inputRefs.current[index + 1].focus();
             }
@@ -57,41 +54,42 @@ const VerifyOTP = () => {
 
     return (
         <AuthLayout hideLeftPanel={true}>
-            <Box sx={{ textAlign: 'left', pt: { xs: 4, md: 0 } }}>
-                <Box sx={{ mb: 2 }}>
-                    <Box
-                        component="img"
+            <div className="text-left pt-8 md:pt-0 w-full max-w-sm mx-auto">
+                <div className="mb-4">
+                    <img
                         src={logo}
                         alt="WeighPro Logo"
-                        sx={{ height: 40, mb: { xs: 5, md: 2 }, display: 'block' }}
+                        className="h-10 mb-10 md:mb-4 block"
                         onError={(e) => { e.target.style.display = 'none' }}
                     />
-                </Box>
-                <Box sx={{ textAlign: 'left' }}>
-                    <IconButton onClick={() => navigate(-1)} sx={{ ml: -1, mb: 1, p: 1, color: 'text.primary' }}>
-                        <ArrowBackIcon sx={{ fontSize: '1.25rem' }} />
-                    </IconButton>
-                    <Typography variant="h2" sx={{ mb: 1 }}>
+                </div>
+                <div className="text-left w-full">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="p-2 -ml-2 mb-2 text-gray-900 rounded-full hover:bg-gray-100 transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center focus:outline-none"
+                    >
+                        <ArrowLeft size={20} />
+                    </button>
+                    <h2 className="text-[30px] font-['Geist_Sans'] font-bold mb-2 leading-tight text-gray-900">
                         We've sent a 6-digit OTP
-                    </Typography>
-                    <Typography variant="subtitle2" sx={{ mb: 4 }}>
-                        to phone number <Box component="span" sx={{ fontWeight: 'bold' }}>{maskedPhone}</Box>
+                    </h2>
+                    <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium mb-8 text-gray-500">
+                        to phone number <span className="font-bold">{maskedPhone}</span>
                         {mode === 'signup' && (
-                            <Box
-                                component="span"
-                                sx={{ color: 'text.secondary', ml: 1, textDecoration: 'underline', cursor: 'pointer', fontSize: '0.875rem' }}
+                            <button
+                                className="text-gray-500 ml-2 underline cursor-pointer text-sm font-medium border-none bg-transparent p-0 inline focus:outline-none"
                                 onClick={() => navigate(-1)}
                             >
                                 Edit
-                            </Box>
+                            </button>
                         )}
-                    </Typography>
+                    </p>
 
-                    <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'space-between', mb: 3 }}>
+                    <div className="flex gap-2 justify-between mb-6">
                         {otp.map((data, index) => (
-                            <TextField
+                            <input
                                 key={index}
-                                inputRef={(el) => inputRefs.current[index] = el}
+                                ref={(el) => inputRefs.current[index] = el}
                                 value={data}
                                 onChange={(e) => {
                                     if (e.target.value.length <= 1) {
@@ -100,52 +98,30 @@ const VerifyOTP = () => {
                                 }}
                                 onKeyDown={(e) => handleKeyDown(e, index)}
                                 onFocus={(e) => e.target.select()}
-                                inputProps={{
-                                    maxLength: 1,
-                                    style: { textAlign: 'center', fontSize: '1.5rem', padding: '0.75rem' }
-                                }}
-                                sx={{
-                                    width: '3rem',
-                                    '& .MuiOutlinedInput-root': {
-                                        borderRadius: '8px',
-                                        height: '3.5rem',
-                                        '& fieldset': { borderColor: '#E5E7EB' },
-                                        '&:hover fieldset': { borderColor: '#E5E7EB' },
-                                        '&.Mui-focused fieldset': { borderColor: 'primary.main', borderWidth: '1px' },
-                                    }
-                                }}
+                                maxLength={1}
+                                className="w-10 sm:w-12 h-14 text-center text-2xl border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0B3D2E] focus:border-[#0B3D2E] transition-colors bg-white font-medium"
                             />
                         ))}
-                    </Box>
+                    </div>
 
-                    <Box sx={{ mb: 3, fontSize: '0.875rem', color: 'text.secondary' }}>
+                    <div className="mb-6 text-[14px] font-['Plus_Jakarta_Sans'] text-gray-500">
                         {timer > 0 ? (
-                            <span>Didn't receive it? <Box component="span" sx={{ fontWeight: 'bold' }}>Retry</Box> in 00:{timer.toString().padStart(2, '0')}</span>
+                            <span>Didn't receive it? <span className="font-bold">Retry</span> in 00:{timer.toString().padStart(2, '0')}</span>
                         ) : (
-                            <Box
-                                component="button"
+                            <button
                                 onClick={() => setTimer(60)}
-                                sx={{
-                                    background: 'none',
-                                    border: 'none',
-                                    color: 'primary.main',
-                                    cursor: 'pointer',
-                                    fontWeight: 'bold',
-                                    p: 0,
-                                    fontSize: 'inherit',
-                                    textDecoration: 'none'
-                                }}
+                                className="bg-transparent border-none text-[#0B3D2E] cursor-pointer font-bold p-0 text-sm no-underline hover:underline focus:outline-none"
                             >
                                 Resend OTP
-                            </Box>
+                            </button>
                         )}
-                    </Box>
+                    </div>
 
-                    <Button onClick={handleVerify}>
+                    <Button onClick={handleVerify} className="text-[16px] font-['Plus_Jakarta_Sans'] py-3 mt-2">
                         Verify
                     </Button>
-                </Box>
-            </Box>
+                </div>
+            </div>
         </AuthLayout>
     );
 };

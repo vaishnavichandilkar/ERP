@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import AuthLayout from '../../layout/auth/AuthLayout';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
-import { Box, Typography, Checkbox, FormControlLabel, Link } from '@mui/material';
 import logo from '../../assets/images/logo2.png';
 
 const SignIn = () => {
@@ -17,70 +16,55 @@ const SignIn = () => {
 
     return (
         <AuthLayout hideLeftPanel={true}>
-            <Box sx={{ textAlign: 'left', width: '100%', boxSizing: 'border-box' }}>
-                <Box
-                    component="img"
+            <div className="text-left w-full box-border">
+                <img
                     src={logo}
                     alt="WeighPro Logo"
-                    sx={{ height: 40, mb: { xs: 3, md: 2 }, display: 'block' }}
+                    className="h-10 mb-6 md:mb-4 block"
                     onError={(e) => { e.target.style.display = 'none' }}
                 />
-                <Typography variant="h2" sx={{ mb: 0.5 }}>
+                <h2 className="text-[30px] font-['Geist_Sans'] font-bold mb-1 leading-tight text-gray-900">
                     Welcome back,<br />
                     Seller! 🏬
-                </Typography>
-                <Typography variant="subtitle2" sx={{ mb: 3 }}>
+                </h2>
+                <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium mb-6 text-gray-500">
                     Sign in to manage your shop and orders
-                </Typography>
+                </p>
 
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%' }}>
+                <div className="flex flex-col gap-4 w-full">
                     <Input
                         label="Phone number"
                         placeholder="Enter your number"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         type="tel"
-                        sx={{ width: '100%' }}
                     />
 
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <FormControlLabel
-                            control={
-                                <Checkbox
-                                    checked={agreed}
-                                    onChange={(e) => setAgreed(e.target.checked)}
-                                    sx={{
-                                        color: 'text.secondary',
-                                        '&.Mui-checked': {
-                                            color: 'primary.main',
-                                        },
-                                        p: 0,
-                                        mr: 1
-                                    }}
-                                />
-                            }
-                            label={
-                                <Typography variant="body2" color="text.secondary">
-                                    By logging in, I agree to <Link href="#" sx={{ color: 'text.secondary', textDecoration: 'underline' }}>T&C</Link> and <Link href="#" sx={{ color: 'text.secondary', textDecoration: 'underline' }}>Privacy Policy</Link>
-                                </Typography>
-                            }
-                            sx={{ ml: 0, mr: 0, alignItems: 'flex-start' }} // Reset default margin
-                        />
-                    </Box>
+                    <div className="flex items-start">
+                        <label className="flex items-start cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={agreed}
+                                onChange={(e) => setAgreed(e.target.checked)}
+                                className="mt-1 mr-2 px-0 text-[#0B3D2E] rounded border-gray-300 focus:ring-[#0B3D2E]"
+                            />
+                            <span className="text-[14px] font-['Plus_Jakarta_Sans'] text-gray-500">
+                                By logging in, I agree to <a href="#" className="text-gray-500 underline font-medium">T&C</a> and <a href="#" className="text-gray-500 underline font-medium">Privacy Policy</a>
+                            </span>
+                        </label>
+                    </div>
 
                     <Button
                         disabled={!phone || !agreed}
                         onClick={handleGetOTP}
-                        fullWidth
-                        sx={{ py: 1.5, mt: 1 }}
+                        className="text-[16px] font-['Plus_Jakarta_Sans'] py-3 mt-2"
                     >
                         Get OTP
                     </Button>
-                </Box>
-            </Box>
+                </div>
+            </div>
         </AuthLayout>
     );
 };
 
 export default SignIn;
-
