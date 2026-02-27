@@ -9,6 +9,10 @@ import Success from '../pages/auth/Success';
 import SignUp from '../pages/auth/SignUp';
 import SelectMachine from '../pages/auth/SelectMachine';
 
+// Dashboard Pages
+import DashboardLayout from '../layout/dashboard/DashboardLayout';
+import Home from '../pages/dashboard/home/Home';
+
 export const ROUTES = {
     LANDING: '/',
     LOGIN: '/login',
@@ -17,6 +21,7 @@ export const ROUTES = {
     SUCCESS: '/success',
     REGISTRATION_FORM: '/registration-form',
     SELECT_MACHINE: '/select-machine',
+    DASHBOARD: '/dashboard',
 };
 
 export const router = createBrowserRouter([
@@ -43,6 +48,16 @@ export const router = createBrowserRouter([
     {
         path: ROUTES.SELECT_MACHINE,
         element: <SelectMachine />,
+    },
+    {
+        path: ROUTES.DASHBOARD,
+        element: <DashboardLayout />,
+        children: [
+            {
+                index: true,
+                element: <Home />,
+            }
+        ]
     },
     {
         path: '*',

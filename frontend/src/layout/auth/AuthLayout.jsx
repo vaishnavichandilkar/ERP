@@ -33,8 +33,8 @@ const AuthLayout = ({ children, maxWidth = 'max-w-[480px]', hideLeftPanel = fals
             </div>
 
             {/* Right Panel - Scrollable */}
-            <div className="w-full md:w-[66.95%] basis-full md:basis-[66.95%] md:max-w-[66.95%] h-auto md:h-full overflow-visible md:overflow-y-auto bg-white flex flex-col items-center font-sans">
-                <div className={`w-full p-4 md:p-8 box-border grow flex flex-col justify-center min-h-min ${maxWidth}`}>
+            <div className="flex-1 w-full md:w-[66.95%] basis-full md:basis-[66.95%] md:max-w-[66.95%] min-h-screen md:min-h-0 h-auto md:h-full overflow-visible md:overflow-y-auto bg-white flex flex-col items-center font-sans">
+                <div className={`w-full p-6 md:p-8 box-border grow flex flex-col justify-center min-h-min ${maxWidth}`}>
                     {children}
                 </div>
             </div>

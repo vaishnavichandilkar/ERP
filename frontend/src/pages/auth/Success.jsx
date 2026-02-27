@@ -13,7 +13,7 @@ const Success = () => {
         if (mode === 'signup') {
             navigate('/select-machine');
         } else {
-            navigate('/select-machine');
+            navigate('/dashboard');
         }
     };
 
@@ -38,7 +38,7 @@ const Success = () => {
                 </p>
 
                 <Button onClick={handleNavigation} className="text-[16px] font-['Plus_Jakarta_Sans'] py-3 px-6 mt-4">
-                    {mode === 'signup' ? "Select Weighing Machine" : "Select Weighing Machine"}
+                    {mode === 'signup' ? "Select Weighing Machine" : "Go To Dashboard"}
                 </Button>
             </div>
         </AuthLayout>
