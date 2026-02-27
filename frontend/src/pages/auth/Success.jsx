@@ -13,25 +13,23 @@ const Success = () => {
 
     const handleNavigation = () => {
         if (mode === 'signup') {
-            // As per design text "Go to Registration Form", but logically likely Login or Dashboard.
-            // I will navigate to Login since user is verified.
-            navigate('/registration-form');
+            navigate('/select-machine');
         } else {
-            navigate('/dashboard');
+            navigate('/select-machine');
         }
     };
 
     return (
-        <AuthLayout>
-            <Box sx={{ textAlign: 'center' }}>
+        <AuthLayout hideLeftPanel={true}>
+            <Box sx={{ textAlign: 'center', pt: { xs: 4, md: 0 } }}>
                 <Box
-                   component="img"
-                   src={logo}
-                   alt="WeighPro Logo"
-                   sx={{ height: 90, marginLeft:'50px', mb: 2, display: 'block' }}
-                   onError={(e) => { e.target.style.display = 'none' }}
+                    component="img"
+                    src={logo}
+                    alt="Verified Logo"
+                    sx={{ height: 90, mx: 'auto', mb: { xs: 5, md: 2 }, display: 'block' }}
+                    onError={(e) => { e.target.style.display = 'none' }}
                 />
-                
+
 
                 <Typography variant="h2" sx={{ mb: 1 }}>
                     Successfully Verified
@@ -44,7 +42,7 @@ const Success = () => {
                 </Typography>
 
                 <Button onClick={handleNavigation}>
-                    {mode === 'signup' ? "Go to Registration Form" : "Go to Dashboard"}
+                    {mode === 'signup' ? "Select  Weighing  Machine" : "Select  Weighing  Machine"}
                 </Button>
             </Box>
         </AuthLayout>

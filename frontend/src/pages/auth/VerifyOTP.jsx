@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AuthLayout from '../../layout/auth/AuthLayout';
 import Button from '../../components/common/Button';
-import { Box, Typography, TextField, Stack } from '@mui/material';
+import { Box, Typography, TextField, Stack, IconButton } from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import logo from '../../assets/images/logo2.png';
 
 const VerifyOTP = () => {
@@ -55,18 +56,21 @@ const VerifyOTP = () => {
     const maskedPhone = `+91 ${phone.replace(/.(?=.{4})/g, 'X')}`;
 
     return (
-        <AuthLayout>
-            <Box sx={{ textAlign: 'left' }}>
+        <AuthLayout hideLeftPanel={true}>
+            <Box sx={{ textAlign: 'left', pt: { xs: 4, md: 0 } }}>
                 <Box sx={{ mb: 2 }}>
                     <Box
                         component="img"
                         src={logo}
                         alt="WeighPro Logo"
-                        sx={{ height: 40, mb: 2, display: 'block' }}
+                        sx={{ height: 40, mb: { xs: 5, md: 2 }, display: 'block' }}
                         onError={(e) => { e.target.style.display = 'none' }}
                     />
                 </Box>
                 <Box sx={{ textAlign: 'left' }}>
+                    <IconButton onClick={() => navigate(-1)} sx={{ ml: -1, mb: 1, p: 1, color: 'text.primary' }}>
+                        <ArrowBackIcon sx={{ fontSize: '1.25rem' }} />
+                    </IconButton>
                     <Typography variant="h2" sx={{ mb: 1 }}>
                         We've sent a 6-digit OTP
                     </Typography>

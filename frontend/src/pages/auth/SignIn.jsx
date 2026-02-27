@@ -16,62 +16,67 @@ const SignIn = () => {
     };
 
     return (
-        <AuthLayout>
-            <Box sx={{ textAlign: 'left' }}>
+        <AuthLayout hideLeftPanel={true}>
+            <Box sx={{ textAlign: 'left', width: '100%', boxSizing: 'border-box' }}>
                 <Box
                     component="img"
                     src={logo}
                     alt="WeighPro Logo"
-                    sx={{ height: 40, mb: 2, display: 'block' }}
+                    sx={{ height: 40, mb: { xs: 3, md: 2 }, display: 'block' }}
                     onError={(e) => { e.target.style.display = 'none' }}
                 />
-                <Typography variant="h2" sx={{ mb: 1 }}>
+                <Typography variant="h2" sx={{ mb: 0.5 }}>
                     Welcome back,<br />
                     Seller! 🏬
                 </Typography>
-                <Typography variant="subtitle2" sx={{ mb: 4 }}>
+                <Typography variant="subtitle2" sx={{ mb: 3 }}>
                     Sign in to manage your shop and orders
                 </Typography>
 
-                <Input
-                    label="Phone number"
-                    placeholder="Enter your number"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    type="tel"
-                />
-
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                    <FormControlLabel
-                        control={
-                            <Checkbox
-                                checked={agreed}
-                                onChange={(e) => setAgreed(e.target.checked)}
-                                sx={{
-                                    color: 'text.secondary',
-                                    '&.Mui-checked': {
-                                        color: 'primary.main',
-                                    },
-                                    p: 0,
-                                    mr: 1
-                                }}
-                            />
-                        }
-                        label={
-                            <Typography variant="body2" color="text.secondary">
-                                By logging in, I agree to<Link href="#" sx={{ color: 'text.secondary', textDecoration: 'underline' }}>T&C</Link> and <Link href="#" sx={{ color: 'text.secondary', textDecoration: 'underline' }}>Privacy Policy</Link>
-                            </Typography>
-                        }
-                        sx={{ ml: 0, mr: 0 }} // Reset default margin
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%' }}>
+                    <Input
+                        label="Phone number"
+                        placeholder="Enter your number"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        type="tel"
+                        sx={{ width: '100%' }}
                     />
-                </Box>
 
-                <Button
-                    disabled={!phone || !agreed}
-                    onClick={handleGetOTP}
-                >
-                    Get OTP
-                </Button>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    checked={agreed}
+                                    onChange={(e) => setAgreed(e.target.checked)}
+                                    sx={{
+                                        color: 'text.secondary',
+                                        '&.Mui-checked': {
+                                            color: 'primary.main',
+                                        },
+                                        p: 0,
+                                        mr: 1
+                                    }}
+                                />
+                            }
+                            label={
+                                <Typography variant="body2" color="text.secondary">
+                                    By logging in, I agree to <Link href="#" sx={{ color: 'text.secondary', textDecoration: 'underline' }}>T&C</Link> and <Link href="#" sx={{ color: 'text.secondary', textDecoration: 'underline' }}>Privacy Policy</Link>
+                                </Typography>
+                            }
+                            sx={{ ml: 0, mr: 0, alignItems: 'flex-start' }} // Reset default margin
+                        />
+                    </Box>
+
+                    <Button
+                        disabled={!phone || !agreed}
+                        onClick={handleGetOTP}
+                        fullWidth
+                        sx={{ py: 1.5, mt: 1 }}
+                    >
+                        Get OTP
+                    </Button>
+                </Box>
             </Box>
         </AuthLayout>
     );

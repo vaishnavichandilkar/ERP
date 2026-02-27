@@ -7,6 +7,7 @@ import SignIn from '../pages/auth/SignIn';
 import VerifyOTP from '../pages/auth/VerifyOTP';
 import Success from '../pages/auth/Success';
 import SignUp from '../pages/auth/SignUp';
+import SelectMachine from '../pages/auth/SelectMachine';
 
 export const ROUTES = {
     LANDING: '/',
@@ -15,6 +16,7 @@ export const ROUTES = {
     VERIFY_OTP: '/verify-otp',
     SUCCESS: '/success',
     REGISTRATION_FORM: '/registration-form',
+    SELECT_MACHINE: '/select-machine',
 };
 
 export const router = createBrowserRouter([
@@ -37,6 +39,10 @@ export const router = createBrowserRouter([
     {
         path: ROUTES.SUCCESS,
         element: <Success />,
+    },
+    {
+        path: ROUTES.SELECT_MACHINE,
+        element: <SelectMachine />,
     },
     {
         path: '*',
