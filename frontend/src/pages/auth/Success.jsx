@@ -23,7 +23,7 @@ const Success = () => {
                 <img
                     src={logo}
                     alt="Verified Logo"
-                    className="h-[90px] mx-auto mb-10 md:mb-4 block"
+                    className="h-[90px] mb-10 md:mb-4 block pl-8"
                     onError={(e) => { e.target.style.display = 'none' }}
                 />
 

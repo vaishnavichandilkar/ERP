@@ -7,7 +7,7 @@ const DashboardLayout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     return (
-        <div className="flex h-screen bg-[#F8FAFC] font-['Plus_Jakarta_Sans'] overflow-hidden">
+        <div className="flex h-screen bg-[#ffffff] font-['Plus_Jakarta_Sans'] overflow-hidden">
             <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
             <div className="flex flex-col flex-1 min-w-0 overflow-hidden">

@@ -12,6 +12,11 @@ import SelectMachine from '../pages/auth/SelectMachine';
 // Dashboard Pages
 import DashboardLayout from '../layout/dashboard/DashboardLayout';
 import Home from '../pages/dashboard/home/Home';
+import FacilityPage from '../pages/dashboard/facility/FacilityPage';
+import AddFacility from '../pages/dashboard/facility/AddFacility';
+import ViewFacility from '../pages/dashboard/facility/ViewFacility';
+import UpdateFacility from '../pages/dashboard/facility/UpdateFacility';
+import Inventory from '../pages/dashboard/inventory/Inventory';
 
 export const ROUTES = {
     LANDING: '/',
@@ -56,6 +61,26 @@ export const router = createBrowserRouter([
             {
                 index: true,
                 element: <Home />,
+            },
+            {
+                path: 'facility',
+                element: <FacilityPage />
+            },
+            {
+                path: 'facility/add',
+                element: <AddFacility />
+            },
+            {
+                path: 'facility/view',
+                element: <ViewFacility />
+            },
+            {
+                path: 'facility/update',
+                element: <UpdateFacility />
+            },
+            {
+                path: 'inventory',
+                element: <Inventory />,
             }
         ]
     },
