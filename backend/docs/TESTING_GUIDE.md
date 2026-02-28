@@ -4,29 +4,40 @@ This guide provides a comprehensive step-by-step walkthrough to test the **Weigh
 
 **Prerequisites**:
 1.  **Server Running**: `npm run start:dev`
-2.  **Database Seeded**: `npx ts-node src/prisma/seed.ts` (Creates default Super Admin with phone: `admin_phone`)
+2.  **Database Seeded**: `npx ts-node src/prisma/seed.ts` (Creates default Super Admin with phone: `8861220023`)
 3.  **Swagger URL**: [http://localhost:3000/api/docs](http://localhost:3000/api/docs)
 
 ---
 
-## 🚀 Phase 1: Seller Onboarding (Strict 6-Step Flow)
+## 🚀 Phase 1: Seller Onboarding (Strict 9-Step Flow)
 
-**Goal**: Register as a new Seller, provide all business evidence, and wait for Superadmin approval.
+**Goal**: Select language, register mobile, provide all business evidence, machine configurations, and wait for Superadmin approval.
 
-### Step 1: Mobile Registration
-*   **Endpoint**: `POST /onboarding/step1-mobile`
+### Step 1: Language Selection
+*   **Endpoint**: `POST /onboarding/step1-language`
 *   **Payload**:
     ```json
     {
+      "language": "English"
+    }
+    ```
+*   **Result**: Returns `userId` (e.g., `"550e8400-e29b-..."`). **SAVE THIS ID.**
+
+### Step 2: Mobile Registration (Send OTP)
+*   **Endpoint**: `POST /onboarding/step2-mobile`
+*   **Payload**:
+    ```json
+    {
+      "userId": "PASTE_ID_FROM_STEP_1",
       "phone": "9876543210"
     }
     ```
-*   **Result**: Returns `message: OTP sent successfully`.
+*   **Success (201)**: Returns `message: OTP sent successfully`.
+*   **Failure (409)**: If the phone number is already in use, returns `"message": "Mobile number already registered. Please login."`.
 *   **Console**: Check your server terminal for the **OTP** (e.g., `[ONBOARDING OTP] Sent 123456 to 9876543210`).
-*   **DB Status**: User created/updated with role `seller`.
 
-### Step 2: Verify OTP
-*   **Endpoint**: `POST /onboarding/step1-verify`
+### Step 3: Verify OTP
+*   **Endpoint**: `POST /onboarding/step3-verify`
 *   **Payload**:
     ```json
     {
@@ -35,10 +46,10 @@ This guide provides a comprehensive step-by-step walkthrough to test the **Weigh
     }
     ```
 *   **Result**: Returns `accessToken`.
-*   **Action**: Click **Authorize** in Swagger and paste this token (`Bearer <token>`). This token allows you to complete the next 5 steps.
+*   **Action**: Click **Authorize** in Swagger and paste this token (`Bearer <token>`). This token allows you to complete the remaining steps.
 
-### Step 3: Personal Details
-*   **Endpoint**: `PUT /onboarding/step2-details`
+### Step 4: Personal Details
+*   **Endpoint**: `PUT /onboarding/step4-details`
 *   **Payload**:
     ```json
     {
@@ -49,8 +60,8 @@ This guide provides a comprehensive step-by-step walkthrough to test the **Weigh
     ```
 *   **Result**: Profile updated.
 
-### Step 4: Business Verification (DOC UPLOADS)
-*   **Endpoint**: `POST /onboarding/step3-business`
+### Step 5: Business Verification (DOC UPLOADS)
+*   **Endpoint**: `POST /onboarding/step5-business`
 *   **Type**: `multipart/form-data`
 *   **Form Data**:
     *   `udyogAadharNumber`: "UDYOG-12345"
@@ -58,10 +69,10 @@ This guide provides a comprehensive step-by-step walkthrough to test the **Weigh
     *   `udyogAadharCertificate`: [Upload PDF]
     *   `gstCertificate`: [Upload PDF]
     *   `businessProof`: [Upload PDF] (Optional)
-*   **Result**: Evidence documents saved and linked to seller.
+*   **Result**: Business evidence documents saved and linked to seller.
 
-### Step 5: Shop Details
-*   **Endpoint**: `POST /onboarding/step4-shop`
+### Step 6: Shop Details
+*   **Endpoint**: `POST /onboarding/step6-shop`
 *   **Type**: `multipart/form-data`
 *   **Form Data**:
     *   `shopName`: "Doe Weighing Solutions"
@@ -73,8 +84,8 @@ This guide provides a comprehensive step-by-step walkthrough to test the **Weigh
     *   `shopActLicense`: [Upload PDF]
 *   **Result**: Shop model updated and license PDF stored.
 
-### Step 6: Bank Details
-*   **Endpoint**: `POST /onboarding/step5-bank`
+### Step 7: Bank Details
+*   **Endpoint**: `POST /onboarding/step7-bank`
 *   **Type**: `multipart/form-data`
 *   **Form Data**:
     *   `holderName`: "John Doe"
@@ -86,10 +97,24 @@ This guide provides a comprehensive step-by-step walkthrough to test the **Weigh
     *   `panCard`: [Upload PDF]
 *   **Result**: Bank records updated and verification documents stored.
 
-### Step 7: Finalize
-*   **Endpoint**: `POST /onboarding/step6-complete`
+### Step 8: Machine Configuration
+*   **Endpoint**: `POST /onboarding/step8-machine`
+*   **Payload**:
+    ```json
+    {
+      "isUsingOwnMachine": true,
+      "machineName": "Industrial Weighbridge A1",
+      "make": "TATA Precision",
+      "modelNumber": "TP-9000",
+      "machineType": "Static-Pit"
+    }
+    ```
+*   **Result**: Weighing machine details stored for the seller.
+
+### Step 9: Finalize
+*   **Endpoint**: `POST /onboarding/step9-complete`
 *   **Result**: `{ "message": "Onboarding complete. Your account is pending Superadmin approval." }`.
-*   **Status**: `onboarded_at` is set in DB. Login is still restricted until approved.
+*   **Status**: `onboarded_at` is set in DB. Login is restricted until approved.
 
 ---
 
@@ -99,9 +124,9 @@ This guide provides a comprehensive step-by-step walkthrough to test the **Weigh
 
 ### 1. Super Admin Login (Mobile + OTP)
 *   **Action**: Clear current Bearer Token.
-*   **Step A**: `POST /auth/send-login-otp` with `{ "phone": "admin_phone" }`.
+*   **Step A**: `POST /auth/send-login-otp` with `{ "phone": "8861220023" }`.
 *   **Step B**: Check console for OTP.
-*   **Step C**: `POST /auth/login` with `{ "phone": "admin_phone", "otp": "..." }`.
+*   **Step C**: `POST /auth/login` with `{ "phone": "8861220023", "otp": "..." }`.
 *   **Step D**: Authorize in Swagger with the Super Admin token.
 
 ### 2. Review and Approve
@@ -116,7 +141,7 @@ This guide provides a comprehensive step-by-step walkthrough to test the **Weigh
 
 ---
 
-## � Phase 3: Regular Seller Login
+## 🔑 Phase 3: Regular Seller Login
 
 **Goal**: Approved seller logs in to manage their business.
 
@@ -149,26 +174,25 @@ This guide provides a comprehensive step-by-step walkthrough to test the **Weigh
 *   **Payload**:
     ```json
     {
-      "name": "Op Sam",
+      "name": "Operator Sam",
       "username": "opsam",
-      "password": "password123",
       "mobile": "5555566666",
       "role": "operator",
       "facilityId": "FACILITY_UUID_FROM_STEP_4.1"
     }
     ```
-*   **Validation**: Ensure you are logged in as the Seller who owns the facility.
+*   **Note**: Passwords have been removed from the system. All sub-users log in using their mobile number.
 
 ---
 
-## 👨‍💻 Phase 5: Staff Login (Traditional)
+## 👨‍💻 Phase 5: Staff Login (OTP Based)
 
-**Goal**: Sub-users (Administrators/Operators) log in via their mobile number.
+**Goal**: Sub-users (Administrators/Operators) log in via their registered mobile number.
 
-*   **Note**: Staff members also use the Mobile + OTP flow for maximum security.
+*   **Logic**: Every user in the system (Superadmin, Seller, Admin, Operator) uses the Mobile + OTP flow for maximum security.
 *   **Step 1**: `POST /auth/send-login-otp` with `{ "phone": "5555566666" }`.
 *   **Step 2**: `POST /auth/login` with OTP.
-*   **Result**: Success! Token returned with `role: "OPERATOR"`.
+*   **Result**: Returns tokens and user object with `role: "OPERATOR"`.
 *   **Check**: Facilities list should only show the facility they are assigned to.
 
 ---
@@ -181,4 +205,7 @@ This guide provides a comprehensive step-by-step walkthrough to test the **Weigh
 
 ### 2. Audit Logs
 *   **Check DB**: `SELECT * FROM audit_logs ORDER BY "createdAt" DESC;`
-*   **Verify**: Actions like `approve-seller`, `facility creation`, and `logins` are recorded.
+*   **Verify**: Actions like `approve-seller`, `facility creation`, and `logins` are automatically recorded.
+
+---
+*Last Updated: February 28, 2026*

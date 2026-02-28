@@ -57,24 +57,37 @@ src/
 
 ---
 
-## SECTION 3: SELLER REGISTRATION FLOW (STEP 1)
+## SECTION 3: SELLER REGISTRATION & LANGUAGE (STEP 1)
 
-When a new user enters their mobile number to join WeighPro:
+When a new user starts the onboarding:
 
-1.  **Frontend**: Sends `POST /onboarding/step1-mobile`.
-2.  **onboarding.controller.ts**: `registerMobile(dto)` receives the phone number.
+1.  **Frontend**: User selects language (English, Hindi, Marathi, Kannada).
+2.  **Request**: Sends `POST /onboarding/step1-language`.
 3.  **onboarding.service.ts**: 
-    *   Generates a 6-digit cryptographic OTP.
-    *   Calls `prisma.user.upsert`: If the user doesn't exist, it creates a new record with `role: "seller"`.
-    *   Calls `prisma.otp.upsert`: Stores the OTP with a 5-minute expiry.
-4.  **Database**: Entry created in the `User` and `otp` tables.
+    *   Creates a temporary `User` record with `selected_language`.
+4.  **Database**: Entry created in `User` table with a UUID.
+5.  **Response**: Returns `userId`. Frontend must store this ID to maintain session until OTP verification.
+
+---
+
+## SECTION 4: MOBILE REGISTRATION & OTP (STEP 2)
+
+1.  **Frontend**: User enters phone and clicks "Send OTP".
+2.  **Request**: Sends `POST /onboarding/step2-mobile` with `{ userId, phone }`.
+3.  **onboarding.service.ts**:
+    *   Finds temporary record by `userId`.
+    *   **Validation**: Checks if `phone` exists in `User` table.
+    *   **Uniqueness Check**: If found, throws `409 Conflict` error: "Mobile number already registered. Please login.".
+    *   Updates temporary record with `phone`.
+    *   Generates and stores `OTP` for the phone.
+4.  **Database**: Record updated; `OTP` record created.
 5.  **Response**: Returns success message.
 
 ---
 
-## SECTION 4: OTP VERIFICATION & JWT GENERATION
+## SECTION 4.1: OTP VERIFICATION & JWT GENERATION (STEP 3)
 
-1.  **Incoming**: `POST /onboarding/step1-verify` with `{ phone, otp }`.
+1.  **Incoming**: `POST /onboarding/step3-verify` with `{ phone, otp }`.
 2.  **onboarding.controller.ts**: `verifyOtp(dto)` is triggered.
 3.  **onboarding.service.ts**:
     *   Queries `prisma.otp` to find a match for the phone.
@@ -101,7 +114,7 @@ When a new user enters their mobile number to join WeighPro:
 
 ## SECTION 6: JWT AUTHORIZATION FLOW (INTERNAL)
 
-When a protected API (e.g., `PUT /onboarding/step2-details`) is called:
+When a protected API (e.g., `PUT /onboarding/step4-details`) is called:
 
 1.  **Entry**: `onboarding.controller.ts` is guarded by `@UseGuards(JwtAuthGuard)`.
 2.  **Guard**: `jwt-auth.guard.ts` extracts the Bearer token.
@@ -119,29 +132,45 @@ When a protected API (e.g., `PUT /onboarding/step2-details`) is called:
 
 ---
 
-## SECTION 8: FULL SELLER ONBOARDING (STEPS 2-7)
+## SECTION 8: STEP-BY-STEP ONBOARDING PROCESS (STRICT SEQUENCE)
 
-### Step 2: Personal Details
-*   **Prisma**: `user.update` (Saves `first_name`, `last_name`, `email`).
+The onboarding follows a strict **9-step sequence**.
 
-### Step 3: Business Documentation
-*   **Controller**: `saveBusinessDetails` receives files.
-*   **Prisma**: `sellerDocument.create` (Stores `url`, `type`, and `category`).
+### Step 1: Language Selection
+**Endpoint**: `POST /onboarding/step1-language`
+**Database**: Creates/Updates `User` with `role: seller` and `selected_language`.
 
-### Step 4: Shop Details
-*   **Prisma**: `shopDetail.upsert` (Stores geographic data).
-*   **Prisma**: `sellerDocument.create` (Stores `SHOP_ACT_LICENSE` PDF).
+### Step 2: Mobile Registration (OTP)
+**Endpoint**: `POST /onboarding/step2-mobile`
+**Database**: Generates and stores `OTP` for the phone.
 
-### Step 5: Bank Details
-*   **Prisma**: `bankDetail.upsert` (Stores Account, IFSC, and `panNumber`).
-*   **Prisma**: `sellerDocument.create` (Stores `CANCELLED_CHEQUE` and `PAN_CARD` PDFs).
+### Step 3: Verify OTP
+**Endpoint**: `POST /onboarding/step3-verify`
+**Database**: Validates OTP. On success, generates JWT session tokens.
 
-### Step 6: Machine Configuration
-*   **Prisma**: `weighingMachineDetail.upsert` (Stores machine make, model, and type).
+### Step 4: Personal Details
+**Endpoint**: `PUT /onboarding/step4-details` (Protected)
+**Database**: Updates `User` with `first_name`, `last_name`, `email`.
 
-### Step 7: Completion
-*   **Service**: `completeOnboarding`
-*   **Prisma**: `user.update` sets `onboarded_at = now()`.
+### Step 5: Business Details & Documents
+**Endpoint**: `POST /onboarding/step5-business` (Protected, Multipart)
+**Database**: Creates entries in `SellerDocument` table for verification.
+
+### Step 6: Shop Details
+**Endpoint**: `POST /onboarding/step6-shop` (Protected, Multipart)
+**Database**: Updates/Creates `ShopDetail` and stores license PDF.
+
+### Step 7: Bank Details
+**Endpoint**: `POST /onboarding/step7-bank` (Protected, Multipart)
+**Database**: Updates/Creates `BankDetail` and stores bank verification PDFs.
+
+### Step 8: Machine Configuration
+**Endpoint**: `POST /onboarding/step8-machine` (Protected)
+**Database**: Updates/Creates `WeighingMachineDetail`.
+
+### Step 9: Final Submission
+**Endpoint**: `POST /onboarding/step9-complete` (Protected)
+**Database**: Sets `onboarded_at` in the `User` table.
 *   **System Action**: User is now locked in `PENDING_APPROVAL` state.
 
 ---
@@ -157,7 +186,7 @@ When a protected API (e.g., `PUT /onboarding/step2-details`) is called:
 
 | Action | Table Involved | Key Fields |
 | :--- | :--- | :--- |
-| **Mobile Entry** | `User` | `phone`, `role: "seller"` |
+| **Language & User Init**| `User` | `phone`, `role`, `selected_language` |
 | **OTP Sent** | `otp` | `otp`, `expiresAt` |
 | **OTP Verified** | `sessions` | `jti`, `refreshTokenHash` |
 | **Profile Fill** | `User` | `first_name`, `last_name`, `email` |
@@ -185,14 +214,15 @@ When a protected API (e.g., `PUT /onboarding/step2-details`) is called:
 
 ## SECTION 13: STEP-BY-STEP SEQUENCE FLOW (TIMELINE)
 
-1.  **T+0s**: User enters phone. **OTP sent**.
-2.  **T+10s**: User enters OTP. **Tokens received**.
-3.  **T+1m**: User completes Personal Details (Step 2).
-4.  **T+3m**: User uploads Docs (Steps 3-5).
-5.  **T+4m**: User configures machine (Step 6).
-6.  **T+5m**: User clicks "Finish" (Step 7). **Onboarding Complete**.
-7.  **T+1h**: **Superadmin** reviews and **Approves**.
-8.  **T+1h 1s**: Seller Dashboard unlocked.
+1.  **T+0s**: User selects language. **User Initialized**.
+2.  **T+5s**: User enter phone & clicks Send OTP. **OTP sent**.
+3.  **T+15s**: User enters OTP. **Tokens received**.
+4.  **T+1m**: User completes Personal Details (Step 4).
+5.  **T+3m**: User uploads Docs (Steps 5-7).
+6.  **T+4m**: User configures machine (Step 8).
+7.  **T+5m**: User clicks "Finish" (Step 9). **Onboarding Complete**.
+8.  **T+1h**: **Superadmin** reviews and **Approves**.
+9.  **T+1h 1s**: Seller Dashboard unlocked.
 
 ---
-*Last Updated: February 27, 2026*
+*Last Updated: February 28, 2026*

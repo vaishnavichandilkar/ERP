@@ -21,10 +21,10 @@ This module implements a granular Role-Based Access Control (RBAC) system using 
 **Body**:
 ```json
 {
-  "name": "Fac Admin",
+  "name": "Facility Admin",
   "username": "fac_admin",
-  "password": "password123",
-  "role": "ADMINISTRATOR", 
+  "mobile": "9876543210",
+  "role": "administrator", 
   "facilityId": "uuid-facility-id",
   "administratorAccess": {
     "facilityManagement_view": true,

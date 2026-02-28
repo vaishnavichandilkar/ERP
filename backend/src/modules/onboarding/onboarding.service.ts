@@ -4,7 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import { Step1MobileDto, Step1VerifyDto, Step2DetailsDto, Step3BusinessDto, Step4ShopDto, Step5BankDto, Step6MachineDto } from './dto/onboarding.dto';
+import { Step1LanguageDto, Step2MobileDto, Step3VerifyDto, Step4DetailsDto, Step5BusinessDto, Step6ShopDto, Step7BankDto, Step8MachineDto } from './dto/onboarding.dto';
 
 @Injectable()
 export class OnboardingService {
@@ -14,50 +14,80 @@ export class OnboardingService {
         private configService: ConfigService,
     ) { }
 
-    async registerMobile(dto: Step1MobileDto) {
-        // Generate OTP
+    async saveLanguage(dto: Step1LanguageDto) {
+        // Step 1: Create a temporary user record to store the selection
+        // If userId is provided, update that record instead
+        let user;
+        if (dto.userId) {
+            user = await this.prisma.user.update({
+                where: { id: dto.userId },
+                data: { selected_language: dto.language }
+            });
+        } else {
+            user = await this.prisma.user.create({
+                data: {
+                    selected_language: dto.language,
+                    role: 'seller', // Default to seller for onboarding
+                }
+            });
+        }
+
+        return {
+            message: `Language '${dto.language}' selected and session created`,
+            userId: user.id,
+            selectedLanguage: dto.language
+        };
+    }
+
+    async registerMobile(dto: Step2MobileDto) {
+        // 1. Find the temporary user session
+        const tempUser = await this.prisma.user.findUnique({
+            where: { id: dto.userId }
+        });
+
+        if (!tempUser) {
+            throw new BadRequestException('Onboarding session not found or expired');
+        }
+
+        // 2. Check if a user with this phone already exists
+        // CRITICAL: We block registration if the number is already in our system
+        const existingUserWithPhone = await this.prisma.user.findUnique({
+            where: { phone: dto.phone }
+        });
+
+        if (existingUserWithPhone) {
+            throw new ConflictException('Mobile number already registered. Please login.');
+        }
+
+        // 3. Update the temporary record with the phone number
+        await this.prisma.user.update({
+            where: { id: dto.userId },
+            data: { phone: dto.phone }
+        });
+
+        // 4. Generate OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const expiresAt = new Date();
         expiresAt.setMinutes(expiresAt.getMinutes() + 5);
 
-        // Create or Update User with role = seller
-        // We use upsert to handle re-registration or starting over if not onboarded
-        const user = await this.prisma.user.upsert({
-            where: { phone: dto.phone },
-            update: {
-                role: 'seller', // Ensure role is seller as per requirement
-            },
-            create: {
-                phone: dto.phone,
-                role: 'seller',
-                isApproved: false,
-            }
-        });
-
         // Store OTP
         await this.prisma.otp.upsert({
             where: { phone: dto.phone },
-            update: {
-                otp,
-                expiresAt,
-            },
-            create: {
-                phone: dto.phone,
-                otp,
-                expiresAt,
-            }
+            update: { otp, expiresAt },
+            create: { phone: dto.phone, otp, expiresAt }
         });
 
         // Send OTP (Mock)
-        console.log(`[ONBOARDING OTP] Sent ${otp} to ${dto.phone}`);
+        console.log(`[ONBOARDING OTP] Sent ${otp} to ${dto.phone} with language ${tempUser.selected_language}`);
 
         return {
             message: 'OTP sent successfully',
-            phone: dto.phone
+            phone: dto.phone,
+            userId: dto.userId
         };
     }
 
-    async verifyOtp(dto: Step1VerifyDto) {
+    async verifyOtp(dto: Step3VerifyDto) {
         const otpRecord = await this.prisma.otp.findUnique({
             where: { phone: dto.phone }
         });
@@ -90,7 +120,7 @@ export class OnboardingService {
         };
     }
 
-    async updatePersonalDetails(userId: string, dto: Step2DetailsDto) {
+    async updatePersonalDetails(userId: string, dto: Step4DetailsDto) {
         return this.prisma.user.update({
             where: { id: userId },
             data: {
@@ -101,7 +131,7 @@ export class OnboardingService {
         });
     }
 
-    async saveBusinessDetails(userId: string, dto: Step3BusinessDto, files: any) {
+    async saveBusinessDetails(userId: string, dto: Step5BusinessDto, files: any) {
         // Save Udyog Aadhar Number as document entry
         await this.saveDocument(userId, 'OTHER', dto.udyogAadharNumber, 'UDYOG_AADHAR');
 
@@ -126,7 +156,7 @@ export class OnboardingService {
         return { message: 'Business details saved successfully' };
     }
 
-    async saveShopDetails(userId: string, dto: Step4ShopDto, files: any) {
+    async saveShopDetails(userId: string, dto: Step6ShopDto, files: any) {
         // Use the new ShopDetail model
         await this.prisma.shopDetail.upsert({
             where: { userId },
@@ -157,7 +187,7 @@ export class OnboardingService {
         return { message: 'Shop details saved successfully' };
     }
 
-    async saveBankDetails(userId: string, dto: Step5BankDto, files: any) {
+    async saveBankDetails(userId: string, dto: Step7BankDto, files: any) {
         // Save Bank Details
         await this.prisma.bankDetail.upsert({
             where: { userId },
@@ -191,7 +221,7 @@ export class OnboardingService {
         return { message: 'Bank details saved successfully' };
     }
 
-    async saveMachineDetails(userId: string, dto: Step6MachineDto) {
+    async saveMachineDetails(userId: string, dto: Step8MachineDto) {
         await this.prisma.weighingMachineDetail.upsert({
             where: { userId },
             update: {

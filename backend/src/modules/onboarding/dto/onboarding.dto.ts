@@ -1,15 +1,32 @@
 import { IsEmail, IsNotEmpty, IsString, IsOptional, Length, IsBoolean, ValidateIf } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class Step1MobileDto {
+export class Step1LanguageDto {
+    @ApiProperty({ example: 'English', description: 'Selected language (English, Hindi, Marathi, Kannada)' })
+    @IsString()
+    @IsNotEmpty()
+    language: string;
+
+    @ApiProperty({ example: 'uuid-of-existing-onboarding-session', description: 'Optional userId to update existing selection', required: false })
+    @IsString()
+    @IsOptional()
+    userId?: string;
+}
+
+export class Step2MobileDto {
     @ApiProperty({ example: '1234567890' })
     @IsString()
     @IsNotEmpty()
     @Length(10, 15)
     phone: string;
+
+    @ApiProperty({ example: 'uuid-from-step-1', description: 'The userId returned from Step 1' })
+    @IsString()
+    @IsNotEmpty()
+    userId: string;
 }
 
-export class Step1VerifyDto {
+export class Step3VerifyDto {
     @ApiProperty({ example: '1234567890' })
     @IsString()
     @IsNotEmpty()
@@ -21,7 +38,7 @@ export class Step1VerifyDto {
     otp: string;
 }
 
-export class Step2DetailsDto {
+export class Step4DetailsDto {
     @ApiProperty({ example: 'John' })
     @IsString()
     @IsNotEmpty()
@@ -38,7 +55,7 @@ export class Step2DetailsDto {
     email: string;
 }
 
-export class Step3BusinessDto {
+export class Step5BusinessDto {
     @ApiProperty({ example: 'UDYOG-12345' })
     @IsString()
     @IsNotEmpty()
@@ -50,7 +67,7 @@ export class Step3BusinessDto {
     gstNumber: string;
 }
 
-export class Step4ShopDto {
+export class Step6ShopDto {
     @ApiProperty({ example: 'My Awesome Shop' })
     @IsString()
     @IsNotEmpty()
@@ -82,7 +99,7 @@ export class Step4ShopDto {
     district: string;
 }
 
-export class Step5BankDto {
+export class Step7BankDto {
     @ApiProperty({ example: 'John Doe' })
     @IsString()
     @IsNotEmpty()
@@ -109,7 +126,7 @@ export class Step5BankDto {
     panNumber: string;
 }
 
-export class Step6MachineDto {
+export class Step8MachineDto {
     @ApiProperty({ example: true })
     @IsBoolean()
     @IsNotEmpty()

@@ -15,7 +15,7 @@ async function main() {
     console.log('Modules seeded.');
 
     // 2. Seed System Admin (Superadmin)
-    const adminPhone = 'admin_phone';
+    const adminPhone = '8861220023';
     const existingAdmin = await prisma.user.findUnique({
         where: { phone: adminPhone }
     });

@@ -73,48 +73,71 @@ The primary login gateway.
     *   `401 (Unauthorized)` + `"Account pending Superadmin approval"`: User finished onboarding but is waiting for admin review. Show "Under Review" screen.
     *   `401 (Unauthorized)` + `"Account blocked"`: Restricted access. Show "Contact Support".
 
-### 2.3 Refresh Token Rotation
-Frontend must call this when the `accessToken` expires.
-*   **Endpoint**: `/auth/refresh`
-*   **Method**: `POST`
-*   **Body**:
-    ```json
-    {
-      "refreshToken": "eyJ..."
-    }
-    ```
-*   **Success (201)**: Returns a fresh set of `accessToken` and `refreshToken`.
-*   **Note**: The old `refreshToken` is invalidated upon this call.
+### ONBOARDING FLOW (STRICT 9-STEP)
+
+| Step | API Path | Method | Description |
+| :--- | :--- | :--- | :--- |
+| **Step 1** | `/onboarding/step1-language` | `POST` | Select language (Initializes User) |
+| **Step 2** | `/onboarding/step2-mobile` | `POST` | Register mobile and receive OTP |
+| **Step 3** | `/onboarding/step3-verify` | `POST` | Verify OTP and receive JWT |
+| **Step 4** | `/onboarding/step4-details` | `PUT` | Update personal profile |
+| **Step 5** | `/onboarding/step5-business` | `POST` | Upload business docs |
+| **Step 6** | `/onboarding/step6-shop` | `POST` | Shop detail config |
+| **Step 7** | `/onboarding/step7-bank` | `POST` | Bank & PAN verification |
+| **Step 8** | `/onboarding/step8-machine` | `POST` | Machine configuration |
+| **Step 9** | `/onboarding/step9-complete` | `POST` | Final submit for approval |
 
 ---
 
-## 3. SELLER ONBOARDING FLOW (STEP-BY-STEP)
+## 🛠️ ENDPOINT SPECIFICATIONS
 
-All Step 2-7 APIs require: `Authorization: Bearer <InitialAccessToken>` (received after Step 1 verification).
-
-### Step 1: Start Onboarding (Mobile Entry)
-*   **Endpoint**: `/onboarding/step1-mobile` | `POST`
-*   **Body**: `{ "phone": "8861220023" }`
-*   **Logic**: Creates user in DB with `role: "seller"` and `isApproved: false`.
-
-### Step 1b: Verify Onboarding OTP
-*   **Endpoint**: `/onboarding/step1-verify` | `POST`
-*   **Body**: `{ "phone": "8861220023", "otp": "123456" }`
-*   **Response**: Returns tokens. Save these; they are required to "unlock" the next steps.
-
-### Step 2: Personal Profile
-*   **Endpoint**: `/onboarding/step2-details` | `PUT`
-*   **Body**:
+### 1. Language Selection
+*   **Path**: `POST /onboarding/step1-language`
+*   **Payload**:
     ```json
     {
-      "first_name": "Ritesh",
-      "last_name": "Honule",
-      "email": "ritesh@gmail.com"
+      "language": "English"
+    }
+    ```
+*   **Success (201)**: Returns `userId`. This ID acts as your temporary onboarding session.
+
+### 2. Mobile Entry (Send OTP)
+*   **Path**: `POST /onboarding/step2-mobile`
+*   **Payload**:
+    ```json
+    {
+      "userId": "UUID_FROM_STEP_1",
+      "phone": "9876543210"
+    }
+    ```
+*   **Success (201)**: Returns success message. Backend automatically links the previously selected language to this phone number.
+*   **Failure (409 Conflict)**: If the mobile number already exists, returns `message: "Mobile number already registered. Please login."`.
+
+### 3. Verify OTP
+*   **Path**: `POST /onboarding/step3-verify`
+*   **Payload**:
+    ```json
+    {
+      "phone": "9876543210",
+      "otp": "123456"
+    }
+    ```
+*   **Success (200)**: Returns `accessToken`, `refreshToken`, and `user` profile data.
+
+### 4. Personal Details
+*   **Path**: `PUT /onboarding/step4-details`
+*   **Headers**: `Authorization: Bearer <token>`
+*   **Payload**:
+    ```json
+    {
+      "first_name": "...",
+      "last_name": "...",
+      "email": "..."
     }
     ```
 
-### Step 3: Business Documents (Evidence Upload)
-*   **Endpoint**: `/onboarding/step3-business` | `POST`
+### Step 4: Business Documents (Evidence Upload)
+*   **Endpoint**: `/onboarding/step4-business` | `POST`
 *   **Headers**: `Content-Type: multipart/form-data`
 *   **Form Fields**:
     *   `udyogAadharNumber` (text): e.g. "MH-12-UDYOG789"
@@ -123,8 +146,8 @@ All Step 2-7 APIs require: `Authorization: Bearer <InitialAccessToken>` (receive
     *   `gstCertificate` (file): PDF/Image (Max 5MB)
     *   `businessProof` (file): Optional PDF/Image
 
-### Step 4: Shop & Physical Location
-*   **Endpoint**: `/onboarding/step4-shop` | `POST`
+### Step 5: Shop & Physical Location
+*   **Endpoint**: `/onboarding/step5-shop` | `POST`
 *   **Headers**: `Content-Type: multipart/form-data`
 *   **Form Fields**:
     *   `shopName`: "Ritesh Weighing Solutions"
@@ -135,8 +158,8 @@ All Step 2-7 APIs require: `Authorization: Bearer <InitialAccessToken>` (receive
     *   `district`: "Bengaluru"
     *   `shopActLicense` (file): Required PDF.
 
-### Step 5: Banking & Financials
-*   **Endpoint**: `/onboarding/step5-bank` | `POST`
+### Step 6: Banking & Financials
+*   **Endpoint**: `/onboarding/step6-bank` | `POST`
 *   **Headers**: `Content-Type: multipart/form-data`
 *   **Form Fields**:
     *   `holderName`: "Ritesh Honule"
@@ -145,8 +168,8 @@ All Step 2-7 APIs require: `Authorization: Bearer <InitialAccessToken>` (receive
     *   `cancelledCheque` (file): Required PDF.
     *   `panCard` (file): Required PDF.
 
-### Step 6: Machine Configuration
-*   **Endpoint**: `/onboarding/step6-machine` | `POST`
+### Step 7: Machine Configuration
+*   **Endpoint**: `/onboarding/step7-machine` | `POST`
 *   **Body**:
     ```json
     {
@@ -158,8 +181,8 @@ All Step 2-7 APIs require: `Authorization: Bearer <InitialAccessToken>` (receive
     }
     ```
 
-### Step 7: Final Submission
-*   **Endpoint**: `/onboarding/step7-complete` | `POST`
+### Step 8: Final Submission
+*   **Endpoint**: `/onboarding/step8-complete` | `POST`
 *   **Effect**: Sets `onboarded_at` timestamp. User is moved to "Pending Superadmin Review" queue.
 
 ---
@@ -255,4 +278,4 @@ api.interceptors.response.use(
 4.  **BigInt Handling**: Note that file `size` fields are returned as strings (e.g. `"5048576"`) to avoid JSON serialization errors.
 
 ---
-*Last Updated: February 27, 2026*
+*Last Updated: February 28, 2026*

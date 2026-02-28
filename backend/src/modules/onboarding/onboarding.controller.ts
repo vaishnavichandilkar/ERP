@@ -2,7 +2,7 @@ import { Controller, Post, Body, Put, UseInterceptors, UploadedFiles, UseGuards,
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { OnboardingService } from './onboarding.service';
-import { Step1MobileDto, Step1VerifyDto, Step2DetailsDto, Step3BusinessDto, Step4ShopDto, Step5BankDto, Step6MachineDto } from './dto/onboarding.dto';
+import { Step1LanguageDto, Step2MobileDto, Step3VerifyDto, Step4DetailsDto, Step5BusinessDto, Step6ShopDto, Step7BankDto, Step8MachineDto } from './dto/onboarding.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { multerConfig } from '../upload/multer.config';
 
@@ -11,31 +11,37 @@ import { multerConfig } from '../upload/multer.config';
 export class OnboardingController {
     constructor(private onboardingService: OnboardingService) { }
 
-    @Post('step1-mobile')
-    @ApiOperation({ summary: 'Step 1: Mobile Registration (Send OTP)' })
-    registerMobile(@Body() dto: Step1MobileDto) {
+    @Post('step1-language')
+    @ApiOperation({ summary: 'Step 1: Language Selection' })
+    selectLanguage(@Body() dto: Step1LanguageDto) {
+        return this.onboardingService.saveLanguage(dto);
+    }
+
+    @Post('step2-mobile')
+    @ApiOperation({ summary: 'Step 2: Mobile Registration (Send OTP)' })
+    registerMobile(@Body() dto: Step2MobileDto) {
         return this.onboardingService.registerMobile(dto);
     }
 
-    @Post('step1-verify')
-    @ApiOperation({ summary: 'Step 1: Verify OTP' })
-    verifyOtp(@Body() dto: Step1VerifyDto) {
+    @Post('step3-verify')
+    @ApiOperation({ summary: 'Step 3: Verify OTP' })
+    verifyOtp(@Body() dto: Step3VerifyDto) {
         return this.onboardingService.verifyOtp(dto);
     }
 
-    @Put('step2-details')
+    @Put('step4-details')
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth()
-    @ApiOperation({ summary: 'Step 2: Basic User Details' })
-    updatePersonalDetails(@Request() req, @Body() dto: Step2DetailsDto) {
+    @ApiOperation({ summary: 'Step 4: Basic User Details' })
+    updatePersonalDetails(@Request() req, @Body() dto: Step4DetailsDto) {
         return this.onboardingService.updatePersonalDetails(req.user.userId, dto);
     }
 
-    @Post('step3-business')
+    @Post('step5-business')
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth()
     @ApiConsumes('multipart/form-data')
-    @ApiOperation({ summary: 'Step 3: Business Verification (PDF Uploads)' })
+    @ApiOperation({ summary: 'Step 5: Business Verification (PDF Uploads)' })
     @ApiBody({
         schema: {
             type: 'object',
@@ -56,7 +62,7 @@ export class OnboardingController {
     ], multerConfig))
     saveBusinessDetails(
         @Request() req,
-        @Body() dto: Step3BusinessDto,
+        @Body() dto: Step5BusinessDto,
         @UploadedFiles() files: {
             udyogAadharCertificate?: Express.Multer.File[],
             gstCertificate?: Express.Multer.File[],
@@ -66,11 +72,11 @@ export class OnboardingController {
         return this.onboardingService.saveBusinessDetails(req.user.userId, dto, files);
     }
 
-    @Post('step4-shop')
+    @Post('step6-shop')
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth()
     @ApiConsumes('multipart/form-data')
-    @ApiOperation({ summary: 'Step 4: Shop Details (PDF Upload)' })
+    @ApiOperation({ summary: 'Step 6: Shop Details (PDF Upload)' })
     @ApiBody({
         schema: {
             type: 'object',
@@ -91,7 +97,7 @@ export class OnboardingController {
     ], multerConfig))
     saveShopDetails(
         @Request() req,
-        @Body() dto: Step4ShopDto,
+        @Body() dto: Step6ShopDto,
         @UploadedFiles() files: {
             shopActLicense?: Express.Multer.File[]
         }
@@ -99,11 +105,11 @@ export class OnboardingController {
         return this.onboardingService.saveShopDetails(req.user.userId, dto, files);
     }
 
-    @Post('step5-bank')
+    @Post('step7-bank')
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth()
     @ApiConsumes('multipart/form-data')
-    @ApiOperation({ summary: 'Step 5: Bank Details (PDF Uploads)' })
+    @ApiOperation({ summary: 'Step 7: Bank Details (PDF Uploads)' })
     @ApiBody({
         schema: {
             type: 'object',
@@ -125,7 +131,7 @@ export class OnboardingController {
     ], multerConfig))
     saveBankDetails(
         @Request() req,
-        @Body() dto: Step5BankDto,
+        @Body() dto: Step7BankDto,
         @UploadedFiles() files: {
             cancelledCheque?: Express.Multer.File[],
             panCard?: Express.Multer.File[]
@@ -134,10 +140,10 @@ export class OnboardingController {
         return this.onboardingService.saveBankDetails(req.user.userId, dto, files);
     }
 
-    @Post('step6-machine')
+    @Post('step8-machine')
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth()
-    @ApiOperation({ summary: 'Step 6: Weighing Machine & Model Configuration' })
+    @ApiOperation({ summary: 'Step 8: Weighing Machine & Model Configuration' })
     @ApiBody({
         schema: {
             type: 'object',
@@ -151,14 +157,14 @@ export class OnboardingController {
             required: ['isUsingOwnMachine', 'machineName']
         }
     })
-    saveMachineDetails(@Request() req, @Body() dto: Step6MachineDto) {
+    saveMachineDetails(@Request() req, @Body() dto: Step8MachineDto) {
         return this.onboardingService.saveMachineDetails(req.user.userId, dto);
     }
 
-    @Post('step7-complete')
+    @Post('step9-complete')
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth()
-    @ApiOperation({ summary: 'Step 7: Final Onboarding Completion' })
+    @ApiOperation({ summary: 'Step 9: Final Onboarding Completion' })
     completeOnboarding(@Request() req) {
         return this.onboardingService.completeOnboarding(req.user.userId);
     }
