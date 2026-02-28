@@ -8,6 +8,7 @@ import VerifyOTP from '../pages/auth/VerifyOTP';
 import Success from '../pages/auth/Success';
 import SignUp from '../pages/auth/SignUp';
 import SelectMachine from '../pages/auth/SelectMachine';
+import ApplicationStatus from '../pages/auth/ApplicationStatus';
 
 // Dashboard Pages
 import DashboardLayout from '../layout/dashboard/DashboardLayout';
@@ -26,6 +27,7 @@ export const ROUTES = {
     SUCCESS: '/success',
     REGISTRATION_FORM: '/registration-form',
     SELECT_MACHINE: '/select-machine',
+    APPLICATION_STATUS: '/application-status',
     DASHBOARD: '/dashboard',
 };
 
@@ -53,6 +55,10 @@ export const router = createBrowserRouter([
     {
         path: ROUTES.SELECT_MACHINE,
         element: <SelectMachine />,
+    },
+    {
+        path: ROUTES.APPLICATION_STATUS,
+        element: <ApplicationStatus />,
     },
     {
         path: ROUTES.DASHBOARD,

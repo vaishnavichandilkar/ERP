@@ -90,8 +90,8 @@ const SelectMachine = () => {
     const [machineType, setMachineType] = useState('');
     const [machineMake, setMachineMake] = useState('');
 
-    const handleDashboard = () => {
-        navigate('/dashboard');
+    const handleSubmit = () => {
+        navigate('/application-status');
     };
 
     const getBtnClass = (selected) => {
@@ -172,7 +172,7 @@ const SelectMachine = () => {
                     </div>
 
                     <Button
-                        onClick={handleDashboard}
+                        onClick={handleSubmit}
                         disabled={!isValid}
                         className={`w-full py-2.5 md:py-3 mt-4 text-[15px] md:text-[16px] font-['Plus_Jakarta_Sans'] rounded-[10px] transition-colors ${isValid ? '!bg-[#0B3D2E] hover:!bg-[#092E22] text-white' : '!bg-[#A7C0B8] text-white !opacity-100'}`}
                     >
