@@ -6,12 +6,15 @@ import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { Step1LanguageDto, Step2MobileDto, Step3VerifyDto, Step4DetailsDto, Step5BusinessDto, Step6ShopDto, Step7BankDto, Step8MachineDto } from './dto/onboarding.dto';
 
+import { SmsService } from '../otp/sms.service';
+
 @Injectable()
 export class OnboardingService {
     constructor(
         private prisma: PrismaService,
         private jwtService: JwtService,
         private configService: ConfigService,
+        private smsService: SmsService,
     ) { }
 
     async saveLanguage(dto: Step1LanguageDto) {
@@ -49,36 +52,9 @@ export class OnboardingService {
             throw new BadRequestException('Onboarding session not found or expired');
         }
 
-        // 2. Check if a user with this phone already exists
-        // CRITICAL: We block registration if the number is already in our system
-        const existingUserWithPhone = await this.prisma.user.findUnique({
-            where: { phone: dto.phone }
-        });
-
-        if (existingUserWithPhone) {
-            throw new ConflictException('Mobile number already registered. Please login.');
-        }
-
-        // 3. Update the temporary record with the phone number
-        await this.prisma.user.update({
-            where: { id: dto.userId },
-            data: { phone: dto.phone }
-        });
-
-        // 4. Generate OTP
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const expiresAt = new Date();
-        expiresAt.setMinutes(expiresAt.getMinutes() + 5);
-
-        // Store OTP
-        await this.prisma.otp.upsert({
-            where: { phone: dto.phone },
-            update: { otp, expiresAt },
-            create: { phone: dto.phone, otp, expiresAt }
-        });
-
-        // Send OTP (Mock)
-        console.log(`[ONBOARDING OTP] Sent ${otp} to ${dto.phone} with language ${tempUser.selected_language}`);
+        // 2. Only send OTP. Do NOT update the user table with phone yet.
+        // This ensures the mobile number isn't "taken" until verified.
+        await this.smsService.sendOtp(dto.phone);
 
         return {
             message: 'OTP sent successfully',
@@ -88,34 +64,60 @@ export class OnboardingService {
     }
 
     async verifyOtp(dto: Step3VerifyDto) {
-        const otpRecord = await this.prisma.otp.findUnique({
+        // 1. Verify OTP using SmsService
+        const isValid = await this.smsService.verifyOtp(dto.phone, dto.otp);
+        if (!isValid) {
+            throw new BadRequestException('Invalid or expired OTP');
+        }
+
+        // 2. Check if this mobile number already exists in the users table
+        const existingUser = await this.prisma.user.findUnique({
             where: { phone: dto.phone }
         });
 
-        if (!otpRecord || otpRecord.otp !== dto.otp) {
-            throw new BadRequestException('Invalid OTP');
-        }
-
-        if (otpRecord.expiresAt < new Date()) {
-            throw new BadRequestException('OTP expired');
-        }
-
-        const user = await this.prisma.user.findUnique({
-            where: { phone: dto.phone }
+        // 3. Find the temporary onboarding session user
+        const tempUser = await this.prisma.user.findUnique({
+            where: { id: dto.userId }
         });
 
-        if (!user) {
-            throw new BadRequestException('User not found');
+        if (!tempUser) {
+            throw new BadRequestException('Onboarding session not found');
         }
 
-        // Delete OTP after successful verification
-        await this.prisma.otp.delete({ where: { phone: dto.phone } });
+        let userToAuth;
 
-        // Generate temporary token for onboarding flow
-        const tokens = await this.generateOnboardingTokens(user);
+        if (existingUser) {
+            // LOGIN / RESUME CASE: 
+            // Transfer the language from the temp session to the existing user if it changed
+            await this.prisma.user.update({
+                where: { id: existingUser.id },
+                data: { selected_language: tempUser.selected_language }
+            });
+
+            // Cleanup the temporary draft user
+            await this.prisma.user.delete({ where: { id: dto.userId } });
+
+            userToAuth = existingUser;
+        } else {
+            // REGISTRATION CASE:
+            // Finally save the phone number to the temporary user record
+            userToAuth = await this.prisma.user.update({
+                where: { id: dto.userId },
+                data: {
+                    phone: dto.phone,
+                    onboarded_at: null // Still in onboarding flow
+                }
+            });
+        }
+
+        // 4. Cleanup the verified OTP record
+        await this.smsService.deleteOtp(dto.phone);
+
+        // 5. Generate temporary token for the flow
+        const tokens = await this.generateOnboardingTokens(userToAuth);
 
         return {
-            message: 'OTP verified successfully',
+            message: existingUser ? 'Welcome back! OTP verified.' : 'Registration successful! OTP verified.',
             ...tokens
         };
     }

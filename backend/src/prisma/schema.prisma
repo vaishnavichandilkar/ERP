@@ -133,13 +133,10 @@ model WeighingMachineDetail {
 model Otp {
 
   id         Int      @id @default(autoincrement())
-
   phone      String   @unique
-
   otp        String
-
   expiresAt  DateTime
-
+  isVerified Boolean  @default(false)
 
   @@map("Otp")
 

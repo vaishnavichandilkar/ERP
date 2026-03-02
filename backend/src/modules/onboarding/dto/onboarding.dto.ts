@@ -36,6 +36,11 @@ export class Step3VerifyDto {
     @IsString()
     @IsNotEmpty()
     otp: string;
+
+    @ApiProperty({ example: 'uuid-from-step-1', description: 'The userId returned from Step 1' })
+    @IsString()
+    @IsNotEmpty()
+    userId: string;
 }
 
 export class Step4DetailsDto {

@@ -6,12 +6,15 @@ import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { ConfigService } from '@nestjs/config';
 
+import { SmsService } from '../otp/sms.service';
+
 @Injectable()
 export class AuthService {
     constructor(
         private prisma: PrismaService,
         private jwtService: JwtService,
         private configService: ConfigService,
+        private smsService: SmsService,
     ) { }
 
     async sendLoginOtp(dto: SendLoginOtpDto) {
@@ -19,44 +22,29 @@ export class AuthService {
         const user = await this.findUserByPhone(dto.phone);
         if (!user) throw new NotFoundException('User with this phone number not found');
 
-        // 2. Generate OTP
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const expiresAt = new Date();
-        expiresAt.setMinutes(expiresAt.getMinutes() + 5);
-
-        // 3. Store OTP in Otp table
-        await this.prisma.otp.upsert({
-            where: { phone: dto.phone },
-            update: { otp, expiresAt },
-            create: { phone: dto.phone, otp, expiresAt }
-        });
-
-        // 4. Send OTP (Mock)
-        console.log(`[LOGIN OTP] Sent ${otp} to ${dto.phone}`);
+        // 2. Send OTP via SMS (Generates, Sends, and Stores)
+        await this.smsService.sendOtp(dto.phone);
 
         return { message: 'OTP sent successfully' };
     }
 
     async login(dto: LoginDto) {
-        // 1. Verify OTP
-        const otpRecord = await this.prisma.otp.findUnique({
-            where: { phone: dto.phone }
-        });
-
-        if (!otpRecord || otpRecord.otp !== dto.otp) {
-            throw new BadRequestException('Invalid OTP');
-        }
-
-        if (otpRecord.expiresAt < new Date()) {
-            throw new BadRequestException('OTP expired');
+        // 1. Verify OTP using SmsService
+        const isValid = await this.smsService.verifyOtp(dto.phone, dto.otp);
+        if (!isValid) {
+            throw new BadRequestException('Invalid or expired OTP');
         }
 
         // 2. Find User and Role
         const { user, roleType } = await this.findUserAndRoleByPhone(dto.phone);
-        if (!user) throw new UnauthorizedException('User not found');
+        if (!user) {
+            // Cleanup anyway if user doesn't exist (though shouldn't happen here for login)
+            await this.smsService.deleteOtp(dto.phone);
+            throw new UnauthorizedException('User not found');
+        }
 
-        // Delete OTP after successful verification
-        await this.prisma.otp.delete({ where: { phone: dto.phone } });
+        // Cleanup OTP after success
+        await this.smsService.deleteOtp(dto.phone);
 
         // 3. Check active status
         const isActive = user.isBlocked === undefined ? (user.isActive !== false) : !user.isBlocked;

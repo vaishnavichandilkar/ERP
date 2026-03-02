@@ -4,8 +4,11 @@ import { OnboardingService } from './onboarding.service';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
+import { OtpModule } from '../otp/otp.module';
+
 @Module({
     imports: [
+        OtpModule,
         JwtModule.registerAsync({
             imports: [ConfigModule],
             inject: [ConfigService],
