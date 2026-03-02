@@ -9,6 +9,7 @@ const tableData = [
     { sr: 3, barcode: '2601070001G1GM', product: 'Soybean Pend', weight: '150 Kg', facility: 'Plant 3', terminal: 'G3', status: 'Out Stock', created: '2026-02-07 10.33', out: '2026-04-07 10.33' },
     { sr: 4, barcode: '2601070001G1GM', product: 'Murgas', weight: '200 Kg', facility: 'Plant 4', terminal: 'G4', status: 'In Stock', created: '2026-03-07 10.33', out: '2026-04-07 10.33' },
     { sr: 5, barcode: '2601070001G1GM', product: 'Sorghum', weight: '150 Kg', facility: 'Plant 5', terminal: 'G5', status: 'Out Stock', created: '2026-05-07 10.33', out: '2026-06-07 10.33' },
+    { sr: 6, barcode: '2601070001G1GM', product: 'Sorghum', weight: '150 Kg', facility: 'Plant 5', terminal: 'G5', status: 'Out Stock', created: '2026-05-07 10.33', out: '2026-06-07 10.33' },
     { sr: 7, barcode: '2601070001G1GM', product: 'Murgas', weight: '150 Kg', facility: 'Plant 1', terminal: 'G1', status: 'In Stock', created: '2026-01-07 10.33', out: '2026-03-07 10.33' },
     { sr: 8, barcode: '2601070001G1GM', product: 'Pend', weight: '170 Kg', facility: 'Plant 2', terminal: 'G2', status: 'In Stock', created: '2026-02-07 10.33', out: '2026-03-07 10.33' },
     { sr: 9, barcode: '2601070001G1GM', product: 'Soybean Pend', weight: '150 Kg', facility: 'Plant 3', terminal: 'G3', status: 'Out Stock', created: '2026-02-07 10.33', out: '2026-04-07 10.33' },
@@ -79,8 +80,8 @@ const tableData = [
 
 const fullDataset = [
     ...tableData,
-    { sr: 6, barcode: '2601070001G1GM', product: 'Wheat', weight: '250 Kg', facility: 'Plant 1', terminal: 'G1', status: 'In Stock', created: '2026-06-07 10.33', out: '2026-07-07 10.33' },
-    { sr: 7, barcode: '2601070001G1GM', product: 'Fertilizer', weight: '500 Kg', facility: 'Plant 2', terminal: 'G2', status: 'Out Stock', created: '2026-07-07 10.33', out: '2026-08-07 10.33' }
+    { sr: 73, barcode: '2601070001G1GM', product: 'Wheat', weight: '250 Kg', facility: 'Plant 1', terminal: 'G1', status: 'In Stock', created: '2026-06-07 10.33', out: '2026-07-07 10.33' },
+    { sr: 74, barcode: '2601070001G1GM', product: 'Fertilizer', weight: '500 Kg', facility: 'Plant 2', terminal: 'G2', status: 'Out Stock', created: '2026-07-07 10.33', out: '2026-08-07 10.33' }
 ];
 
 const Inventory = () => {
@@ -200,15 +201,15 @@ const Inventory = () => {
             if (filters.customFrom && new Date(filters.customFrom) > itemDate) return false;
             // set customTo to end of day
             if (filters.customTo) {
-                const toDateObj = new Date(filters.customTo);
-                toDateObj.setHours(23, 59, 59, 999);
-                if (toDateObj < itemDate) return false;
+               const toDateObj = new Date(filters.customTo);
+               toDateObj.setHours(23, 59, 59, 999);
+               if (toDateObj < itemDate) return false;
             }
 
             if (filters.dateRange) {
                 const diffTime = Math.abs(today - itemDate);
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
+                
                 if (filters.dateRange === 'Last 15 Days' && diffDays > 15) return false;
                 if (filters.dateRange === 'Last 30 Days' && diffDays > 30) return false;
                 if (filters.dateRange === 'Last 6 Months' && diffDays > 182) return false;
@@ -242,16 +243,16 @@ const Inventory = () => {
 
     const totalRecords = filteredDataset.length;
     const totalPages = Math.ceil(totalRecords / rowsPerPage);
-
+    
     const startIndex = totalRecords === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
     const endIndex = Math.min(currentPage * rowsPerPage, totalRecords);
-
+    
     // Slice data to respect current page and limit
     const paginatedDataset = filteredDataset.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
     let startPage = 1;
     let endPage = totalPages;
-
+    
     if (totalPages > 5) {
         if (currentPage <= 3) {
             startPage = 1;
@@ -264,19 +265,20 @@ const Inventory = () => {
             endPage = currentPage + 2;
         }
     }
-
+    
     const visiblePages = Array.from({ length: Math.max(0, (endPage + 1) - startPage) }, (_, i) => startPage + i);
 
     return (
         <div className="relative flex flex-col w-full max-w-[1400px] mx-auto pb-10 font-['Plus_Jakarta_Sans']">
-
+            
             {/* Soft Toast Modal Absolute Placed */}
             {toast.show && (
-                <div
-                    className={`fixed top-5 right-5 z-50 px-4 py-2.5 rounded shadow-lg flex items-center gap-2 transform transition-all duration-300 ${toast.type === 'success'
-                            ? 'bg-[#DCFCE7] text-[#166534] border border-[#166534]/20'
+                <div 
+                    className={`fixed top-5 right-5 z-50 px-4 py-2.5 rounded shadow-lg flex items-center gap-2 transform transition-all duration-300 ${
+                        toast.type === 'success' 
+                            ? 'bg-[#DCFCE7] text-[#166534] border border-[#166534]/20' 
                             : 'bg-[#FEE2E2] text-[#991B1B] border border-[#991B1B]/20'
-                        }`}
+                    }`}
                 >
                     <span className="text-[14px] font-medium">{toast.message}</span>
                 </div>
@@ -293,10 +295,10 @@ const Inventory = () => {
             </div>
 
             {/* Inventory Card Container */}
-            <div className="bg-white rounded-[10px] md:rounded-[12px] border border-[#E5E7EB] p-[20px] md:p-[24px] shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-
+            <div className="bg-white rounded-[10px] md:rounded-[12px] border border-[#E5E7EB] py-[16px] shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+                
                 {/* Top Row Inside Card */}
-                <div className="flex flex-col gap-4 mb-[20px] md:mb-[24px] relative" ref={filterContainerRef}>
+                <div className="flex flex-col gap-4 mb-[12px] relative px-[16px] md:px-[20px]" ref={filterContainerRef}>
                     <div className="flex items-center justify-between">
                         <h2 className="text-[16px] font-semibold text-[#111827]">
                             Inventory List
@@ -311,17 +313,17 @@ const Inventory = () => {
                                 </button>
                                 {isExportDropdownOpen && (
                                     <div className="absolute right-0 mt-3 w-[160px] bg-white rounded-[12px] shadow-[0_4px_24px_rgba(0,0,0,0.08)] border border-[#E5E7EB] py-[8px] z-50">
-                                        <button
-                                            onClick={() => { handleExportPdf(); setIsExportDropdownOpen(false); }}
-                                            className="w-full text-left px-[16px] py-[10px] text-[13px] text-[#4B5563] hover:bg-gray-50 flex items-center gap-[8px]"
+                                        <button 
+                                            onClick={() => { handleExportPdf(); setIsExportDropdownOpen(false); }} 
+                                            className="w-full text-left px-[16px] py-[10px] text-[12px] text-[#4B5563] hover:bg-gray-50 flex items-center gap-[8px]"
                                         >
-                                            <FileText size={14} className="text-[#9CA3AF]" /> Export to PDF
+                                            <FileText size={14} className="text-[#9CA3AF]"/> Export to PDF
                                         </button>
-                                        <button
-                                            onClick={() => { handleExportExcel(); setIsExportDropdownOpen(false); }}
-                                            className="w-full text-left px-[16px] py-[10px] text-[13px] text-[#4B5563] hover:bg-gray-50 flex items-center gap-[8px]"
+                                        <button 
+                                            onClick={() => { handleExportExcel(); setIsExportDropdownOpen(false); }} 
+                                            className="w-full text-left px-[16px] py-[10px] text-[12px] text-[#4B5563] hover:bg-gray-50 flex items-center gap-[8px]"
                                         >
-                                            <FileSpreadsheet size={14} className="text-[#9CA3AF]" /> Export to Excel
+                                            <FileSpreadsheet size={14} className="text-[#9CA3AF]"/> Export to Excel
                                         </button>
                                     </div>
                                 )}
@@ -331,7 +333,7 @@ const Inventory = () => {
                             <button onClick={() => setIsFilterOpen(prev => !prev)} className="flex items-center justify-center p-1">
                                 <ListFilter size={20} className={isFilterOpen ? "text-[#111827]" : ""} />
                             </button>
-
+                            
                             {/* Search */}
                             <button onClick={() => setIsMobileSearchOpen(prev => !prev)} className="flex items-center justify-center p-1">
                                 <Search size={20} className={isMobileSearchOpen ? "text-[#111827]" : ""} />
@@ -340,26 +342,27 @@ const Inventory = () => {
 
                         {/* Desktop Controls (>= md) */}
                         <div className="hidden md:flex flex-wrap items-center gap-[12px]">
-                            <button
+                            <button 
                                 onClick={handleExportExcel}
-                                className="bg-[#0B3D2E] hover:bg-[#072a20] text-white h-[36px] md:h-[38px] px-[16px] rounded-[8px] text-[14px] font-medium transition-colors whitespace-nowrap"
+                                className="bg-[#0B3D2E] hover:bg-[#072a20] text-white h-[36px] md:h-[38px] px-[16px] rounded-[8px] text-[12px] font-medium transition-colors whitespace-nowrap"
                             >
                                 Export Excel
                             </button>
-                            <button
+                            <button 
                                 onClick={handleExportPdf}
-                                className="bg-[#0B3D2E] hover:bg-[#072a20] text-white h-[36px] md:h-[38px] px-[16px] rounded-[8px] text-[14px] font-medium transition-colors whitespace-nowrap"
+                                className="bg-[#0B3D2E] hover:bg-[#072a20] text-white h-[36px] md:h-[38px] px-[16px] rounded-[8px] text-[12px] font-medium transition-colors whitespace-nowrap"
                             >
                                 Export PDF
                             </button>
-
+                            
                             <div>
-                                <button
+                                <button 
                                     onClick={() => setIsFilterOpen(prev => !prev)}
-                                    className={`h-[36px] md:h-[38px] px-[14px] rounded-[8px] text-[14px] font-medium flex items-center gap-2 transition-colors whitespace-nowrap border ${isFilterOpen
-                                            ? 'bg-gray-100 border-[#D1D5DB] text-[#111827]'
+                                    className={`h-[36px] md:h-[38px] px-[14px] rounded-[8px] text-[12px] font-medium flex items-center gap-2 transition-colors whitespace-nowrap border ${
+                                        isFilterOpen 
+                                            ? 'bg-gray-100 border-[#D1D5DB] text-[#111827]' 
                                             : 'bg-[#F9FAFB] border-[#E5E7EB] hover:bg-gray-100 text-[#4B5563]'
-                                        }`}
+                                    }`}
                                 >
                                     Filter by <ChevronDown size={16} className={`transition-transform duration-200 ${isFilterOpen ? 'rotate-180 text-[#4B5563]' : 'rotate-0 text-[#9CA3AF]'}`} />
                                 </button>
@@ -369,12 +372,12 @@ const Inventory = () => {
                                 <div className="absolute inset-y-0 left-0 pl-[12px] flex items-center pointer-events-none">
                                     <Search size={16} className="text-[#9CA3AF]" />
                                 </div>
-                                <input
+                                <input 
                                     type="text"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    placeholder="Search by anything"
-                                    className="w-full h-[36px] md:h-[38px] pl-[36px] pr-[12px] border border-[#E5E7EB] rounded-[8px] text-[14px] outline-none focus:border-[#0B3D2E] focus:ring-1 focus:ring-[#0B3D2E]/20 transition-all placeholder-[#9CA3AF]"
+                                    placeholder="Search by anything" 
+                                    className="w-full h-[36px] md:h-[38px] pl-[36px] pr-[12px] border border-[#E5E7EB] rounded-[8px] text-[12px] outline-none focus:border-[#0B3D2E] focus:ring-1 focus:ring-[#0B3D2E]/20 transition-all placeholder-[#9CA3AF]"
                                 />
                             </div>
                         </div>
@@ -386,19 +389,19 @@ const Inventory = () => {
                             <div className="absolute inset-y-0 left-0 pl-[12px] flex items-center pointer-events-none">
                                 <Search size={16} className="text-[#9CA3AF]" />
                             </div>
-                            <input
+                            <input 
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Search by anything"
-                                className="w-full h-[40px] pl-[36px] pr-[12px] border border-[#E5E7EB] rounded-[8px] text-[14px] outline-none focus:border-[#22C55E] focus:ring-1 focus:ring-[#22C55E]/20 transition-all placeholder-[#9CA3AF]"
+                                placeholder="Search by anything" 
+                                className="w-full h-[40px] pl-[36px] pr-[12px] border border-[#E5E7EB] rounded-[8px] text-[12px] outline-none focus:border-[#22C55E] focus:ring-1 focus:ring-[#22C55E]/20 transition-all placeholder-[#9CA3AF]"
                                 autoFocus
                             />
                         </div>
                     )}
 
-                    <FilterPopup
-                        isOpen={isFilterOpen}
+                    <FilterPopup 
+                        isOpen={isFilterOpen} 
                         filters={filters}
                         setFilters={(val) => {
                             setFilters(val);
@@ -409,40 +412,41 @@ const Inventory = () => {
 
                 {/* Table Area */}
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse min-w-[1000px]">
-                        <thead>
-                            <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-                                <th className="py-[14px] px-[16px] text-[13px] font-medium text-[#6B7280] whitespace-nowrap first:pl-[8px] last:pr-[8px]">Sr.</th>
-                                <th className="py-[14px] px-[16px] text-[13px] font-medium text-[#6B7280] whitespace-nowrap">Barcode</th>
-                                <th className="py-[14px] px-[16px] text-[13px] font-medium text-[#6B7280] whitespace-nowrap">Product</th>
-                                <th className="py-[14px] px-[16px] text-[13px] font-medium text-[#6B7280] whitespace-nowrap">weight/items</th>
-                                <th className="py-[14px] px-[16px] text-[13px] font-medium text-[#6B7280] whitespace-nowrap">Facility Name</th>
-                                <th className="py-[14px] px-[16px] text-[13px] font-medium text-[#6B7280] whitespace-nowrap">Terminal</th>
-                                <th className="py-[14px] px-[16px] text-[13px] font-medium text-[#6B7280] whitespace-nowrap">Status</th>
-                                <th className="py-[14px] px-[16px] text-[13px] font-medium text-[#6B7280] whitespace-nowrap">Created At</th>
-                                <th className="py-[14px] px-[16px] text-[13px] font-medium text-[#6B7280] whitespace-nowrap last:pr-[8px]">Out At</th>
+                    <table className="w-full text-center border-collapse min-w-[1000px] border-t border-b border-[#E5E7EB]">
+                        <thead className="px-[16px] md:px-[20px]">
+                            <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB] text-center px-[16px] md:px-[20px]">
+                                <th className="py-[10px] px-[16px] border-r border-[#E5E7EB] text-[14px] font-medium text-[#6B7280] whitespace-nowrap text-center align-middle first:pl-[8px] last:pr-[8px]">Sr.</th>
+                                <th className="py-[10px] px-[16px] border-r border-[#E5E7EB] text-[14px] font-medium text-[#6B7280] whitespace-nowrap text-center align-middle">Barcode</th>
+                                <th className="py-[10px] px-[16px] border-r border-[#E5E7EB] text-[14px] font-medium text-[#6B7280] whitespace-nowrap text-center align-middle">Product</th>
+                                <th className="py-[10px] px-[16px] border-r border-[#E5E7EB] text-[14px] font-medium text-[#6B7280] whitespace-nowrap text-center align-middle">weight/items</th>
+                                <th className="py-[10px] px-[16px] border-r border-[#E5E7EB] text-[14px] font-medium text-[#6B7280] whitespace-nowrap text-center align-middle">Facility Name</th>
+                                <th className="py-[10px] px-[16px] border-r border-[#E5E7EB] text-[14px] font-medium text-[#6B7280] whitespace-nowrap text-center align-middle">Terminal</th>
+                                <th className="py-[10px] px-[16px] border-r border-[#E5E7EB] text-[14px] font-medium text-[#6B7280] whitespace-nowrap text-center align-middle">Status</th>
+                                <th className="py-[10px] px-[16px] border-r border-[#E5E7EB] text-[14px] font-medium text-[#6B7280] whitespace-nowrap text-center align-middle">Created At</th>
+                                <th className="py-[10px] px-[16px] text-[14px] font-medium text-[#6B7280] whitespace-nowrap text-center align-middle last:pr-[8px]">Out At</th>
                             </tr>
                         </thead>
-                        <tbody className="text-[13px] text-[#4B5563]">
+                        <tbody className="text-[14px] text-[#4B5563]">
                             {paginatedDataset.length > 0 ? (
                                 paginatedDataset.map((row) => (
-                                    <tr key={row.sr} className="border-b border-[#F3F4F6] last:border-b-0 hover:bg-gray-50/50 transition-colors">
-                                        <td className="h-[48px] md:h-[52px] px-[16px] whitespace-nowrap first:pl-[8px] align-middle">{row.sr}</td>
-                                        <td className="h-[48px] md:h-[52px] px-[16px] whitespace-nowrap text-[#111827] font-medium align-middle">{row.barcode}</td>
-                                        <td className="h-[48px] md:h-[52px] px-[16px] whitespace-nowrap align-middle">{row.product}</td>
-                                        <td className="h-[48px] md:h-[52px] px-[16px] whitespace-nowrap align-middle">{row.weight}</td>
-                                        <td className="h-[48px] md:h-[52px] px-[16px] whitespace-nowrap align-middle">{row.facility}</td>
-                                        <td className="h-[48px] md:h-[52px] px-[16px] whitespace-nowrap align-middle">{row.terminal}</td>
-                                        <td className="h-[48px] md:h-[52px] px-[16px] whitespace-nowrap align-middle">
-                                            <span className={`inline-flex items-center justify-center px-[10px] py-[4px] rounded-[20px] text-[12px] font-medium ${row.status === 'In Stock'
-                                                    ? 'bg-[#DCFCE7] text-[#166534]'
+                                    <tr key={row.sr} className="border-b border-[#F3F4F6] last:border-b-0 hover:bg-gray-50/50 transition-colors text-center">
+                                        <td className="h-[40px] md:h-[44px] px-[16px] border-r border-[#E5E7EB] whitespace-nowrap text-center align-middle first:pl-[8px]">{row.sr}</td>
+                                        <td className="h-[40px] md:h-[44px] px-[16px] border-r border-[#E5E7EB] whitespace-nowrap text-[#111827] font-medium text-center align-middle">{row.barcode}</td>
+                                        <td className="h-[40px] md:h-[44px] px-[16px] border-r border-[#E5E7EB] whitespace-nowrap text-center align-middle">{row.product}</td>
+                                        <td className="h-[40px] md:h-[44px] px-[16px] border-r border-[#E5E7EB] whitespace-nowrap text-center align-middle">{row.weight}</td>
+                                        <td className="h-[40px] md:h-[44px] px-[16px] border-r border-[#E5E7EB] whitespace-nowrap text-center align-middle">{row.facility}</td>
+                                        <td className="h-[40px] md:h-[44px] px-[16px] border-r border-[#E5E7EB] whitespace-nowrap text-center align-middle">{row.terminal}</td>
+                                        <td className="h-[40px] md:h-[44px] px-[16px] border-r border-[#E5E7EB] whitespace-nowrap text-center align-middle">
+                                            <span className={`inline-flex items-center justify-center px-[10px] py-[4px] rounded-[20px] text-[12px] font-medium ${
+                                                row.status === 'In Stock' 
+                                                    ? 'bg-[#DCFCE7] text-[#166534]' 
                                                     : 'bg-[#F3F4F6] text-[#4B5563]'
-                                                }`}>
+                                            }`}>
                                                 {row.status}
                                             </span>
                                         </td>
-                                        <td className="h-[48px] md:h-[52px] px-[16px] whitespace-nowrap align-middle text-[#6B7280]">{row.created}</td>
-                                        <td className="h-[48px] md:h-[52px] px-[16px] whitespace-nowrap align-middle text-[#6B7280] last:pr-[8px]">{row.out}</td>
+                                        <td className="h-[40px] md:h-[44px] px-[16px] border-r border-[#E5E7EB] whitespace-nowrap text-center align-middle text-[#6B7280]">{row.created}</td>
+                                        <td className="h-[40px] md:h-[44px] px-[16px] whitespace-nowrap text-center align-middle text-[#6B7280] last:pr-[8px]">{row.out}</td>
                                     </tr>
                                 ))
                             ) : (
@@ -456,34 +460,31 @@ const Inventory = () => {
                     </table>
                 </div>
 
-                {/* Terminal Boundary Line */}
-                <div className="w-full bg-[#E5E7EB] h-[1px]"></div>
-
                 {/* Bottom Pagination Section */}
-                <div className="flex items-center justify-between mt-[20px] md:mt-[24px]">
+                <div className="flex items-center justify-between mt-[12px] md:mt-[14px] px-[16px] md:px-[20px]">
                     {/* Left: Show per page */}
-                    <div className="flex items-center gap-[8px] text-[13px] text-[#4B5563]">
+                    <div className="flex items-center gap-[8px] text-[12px] text-[#4B5563]">
                         <span className="hidden md:inline">Show</span>
                         <div className="relative border border-[#E5E7EB] rounded-[6px] h-[32px] min-w-[50px] bg-white transition-colors" ref={rowsDropdownRef}>
-                            <div
+                            <div 
                                 onClick={() => setIsRowsDropdownOpen(!isRowsDropdownOpen)}
                                 className="w-full h-full px-[8px] flex items-center justify-between cursor-pointer hover:border-[#D1D5DB]"
                             >
-                                <span className="text-[13px] text-[#111827] mr-2">{rowsPerPage}</span>
+                                <span className="text-[12px] text-[#111827] mr-2">{rowsPerPage}</span>
                                 <ChevronDown size={14} className={`text-[#9CA3AF] transition-transform duration-200 ${isRowsDropdownOpen ? 'rotate-180' : 'rotate-0'}`} />
                             </div>
-
+                            
                             {isRowsDropdownOpen && (
                                 <div className="absolute bottom-full left-0 mb-1 w-full bg-white border border-[#E5E7EB] rounded-[6px] shadow-lg overflow-hidden z-50 py-[4px]">
                                     {[5, 10, 25, 50].map(option => (
-                                        <div
+                                        <div 
                                             key={option}
                                             onClick={() => {
                                                 setRowsPerPage(option);
                                                 setCurrentPage(1);
                                                 setIsRowsDropdownOpen(false);
                                             }}
-                                            className={`px-[8px] py-[6px] text-[13px] cursor-pointer hover:bg-gray-50 flex justify-center ${rowsPerPage === option ? 'bg-gray-50 font-medium text-[#111827]' : 'text-[#4B5563]'}`}
+                                            className={`px-[8px] py-[6px] text-[12px] cursor-pointer hover:bg-gray-50 flex justify-center ${rowsPerPage === option ? 'bg-gray-50 font-medium text-[#111827]' : 'text-[#4B5563]'}`}
                                         >
                                             {option}
                                         </div>
@@ -495,33 +496,34 @@ const Inventory = () => {
                     </div>
 
                     {/* Right: Pagination */}
-                    <div className="flex items-center gap-[6px] md:gap-[12px] text-[13px] text-[#6B7280]">
+                    <div className="flex items-center gap-[6px] md:gap-[12px] text-[12px] text-[#6B7280]">
                         <span className="hidden md:inline mr-2">{startIndex}-{endIndex} of {totalRecords}</span>
-                        <button
+                        <button 
                             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                             disabled={currentPage === 1 || totalRecords === 0}
-                            className={`transition-colors p-1 flex items-center justify-center ${currentPage === 1 || totalRecords === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:text-[#111827] cursor-pointer'}`}
+                            className={`transition-colors p-1 flex items-center justify-center text-[14px] ${currentPage === 1 || totalRecords === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:text-[#111827] cursor-pointer'}`}
                         >
                             <ArrowLeft size={14} />
                         </button>
-
+                        
                         {visiblePages.map(page => (
-                            <button
+                            <button 
                                 key={page}
                                 onClick={() => setCurrentPage(page)}
-                                className={`transition-colors w-[24px] h-[24px] flex items-center justify-center rounded-[4px] ${currentPage === page
-                                        ? 'bg-[#F3F4F6] text-[#111827] font-medium'
-                                        : 'hover:text-[#111827] cursor-pointer'
-                                    }`}
+                                className={`transition-colors w-[24px] h-[24px] flex items-center justify-center rounded-[4px] text-[14px] ${
+                                    currentPage === page 
+                                    ? 'bg-[#F3F4F6] text-[#111827] font-medium' 
+                                    : 'hover:text-[#111827] cursor-pointer'
+                                }`}
                             >
                                 {page}
                             </button>
                         ))}
 
-                        <button
+                        <button 
                             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                             disabled={currentPage === totalPages || totalRecords === 0}
-                            className={`transition-colors p-1 flex items-center justify-center ${currentPage === totalPages || totalRecords === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:text-[#111827] cursor-pointer'}`}
+                            className={`transition-colors p-1 flex items-center justify-center text-[14px] ${currentPage === totalPages || totalRecords === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:text-[#111827] cursor-pointer'}`}
                         >
                             <ArrowRight size={14} />
                         </button>
