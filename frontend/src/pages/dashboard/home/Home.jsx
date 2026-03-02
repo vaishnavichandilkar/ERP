@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Filter, ArrowUpRight, ArrowDownRight, Download, Search, ChevronDown, ArrowLeft, ArrowRight, ChevronsUpDown } from 'lucide-react';
+import ActionMenu from '../facility/components/ActionMenu';
 
 const StatCard = ({ title, value, trend, percentage }) => {
     const isUp = trend === 'up';
@@ -42,18 +43,116 @@ const StatCard = ({ title, value, trend, percentage }) => {
     );
 };
 
-const DashboardTable = ({ title, columns, data }) => {
+const DashboardTable = ({ title, columns, data, searchPlaceholder, hideDownload }) => {
+    const [currentPage, setCurrentPage] = useState(1);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
+    const [isRowsDropdownOpen, setIsRowsDropdownOpen] = useState(false);
+    const rowsDropdownRef = useRef(null);
+    const [isAnimating, setIsAnimating] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const filteredData = React.useMemo(() => {
+        if (!searchQuery) return data;
+        const query = searchQuery.toLowerCase();
+        return data.filter(row =>
+            Object.values(row).some(val =>
+                String(val).toLowerCase().includes(query)
+            )
+        );
+    }, [data, searchQuery]);
+
+    const totalRecords = filteredData.length;
+    const totalPages = Math.max(1, Math.ceil(totalRecords / rowsPerPage));
+
+    const startIndex = totalRecords === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
+    const endIndex = Math.min(currentPage * rowsPerPage, totalRecords);
+
+    const paginatedDataset = filteredData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
+
+    const handlePageChange = (newPage) => {
+        if (newPage !== currentPage && newPage >= 1 && newPage <= totalPages) {
+            setIsAnimating(true);
+            setTimeout(() => {
+                setCurrentPage(newPage);
+                setIsAnimating(false);
+            }, 150); // half of transition
+        }
+    };
+
+    const handleRowsChange = (newRows) => {
+        if (newRows !== rowsPerPage) {
+            setIsAnimating(true);
+            setTimeout(() => {
+                setRowsPerPage(newRows);
+                setCurrentPage(1);
+                setIsRowsDropdownOpen(false);
+                setIsAnimating(false);
+            }, 150);
+        } else {
+            setIsRowsDropdownOpen(false);
+        }
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (rowsDropdownRef.current && !rowsDropdownRef.current.contains(event.target)) {
+                setIsRowsDropdownOpen(false);
+            }
+        };
+
+        if (isRowsDropdownOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isRowsDropdownOpen]);
+
+    // Visible Pages logic
+    let startPage = 1;
+    let endPage = totalPages;
+    if (totalPages > 5) {
+        if (currentPage <= 3) {
+            startPage = 1;
+            endPage = 5;
+        } else if (currentPage >= totalPages - 2) {
+            startPage = totalPages - 4;
+            endPage = totalPages;
+        } else {
+            startPage = currentPage - 2;
+            endPage = currentPage + 2;
+        }
+    }
+    const visiblePages = Array.from({ length: Math.max(0, (endPage + 1) - startPage) }, (_, i) => startPage + i);
+
     return (
-        <div className="bg-white rounded-[10px] md:rounded-[12px] border border-[#E5E7EB] mt-4 overflow-hidden flex flex-col font-['Plus_Jakarta_Sans']">
+        <div className="bg-white rounded-[10px] md:rounded-[12px] border border-[#E5E7EB] mt-4 overflow-hidden flex flex-col font-['Plus_Jakarta_Sans'] transition-all duration-300 ease-in-out">
             <div className="flex items-center justify-between p-4 border-b border-[#E5E7EB]">
                 <h3 className="text-[#111827] text-[13px] md:text-[16px] font-bold">{title}</h3>
-                <div className="flex gap-3">
-                    <button className="text-[#9CA3AF] hover:text-[#111827] transition-colors">
-                        <Download size={16} strokeWidth={2} />
-                    </button>
-                    <button className="text-[#9CA3AF] hover:text-[#111827] transition-colors">
-                        <Search size={16} strokeWidth={2} />
-                    </button>
+                <div className="flex gap-3 items-center">
+                    {searchPlaceholder ? (
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-[12px] flex items-center pointer-events-none">
+                                <Search size={14} className="text-[#9CA3AF]" />
+                            </div>
+                            <input
+                                type="text"
+                                placeholder={searchPlaceholder}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="h-[36px] min-w-[140px] w-full md:w-[200px] pl-[34px] pr-[12px] border border-[#E5E7EB] bg-[#F9FAFB] rounded-[8px] text-[13px] outline-none focus:border-[#014A36] transition-all placeholder-[#9CA3AF]"
+                            />
+                        </div>
+                    ) : (
+                        <button className="text-[#9CA3AF] hover:text-[#111827] transition-colors focus:outline-none">
+                            <Search size={16} strokeWidth={2} />
+                        </button>
+                    )}
+                    {!hideDownload && (
+                        <button className="text-[#9CA3AF] hover:text-[#111827] transition-colors focus:outline-none">
+                            <Download size={16} strokeWidth={2} />
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -71,40 +170,102 @@ const DashboardTable = ({ title, columns, data }) => {
                             ))}
                         </tr>
                     </thead>
-                    <tbody className="text-[10px] md:text-[13px] text-[#4B5563]">
-                        {data.map((row, rowIndex) => (
-                            <tr key={rowIndex} className="border-b border-[#E5E7EB] last:border-b-0 hover:bg-gray-50/50">
+                    <tbody className={`text-[10px] md:text-[13px] text-[#4B5563] transition-all duration-300 ease-in-out ${isAnimating ? 'opacity-0' : 'opacity-100'}`}>
+                        {paginatedDataset.map((row, rowIndex) => (
+                            <tr key={rowIndex} className="border-b border-[#E5E7EB] last:border-b-0 hover:bg-gray-50/50 transition-colors">
                                 {columns.map((col, colIndex) => (
-                                    <td key={colIndex} className="p-3 md:p-4 border-r border-[#E5E7EB] last:border-r-0 whitespace-nowrap">
-                                        {row[col.key]}
+                                    <td key={colIndex} className="p-3 md:p-4 border-r border-[#E5E7EB] last:border-r-0 whitespace-nowrap h-[44px] md:h-[53px]">
+                                        {col.render ? col.render(row) : row[col.key]}
                                     </td>
                                 ))}
                             </tr>
                         ))}
+                        {/* Edge case: empty state */}
+                        {totalRecords === 0 && (
+                            <tr>
+                                <td colSpan={columns.length} className="py-[40px] text-center text-[#9CA3AF] align-middle">
+                                    No records found
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>
-
-            {/* Progress bar line above pagination */}
-            <div className="h-1.5 w-full bg-[#E5E7EB]">
-                <div className="h-full bg-[#A7C0B8] w-[70%]"></div>
-            </div>
+            {/* Terminal Boundary Line */}
+            <div className="w-full bg-[#E5E7EB] h-[1px]"></div>
 
             {/* Pagination Footer */}
-            <div className="p-3 md:p-4 flex items-center justify-between flex-wrap gap-3">
-                <div className="relative border border-[#E5E7EB] rounded-[6px] px-2 py-1 flex items-center justify-between min-w-[45px] bg-[#F9FAFB] cursor-pointer">
-                    <span className="text-[11px] md:text-[12px] text-[#4B5563]">3</span>
-                    <ChevronDown size={14} className="text-[#9CA3AF]" />
+            <div className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                {/* Left: Show per page and Mobile Count */}
+                <div className="flex items-center gap-3 text-[12px] md:text-[13px] text-[#4B5563] w-full sm:w-auto justify-between sm:justify-start">
+                    <div className="flex items-center gap-2">
+                        <span>Show</span>
+                        <div className="relative border border-[#E5E7EB] rounded-[6px] h-[32px] min-w-[50px] bg-white transition-colors" ref={rowsDropdownRef}>
+                            <div
+                                onClick={() => setIsRowsDropdownOpen(!isRowsDropdownOpen)}
+                                className="w-full h-full px-[8px] flex items-center justify-between cursor-pointer hover:border-[#D1D5DB]"
+                            >
+                                <span className="text-[13px] text-[#111827] mr-2">{rowsPerPage}</span>
+                                <ChevronDown size={14} className={`text-[#9CA3AF] transition-transform duration-200 ${isRowsDropdownOpen ? 'rotate-180' : 'rotate-0'}`} />
+                            </div>
+
+                            {isRowsDropdownOpen && (
+                                <div className="absolute bottom-full left-0 mb-1 w-full bg-white border border-[#E5E7EB] rounded-[6px] shadow-lg overflow-hidden z-50 py-[4px]">
+                                    {[3, 5, 10].map(option => (
+                                        <div
+                                            key={option}
+                                            onClick={() => handleRowsChange(option)}
+                                            className={`px-[8px] py-[6px] text-[13px] cursor-pointer hover:bg-gray-50 flex justify-center ${rowsPerPage === option ? 'bg-gray-50 font-medium text-[#111827]' : 'text-[#4B5563]'}`}
+                                        >
+                                            {option}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        <span>per page</span>
+                    </div>
+                    {/* Mobile Only Count */}
+                    <span className="sm:hidden text-[#6B7280]">
+                        {startIndex}-{endIndex} of {totalRecords}
+                    </span>
                 </div>
 
-                <div className="flex items-center gap-3 text-[11px] md:text-[12px] text-[#9CA3AF] font-medium">
-                    <button className="hover:text-[#111827]"><ArrowLeft size={14} /></button>
-                    <button className="hover:text-[#111827]">1</button>
-                    <button className="w-[20px] h-[20px] rounded bg-[#F9FAFB] text-[#111827] flex items-center justify-center font-bold">2</button>
-                    <button className="hover:text-[#111827]">3</button>
-                    <button className="hover:text-[#111827]">4</button>
-                    <button className="hover:text-[#111827]">5</button>
-                    <button className="hover:text-[#111827] text-[#111827]"><ArrowRight size={14} /></button>
+                {/* Right: Desktop Count & Navigation Controls */}
+                <div className="flex items-center justify-between sm:justify-end gap-3 text-[12px] md:text-[13px] text-[#6B7280] w-full sm:w-auto">
+                    {/* Desktop Only Count */}
+                    <span className="hidden sm:inline mr-2">{startIndex}-{endIndex} of {totalRecords}</span>
+
+                    <div className="flex items-center gap-1 sm:gap-2">
+                        <button
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1 || totalRecords === 0}
+                            className={`transition-colors p-1.5 flex items-center justify-center rounded-md focus:outline-none ${currentPage === 1 || totalRecords === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 hover:text-[#111827] cursor-pointer'}`}
+                        >
+                            <ArrowLeft size={16} />
+                        </button>
+
+                        {visiblePages.map(page => (
+                            <button
+                                key={page}
+                                onClick={() => handlePageChange(page)}
+                                className={`transition-colors w-[26px] h-[26px] sm:w-[28px] sm:h-[28px] flex items-center justify-center rounded-[6px] focus:outline-none ${currentPage === page
+                                    ? 'bg-[#F3F4F6] text-[#111827] font-bold'
+                                    : 'hover:bg-gray-50 hover:text-[#111827] cursor-pointer font-medium'
+                                    }`}
+                            >
+                                {page}
+                            </button>
+                        ))}
+
+                        <button
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages || totalRecords === 0}
+                            className={`transition-colors p-1.5 flex items-center justify-center rounded-md focus:outline-none ${currentPage === totalPages || totalRecords === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 hover:text-[#111827] cursor-pointer'}`}
+                        >
+                            <ArrowRight size={16} />
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -112,26 +273,88 @@ const DashboardTable = ({ title, columns, data }) => {
 };
 
 const productColumns = [
-    { title: 'Product name', key: 'name', sortable: false },
+    { title: 'Product name', key: 'name', sortable: true },
     { title: 'Category', key: 'category', sortable: true },
-    { title: 'Seller name / ID', key: 'seller', sortable: false }
+    { title: 'Seller name / ID', key: 'seller', sortable: true },
+    {
+        title: 'Status', key: 'status', sortable: true, render: (row) => {
+            if (row.status === 'Approved') {
+                return (
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#ECFDF3] text-[#027A48] w-fit">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#12B76A]"></div>
+                        <span className="text-[12px] font-medium">Approved</span>
+                    </div>
+                )
+            } else {
+                return (
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#FFFAEB] text-[#B54708] w-fit">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#F79009]"></div>
+                        <span className="text-[12px] font-medium">Pending</span>
+                    </div>
+                )
+            }
+        }
+    },
+    { title: 'Uploaded on', key: 'uploadedOn', sortable: true },
+    { title: '', key: 'action', sortable: false, render: () => <ActionMenu /> }
 ];
 
+// Extended product data to test pagination
 const productData = [
-    { name: 'Hybrid Wheat', category: 'Seeds', seller: 'Ravi Agro / SEL...' },
-    { name: 'NPK Fertilizer', category: 'Seeds', seller: 'Ravi Agro / SEL...' },
-    { name: 'Organic Seeds', category: 'Seeds', seller: 'Ravi Agro / SEL...' }
+    { name: 'Hybrid Wheat', category: 'Seeds', seller: 'Ravi Agro / SELL1023', status: 'Approved', uploadedOn: '05-May-2025' },
+    { name: 'NPK Fertilizer', category: 'Seeds', seller: 'Ravi Agro / SELL1023', status: 'Pending', uploadedOn: '05-May-2025' },
+    { name: 'Organic Seeds', category: 'Seeds', seller: 'Ravi Agro / SELL1023', status: 'Approved', uploadedOn: '05-May-2025' },
+    { name: 'Premium Sorghum', category: 'Seeds', seller: 'Ravi Agro / SELL1023', status: 'Approved', uploadedOn: '06-May-2025' },
+    { name: 'Urea Fertilizer', category: 'Fertilizer', seller: 'Godrej / SELL1024', status: 'Approved', uploadedOn: '06-May-2025' },
+    { name: 'Cotton Seeds', category: 'Seeds', seller: 'Kisan / SELL1025', status: 'Pending', uploadedOn: '07-May-2025' },
+    { name: 'Bio Pesticide', category: 'Chemicals', seller: 'Agro Protect / SELL1026', status: 'Approved', uploadedOn: '07-May-2025' },
+    { name: 'Soybean Pend', category: 'Cattle Feed', seller: 'NutriFeed / SELL1027', status: 'Approved', uploadedOn: '08-May-2025' },
+    { name: 'Murgas', category: 'Cattle Feed', seller: 'Local Mill / SELL1028', status: 'Pending', uploadedOn: '08-May-2025' },
+    { name: 'Zinc Sulphate', category: 'Fertilizer', seller: 'Ravi Agro / SELL1029', status: 'Approved', uploadedOn: '09-May-2025' },
+    { name: 'Maize Seeds', category: 'Seeds', seller: 'Mahyco / SELL1030', status: 'Approved', uploadedOn: '09-May-2025' },
+    { name: 'Super Phosphate', category: 'Fertilizer', seller: 'IFFCO / SELL1031', status: 'Pending', uploadedOn: '10-May-2025' }
 ];
 
 const customerColumns = [
-    { title: 'ID', key: 'id', sortable: true },
     { title: 'Customer Name', key: 'name', sortable: true },
-    { title: 'Mobile', key: 'mobile', sortable: true }
+    { title: 'Mobile', key: 'mobile', sortable: true },
+    { title: 'ID', key: 'id', sortable: true },
+    {
+        title: 'Status', key: 'status', sortable: true, render: (row) => {
+            if (row.status === 'Active') {
+                return (
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#ECFDF3] text-[#027A48] w-fit">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#12B76A]"></div>
+                        <span className="text-[12px] font-medium">Active</span>
+                    </div>
+                )
+            } else {
+                return (
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F2F4F7] text-[#344054] w-fit">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#98A2B3]"></div>
+                        <span className="text-[12px] font-medium">Inactive</span>
+                    </div>
+                )
+            }
+        }
+    },
+    { title: 'Added on', key: 'addedOn', sortable: true },
+    { title: '', key: 'action', sortable: false, render: () => <ActionMenu /> }
 ];
 
+// Extended customer data to test pagination
 const customerData = [
-    { id: 'GM00001', name: 'Mahadev Patil', mobile: '709854763...' },
-    { id: 'GM00002', name: 'Prasad Vhanji', mobile: '709854763...' }
+    { id: 'GM00001', name: 'Mahadev Patil', mobile: '709854763...', status: 'Active', addedOn: '01-May-2025' },
+    { id: 'GM00002', name: 'Prasad Vhanji', mobile: '709854763...', status: 'Active', addedOn: '02-May-2025' },
+    { id: 'GM00003', name: 'Vilas Jadhav', mobile: '908765432...', status: 'Inactive', addedOn: '02-May-2025' },
+    { id: 'GM00004', name: 'Sambhaji Bhosale', mobile: '887766554...', status: 'Active', addedOn: '03-May-2025' },
+    { id: 'GM00005', name: 'Anand Shinde', mobile: '998877665...', status: 'Active', addedOn: '04-May-2025' },
+    { id: 'GM00006', name: 'Prakash Rane', mobile: '776655443...', status: 'Inactive', addedOn: '05-May-2025' },
+    { id: 'GM00007', name: 'Dattu More', mobile: '889900112...', status: 'Active', addedOn: '06-May-2025' },
+    { id: 'GM00008', name: 'Rajendra Pawar', mobile: '901234567...', status: 'Active', addedOn: '07-May-2025' },
+    { id: 'GM00009', name: 'Kishore Kulkarni', mobile: '789012345...', status: 'Inactive', addedOn: '08-May-2025' },
+    { id: 'GM00010', name: 'Vishal Joshi', mobile: '890123456...', status: 'Active', addedOn: '09-May-2025' },
+    { id: 'GM00011', name: 'Ramesh Naik', mobile: '701234567...', status: 'Active', addedOn: '10-May-2025' },
 ];
 
 const Home = () => {
@@ -168,8 +391,8 @@ const Home = () => {
             </div>
 
             {/* Tables Area */}
-            <DashboardTable title="New Products added" columns={productColumns} data={productData} />
-            <DashboardTable title="New Customer added" columns={customerColumns} data={customerData} />
+            <DashboardTable title="New products added" columns={productColumns} data={productData} searchPlaceholder="Search products" hideDownload={true} />
+            <DashboardTable title="New customers added" columns={customerColumns} data={customerData} searchPlaceholder="Search customers" hideDownload={true} />
         </div>
     );
 };

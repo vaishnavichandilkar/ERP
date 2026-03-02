@@ -4,6 +4,7 @@ import AuthLayout from '../../layout/auth/AuthLayout';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import logo from '../../assets/images/logo2.png';
+import { ChevronDown } from 'lucide-react';
 
 const SignIn = () => {
     const [phone, setPhone] = useState('');
@@ -38,6 +39,12 @@ const SignIn = () => {
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         type="tel"
+                        prefix={
+                            <div className="flex items-center gap-1.5 cursor-pointer hover:bg-gray-50 rounded-l-[8px] h-full">
+                                <span className="text-[15px] font-medium text-gray-900">IN</span>
+                                <ChevronDown size={14} className="text-gray-500" strokeWidth={2} />
+                            </div>
+                        }
                     />
 
                     <div className="flex items-start">
