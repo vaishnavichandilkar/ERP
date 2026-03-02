@@ -7,9 +7,9 @@ export class Step1LanguageDto {
     @IsNotEmpty()
     language: string;
 
-    @ApiProperty({ example: 'uuid-of-existing-onboarding-session', description: 'Optional userId to update existing selection', required: false })
-    @IsString()
-    @IsOptional()
+    // @ApiProperty({ example: 'uuid-of-existing-onboarding-session', description: 'Optional userId to update existing selection', required: false })
+    // @IsString()
+    // @IsOptional()
     userId?: string;
 }
 

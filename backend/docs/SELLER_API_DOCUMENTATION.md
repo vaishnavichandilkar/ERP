@@ -30,7 +30,7 @@ Sends a verification code to the registered mobile number. Use this for both Sig
 *   **Body**:
     ```json
     {
-      "phone": "8861220023"
+      "phone": "1111111111"
     }
     ```
 *   **Success (201 Created)**:
@@ -50,7 +50,7 @@ The primary login gateway.
 *   **Body**:
     ```json
     {
-      "phone": "8861220023",
+      "phone": "1111111111",
       "otp": "123456"
     }
     ```
@@ -62,7 +62,7 @@ The primary login gateway.
       "user": {
         "id": "550e8400-e29b-41d4-a716-446655440000",
         "name": "Ritesh Honule",
-        "username": "8861220023",
+        "username": "1111111111",
         "role": "SELLER",
         "isApproved": true
       }

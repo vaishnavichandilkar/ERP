@@ -53,6 +53,7 @@ model User {
   refresh_token      String?
 
   onboarded_at       DateTime?
+  verified           Boolean   @default(false)
   isApproved         Boolean   @default(false)
 
   created_at         DateTime  @default(now())

@@ -4,7 +4,7 @@ This guide provides a comprehensive step-by-step walkthrough to test the **Weigh
 
 **Prerequisites**:
 1.  **Server Running**: `npm run start:dev`
-2.  **Database Seeded**: `npx ts-node src/prisma/seed.ts` (Creates default Super Admin with phone: `8861220023`)
+2.  **Database Seeded**: `npx ts-node src/prisma/seed.ts` (Creates default Super Admin with phone: `1111111111`)
 3.  **Swagger URL**: [http://localhost:3000/api/docs](http://localhost:3000/api/docs)
 
 ---
@@ -124,9 +124,9 @@ This guide provides a comprehensive step-by-step walkthrough to test the **Weigh
 
 ### 1. Super Admin Login (Mobile + OTP)
 *   **Action**: Clear current Bearer Token.
-*   **Step A**: `POST /auth/send-login-otp` with `{ "phone": "8861220023" }`.
+*   **Step A**: `POST /auth/send-login-otp` with `{ "phone": "1111111111" }`.
 *   **Step B**: Check console for OTP.
-*   **Step C**: `POST /auth/login` with `{ "phone": "8861220023", "otp": "..." }`.
+*   **Step C**: `POST /auth/login` with `{ "phone": "1111111111", "otp": "..." }`.
 *   **Step D**: Authorize in Swagger with the Super Admin token.
 
 ### 2. Review and Approve
