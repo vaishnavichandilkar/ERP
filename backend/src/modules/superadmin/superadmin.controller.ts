@@ -32,6 +32,6 @@ export class SuperAdminController {
     @ApiResponse({ status: 200, description: 'Seller rejected successfully.' })
     async rejectSeller(@Request() req, @Body() dto: ApproveSellerDto) {
         if (req.user.role !== 'SUPERADMIN') throw new ForbiddenException('Only Super Admin can access this resource');
-        return this.superAdminService.rejectSeller(dto.sellerId);
+        return this.superAdminService.rejectSeller(dto.sellerId, dto.rejectionReason);
     }
 }

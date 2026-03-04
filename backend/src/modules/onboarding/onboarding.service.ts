@@ -72,12 +72,12 @@ export class OnboardingService {
                     where: { id: existingUser.id },
                     data: { selected_language: tempUser.selected_language }
                 });
-                
+
                 // Delete the temp session row if it's different from the record we're reusing
                 if (tempUser.id !== existingUser.id) {
                     await this.prisma.user.delete({ where: { id: tempUser.id } });
                 }
-                
+
                 targetUserId = existingUser.id;
             }
         } else {

@@ -8,7 +8,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         const response = ctx.getResponse<Response>();
         const request = ctx.getRequest<Request>();
 
-        const status =
+        let status =
             exception instanceof HttpException
                 ? exception.getStatus()
                 : HttpStatus.INTERNAL_SERVER_ERROR;
@@ -17,10 +17,24 @@ export class GlobalExceptionFilter implements ExceptionFilter {
             console.error('Unhandled Exception:', exception);
         }
 
-        const message =
-            exception instanceof HttpException
-                ? exception.getResponse()
-                : 'Internal server error';
+        let message: string | string[] = 'Internal server error';
+
+        if (exception instanceof HttpException) {
+            const exceptionResponse = exception.getResponse();
+            if (typeof exceptionResponse === 'string') {
+                message = exceptionResponse;
+            } else if (typeof exceptionResponse === 'object' && exceptionResponse !== null && (exceptionResponse as any).message) {
+                const msg = (exceptionResponse as any).message;
+                message = Array.isArray(msg) ? msg.join(', ') : msg;
+            } else {
+                message = exception.message;
+            }
+        } else if (exception && typeof exception === 'object' && (exception as any).code === 'P2002') {
+            const target = (exception as any).meta?.target;
+            const targetStr = Array.isArray(target) ? target.join(', ') : target;
+            message = `The ${targetStr || 'field'} is already registered or taken. Please provide a different one.`;
+            status = HttpStatus.CONFLICT;
+        }
 
         response.status(status).json({
             statusCode: status,

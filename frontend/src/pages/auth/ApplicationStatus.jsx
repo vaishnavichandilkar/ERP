@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import api from '../../services/api';
 import AuthLayout from '../../layout/auth/AuthLayout';
 import Button from '../../components/common/Button';
 import { Clock, AlertCircle, X, Check } from 'lucide-react';
@@ -15,10 +16,54 @@ const ApplicationStatus = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // In a real app, you would fetch this from an API endpoint
-    // We parse it from URL just to easily test all 4 states
-    const queryParams = new URLSearchParams(location.search);
-    const apiStatus = queryParams.get('state') || 'pending'; // pending, invalid, rejected, approved
+    const [apiStatus, setApiStatus] = useState('PENDING');
+    const [rejectionReason, setRejectionReason] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchStatus = async () => {
+            try {
+                const response = await api.get('/auth/me');
+                if (response.data) {
+                    const status = response.data.approvalStatus || 'PENDING';
+
+                    if (status === 'APPROVED' && !response.data.isFirstApprovalLogin) {
+                        navigate('/dashboard');
+                        return;
+                    }
+
+                    setApiStatus(status);
+                    setRejectionReason(response.data.rejectionReason);
+                }
+            } catch (error) {
+                console.error("Failed to fetch application status", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchStatus();
+    }, [navigate]);
+
+    const handleStartUsing = async () => {
+        try {
+            await api.post('/auth/mark-approval-seen');
+        } catch (error) {
+            console.error('Failed to mark approval seen', error);
+        } finally {
+            navigate('/dashboard');
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <AuthLayout hideLeftPanel={false}>
+                <div className="flex items-center justify-center w-full h-full">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0B3D2E]"></div>
+                </div>
+            </AuthLayout>
+        );
+    }
 
     const renderPendingState = () => (
         <div className="flex flex-col items-center justify-center text-center w-full max-w-[420px] mx-auto animate-in fade-in zoom-in duration-500 md:mt-0 pt-8 pb-10">
@@ -70,12 +115,18 @@ const ApplicationStatus = () => {
                 Our team has reviewed your details and<br />provided detailed feedback as below
             </h4>
             <div className="space-y-4">
-                {[1, 2, 3, 4, 5, 6].map((num) => (
-                    <div key={num} className="flex gap-4 items-start">
-                        <span className="text-[13px] font-medium text-[#6B7280] font-['Plus_Jakarta_Sans'] shrink-0 w-10">Step {num}</span>
-                        <p className="text-[13px] text-[#111827] font-semibold leading-[1.4] font-['Plus_Jakarta_Sans']">Lorem ipsum text for rejection<br />added</p>
+                {rejectionReason ? (
+                    <div className="flex gap-4 items-start">
+                        <p className="text-[13px] text-[#111827] font-semibold leading-[1.4] font-['Plus_Jakarta_Sans']">{rejectionReason}</p>
                     </div>
-                ))}
+                ) : (
+                    [1, 2, 3, 4, 5, 6].map((num) => (
+                        <div key={num} className="flex gap-4 items-start">
+                            <span className="text-[13px] font-medium text-[#6B7280] font-['Plus_Jakarta_Sans'] shrink-0 w-10">Step {num}</span>
+                            <p className="text-[13px] text-[#111827] font-semibold leading-[1.4] font-['Plus_Jakarta_Sans']">Lorem ipsum text for rejection<br />added</p>
+                        </div>
+                    ))
+                )}
             </div>
         </div>
     );
@@ -156,7 +207,7 @@ const ApplicationStatus = () => {
             </div>
 
             <Button
-                onClick={() => navigate('/dashboard')}
+                onClick={handleStartUsing}
                 className="w-[90%] md:w-full max-w-[340px] py-3 text-[15px] font-semibold font-['Plus_Jakarta_Sans'] rounded-[8px] !bg-[#0B3D2E] hover:!bg-[#092E22] text-white"
             >
                 Start Using
@@ -165,12 +216,11 @@ const ApplicationStatus = () => {
     );
 
     return (
-        <AuthLayout hideLeftPanel={true}>
+        <AuthLayout hideLeftPanel={false}>
             <div className="w-full h-full flex items-center justify-center px-0 sm:px-4 py-4 sm:py-10 font-['Plus_Jakarta_Sans'] overflow-y-auto">
-                {apiStatus === 'pending' && renderPendingState()}
-                {apiStatus === 'invalid' && renderInvalidState()}
-                {apiStatus === 'rejected' && renderRejectedState()}
-                {apiStatus === 'approved' && renderApprovedState()}
+                {apiStatus === 'PENDING' && renderPendingState()}
+                {apiStatus === 'REJECTED' && renderRejectedState()}
+                {apiStatus === 'APPROVED' && renderApprovedState()}
             </div>
         </AuthLayout>
     );

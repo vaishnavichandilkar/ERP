@@ -20,7 +20,7 @@ export class AuthService {
     async sendLoginOtp(dto: SendLoginOtpDto) {
         // 1. Check if user exists in any table
         const user = await this.findUserByPhone(dto.phone);
-        if (!user) throw new NotFoundException('User with this phone number not found');
+        if (!user) throw new NotFoundException('This phone number is not registered. Please sign up or try a different number.');
 
         // 2. Send OTP via SMS (Generates, Sends, and Stores)
         await this.smsService.sendOtp(dto.phone);
@@ -54,9 +54,6 @@ export class AuthService {
         if (user.role === 'seller') {
             if (!user.onboarded_at) {
                 throw new UnauthorizedException('Onboarding incomplete. Please complete your profile.');
-            }
-            if (!user.isApproved) {
-                throw new UnauthorizedException('Account pending Superadmin approval.');
             }
         }
 
@@ -188,7 +185,16 @@ export class AuthService {
                 name: user.first_name || user.name,
                 username: username,
                 role: roleType,
+                approvalStatus: user.approvalStatus,
+                isFirstApprovalLogin: user.isFirstApprovalLogin,
             },
         };
+    }
+    async markApprovalLoginSeen(userId: string) {
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: { isFirstApprovalLogin: false }
+        });
+        return { message: 'Approval login screen marked as seen' };
     }
 }

@@ -5,14 +5,46 @@ import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import logo from '../../assets/images/logo2.png';
 import { ChevronDown } from 'lucide-react';
+import { sendLoginOtpApi } from '../../services/authService';
 
 const SignIn = () => {
     const [phone, setPhone] = useState('');
     const [agreed, setAgreed] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    const handleGetOTP = () => {
-        navigate('/verify-otp', { state: { phone } });
+    const validatePhone = (phoneNumber) => {
+        if (!phoneNumber) return '';
+        if (!/^\d{10}$/.test(phoneNumber)) return 'Invalid phone number format.';
+        return '';
+    };
+
+    const handlePhoneBlur = () => {
+        const validationError = validatePhone(phone);
+        if (validationError) {
+            setError(validationError);
+        }
+    };
+
+    const handleGetOTP = async () => {
+        const validationError = validatePhone(phone);
+        if (validationError) {
+            setError(validationError);
+            return;
+        }
+
+        setIsLoading(true);
+        setError('');
+        try {
+            await sendLoginOtpApi(phone);
+            navigate('/verify-otp', { state: { phone, mode: 'login' } });
+        } catch (err) {
+            // Antigravity requirement: Use precise backend error message below the input
+            setError(err.response?.data?.message || 'Failed to send OTP. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -33,19 +65,39 @@ const SignIn = () => {
                 </p>
 
                 <div className="flex flex-col gap-4 w-full">
-                    <Input
-                        label="Phone number"
-                        placeholder="Enter your number"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        type="tel"
-                        prefix={
-                            <div className="flex items-center gap-1.5 cursor-pointer hover:bg-gray-50 rounded-l-[8px] h-full">
-                                <span className="text-[15px] font-medium text-gray-900">IN</span>
-                                <ChevronDown size={14} className="text-gray-500" strokeWidth={2} />
+                    {/* Inline error logic is tied to the Input component. We will pass error to Input. */}
+                    <div className="flex flex-col">
+                        <Input
+                            label="Phone number"
+                            placeholder="Enter your number"
+                            value={phone}
+                            onBlur={handlePhoneBlur}
+                            onChange={(e) => {
+                                // Allow only numbers, max length 10
+                                const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                setPhone(val);
+                                if (error) {
+                                    const validationError = validatePhone(val);
+                                    if (!validationError) {
+                                        setError('');
+                                    }
+                                }
+                            }}
+                            type="tel"
+                            invalid={!!error}
+                            prefix={
+                                <div className="flex items-center gap-1.5 cursor-pointer hover:bg-gray-50 rounded-l-[8px] h-full">
+                                    <span className="text-[15px] font-medium text-gray-900">IN</span>
+                                    <ChevronDown size={14} className="text-gray-500" strokeWidth={2} />
+                                </div>
+                            }
+                        />
+                        {error && (
+                            <div className="mt-1.5 text-red-500 text-[13px] font-medium animate-in fade-in slide-in-from-top-1 duration-300">
+                                {error}
                             </div>
-                        }
-                    />
+                        )}
+                    </div>
 
                     <div className="flex items-start">
                         <label className="flex items-start cursor-pointer">
@@ -62,11 +114,11 @@ const SignIn = () => {
                     </div>
 
                     <Button
-                        disabled={!phone || !agreed}
+                        disabled={!phone || !agreed || isLoading || phone.length < 10 || !!error}
                         onClick={handleGetOTP}
                         className="text-[16px] font-['Plus_Jakarta_Sans'] py-3 mt-2"
                     >
-                        Get OTP
+                        {isLoading ? 'Sending...' : 'Get OTP'}
                     </Button>
                 </div>
             </div>

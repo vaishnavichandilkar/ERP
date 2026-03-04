@@ -6,4 +6,8 @@ export class ApproveSellerDto {
     @IsString()
     @IsNotEmpty()
     sellerId: string;
+
+    @ApiProperty({ required: false })
+    @IsString()
+    rejectionReason?: string;
 }

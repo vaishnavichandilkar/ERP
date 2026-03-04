@@ -29,6 +29,8 @@ async function main() {
                 email: 'admin@weighpro.com',
                 role: 'superadmin',
                 isApproved: true,
+                approvalStatus: 'APPROVED',
+                isFirstApprovalLogin: false,
                 onboarded_at: new Date(),
             }
         });
@@ -39,6 +41,8 @@ async function main() {
             data: {
                 role: 'superadmin',
                 isApproved: true,
+                approvalStatus: 'APPROVED',
+                isFirstApprovalLogin: false,
                 onboarded_at: new Date(),
             }
         });

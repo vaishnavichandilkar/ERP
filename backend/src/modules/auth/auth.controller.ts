@@ -52,4 +52,13 @@ export class AuthController {
     getProfile(@Request() req) {
         return req.user;
     }
+
+    @Post('mark-approval-seen')
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard)
+    @ApiOperation({ summary: 'Mark approval login page as seen' })
+    @ApiResponse({ status: 200, description: 'Marked as seen successfully.' })
+    markApprovalSeen(@Request() req) {
+        return this.authService.markApprovalLoginSeen(req.user.userId);
+    }
 }

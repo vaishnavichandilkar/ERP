@@ -79,7 +79,7 @@ const FileUploadBox = ({ title, file, onFileChange, onRemove }) => {
     );
 };
 
-const CustomInput = ({ label, type = 'text', value, onChange, placeholder, name, select, children, className = '', prefix }) => (
+const CustomInput = ({ label, type = 'text', value, onChange, onBlur, placeholder, name, select, children, className = '', prefix, error }) => (
     <div className={`flex flex-col w-full ${className}`}>
         {label && (
             <label className="text-[14px] text-[#374151] mb-2 font-['Plus_Jakarta_Sans'] font-medium block">
@@ -93,7 +93,8 @@ const CustomInput = ({ label, type = 'text', value, onChange, placeholder, name,
                         name={name}
                         value={value}
                         onChange={onChange}
-                        className={`w-full h-[56px] px-[16px] text-[15px] border border-[#D1D5DB] rounded-[8px] outline-none bg-[#FFFFFF] font-['Plus_Jakarta_Sans'] appearance-none transition-colors focus:border-[#0F3D2E] focus:ring-1 focus:ring-[#0F3D2E] ${!value ? 'text-[#6B7280]' : 'text-[#111827]'}`}
+                        onBlur={onBlur}
+                        className={`w-full h-[56px] px-[16px] text-[15px] border ${error ? 'border-red-500 hover:border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-[#D1D5DB] focus:border-[#0F3D2E] focus:ring-[#0F3D2E]'} rounded-[8px] outline-none bg-[#FFFFFF] font-['Plus_Jakarta_Sans'] appearance-none transition-all duration-300 focus:ring-1 ${!value ? 'text-[#6B7280]' : 'text-[#111827]'}`}
                     >
                         {children}
                     </select>
@@ -102,7 +103,7 @@ const CustomInput = ({ label, type = 'text', value, onChange, placeholder, name,
                     </div>
                 </>
             ) : prefix ? (
-                <div className="relative flex items-center w-full h-[56px] border border-[#D1D5DB] rounded-[8px] bg-[#FFFFFF] transition-colors focus-within:border-[#0F3D2E] focus-within:ring-1 focus-within:ring-[#0F3D2E] overflow-hidden">
+                <div className={`relative flex items-center w-full h-[56px] border ${error ? 'border-red-500 hover:border-red-500 focus-within:border-red-500 focus-within:ring-red-500/20' : 'border-[#D1D5DB] focus-within:border-[#0F3D2E] focus-within:ring-[#0F3D2E]'} rounded-[8px] bg-[#FFFFFF] transition-all duration-300 focus-within:ring-1 overflow-hidden`}>
                     <div className="pl-4 pr-3 flex items-center h-full text-[#111827]">
                         {prefix}
                     </div>
@@ -111,6 +112,7 @@ const CustomInput = ({ label, type = 'text', value, onChange, placeholder, name,
                         name={name}
                         value={value}
                         onChange={onChange}
+                        onBlur={onBlur}
                         placeholder={placeholder}
                         className="flex-1 w-full h-full font-['Plus_Jakarta_Sans'] placeholder:text-[#9CA3AF] text-[#111827] outline-none bg-transparent px-[2px] text-[15px]"
                     />
@@ -121,11 +123,17 @@ const CustomInput = ({ label, type = 'text', value, onChange, placeholder, name,
                     name={name}
                     value={value}
                     onChange={onChange}
+                    onBlur={onBlur}
                     placeholder={placeholder}
-                    className="w-full h-[56px] px-[16px] text-[15px] border border-[#D1D5DB] rounded-[8px] outline-none bg-[#FFFFFF] font-['Plus_Jakarta_Sans'] transition-colors focus:border-[#0F3D2E] focus:ring-1 focus:ring-[#0F3D2E] placeholder:text-[#9CA3AF] text-[#111827]"
+                    className={`w-full h-[56px] px-[16px] text-[15px] border ${error ? 'border-red-500 hover:border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-[#D1D5DB] focus:border-[#0F3D2E] focus:ring-[#0F3D2E]'} rounded-[8px] outline-none bg-[#FFFFFF] font-['Plus_Jakarta_Sans'] transition-all duration-300 focus:ring-1 placeholder:text-[#9CA3AF] text-[#111827]`}
                 />
             )}
         </div>
+        {error && (
+            <div className="mt-1.5 text-red-500 text-[13px] font-medium animate-in fade-in slide-in-from-top-1 duration-300">
+                {error}
+            </div>
+        )}
     </div>
 );
 
@@ -167,9 +175,66 @@ const SignUp = () => {
         panCardFile: null,
     });
 
+    const validateField = (name, value) => {
+        if (!value) return '';
+        switch (name) {
+            case 'firstName':
+            case 'lastName':
+                if (!/^[a-zA-Z\s]+$/.test(value)) return `${name === 'firstName' ? 'First' : 'Last'} name must contain only letters and spaces.`;
+                break;
+            case 'email':
+                if (!/\S+@\S+\.\S+/.test(value)) return 'Invalid email format.';
+                break;
+            case 'phone':
+                if (!/^\d{10}$/.test(value)) return 'Invalid phone number format.';
+                break;
+            case 'accountHolderName':
+                if (!/^[a-zA-Z\s]+$/.test(value)) return 'Account holder name must contain only letters and spaces.';
+                break;
+            case 'accountNumber':
+                if (!/^\d+$/.test(value)) return 'Account number must contain only numbers.';
+                break;
+            case 'ifscCode':
+                if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(value)) return 'IFSC code must be valid, e.g., SBIN0001234.';
+                break;
+            case 'udyogAadhar':
+                if (!/^\d{12}$/.test(value)) return 'Udyog Aadhar must be exactly 12 digits long.';
+                break;
+            case 'gstNumber':
+                if (value && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(value)) return 'GST number must be a valid 15 character string format e.g. 22AAAAA0000A1Z5';
+                break;
+            case 'village':
+                if (value && !/^[a-zA-Z\s]+$/.test(value)) return 'Village name must contain only letters and spaces.';
+                break;
+            case 'pinCode':
+                if (!/^\d{6}$/.test(value)) return 'Pincode must be exactly 6 digits.';
+                break;
+            default:
+                break;
+        }
+        return '';
+    };
+
+    const handleBlur = (e) => {
+        const { name, value } = e.target;
+        const validationError = validateField(name, value);
+        if (validationError) {
+            setFieldErrors(prev => ({ ...prev, [name]: validationError }));
+        }
+    };
+
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
+        const newValue = type === 'checkbox' ? checked : value;
+        setFormData({ ...formData, [name]: newValue });
+
+        if (fieldErrors[name]) {
+            const validationError = validateField(name, newValue);
+            if (!validationError) {
+                setFieldErrors(prev => ({ ...prev, [name]: '' }));
+            }
+        }
+        if (error) setError('');
     };
 
     const handleFileChange = (name, file) => {
@@ -180,17 +245,115 @@ const SignUp = () => {
         setFormData({ ...formData, [name]: null });
     };
 
-    const handleNext = () => {
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [fieldErrors, setFieldErrors] = useState({});
+
+    const handleNext = async () => {
         if (step === 0) {
-            navigate('/verify-otp', { state: { phone: formData.phone, mode: 'signup' } });
-        } else if (step === 1) {
-            setSearchParams({ step: '2' });
-        } else if (step === 2) {
-            setSearchParams({ step: '3' });
-        } else if (step === 3) {
-            setSearchParams({ step: '4' });
-        } else if (step === 4) {
-            navigate('/success', { state: { mode: 'signup' } });
+            const validationError = validateField('phone', formData.phone);
+            if (validationError) {
+                setFieldErrors(prev => ({ ...prev, phone: validationError }));
+                return;
+            }
+        }
+
+        setIsLoading(true);
+        setError('');
+        setFieldErrors({});
+        try {
+            if (step === 0) {
+                const { registerMobileApi } = await import('../../services/onboardingService');
+                const response = await registerMobileApi(formData.phone);
+                navigate('/verify-otp', { state: { phone: formData.phone, mode: 'signup', userId: response.userId } });
+            } else if (step === 1) {
+                const { savePersonalDetailsApi } = await import('../../services/onboardingService');
+                await savePersonalDetailsApi({
+                    first_name: formData.firstName,
+                    last_name: formData.lastName,
+                    email: formData.email
+                });
+                setSearchParams({ step: '2' });
+            } else if (step === 2) {
+                const { saveBusinessDetailsApi } = await import('../../services/onboardingService');
+                await saveBusinessDetailsApi(formData, {
+                    udyogAadharFile: formData.udyogAadharFile,
+                    gstFile: formData.gstFile,
+                    otherDocFile: formData.otherDocFile
+                });
+                setSearchParams({ step: '3' });
+            } else if (step === 3) {
+                const { saveShopDetailsApi } = await import('../../services/onboardingService');
+                await saveShopDetailsApi(formData);
+                setSearchParams({ step: '4' });
+            } else if (step === 4) {
+                const { saveBankDetailsApi, saveMachineDetailsDefaultApi, completeOnboardingApi } = await import('../../services/onboardingService');
+                await saveBankDetailsApi(formData, {
+                    cancelledChequeFile: formData.cancelledChequeFile,
+                    panCardFile: formData.panCardFile
+                });
+                // Call hidden default machine details required by the backend
+                await saveMachineDetailsDefaultApi();
+                // Finally complete onboarding
+                await completeOnboardingApi();
+                navigate('/success', { state: { mode: 'signup' } });
+            }
+        } catch (err) {
+            const apiMsg = err.response?.data?.message || 'An error occurred while saving your data. Please try again.';
+            const msgStr = typeof apiMsg === 'string' ? apiMsg : JSON.stringify(apiMsg);
+
+            const newFieldErrors = {};
+
+            if (step === 0) {
+                const errors = msgStr.split(',').map(e => e.trim());
+                errors.forEach(err => {
+                    const lowErr = err.toLowerCase();
+                    if (lowErr.includes('phone') || lowErr.includes('registered')) newFieldErrors.phone = err;
+                });
+            } else if (step === 1) {
+                const errors = msgStr.split(',').map(e => e.trim());
+                errors.forEach(err => {
+                    const lowErr = err.toLowerCase();
+                    if (lowErr.includes('first name') || lowErr.includes('firstname')) newFieldErrors.firstName = err;
+                    else if (lowErr.includes('last name') || lowErr.includes('lastname')) newFieldErrors.lastName = err;
+                    else if (lowErr.includes('email')) newFieldErrors.email = err;
+                });
+            } else if (step === 2) {
+                const errors = msgStr.split(',').map(e => e.trim());
+                errors.forEach(err => {
+                    const lowErr = err.toLowerCase();
+                    if (lowErr.includes('udyog') || lowErr.includes('aadhar')) newFieldErrors.udyogAadhar = err;
+                    else if (lowErr.includes('gst')) newFieldErrors.gstNumber = err;
+                });
+            } else if (step === 3) {
+                const errors = msgStr.split(',').map(e => e.trim());
+                errors.forEach(err => {
+                    const lowErr = err.toLowerCase();
+                    if (lowErr.includes('shop')) newFieldErrors.shopName = err;
+                    else if (lowErr.includes('address')) newFieldErrors.address = err;
+                    else if (lowErr.includes('village')) newFieldErrors.village = err;
+                    else if (lowErr.includes('pin')) newFieldErrors.pinCode = err;
+                    else if (lowErr.includes('district')) newFieldErrors.district = err;
+                    else if (lowErr.includes('state')) newFieldErrors.state = err;
+                });
+            } else if (step === 4) {
+                const errors = msgStr.split(',').map(e => e.trim());
+                errors.forEach(err => {
+                    const lowErr = err.toLowerCase();
+                    if (lowErr.includes('holder') || lowErr.includes('name')) newFieldErrors.accountHolderName = err;
+                    else if (lowErr.includes('account number') || lowErr.includes('accountno')) newFieldErrors.accountNumber = err;
+                    else if (lowErr.includes('ifsc')) newFieldErrors.ifscCode = err;
+                    else if (lowErr.includes('bank')) newFieldErrors.bankName = err;
+                });
+            }
+
+            if (Object.keys(newFieldErrors).length > 0) {
+                setFieldErrors(newFieldErrors);
+            } else {
+                setError(msgStr);
+            }
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -231,7 +394,12 @@ const SignUp = () => {
                                         name="phone"
                                         type="tel"
                                         value={formData.phone}
-                                        onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        onChange={(e) => {
+                                            const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                                            handleChange({ target: { name: 'phone', value: val } });
+                                        }}
+                                        error={fieldErrors.phone || (step === 0 ? error : '')}
                                         prefix={
                                             <div className="flex items-center gap-1.5 pr-2">
                                                 <span className="text-[15px] font-medium text-[#111827]">IN</span>
@@ -257,14 +425,11 @@ const SignUp = () => {
                                 </div>
 
                                 <button
-                                    disabled={!formData.phone || !formData.agreed}
+                                    disabled={!formData.phone || !formData.agreed || formData.phone.length < 10 || isLoading || !!fieldErrors.phone}
                                     onClick={handleNext}
-                                    className="w-full h-[56px] bg-[#A7C0B8] text-white text-[16px] font-['Plus_Jakarta_Sans'] font-medium rounded-[8px] transition-colors disabled:opacity-100 disabled:cursor-not-allowed hover:bg-[#86a89d]"
-                                    style={{
-                                        backgroundColor: (!formData.phone || !formData.agreed) ? '#A7C0B8' : '#0F3D2E'
-                                    }}
+                                    className="w-full h-[56px] bg-[#0F3D2E] text-white text-[16px] font-['Plus_Jakarta_Sans'] font-medium rounded-[8px] transition-colors disabled:opacity-60 disabled:cursor-not-allowed hover:bg-[#0a291f]"
                                 >
-                                    Get OTP
+                                    {isLoading ? 'Sending...' : 'Get OTP'}
                                 </button>
                             </form>
                         </div>
@@ -280,6 +445,7 @@ const SignUp = () => {
                             </div>
 
                             <form noValidate onSubmit={(e) => e.preventDefault()}>
+                                {error && <div className="mb-4 text-red-500 text-[13px] font-medium animate-in fade-in slide-in-from-top-1 duration-300">{error}</div>}
                                 <div className="mb-6">
                                     <CustomInput
                                         label="First name"
@@ -287,6 +453,8 @@ const SignUp = () => {
                                         name="firstName"
                                         value={formData.firstName}
                                         onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        error={fieldErrors.firstName}
                                     />
                                 </div>
                                 <div className="mb-6">
@@ -296,6 +464,8 @@ const SignUp = () => {
                                         name="lastName"
                                         value={formData.lastName}
                                         onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        error={fieldErrors.lastName}
                                     />
                                 </div>
                                 <div className="mb-8">
@@ -306,17 +476,19 @@ const SignUp = () => {
                                         type="email"
                                         value={formData.email}
                                         onChange={handleChange}
+                                        onBlur={handleBlur}
+                                        error={fieldErrors.email}
                                     />
                                 </div>
                                 <button
-                                    disabled={!formData.firstName || !formData.lastName || !formData.email}
+                                    disabled={!formData.firstName || !formData.lastName || !formData.email || isLoading || !!fieldErrors.firstName || !!fieldErrors.lastName || !!fieldErrors.email}
                                     onClick={handleNext}
                                     className="w-full h-[56px] text-white text-[16px] font-['Plus_Jakarta_Sans'] font-medium rounded-[8px] transition-colors disabled:opacity-100 disabled:cursor-not-allowed hover:bg-[#86a89d]"
                                     style={{
-                                        backgroundColor: (!formData.firstName || !formData.lastName || !formData.email) ? '#A7C0B8' : '#0F3D2E'
+                                        backgroundColor: (!formData.firstName || !formData.lastName || !formData.email || !!fieldErrors.firstName || !!fieldErrors.lastName || !!fieldErrors.email) ? '#A7C0B8' : '#0F3D2E'
                                     }}
                                 >
-                                    Save & Continue
+                                    {isLoading ? 'Saving...' : 'Save & Continue'}
                                 </button>
                             </form>
                         </div>
@@ -342,6 +514,7 @@ const SignUp = () => {
                                 </p>
 
                                 <form noValidate onSubmit={(e) => e.preventDefault()} className="w-full">
+                                    {error && <div className="mb-4 text-red-500 text-[13px] font-medium animate-in fade-in slide-in-from-top-1 duration-300">{error}</div>}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-[24px] w-full">
                                         <CustomInput
                                             label="Udyog aadhar"
@@ -349,6 +522,8 @@ const SignUp = () => {
                                             name="udyogAadhar"
                                             value={formData.udyogAadhar}
                                             onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            error={fieldErrors.udyogAadhar}
                                         />
                                         <CustomInput
                                             label="GST number (Optional)"
@@ -356,6 +531,8 @@ const SignUp = () => {
                                             name="gstNumber"
                                             value={formData.gstNumber}
                                             onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            error={fieldErrors.gstNumber}
                                         />
                                         <FileUploadBox
                                             title="Upload udyog aadhar certificate"
@@ -383,11 +560,11 @@ const SignUp = () => {
 
                                     <div className="col-span-1 md:col-span-2 w-full flex justify-center mt-[12px]">
                                         <button
-                                            disabled={!formData.udyogAadhar}
+                                            disabled={!formData.udyogAadhar || !formData.udyogAadharFile || !formData.gstFile || isLoading || !!fieldErrors.udyogAadhar || !!fieldErrors.gstNumber}
                                             onClick={handleNext}
                                             className="w-full md:w-[calc(50%-12px)] h-[56px] bg-[#0F3D2E] text-white text-[16px] font-['Plus_Jakarta_Sans'] font-medium rounded-[8px] hover:bg-[#0a291f] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                                         >
-                                            Save & Continue
+                                            {isLoading ? 'Saving...' : 'Save & Continue'}
                                         </button>
                                     </div>
                                 </form>
@@ -411,6 +588,7 @@ const SignUp = () => {
                                 </p>
 
                                 <form noValidate onSubmit={(e) => e.preventDefault()} className="w-full">
+                                    {error && <div className="mb-4 text-red-500 text-[13px] font-medium animate-in fade-in slide-in-from-top-1 duration-300">{error}</div>}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-[24px] w-full">
                                         <CustomInput
                                             label="Shop Name"
@@ -418,6 +596,8 @@ const SignUp = () => {
                                             name="shopName"
                                             value={formData.shopName}
                                             onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            error={fieldErrors.shopName}
                                         />
                                         <CustomInput
                                             label="Address"
@@ -425,6 +605,8 @@ const SignUp = () => {
                                             name="address"
                                             value={formData.address}
                                             onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            error={fieldErrors.address}
                                         />
                                         <CustomInput
                                             label="Village"
@@ -432,6 +614,8 @@ const SignUp = () => {
                                             name="village"
                                             value={formData.village}
                                             onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            error={fieldErrors.village}
                                         />
                                         <CustomInput
                                             label="Pin Code"
@@ -440,6 +624,8 @@ const SignUp = () => {
                                             type="text"
                                             value={formData.pinCode}
                                             onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            error={fieldErrors.pinCode}
                                         />
                                         <CustomInput
                                             select
@@ -447,6 +633,8 @@ const SignUp = () => {
                                             name="district"
                                             value={formData.district}
                                             onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            error={fieldErrors.district}
                                         >
                                             <option value="" disabled className="hidden">Select district</option>
                                             <option value="District 1">Kolhapur</option>
@@ -460,6 +648,8 @@ const SignUp = () => {
                                             name="state"
                                             value={formData.state}
                                             onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            error={fieldErrors.state}
                                         >
                                             <option value="" disabled className="hidden">Select state</option>
                                             <option value="State 1">Maharashtra</option>
@@ -471,11 +661,11 @@ const SignUp = () => {
 
                                     <div className="col-span-1 md:col-span-2 w-full flex justify-center mt-[12px]">
                                         <button
-                                            disabled={!formData.shopName || !formData.address || !formData.village || !formData.pinCode || !formData.district || !formData.state}
+                                            disabled={!formData.shopName || !formData.address || !formData.village || !formData.pinCode || !formData.district || !formData.state || isLoading || !!fieldErrors.shopName || !!fieldErrors.address || !!fieldErrors.village || !!fieldErrors.pinCode || !!fieldErrors.district || !!fieldErrors.state}
                                             onClick={handleNext}
                                             className="w-full md:w-[calc(50%-12px)] h-[56px] bg-[#0F3D2E] text-white text-[16px] font-['Plus_Jakarta_Sans'] font-medium rounded-[8px] hover:bg-[#0a291f] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                                         >
-                                            Save & Continue
+                                            {isLoading ? 'Saving...' : 'Save & Continue'}
                                         </button>
                                     </div>
                                 </form>
@@ -499,6 +689,7 @@ const SignUp = () => {
                                 </p>
 
                                 <form noValidate onSubmit={(e) => e.preventDefault()} className="w-full">
+                                    {error && <div className="mb-4 text-red-500 text-[13px] font-medium animate-in fade-in slide-in-from-top-1 duration-300">{error}</div>}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-[24px] w-full">
                                         <CustomInput
                                             label="Account holder name"
@@ -506,6 +697,8 @@ const SignUp = () => {
                                             name="accountHolderName"
                                             value={formData.accountHolderName}
                                             onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            error={fieldErrors.accountHolderName}
                                         />
                                         <CustomInput
                                             label="Account number"
@@ -513,6 +706,8 @@ const SignUp = () => {
                                             name="accountNumber"
                                             value={formData.accountNumber}
                                             onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            error={fieldErrors.accountNumber}
                                         />
                                         <CustomInput
                                             label="IFSC code"
@@ -520,6 +715,8 @@ const SignUp = () => {
                                             name="ifscCode"
                                             value={formData.ifscCode}
                                             onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            error={fieldErrors.ifscCode}
                                         />
                                         <CustomInput
                                             select
@@ -527,6 +724,7 @@ const SignUp = () => {
                                             name="bankName"
                                             value={formData.bankName}
                                             onChange={handleChange}
+                                            error={fieldErrors.bankName}
                                         >
                                             <option value="" disabled className="hidden">Select bank</option>
                                             <option value="ICICI Bank">ICICI Bank</option>
@@ -553,11 +751,11 @@ const SignUp = () => {
 
                                     <div className="col-span-1 md:col-span-2 w-full flex justify-center mt-[12px]">
                                         <button
-                                            disabled={!formData.accountHolderName || !formData.accountNumber || !formData.ifscCode || !formData.bankName || !formData.cancelledChequeFile}
+                                            disabled={!formData.accountHolderName || !formData.accountNumber || !formData.ifscCode || !formData.bankName || !formData.cancelledChequeFile || isLoading || !!fieldErrors.accountHolderName || !!fieldErrors.accountNumber || !!fieldErrors.ifscCode}
                                             onClick={handleNext}
                                             className="w-full md:w-[calc(50%-12px)] h-[56px] bg-[#0F3D2E] text-white text-[16px] font-['Plus_Jakarta_Sans'] font-medium rounded-[8px] hover:bg-[#0a291f] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                                         >
-                                            {(!formData.accountHolderName || !formData.accountNumber || !formData.ifscCode || !formData.bankName || !formData.cancelledChequeFile) ? "Save & Continue" : "Save & Finish"}
+                                            {isLoading ? 'Saving...' : (!formData.accountHolderName || !formData.accountNumber || !formData.ifscCode || !formData.bankName || !formData.cancelledChequeFile) ? "Save & Continue" : "Save & Finish"}
                                         </button>
                                     </div>
                                 </form>

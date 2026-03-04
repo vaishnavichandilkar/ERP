@@ -91,7 +91,7 @@ const SelectMachine = () => {
     const [machineMake, setMachineMake] = useState('');
 
     const handleSubmit = () => {
-        navigate('/application-status');
+        navigate('/', { state: { registered: true } });
     };
 
     const getBtnClass = (selected) => {

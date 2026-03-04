@@ -13,6 +13,7 @@ const VerifyOTP = () => {
     const location = useLocation();
     const phone = location.state?.phone || 'XXXXXX1234';
     const mode = location.state?.mode || 'login';
+    const userId = location.state?.userId;
 
     useEffect(() => {
         const countdown = setInterval(() => {
@@ -42,12 +43,53 @@ const VerifyOTP = () => {
         }
     };
 
-    const handleVerify = () => {
-        if (mode === 'signup') {
-            navigate('/signup?step=1');
-        } else {
-            navigate('/success', { state: { mode } });
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleVerify = async () => {
+        const enteredOtp = otp.join('');
+        if (enteredOtp.length < 6) return;
+
+        setIsLoading(true);
+        setError('');
+
+        try {
+            if (mode === 'signup') {
+                const { verifyOnboardingOtpApi } = await import('../../services/onboardingService');
+                const response = await verifyOnboardingOtpApi(phone, enteredOtp, userId);
+                if (response.accessToken) {
+                    localStorage.setItem('token', response.accessToken);
+                }
+                navigate('/signup?step=1');
+            } else {
+                const { loginApi } = await import('../../services/authService');
+                const response = await loginApi(phone, enteredOtp);
+                if (response.accessToken) {
+                    localStorage.setItem('token', response.accessToken);
+                }
+                if (response.user) {
+                    localStorage.setItem('user', JSON.stringify(response.user));
+
+                    // Handle application status logic for sellers
+                    if (response.user.role === 'SELLER') {
+                        const status = response.user.approvalStatus;
+                        if (status === 'PENDING' || status === 'REJECTED' || status === 'APPROVED') {
+                            navigate('/application-status');
+                            return;
+                        }
+                    }
+                }
+                navigate('/success', { state: { mode } });
+            }
+        } catch (err) {
+            setError(err.response?.data?.message || 'Invalid OTP. Please try again.');
+        } finally {
+            setIsLoading(false);
         }
+    };
+
+    const handleResend = async () => {
+        // Implement resend OTP if needed
     };
 
     const maskedPhone = `+91 ${phone.replace(/.(?=.{4})/g, 'X')}`;
@@ -85,21 +127,22 @@ const VerifyOTP = () => {
                         )}
                     </p>
 
-                    <div className="flex gap-2 justify-between mb-6">
-                        {otp.map((data, index) => (
+                    <div className="flex justify-between gap-1 sm:gap-4 mb-8">
+                        {otp.map((digit, index) => (
                             <input
                                 key={index}
+                                type="text"
+                                maxLength={1}
+                                value={digit}
                                 ref={(el) => inputRefs.current[index] = el}
-                                value={data}
                                 onChange={(e) => {
-                                    if (e.target.value.length <= 1) {
-                                        handleChange(e.target, index)
-                                    }
+                                    handleChange(e.target, index);
+                                    if (error) setError('');
                                 }}
                                 onKeyDown={(e) => handleKeyDown(e, index)}
-                                onFocus={(e) => e.target.select()}
-                                maxLength={1}
-                                className="w-10 sm:w-12 h-14 text-center text-2xl border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0B3D2E] focus:border-[#0B3D2E] transition-colors bg-white font-medium"
+                                className={`w-10 h-10 sm:w-14 sm:h-14 text-center text-xl sm:text-2xl font-bold border rounded-[8px] bg-white text-gray-900 transition-all duration-300 outline-none
+                                    ${error ? 'border-red-500 hover:border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/20' : 'border-gray-300 focus:border-[#0F3D2E] focus:ring-1 focus:ring-[#0F3D2E]'}
+                                `}
                             />
                         ))}
                     </div>
@@ -109,7 +152,7 @@ const VerifyOTP = () => {
                             <span>Didn't receive it? <span className="font-bold">Retry</span> in 00:{timer.toString().padStart(2, '0')}</span>
                         ) : (
                             <button
-                                onClick={() => setTimer(60)}
+                                onClick={handleResend}
                                 className="bg-transparent border-none text-[#0B3D2E] cursor-pointer font-bold p-0 text-sm no-underline hover:underline focus:outline-none"
                             >
                                 Resend OTP
@@ -117,8 +160,14 @@ const VerifyOTP = () => {
                         )}
                     </div>
 
-                    <Button onClick={handleVerify} className="text-[16px] font-['Plus_Jakarta_Sans'] py-3 mt-2">
-                        Verify
+                    {error && (
+                        <div className="mt-1.5 text-red-500 text-[13px] font-medium animate-in fade-in slide-in-from-top-1 duration-300 mb-4">
+                            {error}
+                        </div>
+                    )}
+
+                    <Button onClick={handleVerify} disabled={isLoading || otp.join('').length < 6} className="text-[16px] font-['Plus_Jakarta_Sans'] py-3 mt-2">
+                        {isLoading ? 'Verifying...' : 'Verify'}
                     </Button>
                 </div>
             </div>

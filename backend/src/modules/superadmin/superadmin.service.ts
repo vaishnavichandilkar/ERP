@@ -17,6 +17,9 @@ export class SuperAdminService {
                 shopDetail: true,
                 weighingMachineDetail: true,
                 sellerDocuments: true
+            },
+            orderBy: {
+                created_at: 'desc'
             }
         });
     }
@@ -31,13 +34,16 @@ export class SuperAdminService {
             where: { id: sellerId },
             data: {
                 isApproved: true,
+                approvalStatus: 'APPROVED',
+                isFirstApprovalLogin: true,
+                rejectionReason: null
             }
         });
 
         return { message: 'Seller approved successfully' };
     }
 
-    async rejectSeller(sellerId: string) {
+    async rejectSeller(sellerId: string, rejectionReason?: string) {
         const user = await this.prisma.user.findUnique({ where: { id: sellerId } });
         if (!user) throw new BadRequestException('User not found');
         if (user.role !== 'seller') throw new BadRequestException('Not a Seller user');
@@ -46,7 +52,8 @@ export class SuperAdminService {
             where: { id: sellerId },
             data: {
                 isApproved: false,
-                // Optionally we could mark them as blocked or reset onboarding
+                approvalStatus: 'REJECTED',
+                rejectionReason: rejectionReason || 'Invalid documents or information provided'
             }
         });
 

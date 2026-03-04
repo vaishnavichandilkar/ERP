@@ -35,6 +35,12 @@ enum SellerDocumentType {
   OTHER
 }
 
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 // USER MODEL
 
 model User {
@@ -61,7 +67,9 @@ model User {
   deleted_at         DateTime?
 
   isBlocked          Boolean   @default(false)
-
+  approvalStatus     ApprovalStatus @default(PENDING)
+  rejectionReason    String?
+  isFirstApprovalLogin Boolean @default(true)
 
   // RELATIONS
   sellerDocuments       SellerDocument[] @relation("UploadedByUser")

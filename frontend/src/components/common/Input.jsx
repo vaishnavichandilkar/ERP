@@ -1,8 +1,8 @@
 import React from 'react';
 
-const Input = ({ label, type = 'text', value, onChange, placeholder, name, required, startIcon, endIcon, select, children, prefix, ...props }) => {
+const Input = ({ label, type = 'text', value, onChange, placeholder, name, required, startIcon, endIcon, select, children, prefix, invalid, ...props }) => {
     const isSelect = select;
-    const baseInputClass = "w-full min-h-[44px] px-3 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#0B3D2E] focus:border-[#0B3D2E] transition-colors";
+    const baseInputClass = `w-full min-h-[44px] px-3 py-2 border rounded-lg text-gray-900 bg-white placeholder-gray-400 focus:outline-none transition-colors ${invalid ? 'border-red-500 focus:ring-1 focus:ring-red-500/20' : 'border-gray-300 focus:ring-1 focus:ring-[#0B3D2E] focus:border-[#0B3D2E]'}`;
 
     // Remove unused MUI props
     delete props.SelectProps;
@@ -22,7 +22,7 @@ const Input = ({ label, type = 'text', value, onChange, placeholder, name, requi
                 </label>
             )}
             {prefix ? (
-                <div className="relative flex items-center w-full min-h-[44px] border border-gray-300 rounded-[8px] bg-white transition-colors focus-within:border-[#0B3D2E] focus-within:ring-1 focus-within:ring-[#0B3D2E] overflow-hidden">
+                <div className={`relative flex items-center w-full min-h-[44px] border rounded-[8px] bg-white transition-all duration-300 overflow-hidden ${invalid ? 'border-red-500 focus-within:ring-1 focus-within:ring-red-500/20' : 'border-gray-300 focus-within:border-[#0B3D2E] focus-within:ring-1 focus-within:ring-[#0B3D2E]'}`}>
                     <div className="pl-4 pr-3 flex items-center h-full text-gray-900 border-r border-[#E5E7EB] shrink-0">
                         {prefix}
                     </div>
