@@ -7,140 +7,81 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// System Admin (for bootstrapping and global management)
-enum AdminStatus {
-  PENDING_OTP
-  PENDING_PROFILE
-  PENDING_APPROVAL
-  ACTIVE
-  REJECTED
-}
-// ENUMS
-
-enum Role {
-  buyer
-  seller
-
-  // COMPANY PANEL ROLES
-  superadmin
-  administrator
-  operator
-}
-
-enum SellerDocumentType {
-  PAN
-  GST
-  AADHAR
-  BANK
-  OTHER
-}
-
-enum ApprovalStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
-
-// USER MODEL
-
 model User {
-  id                 String    @id @default(uuid())
-
-  first_name         String?
-  last_name          String?
-
-  email              String?   @unique
-  phone              String?   @unique
-
-  selected_language  String?
-
-  role               Role      @default(buyer)
-
-  refresh_token      String?
-
-  onboarded_at       DateTime?
-  verified           Boolean   @default(false)
-  isApproved         Boolean   @default(false)
-
-  created_at         DateTime  @default(now())
-  updated_at         DateTime  @updatedAt
-  deleted_at         DateTime?
-
-  isBlocked          Boolean   @default(false)
-  approvalStatus     ApprovalStatus @default(PENDING)
-  rejectionReason    String?
-  isFirstApprovalLogin Boolean @default(true)
-
-  // RELATIONS
-  sellerDocuments       SellerDocument[] @relation("UploadedByUser")
+  id                    String                 @id @default(uuid())
+  first_name            String?
+  last_name             String?
+  email                 String?                @unique
+  phone                 String?                @unique
+  selected_language     String?
+  role                  Role                   @default(buyer)
+  refresh_token         String?
+  onboarded_at          DateTime?
+  verified              Boolean                @default(false)
+  isApproved            Boolean                @default(false)
+  created_at            DateTime               @default(now())
+  updated_at            DateTime               @updatedAt
+  deleted_at            DateTime?
+  isBlocked             Boolean                @default(false)
+  approvalStatus        ApprovalStatus         @default(PENDING)
+  rejectionReason       String?
+  isFirstApprovalLogin  Boolean                @default(true)
   bankDetail            BankDetail?
+  sellerDocuments       SellerDocument[]       @relation("UploadedByUser")
   shopDetail            ShopDetail?
   weighingMachineDetail WeighingMachineDetail?
+  facilities            Facility[]             @relation("SellerFacilities")
   otpVerifications      OtpVerification[]
-  facilities            Facility[]       @relation("SellerFacilities")
 
   @@map("User")
 }
 
-
-// BANK DETAIL MODEL
 model BankDetail {
-  id          String    @id @default(uuid())
-  userId      String    @unique
-  holderName  String
-  accountNo   String    @unique
-  ifsc        String
-  bankName    String
-  panNumber   String?   // New field
-  createdAt   DateTime  @default(now())
-
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  holderName String
+  accountNo  String   @unique
+  ifsc       String
+  bankName   String
+  panNumber  String?
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("BankDetail")
 }
 
-// SHOP DETAIL MODEL (Suggested Improvement for Step 4)
 model ShopDetail {
-  id          String   @id @default(uuid())
-  userId      String   @unique
-  shopName    String
-  address     String
-  village     String?
-  pinCode     String
-  state       String
-  district    String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  shopName  String
+  address   String
+  village   String?
+  pinCode   String
+  state     String
+  district  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("ShopDetail")
 }
 
-// WEIGHING MACHINE MODEL (New Step 6)
 model WeighingMachineDetail {
-  id                 String   @id @default(uuid())
-  userId             String   @unique
-  isUsingOwnMachine  Boolean
-  make               String?
-  machineName        String
-  modelNumber        String?
-  machineType        String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-
-  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  isUsingOwnMachine Boolean
+  make              String?
+  machineName       String
+  modelNumber       String?
+  machineType       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("WeighingMachineDetail")
 }
 
-
-
-
-// OTP MODEL
-
 model Otp {
-
   id         Int      @id @default(autoincrement())
   phone      String   @unique
   otp        String
@@ -148,97 +89,78 @@ model Otp {
   isVerified Boolean  @default(false)
 
   @@map("Otp")
-
 }
 
-
-
-
-// SELLER DOCUMENT MODEL
-
 model SellerDocument {
-  id                Int      @id @default(autoincrement())
-  profileId         Int?
-  type              SellerDocumentType
-  url               String
-  category          String?
-  uploadedByUserId  String?
-
-  name              String?
-  size              BigInt   @default(0)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-
-  // RELATION WITH USER
-  uploadedByUser User? @relation("UploadedByUser", fields: [uploadedByUserId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  id               Int                @id @default(autoincrement())
+  profileId        Int?
+  type             SellerDocumentType
+  url              String
+  category         String?
+  uploadedByUserId String?
+  name             String?
+  size             BigInt             @default(0)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  uploadedByUser   User?              @relation("UploadedByUser", fields: [uploadedByUserId], references: [id])
 
   @@map("SellerDocument")
 }
 
-enum FacilityStatus {
-  ACTIVE
-  INACTIVE
-}
-
 model Facility {
-  id            String         @id @default(uuid())
-  name          String         @db.VarChar(150)
-  location      String         @db.VarChar(150)
-  address       String
-  totalMachines Int
-  gstNumber     String?        @db.VarChar(15)
-  status        FacilityStatus @default(ACTIVE)
-  isDeleted     Boolean        @default(false)
-  
-  sellerId      String         @default("legacy") // Temporary default to avoid migration issues if data exists, but we'll prune it.
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-
-  seller        User           @relation("SellerFacilities", fields: [sellerId], references: [id])
+  id             String          @id @default(uuid())
+  name           String          @db.VarChar(150)
+  location       String          @db.VarChar(150)
+  address        String
+  totalMachines  Int
+  gstNumber      String?         @db.VarChar(15)
+  status         FacilityStatus  @default(ACTIVE)
+  isDeleted      Boolean         @default(false)
+  sellerId       String          @default("legacy")
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
   administrators Administrator[]
+  seller         User            @relation("SellerFacilities", fields: [sellerId], references: [id])
   operators      Operator[]
 
   @@map("facilities")
 }
 
 model Administrator {
-  id           String   @id @default(uuid())
-  name         String
-  username     String   @unique
-  mobile       String?
-  facilityId   String
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
-  facility     Facility @relation(fields: [facilityId], references: [id])
-  permissions  AdministratorPermission[]
+  id          String                    @id @default(uuid())
+  name        String
+  username    String                    @unique
+  mobile      String?
+  facilityId  String
+  isActive    Boolean                   @default(true)
+  createdAt   DateTime                  @default(now())
+  updatedAt   DateTime                  @updatedAt
+  permissions AdministratorPermission[]
+  facility    Facility                  @relation(fields: [facilityId], references: [id])
 
   @@map("administrators")
 }
 
 model Operator {
-  id           String   @id @default(uuid())
-  name         String
-  username     String   @unique
-  mobile       String?
-  facilityId   String
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
-  facility     Facility @relation(fields: [facilityId], references: [id])
-  permissions  OperatorPermission[]
+  id          String               @id @default(uuid())
+  name        String
+  username    String               @unique
+  mobile      String?
+  facilityId  String
+  isActive    Boolean              @default(true)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  permissions OperatorPermission[]
+  facility    Facility             @relation(fields: [facilityId], references: [id])
 
   @@map("operators")
 }
 
 model Module {
-  id                     String                    @id @default(uuid())
-  name                   String                    @unique // Dashboard, Users, Facilities, Reports, Billing, Settings
+  id                       String                    @id @default(uuid())
+  name                     String                    @unique
   administratorPermissions AdministratorPermission[]
-  operatorPermissions    OperatorPermission[]
+  operatorPermissions      OperatorPermission[]
 
   @@map("modules")
 }
@@ -251,7 +173,6 @@ model AdministratorPermission {
   canCreate       Boolean       @default(false)
   canUpdate       Boolean       @default(false)
   canDelete       Boolean       @default(false)
-
   administrator   Administrator @relation(fields: [administratorId], references: [id], onDelete: Cascade)
   module          Module        @relation(fields: [moduleId], references: [id])
 
@@ -272,28 +193,24 @@ model OtpVerification {
 }
 
 model OperatorPermission {
-  id          String   @id @default(uuid())
-  operatorId  String
-  moduleId    String
-  canView     Boolean  @default(false)
-  canCreate   Boolean  @default(false)
-  canUpdate   Boolean  @default(false)
-  canDelete   Boolean  @default(false)
-
-  operator    Operator @relation(fields: [operatorId], references: [id], onDelete: Cascade)
-  module      Module   @relation(fields: [moduleId], references: [id])
+  id         String   @id @default(uuid())
+  operatorId String
+  moduleId   String
+  canView    Boolean  @default(false)
+  canCreate  Boolean  @default(false)
+  canUpdate  Boolean  @default(false)
+  canDelete  Boolean  @default(false)
+  module     Module   @relation(fields: [moduleId], references: [id])
+  operator   Operator @relation(fields: [operatorId], references: [id], onDelete: Cascade)
 
   @@unique([operatorId, moduleId])
   @@map("operator_permissions")
 }
 
-
-
-// Redefining UserSession without direct FK to support multiple tables
 model Session {
   id               String   @id @default(uuid())
-  userId           String   // UUID from any User table
-  userType         String   // ADMIN, ADMINISTRATOR, OPERATOR
+  userId           String
+  userType         String
   jti              String   @unique
   refreshTokenHash String
   expiresAt        DateTime
@@ -302,7 +219,6 @@ model Session {
 
   @@map("sessions")
 }
-
 
 model AuditLog {
   id        String   @id @default(uuid())
@@ -315,4 +231,88 @@ model AuditLog {
   createdAt DateTime @default(now())
 
   @@map("audit_logs")
+}
+
+model SellerProfile {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  currentStep     Int      @default(0)
+  status          String   @default("IN_PROGRESS") 
+  sessionId       String   @unique
+  addressId       String?
+  bankDetailId    String?
+  sellerId        String?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  approvedAt      DateTime?
+  onHoldUntil     DateTime?
+  rejectionReason String?
+
+  reviews         SellerStepReview[]
+  @@map("SellerProfile")
+}
+
+model SellerStepReview {
+  id              String   @id @default(uuid())
+  sellerProfileId String
+  step            Int
+  status          String   @default("PENDING")
+  data            Json?
+  remark          String?
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  sellerProfile   SellerProfile @relation(fields: [sellerProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([sellerProfileId, step])
+  @@map("SellerStepReview")
+}
+
+model Pincode {
+  id        String   @id @default(uuid())
+  pincode   String   @unique
+  state     String
+  district  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("Pincode")
+}
+
+enum AdminStatus {
+  PENDING_OTP
+  PENDING_PROFILE
+  PENDING_APPROVAL
+  ACTIVE
+  REJECTED
+}
+
+enum Role {
+  buyer
+  seller
+  superadmin
+  administrator
+  operator
+}
+
+enum SellerDocumentType {
+  PAN
+  GST
+  AADHAR
+  BANK
+  OTHER
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum FacilityStatus {
+  ACTIVE
+  INACTIVE
 }

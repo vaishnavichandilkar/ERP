@@ -13,6 +13,14 @@ This guide provides a comprehensive step-by-step walkthrough to test the **Weigh
 
 **Goal**: Select language, register mobile, provide all business evidence, machine configurations, and wait for Superadmin approval.
 
+### 🌟 New: Session Management (Resume Form Flow)
+You can test the backend's ability to save partially filled data and resume sessions before following the sequential steps below:
+1.  **Start Onboarding**: `POST /seller/onboarding/start` with `{ "userId": "YOUR_UUID" }`. Returns a `sessionId` and `currentStep`.
+2.  **Submit Step Status**: `POST /seller/onboarding/step/1` with header `x-session-id: <sessionId>` and body containing your form data.
+3.  **Resume Drop-off**: `GET /seller/onboarding/status` with header `x-session-id: <sessionId>`. Returns `completedSteps` arrays containing all your saved form state and the specific `nextStep` required.
+
+---
+
 ### Step 1: Language Selection
 *   **Endpoint**: `POST /onboarding/step1-language`
 *   **Payload**:

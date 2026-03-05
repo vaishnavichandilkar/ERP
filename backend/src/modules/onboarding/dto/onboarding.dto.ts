@@ -100,15 +100,15 @@ export class Step6ShopDto {
     @Matches(/^\d{6}$/, { message: 'pincode must be exactly 6 digits' })
     pinCode: string;
 
-    @ApiProperty({ example: 'Maharashtra' })
+    @ApiProperty({ example: 'Maharashtra', required: false })
     @IsString()
-    @IsNotEmpty()
-    state: string;
+    @IsOptional()
+    state?: string;
 
-    @ApiProperty({ example: 'Mumbai' })
+    @ApiProperty({ example: 'Pune', required: false })
     @IsString()
-    @IsNotEmpty()
-    district: string;
+    @IsOptional()
+    district?: string;
 }
 
 export class Step7BankDto {

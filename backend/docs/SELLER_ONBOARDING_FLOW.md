@@ -158,7 +158,7 @@ The onboarding follows a strict **9-step sequence**.
 
 ### Step 6: Shop Details
 **Endpoint**: `POST /onboarding/step6-shop` (Protected, Multipart)
-**Database**: Updates/Creates `ShopDetail` and stores license PDF.
+**Database**: Verifies `pinCode` against `Pincode` table to auto-fetch `state` and `district`. Updates/Creates `ShopDetail` and stores license PDF.
 
 ### Step 7: Bank Details
 **Endpoint**: `POST /onboarding/step7-bank` (Protected, Multipart)

@@ -173,6 +173,22 @@ export class OnboardingService {
     }
 
     async saveShopDetails(userId: string, dto: Step6ShopDto, files: any) {
+        // Validate Pincode and get State and District
+        const pincodeRecord = await this.prisma.pincode.findUnique({
+            where: { pincode: dto.pinCode }
+        });
+
+        if (!pincodeRecord) {
+            throw new BadRequestException('Invalid pincode. Pincode not found.');
+        }
+
+        if (!pincodeRecord.isActive) {
+            throw new BadRequestException('Service is not active for this pincode yet.');
+        }
+
+        const state = pincodeRecord.state;
+        const district = pincodeRecord.district;
+
         // Use the new ShopDetail model
         await this.prisma.shopDetail.upsert({
             where: { userId },
@@ -181,8 +197,8 @@ export class OnboardingService {
                 address: dto.address,
                 village: dto.village,
                 pinCode: dto.pinCode,
-                state: dto.state,
-                district: dto.district,
+                state: state,
+                district: district,
             },
             create: {
                 userId,
@@ -190,8 +206,8 @@ export class OnboardingService {
                 address: dto.address,
                 village: dto.village,
                 pinCode: dto.pinCode,
-                state: dto.state,
-                district: dto.district,
+                state: state,
+                district: district,
             }
         });
 
