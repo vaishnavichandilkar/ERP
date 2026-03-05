@@ -62,11 +62,14 @@ export class OnboardingService {
 
         if (existingUser) {
             // Requirement 2: If phone exists
-            if (existingUser.verified) {
-                // If verified = true -> return error
-                throw new ConflictException('Phone number already registered');
+            // A user is considered "fully registered" only if they have finished onboarding (onboarded_at is set).
+            // If they are verified but haven't finished onboarding (onboarded_at is null), 
+            // we allow them to continue/re-verify to move forward.
+            if (existingUser.verified && existingUser.onboarded_at) {
+                // If verified = true AND onboarding is complete -> return error
+                throw new ConflictException('Phone number already registered and account is active');
             } else {
-                // If verified = false -> reuse same user
+                // If verified = false OR onboarding is incomplete -> reuse user
                 // Update existing user with language from temp session
                 await this.prisma.user.update({
                     where: { id: existingUser.id },

@@ -3,7 +3,7 @@ const prisma = new PrismaClient();
 
 async function main() {
     // 1. Seed Modules
-    const modules = ['Dashboard', 'Users', 'Facilities', 'Products', 'Inventory', 'Billing', 'Reports', 'Access', 'Settings'];
+    const modules = ['Dashboard', 'Reports', 'Masters', 'Purchase', 'Sales', 'Settings'];
 
     for (const name of modules) {
         await prisma.module.upsert({

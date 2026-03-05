@@ -27,14 +27,27 @@ export class SellerOnboardingService {
         });
 
         if (!profile) {
+            // Check user's verified status to set initial step
+            const user = await this.prisma.user.findUnique({ where: { id: userId } });
+            const initialStep = (user && user.verified) ? 3 : 0;
+
             profile = await this.prisma.sellerProfile.create({
                 data: {
                     userId,
-                    currentStep: 0,
+                    currentStep: initialStep,
                     status: 'IN_PROGRESS',
                     sessionId: uuidv4()
                 }
             });
+        } else if (profile.currentStep < 3) {
+            // Sync step if it was somehow stuck below 3
+            const user = await this.prisma.user.findUnique({ where: { id: userId } });
+            if (user && user.verified) {
+                profile = await this.prisma.sellerProfile.update({
+                    where: { id: profile.id },
+                    data: { currentStep: 3 }
+                });
+            }
         }
 
         return {
@@ -99,6 +112,9 @@ export class SellerOnboardingService {
             throw new NotFoundException('Session not found');
         }
 
+        // Logic change: We allow submitting any step that is <= allowedStep.
+        // This handles cases where a user might be sent back to an earlier step by the frontend
+        // even if the backend 'currentStep' is further ahead.
         const allowedStep = profile.currentStep + 1;
         if (stepNumber > allowedStep) {
             throw new BadRequestException(`Cannot skip steps. Allowed step is ${allowedStep}`);

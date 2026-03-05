@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Filter, ArrowUpRight, ArrowDownRight, Download, Search, ChevronDown, ArrowLeft, ArrowRight, ChevronsUpDown } from 'lucide-react';
-import ActionMenu from '../facility/components/ActionMenu';
+import { Filter, ArrowUpRight, ArrowDownRight, Download, Search, ChevronDown, ArrowLeft, ArrowRight, ChevronsUpDown, MoreHorizontal } from 'lucide-react';
+
+// Removing broken import from deleted module
+// import ActionMenu from '../facility/components/ActionMenu';
 
 const StatCard = ({ title, value, trend, percentage }) => {
     const isUp = trend === 'up';
@@ -296,7 +298,7 @@ const productColumns = [
         }
     },
     { title: 'Uploaded on', key: 'uploadedOn', sortable: true },
-    { title: '', key: 'action', sortable: false, render: () => <ActionMenu /> }
+    { title: '', key: 'action', sortable: false, render: () => <MoreHorizontal className="text-gray-400 cursor-pointer" size={18} /> }
 ];
 
 // Extended product data to test pagination
@@ -339,7 +341,7 @@ const customerColumns = [
         }
     },
     { title: 'Added on', key: 'addedOn', sortable: true },
-    { title: '', key: 'action', sortable: false, render: () => <ActionMenu /> }
+    { title: '', key: 'action', sortable: false, render: () => <MoreHorizontal className="text-gray-400 cursor-pointer" size={18} /> }
 ];
 
 // Extended customer data to test pagination
@@ -358,13 +360,16 @@ const customerData = [
 ];
 
 const Home = () => {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const firstName = user.first_name || 'Seller';
+
     return (
         <div className="flex flex-col w-full max-w-[1400px] mx-auto pb-10">
             {/* Header section */}
             <div className="flex items-center justify-between mb-5 md:mb-8 pt-1">
                 <div>
                     <h1 className="text-[20px] md:text-[26px] font-bold text-[#111827] mb-1 tracking-tight font-['Plus_Jakarta_Sans'] flex items-center gap-1.5">
-                        Welcome <span className="text-[#0B3D2E] font-medium">Sahil !</span>
+                        Welcome <span className="text-[#0B3D2E] font-medium">{firstName} !</span>
                     </h1>
                     <p className="text-[#9CA3AF] text-[10px] md:text-[14px] font-medium max-w-[280px] md:max-w-none leading-[1.3]">
                         Track, manage and forecast your customer and orders.

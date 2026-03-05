@@ -55,11 +55,17 @@ const VerifyOTP = () => {
 
         try {
             if (mode === 'signup') {
-                const { verifyOnboardingOtpApi } = await import('../../services/onboardingService');
+                const { verifyOnboardingOtpApi, startOnboardingApi } = await import('../../services/onboardingService');
                 const response = await verifyOnboardingOtpApi(phone, enteredOtp, userId);
                 if (response.accessToken) {
                     localStorage.setItem('token', response.accessToken);
                 }
+
+                // Start the onboarding session to get the sessionId
+                if (userId) {
+                    await startOnboardingApi(userId);
+                }
+
                 navigate('/signup?step=1');
             } else {
                 const { loginApi } = await import('../../services/authService');
@@ -70,11 +76,46 @@ const VerifyOTP = () => {
                 if (response.user) {
                     localStorage.setItem('user', JSON.stringify(response.user));
 
-                    // Handle application status logic for sellers
+                    // Handle strictly DB-managed redirection for sellers
                     if (response.user.role === 'SELLER') {
-                        const status = response.user.approvalStatus;
-                        if (status === 'PENDING' || status === 'REJECTED' || status === 'APPROVED') {
-                            navigate('/application-status');
+                        try {
+                            const { getProfileApi } = await import('../../services/authService');
+                            const freshProfile = await getProfileApi();
+                            const status = freshProfile.approvalStatus;
+                            const isFirst = freshProfile.isFirstApprovalLogin;
+
+                            // Update local user state from fresh DB response
+                            const updatedUser = { ...response.user, approvalStatus: status, isFirstApprovalLogin: isFirst };
+                            localStorage.setItem('user', JSON.stringify(updatedUser));
+
+                            // APPROVED Flow
+                            if (status === 'APPROVED') {
+                                if (isFirst) {
+                                    // Redirect to status page to see the "You're all set" celebration screen
+                                    navigate('/application-status', {
+                                        state: { status, isFirstApprovalLogin: true },
+                                        replace: true
+                                    });
+                                } else {
+                                    // Direct to dashboard
+                                    navigate('/dashboard', { replace: true });
+                                }
+                                return;
+                            }
+
+                            // PENDING or REJECTED Flow
+                            navigate('/application-status', {
+                                state: {
+                                    status,
+                                    rejectionReason: freshProfile.rejectionReason,
+                                    isFirstApprovalLogin: isFirst
+                                },
+                                replace: true
+                            });
+                            return;
+                        } catch (err) {
+                            console.error("Failed to fetch DB status during login", err);
+                            navigate('/application-status', { replace: true });
                             return;
                         }
                     }

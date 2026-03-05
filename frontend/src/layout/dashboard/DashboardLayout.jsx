@@ -1,10 +1,17 @@
 import React, { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, Navigate } from 'react-router-dom';
 import Header from './Header';
 import Sidebar from './Sidebar';
 
 const DashboardLayout = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    // Security Gate: Ensure Sellers can only access Dashboard if they are APPROVED.
+    // Otherwise, they belong on the ApplicationStatus page.
+    if (user.role === 'SELLER' && user.approvalStatus !== 'APPROVED') {
+        return <Navigate to="/application-status" replace />;
+    }
 
     return (
         <div className="flex h-screen bg-white font-['Plus_Jakarta_Sans'] overflow-hidden">

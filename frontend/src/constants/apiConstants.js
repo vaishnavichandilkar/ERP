@@ -7,6 +7,10 @@ export const AUTH_ENDPOINTS = {
   PROFILE: '/auth/me',
 };
 export const ONBOARDING_ENDPOINTS = {
+  START: '/seller/onboarding/start',
+  STATUS: '/seller/onboarding/status',
+  SUBMIT_STEP: (step) => `/seller/onboarding/step/${step}`,
+  // Legacy steps (keeping for now to avoid breaking changes until migrated)
   STEP1_LANGUAGE: '/onboarding/step1-language',
   STEP2_MOBILE: '/onboarding/step2-mobile',
   STEP3_VERIFY: '/onboarding/step3-verify',

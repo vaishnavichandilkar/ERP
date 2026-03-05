@@ -23,8 +23,12 @@ export class SellerOnboardingController {
     @ApiHeader({ name: 'x-session-id', required: false, description: 'The current onboarding session ID' })
     @ApiHeader({ name: 'x-user-id', required: false, description: 'Fallback to check by User ID if session ID is not present' })
     @ApiQuery({ name: 'userId', required: false, description: 'Check via URL Query parameter' })
-    async getStatus(@Headers('x-session-id') sessionId: string, @Query('userId') userIdQuery?: string, @Headers('x-user-id') userIdHeader?: string) {
+    async getStatus(@Headers() headers: any, @Query('userId') userIdQuery?: string, @Query('sessionId') sessionIdQuery?: string) {
+        // Express/Nest lowercases all header keys automatically
+        const sessionId = sessionIdQuery || headers['x-session-id'] || headers['X-Session-ID'];
+        const userIdHeader = headers['x-user-id'];
         const userId = userIdQuery || userIdHeader;
+
         if (!userId) {
             if (sessionId) return this.onboardingService.getStatusBySession(sessionId);
             throw new BadRequestException('userId or x-session-id is required');
@@ -38,9 +42,11 @@ export class SellerOnboardingController {
     @ApiBody({ schema: { type: 'object', additionalProperties: true } })
     async submitStep(
         @Param('stepNumber', ParseIntPipe) stepNumber: number,
-        @Headers('x-session-id') sessionId: string,
-        @Body() body: any
+        @Headers() headers: any,
+        @Body() body: any,
+        @Query('sessionId') sessionIdQuery?: string
     ) {
+        const sessionId = sessionIdQuery || headers['x-session-id'] || headers['X-Session-ID'];
         if (!sessionId) {
             throw new BadRequestException('x-session-id header is required');
         }

@@ -11,9 +11,17 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
+        const sessionId = localStorage.getItem('sessionId');
+
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
+
+        if (sessionId) {
+            // Ensure the header is set. Axios 1.x allows setting on config.headers instance.
+            config.headers['x-session-id'] = sessionId;
+        }
+
         return config;
     },
     (error) => Promise.reject(error)

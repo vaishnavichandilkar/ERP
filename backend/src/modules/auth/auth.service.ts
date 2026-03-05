@@ -38,25 +38,29 @@ export class AuthService {
         // 2. Find User and Role
         const { user, roleType } = await this.findUserAndRoleByPhone(dto.phone);
         if (!user) {
-            // Cleanup anyway if user doesn't exist (though shouldn't happen here for login)
             await this.smsService.deleteOtp(dto.phone);
             throw new UnauthorizedException('User not found');
+        }
+
+        // 3. Strict Seller Verification (As per DB requirements)
+        if (roleType === 'SELLER') {
+            if (!user.verified) {
+                throw new UnauthorizedException('Phone number not verified.');
+            }
+            if (user.isBlocked) {
+                throw new UnauthorizedException('Account is blocked. Please contact support.');
+            }
         }
 
         // Cleanup OTP after success
         await this.smsService.deleteOtp(dto.phone);
 
-        // 3. Check active status
-        const isActive = user.isBlocked === undefined ? (user.isActive !== false) : !user.isBlocked;
-        if (!isActive) throw new UnauthorizedException('User is inactive or blocked');
-
-        // 4. Check Seller Status
-        if (user.role === 'seller') {
-            if (!user.onboarded_at) {
-                throw new UnauthorizedException('Onboarding incomplete. Please complete your profile.');
-            }
+        // 4. Check active status for Admin/Operator
+        if (roleType === 'ADMINISTRATOR' || roleType === 'OPERATOR') {
+            if (user.isActive === false) throw new UnauthorizedException('Account is inactive');
         }
 
+        // 5. Generate tokens and manage session in DB
         return this.generateTokens(user, roleType);
     }
 

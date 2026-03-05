@@ -1,6 +1,28 @@
 import axiosInstance from './axiosInstance';
 import { ONBOARDING_ENDPOINTS } from '../constants/apiConstants';
 
+export const startOnboardingApi = async (userId) => {
+    const response = await axiosInstance.post(ONBOARDING_ENDPOINTS.START, { userId });
+    if (response.data.sessionId) {
+        localStorage.setItem('sessionId', response.data.sessionId);
+    }
+    return response.data;
+};
+
+export const getOnboardingStatusApi = async () => {
+    const response = await axiosInstance.get(ONBOARDING_ENDPOINTS.STATUS);
+    return response.data;
+};
+
+export const submitOnboardingStepApi = async (stepNumber, data) => {
+    const endpoint = typeof ONBOARDING_ENDPOINTS.SUBMIT_STEP === 'function'
+        ? ONBOARDING_ENDPOINTS.SUBMIT_STEP(stepNumber)
+        : `/seller/onboarding/step/${stepNumber}`;
+
+    const response = await axiosInstance.post(endpoint, data);
+    return response.data;
+};
+
 export const registerMobileApi = async (phone) => {
     // The backend requires a generic user session (Step 1) to be created before sending an OTP
     const step1Response = await axiosInstance.post(ONBOARDING_ENDPOINTS.STEP1_LANGUAGE, { language: 'English' });

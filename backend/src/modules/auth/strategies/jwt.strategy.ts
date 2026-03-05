@@ -18,39 +18,22 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     async validate(payload: any) {
-        // 1. Check User (Platform users: superadmin, seller, buyer)
-        let user: any = await this.prisma.user.findUnique({
-            where: { id: payload.sub },
+        // 1. Strict Session Validation (Matching Session ID in DB)
+        const session = await this.prisma.session.findUnique({
+            where: { jti: payload.jti }
         });
 
-        if (user) {
-            // Sellers can login IF they started onboarding, but their access is limited by Guards
-            // Exception: If they are blocked
-            if (user.isBlocked) throw new UnauthorizedException('Account is blocked');
-
-            return {
-                id: user.id,
-                userId: user.id, // Providing both for compatibility
-                username: user.phone || user.email,
-                role: user.role.toUpperCase(),
-                isApproved: user.isApproved,
-                approvalStatus: user.approvalStatus || 'PENDING',
-                rejectionReason: user.rejectionReason,
-                isFirstApprovalLogin: user.isFirstApprovalLogin,
-                onboarded: !!user.onboarded_at,
-                facilityId: null,
-                permissions: null,
-            };
+        if (!session || session.isRevoked || session.expiresAt < new Date()) {
+            throw new UnauthorizedException('Session expired or revoked. Please log in again.');
         }
 
-        // 2. Check Administrator (Facility user)
-        user = await this.prisma.administrator.findUnique({
-            where: { id: payload.sub },
-            include: { permissions: { include: { module: true } } },
-        });
-
-        if (user) {
-            if (!user.isActive) throw new UnauthorizedException('User inactive');
+        // 2. Fetch User and check status
+        if (payload.role === 'ADMINISTRATOR') {
+            const user = await this.prisma.administrator.findUnique({
+                where: { id: payload.sub },
+                include: { permissions: { include: { module: true } } },
+            });
+            if (!user || user.isActive === false) throw new UnauthorizedException('Account inactive or not found');
             return {
                 id: user.id,
                 userId: user.id,
@@ -61,14 +44,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             };
         }
 
-        // 3. Check Operator (Facility user)
-        user = await this.prisma.operator.findUnique({
-            where: { id: payload.sub },
-            include: { permissions: { include: { module: true } } },
-        });
-
-        if (user) {
-            if (!user.isActive) throw new UnauthorizedException('User inactive');
+        if (payload.role === 'OPERATOR') {
+            const user = await this.prisma.operator.findUnique({
+                where: { id: payload.sub },
+                include: { permissions: { include: { module: true } } },
+            });
+            if (!user || user.isActive === false) throw new UnauthorizedException('Account inactive or not found');
             return {
                 id: user.id,
                 userId: user.id,
@@ -79,7 +60,26 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             };
         }
 
-        throw new UnauthorizedException('User not found');
+        // Default: Platform User (Superadmin, Seller, Buyer)
+        const user = await this.prisma.user.findUnique({
+            where: { id: payload.sub },
+        });
+
+        if (!user || user.isBlocked) {
+            throw new UnauthorizedException('Account blocked or not found');
+        }
+
+        return {
+            id: user.id,
+            userId: user.id,
+            username: user.phone || user.email,
+            role: user.role.toUpperCase(),
+            isApproved: user.isApproved,
+            approvalStatus: user.approvalStatus || 'PENDING',
+            rejectionReason: user.rejectionReason,
+            isFirstApprovalLogin: user.isFirstApprovalLogin,
+            onboarded: !!user.onboarded_at,
+        };
     }
 
     private formatPermissions(permissions: any[]) {

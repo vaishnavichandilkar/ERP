@@ -1,9 +1,13 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
-    Activity, Wrench, UserPlus, Layers, Users,
-    Box, DollarSign, FileText, User, ShieldCheck,
-    Settings, X
+    LayoutDashboard,
+    FileBarChart,
+    Database,
+    ShoppingCart,
+    TrendingUp,
+    Settings,
+    X
 } from 'lucide-react';
 import logo from '../../assets/images/logo2.png';
 
@@ -11,17 +15,12 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     const location = useLocation();
 
     const menuItems = [
-        { path: '/dashboard', label: 'Dashboard', icon: Activity },
-        { path: '/dashboard/facility', label: 'Facility Management', icon: Wrench },
-        { path: '/dashboard/users', label: 'User Management', icon: UserPlus },
-        { path: '/dashboard/products', label: 'Product Management', icon: Layers },
-        { path: '/dashboard/customers', label: 'Customer Management', icon: Users },
-        { path: '/dashboard/inventory', label: 'Inventory', icon: Box },
-        { path: '/dashboard/billing', label: 'Billing', icon: DollarSign },
-        { path: '/dashboard/report', label: 'Report', icon: FileText },
-        { path: '/dashboard/profile', label: 'Profile', icon: User },
-        { path: '/dashboard/access', label: 'Access Management', icon: ShieldCheck },
-        { path: '/dashboard/settings', label: 'Setting', icon: Settings },
+        { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { path: '/dashboard/reports', label: 'Reports', icon: FileBarChart },
+        { path: '/dashboard/masters', label: 'Masters', icon: Database },
+        { path: '/dashboard/purchase', label: 'Purchase', icon: ShoppingCart },
+        { path: '/dashboard/sales', label: 'Sales', icon: TrendingUp },
+        { path: '/dashboard/settings', label: 'Settings', icon: Settings },
     ];
 
     return (
@@ -56,8 +55,8 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                                 to={item.path}
                                 onClick={() => setIsOpen(false)}
                                 className={`flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-[14px] font-medium transition-colors ${isActive
-                                        ? 'bg-[#F3F4F6] text-[#111827]'
-                                        : 'text-[#4B5563] hover:bg-[#F9FAFB] hover:text-[#111827]'
+                                    ? 'bg-[#F3F4F6] text-[#111827]'
+                                    : 'text-[#4B5563] hover:bg-[#F9FAFB] hover:text-[#111827]'
                                     }`}
                             >
                                 <Icon size={18} strokeWidth={isActive ? 2.5 : 2} className={isActive ? "text-[#111827]" : "text-[#9CA3AF]"} />

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import api from '../../services/api';
+import axiosInstance from '../../services/axiosInstance';
 import AuthLayout from '../../layout/auth/AuthLayout';
 import Button from '../../components/common/Button';
 import { Clock, AlertCircle, X, Check } from 'lucide-react';
@@ -16,27 +16,43 @@ const ApplicationStatus = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const [apiStatus, setApiStatus] = useState('PENDING');
-    const [rejectionReason, setRejectionReason] = useState(null);
+    // Initial values from location state (VerifyOTP)
+    const initialState = location.state?.status;
+    const initialReason = location.state?.rejectionReason;
+    const initialIsFirst = location.state?.isFirstApprovalLogin;
+
+    const [apiStatus, setApiStatus] = useState(initialState || 'PENDING');
+    const [rejectionReason, setRejectionReason] = useState(initialReason || null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const fetchStatus = async () => {
             try {
-                const response = await api.get('/auth/me');
-                if (response.data) {
-                    const status = response.data.approvalStatus || 'PENDING';
+                // DB-Managed session: Fetch fresh status on every mount
+                const response = await axiosInstance.get(`/auth/me?t=${Date.now()}`);
 
-                    if (status === 'APPROVED' && !response.data.isFirstApprovalLogin) {
-                        navigate('/dashboard');
+                if (response.data) {
+                    const { approvalStatus, isFirstApprovalLogin, rejectionReason: dbReason } = response.data;
+
+                    // Sync local storage for consistency, but render based on response data
+                    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+                    localStorage.setItem('user', JSON.stringify({
+                        ...currentUser,
+                        approvalStatus,
+                        isFirstApprovalLogin
+                    }));
+
+                    // If approved and already marked as seen in DB
+                    if (approvalStatus === 'APPROVED' && !isFirstApprovalLogin) {
+                        navigate('/dashboard', { replace: true });
                         return;
                     }
 
-                    setApiStatus(status);
-                    setRejectionReason(response.data.rejectionReason);
+                    setApiStatus(approvalStatus);
+                    setRejectionReason(dbReason);
                 }
             } catch (error) {
-                console.error("Failed to fetch application status", error);
+                console.error("Failed to fetch fresh application status from DB", error);
             } finally {
                 setIsLoading(false);
             }
@@ -47,11 +63,15 @@ const ApplicationStatus = () => {
 
     const handleStartUsing = async () => {
         try {
-            await api.post('/auth/mark-approval-seen');
+            setIsLoading(true);
+            // Strictly managed: Update DB first
+            await axiosInstance.post('/auth/mark-approval-seen');
+
+            // Navigate only after DB success
+            navigate('/dashboard', { replace: true });
         } catch (error) {
-            console.error('Failed to mark approval seen', error);
-        } finally {
-            navigate('/dashboard');
+            console.error('Failed to update approval status in DB', error);
+            setIsLoading(false);
         }
     };
 

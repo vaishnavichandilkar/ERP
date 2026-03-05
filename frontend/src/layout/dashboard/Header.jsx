@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import { Menu, Printer, Wifi, Settings as SettingsIcon, HelpCircle, Search, Bell, User, Globe, ChevronDown, Activity, Box, Users, Layers, Wrench, DollarSign, FileText, ShieldCheck } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Menu, Printer, Wifi, Settings as SettingsIcon, HelpCircle, Search, Bell, User, Globe, ChevronDown, LayoutDashboard, FileBarChart, Database, ShoppingCart, TrendingUp } from 'lucide-react';
 import logo from '../../assets/images/logo2.png';
 import SearchPopup from '../../components/common/SearchPopup';
 import NotificationPopup from '../../components/common/NotificationPopup';
@@ -14,6 +14,7 @@ const Header = ({ setSidebarOpen }) => {
     // For visual representation only. Mocking an 'off' / 'on' state.
     const isConnected = false;
     const location = useLocation();
+    const navigate = useNavigate();
 
     // Popup states
     const [activePopupType, setActivePopupType] = useState(null);
@@ -23,60 +24,19 @@ const Header = ({ setSidebarOpen }) => {
 
     // Determine Breadcrumbs dynamically
     const renderBreadcrumbs = () => {
-        if (location.pathname === '/dashboard/facility/add') {
-            return (
-                <div className="flex items-center gap-2 text-[15px]">
-                    <span className="text-gray-400">Facility Management</span>
-                    <span className="text-gray-300 mx-1">›</span>
-                    <span className="text-[#111827] font-medium">Add Facility</span>
-                </div>
-            );
-        } else if (location.pathname === '/dashboard/facility/view') {
-            return (
-                <div className="flex items-center gap-2 text-[15px]">
-                    <span className="text-gray-400">Facility Management</span>
-                    <span className="text-gray-300 mx-1">›</span>
-                    <span className="text-[#111827] font-medium">View Facility</span>
-                </div>
-            );
-        } else if (location.pathname === '/dashboard/facility/update') {
-            return (
-                <div className="flex items-center gap-2 text-[15px]">
-                    <span className="text-gray-400">Facility Management</span>
-                    <span className="text-gray-300 mx-1">›</span>
-                    <span className="text-[#111827] font-medium">Update Facility</span>
-                </div>
-            );
-        } else if (location.pathname === '/dashboard/facility') {
-            return (
-                <div className="flex items-center gap-2 text-[#4B5563] text-[15px] font-medium">
-                    <div className="bg-[#F3F4F6] p-1.5 rounded-[8px] flex items-center justify-center">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
-                    </div>
-                    Facility Management
-                </div>
-            );
-        }
-
-        // Dynamic standard mapping resolving
         const path = location.pathname.replace(/\/$/, "");
         const segments = path.split('/').filter(Boolean);
 
-        let IconComponent = Activity;
+        let IconComponent = LayoutDashboard;
         if (segments.length > 0) {
             const firstSegment = segments[0] === 'dashboard' ? segments[1] : segments[0];
             switch (firstSegment) {
-                case 'inventory': IconComponent = Box; break;
-                case 'users':
-                case 'customers': IconComponent = Users; break;
-                case 'products': IconComponent = Layers; break;
-                case 'facility': IconComponent = Wrench; break;
-                case 'billing': IconComponent = DollarSign; break;
-                case 'report': IconComponent = FileText; break;
-                case 'access': IconComponent = ShieldCheck; break;
+                case 'reports': IconComponent = FileBarChart; break;
+                case 'masters': IconComponent = Database; break;
+                case 'purchase': IconComponent = ShoppingCart; break;
+                case 'sales': IconComponent = TrendingUp; break;
                 case 'settings': IconComponent = SettingsIcon; break;
-                case 'profile': IconComponent = User; break;
-                default: IconComponent = Activity; break;
+                default: IconComponent = LayoutDashboard; break;
             }
         }
 
@@ -87,20 +47,15 @@ const Header = ({ setSidebarOpen }) => {
 
             if (tempSegments.length > 0) {
                 const formattedSegments = tempSegments.map(segment => {
-                    if (segment.toLowerCase() === 'users') return 'User Management';
-                    if (segment.toLowerCase() === 'products') return 'Product Management';
-                    if (segment.toLowerCase() === 'customers') return 'Customer Management';
-                    if (segment.toLowerCase() === 'access') return 'Access Management';
-                    if (segment.toLowerCase() === 'facility') return 'Facility Management';
                     return segment.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
                 });
-                breadcrumbText = formattedSegments.length === 1 ? `${formattedSegments[0]} >` : formattedSegments.join(' > ');
+                breadcrumbText = formattedSegments.length === 1 ? `${formattedSegments[0]}` : formattedSegments.join(' > ');
             }
         }
 
         return (
-            <div className="flex items-center text-[#4B5563] text-[14px] lg:text-[15px] font-medium">
-                <IconComponent size={18} strokeWidth={2} className="mr-[8px]" />
+            <div className="flex items-center text-[#4B5563] text-[14px] lg:text-[15px] font-medium uppercase tracking-wide">
+                <IconComponent size={18} strokeWidth={2.5} className="mr-[10px] text-[#111827]" />
                 {breadcrumbText}
             </div>
         );
@@ -244,7 +199,12 @@ const Header = ({ setSidebarOpen }) => {
                 onClose={() => setIsLogoutOpen(false)}
                 onConfirm={() => {
                     setIsLogoutOpen(false);
-                    // Logic to clear tokens and redirect to login would go here
+                    // Clear tokens and user data
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('user');
+                    // Redirect to landing page
+                    navigate('/');
                 }}
             />
         </header>

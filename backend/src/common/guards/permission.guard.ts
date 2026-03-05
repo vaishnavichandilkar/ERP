@@ -45,35 +45,28 @@ export class PermissionGuard implements CanActivate {
     }
 
     private mapLegacyPermission(perm: string): { moduleName: string, action: string } {
-        // Simple mapping
-        if (perm === 'manage_access') return { moduleName: 'Access', action: 'canView' }; // Or canUpdate
-
-        // Pattern: [module]_[action]
-        // facilityManagement_add -> Facilities.canCreate
+        // Pattern: [module]_[action] (e.g., reports_view)
         const parts = perm.split('_');
-        const legacyModule = parts[0]; // facilityManagement
-        const legacyAction = parts[1]; // add, view, edit, delete, export, print
+        if (parts.length < 2) return { moduleName: '', action: '' };
+
+        const legacyModule = parts[0].toLowerCase();
+        const legacyAction = parts[1].toLowerCase();
 
         let moduleName = '';
-        if (legacyModule === 'facilityManagement') moduleName = 'Facilities';
-        else if (legacyModule === 'userManagement') moduleName = 'Users';
-        else if (legacyModule === 'productManagement') moduleName = 'Products';
-        else if (legacyModule === 'inventoryManagement') moduleName = 'Inventory';
-        else if (legacyModule === 'billing') moduleName = 'Billing';
-        else if (legacyModule === 'report') moduleName = 'Reports';
+        if (legacyModule === 'dashboard') moduleName = 'Dashboard';
+        else if (legacyModule === 'reports') moduleName = 'Reports';
+        else if (legacyModule === 'masters') moduleName = 'Masters';
+        else if (legacyModule === 'purchase') moduleName = 'Purchase';
+        else if (legacyModule === 'sales') moduleName = 'Sales';
+        else if (legacyModule === 'settings') moduleName = 'Settings';
         else return { moduleName: '', action: '' };
 
         let action = '';
-        if (legacyAction === 'add') action = 'canCreate';
-        else if (legacyAction === 'view') action = 'canView';
-        else if (legacyAction === 'edit') action = 'canUpdate';
+        if (legacyAction === 'add' || legacyAction === 'create') action = 'canCreate';
+        else if (legacyAction === 'view' || legacyAction === 'list') action = 'canView';
+        else if (legacyAction === 'edit' || legacyAction === 'update') action = 'canUpdate';
         else if (legacyAction === 'delete') action = 'canDelete';
-        else if (legacyAction === 'export') action = 'canView'; // Or separate flag? Schema has 4 flags.
-        else if (legacyAction === 'print') action = 'canView';
-
-        // Schema only has canView, canCreate, canUpdate, canDelete
-        // Export/Print map to View or require specific extension?
-        // For now, map to View or ignore.
+        else action = 'canView'; // Default fallback
 
         return { moduleName, action };
     }
