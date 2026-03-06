@@ -797,11 +797,7 @@ const SignUp = () => {
 
                                     <div className="col-span-1 md:col-span-2 w-full flex justify-center mt-[36px]">
                                         <button
-<<<<<<< HEAD
-                                            disabled={!formData.accountHolderName || !formData.accountNumber || !formData.ifscCode || !formData.bankName || !formData.cancelledChequeFile || isLoading || !!fieldErrors.accountHolderName || !!fieldErrors.accountNumber || !!fieldErrors.ifscCode}
-=======
-                                            disabled={!formData.accountHolderName || !formData.accountNumber || !formData.ifscCode || !formData.bankName || !formData.cancelledChequeFile || isAnyUploading}
->>>>>>> 4a0df8b (style: frontend layout spacing and adjustments for auth pages)
+                                            disabled={!formData.accountHolderName || !formData.accountNumber || !formData.ifscCode || !formData.bankName || !formData.cancelledChequeFile || isLoading || isAnyUploading || !!fieldErrors.accountHolderName || !!fieldErrors.accountNumber || !!fieldErrors.ifscCode}
                                             onClick={handleNext}
                                             className="w-full md:w-[calc(50%-12px)] h-[56px] bg-[#0F3D2E] text-white text-[16px] font-['Plus_Jakarta_Sans'] font-medium rounded-[8px] hover:bg-[#0a291f] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                                         >
