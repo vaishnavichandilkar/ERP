@@ -14,7 +14,7 @@ const MastersLayout = () => {
         { name: 'Group Master', path: '/dashboard/masters/group-master' },
         { name: 'Account Master', path: '/dashboard/masters/account-master' },
         { name: 'Unit Master', path: '/dashboard/masters/unit-master' },
-        { name: 'Category', path: '/dashboard/masters/category' },
+        { name: 'Category Master', path: '/dashboard/masters/category' },
         { name: 'Product Master', path: '/dashboard/masters/product-master' },
     ];
 
