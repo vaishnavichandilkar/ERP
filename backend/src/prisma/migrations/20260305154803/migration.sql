@@ -110,97 +110,6 @@ CREATE TABLE "SellerDocument" (
 );
 
 -- CreateTable
-CREATE TABLE "facilities" (
-    "id" TEXT NOT NULL,
-    "name" VARCHAR(150) NOT NULL,
-    "location" VARCHAR(150) NOT NULL,
-    "address" TEXT NOT NULL,
-    "totalMachines" INTEGER NOT NULL,
-    "gstNumber" VARCHAR(15),
-    "status" "FacilityStatus" NOT NULL DEFAULT 'ACTIVE',
-    "isDeleted" BOOLEAN NOT NULL DEFAULT false,
-    "sellerId" TEXT NOT NULL DEFAULT 'legacy',
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "facilities_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "administrators" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "username" TEXT NOT NULL,
-    "mobile" TEXT,
-    "facilityId" TEXT NOT NULL,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "administrators_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "operators" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-    "username" TEXT NOT NULL,
-    "mobile" TEXT,
-    "facilityId" TEXT NOT NULL,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "operators_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "modules" (
-    "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
-
-    CONSTRAINT "modules_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "administrator_permissions" (
-    "id" TEXT NOT NULL,
-    "administratorId" TEXT NOT NULL,
-    "moduleId" TEXT NOT NULL,
-    "canView" BOOLEAN NOT NULL DEFAULT false,
-    "canCreate" BOOLEAN NOT NULL DEFAULT false,
-    "canUpdate" BOOLEAN NOT NULL DEFAULT false,
-    "canDelete" BOOLEAN NOT NULL DEFAULT false,
-
-    CONSTRAINT "administrator_permissions_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "otp_verifications" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "otp" TEXT NOT NULL,
-    "expiresAt" TIMESTAMP(3) NOT NULL,
-    "isUsed" BOOLEAN NOT NULL DEFAULT false,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "otp_verifications_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "operator_permissions" (
-    "id" TEXT NOT NULL,
-    "operatorId" TEXT NOT NULL,
-    "moduleId" TEXT NOT NULL,
-    "canView" BOOLEAN NOT NULL DEFAULT false,
-    "canCreate" BOOLEAN NOT NULL DEFAULT false,
-    "canUpdate" BOOLEAN NOT NULL DEFAULT false,
-    "canDelete" BOOLEAN NOT NULL DEFAULT false,
-
-    CONSTRAINT "operator_permissions_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
 CREATE TABLE "sessions" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -298,21 +207,6 @@ CREATE UNIQUE INDEX "WeighingMachineDetail_userId_key" ON "WeighingMachineDetail
 CREATE UNIQUE INDEX "Otp_phone_key" ON "Otp"("phone");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "administrators_username_key" ON "administrators"("username");
-
--- CreateIndex
-CREATE UNIQUE INDEX "operators_username_key" ON "operators"("username");
-
--- CreateIndex
-CREATE UNIQUE INDEX "modules_name_key" ON "modules"("name");
-
--- CreateIndex
-CREATE UNIQUE INDEX "administrator_permissions_administratorId_moduleId_key" ON "administrator_permissions"("administratorId", "moduleId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "operator_permissions_operatorId_moduleId_key" ON "operator_permissions"("operatorId", "moduleId");
-
--- CreateIndex
 CREATE UNIQUE INDEX "sessions_jti_key" ON "sessions"("jti");
 
 -- CreateIndex
@@ -338,30 +232,6 @@ ALTER TABLE "WeighingMachineDetail" ADD CONSTRAINT "WeighingMachineDetail_userId
 
 -- AddForeignKey
 ALTER TABLE "SellerDocument" ADD CONSTRAINT "SellerDocument_uploadedByUserId_fkey" FOREIGN KEY ("uploadedByUserId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "facilities" ADD CONSTRAINT "facilities_sellerId_fkey" FOREIGN KEY ("sellerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "administrators" ADD CONSTRAINT "administrators_facilityId_fkey" FOREIGN KEY ("facilityId") REFERENCES "facilities"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "operators" ADD CONSTRAINT "operators_facilityId_fkey" FOREIGN KEY ("facilityId") REFERENCES "facilities"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "administrator_permissions" ADD CONSTRAINT "administrator_permissions_administratorId_fkey" FOREIGN KEY ("administratorId") REFERENCES "administrators"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "administrator_permissions" ADD CONSTRAINT "administrator_permissions_moduleId_fkey" FOREIGN KEY ("moduleId") REFERENCES "modules"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "otp_verifications" ADD CONSTRAINT "otp_verifications_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "operator_permissions" ADD CONSTRAINT "operator_permissions_moduleId_fkey" FOREIGN KEY ("moduleId") REFERENCES "modules"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "operator_permissions" ADD CONSTRAINT "operator_permissions_operatorId_fkey" FOREIGN KEY ("operatorId") REFERENCES "operators"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "SellerStepReview" ADD CONSTRAINT "SellerStepReview_sellerProfileId_fkey" FOREIGN KEY ("sellerProfileId") REFERENCES "SellerProfile"("id") ON DELETE CASCADE ON UPDATE CASCADE;

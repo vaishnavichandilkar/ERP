@@ -55,37 +55,17 @@ export class AuthService {
         // Cleanup OTP after success
         await this.smsService.deleteOtp(dto.phone);
 
-        // 4. Check active status for Admin/Operator
-        if (roleType === 'ADMINISTRATOR' || roleType === 'OPERATOR') {
-            if (user.isActive === false) throw new UnauthorizedException('Account is inactive');
-        }
-
         // 5. Generate tokens and manage session in DB
         return this.generateTokens(user, roleType);
     }
 
     private async findUserByPhone(phone: string): Promise<any> {
-        // Checks User, Administrator, or Operator tables
-        let user: any = await this.prisma.user.findUnique({ where: { phone } });
-        if (user) return user;
-
-        user = await this.prisma.administrator.findFirst({ where: { mobile: phone } });
-        if (user) return user;
-
-        user = await this.prisma.operator.findFirst({ where: { mobile: phone } });
-        return user;
+        return this.prisma.user.findUnique({ where: { phone } });
     }
 
     private async findUserAndRoleByPhone(phone: string): Promise<{ user: any, roleType: string }> {
-        let user: any = await this.prisma.user.findUnique({ where: { phone } });
+        const user = await this.prisma.user.findUnique({ where: { phone } });
         if (user) return { user, roleType: user.role.toUpperCase() };
-
-        user = await this.prisma.administrator.findFirst({ where: { mobile: phone } });
-        if (user) return { user, roleType: 'ADMINISTRATOR' };
-
-        user = await this.prisma.operator.findFirst({ where: { mobile: phone } });
-        if (user) return { user, roleType: 'OPERATOR' };
-
         return { user: null, roleType: 'UNKNOWN' };
     }
 
@@ -107,19 +87,6 @@ export class AuthService {
             // 2. Find User
             let user: any = await this.prisma.user.findUnique({ where: { id: payload.sub } });
             let roleType = user?.role.toUpperCase();
-
-            if (!user) {
-                user = await this.prisma.administrator.findUnique({
-                    where: { id: payload.sub }
-                });
-                roleType = 'ADMINISTRATOR';
-            }
-            if (!user) {
-                user = await this.prisma.operator.findUnique({
-                    where: { id: payload.sub }
-                });
-                roleType = 'OPERATOR';
-            }
 
             if (!user) throw new UnauthorizedException('User not found');
 
@@ -173,13 +140,10 @@ export class AuthService {
             }
         });
 
-        // 3. Save Refresh Token in User Table (As requested for Sellers/Superadmins)
-        if (roleType !== 'ADMINISTRATOR' && roleType !== 'OPERATOR') {
-            await this.prisma.user.update({
-                where: { id: user.id },
-                data: { refresh_token: refreshToken }
-            });
-        }
+        await this.prisma.user.update({
+            where: { id: user.id },
+            data: { refresh_token: refreshToken }
+        });
 
         return {
             accessToken,

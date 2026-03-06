@@ -130,16 +130,101 @@ export class OnboardingService {
         // 4. Cleanup the verified OTP record
         await this.smsService.deleteOtp(dto.phone);
 
-        // 5. Generate temporary token for the flow
+        // 5. Check if user is already an approved seller
+        const existingProfile = await this.prisma.sellerProfile.findUnique({
+            where: { userId: user.id }
+        });
+
+        if (existingProfile && existingProfile.status === 'APPROVED') {
+            return {
+                message: 'Seller already registered. Please login.',
+                isApproved: true,
+                status: 'APPROVED'
+            };
+        }
+
+        let sessionId: string;
+        let currentStep: number;
+
+        if (existingProfile) {
+            sessionId = existingProfile.sessionId;
+            currentStep = existingProfile.currentStep;
+        } else {
+            // Create a new SellerProfile
+            const newProfile = await this.prisma.sellerProfile.create({
+                data: {
+                    userId: user.id,
+                    currentStep: 3, // Current step is 3 (OTP verified). Next is 4.
+                    status: 'IN_PROGRESS',
+                    sessionId: crypto.randomUUID()
+                }
+            });
+            sessionId = newProfile.sessionId;
+            currentStep = newProfile.currentStep;
+        }
+
+        // 6. Generate temporary token for the flow
         const tokens = await this.generateOnboardingTokens(updatedUser);
 
         return {
             message: 'OTP verified successfully.',
-            ...tokens
+            ...tokens,
+            sessionId,
+            currentStep
         };
     }
 
+    private async validateAndAdvanceStep(userId: string, currentStepNumber: number, nextStepNumber: number, stepData: any) {
+        const profile = await this.prisma.sellerProfile.findUnique({ where: { userId } });
+        if (!profile) throw new BadRequestException('Seller profile not found');
+
+        // Prevent skipping steps
+        if (profile.currentStep < (currentStepNumber - 1)) {
+            throw new BadRequestException(`Cannot skip steps. Complete step ${profile.currentStep + 1} first.`);
+        }
+
+        // Only advance currentStep if they are doing their max pending step
+        const advanceTo = Math.max(profile.currentStep, nextStepNumber);
+
+        await this.prisma.sellerProfile.update({
+            where: { id: profile.id },
+            data: { currentStep: advanceTo }
+        });
+
+        const stepReview = await this.prisma.sellerStepReview.findUnique({
+            where: {
+                sellerProfileId_step: {
+                    sellerProfileId: profile.id,
+                    step: currentStepNumber
+                }
+            }
+        });
+
+        if (stepReview) {
+            await this.prisma.sellerStepReview.update({
+                where: { id: stepReview.id },
+                data: {
+                    status: 'COMPLETED',
+                    data: stepData || {}
+                }
+            });
+        } else {
+            await this.prisma.sellerStepReview.create({
+                data: {
+                    sellerProfileId: profile.id,
+                    step: currentStepNumber,
+                    status: 'COMPLETED',
+                    data: stepData || {}
+                }
+            });
+        }
+
+        return advanceTo;
+    }
+
     async updatePersonalDetails(userId: string, dto: Step4DetailsDto) {
+        await this.validateAndAdvanceStep(userId, 4, 4, dto);
+
         return this.prisma.user.update({
             where: { id: userId },
             data: {
@@ -171,6 +256,8 @@ export class OnboardingService {
         if (files?.businessProof?.[0]) {
             await this.saveFile(userId, 'OTHER', files.businessProof[0], 'BUSINESS_PROOF');
         }
+
+        await this.validateAndAdvanceStep(userId, 5, 5, dto);
 
         return { message: 'Business details saved successfully' };
     }
@@ -219,6 +306,8 @@ export class OnboardingService {
             await this.saveFile(userId, 'OTHER', files.shopActLicense[0], 'SHOP_ACT_LICENSE');
         }
 
+        await this.validateAndAdvanceStep(userId, 6, 6, dto);
+
         return { message: 'Shop details saved successfully' };
     }
 
@@ -253,6 +342,8 @@ export class OnboardingService {
             await this.saveFile(userId, 'PAN', files.panCard[0]);
         }
 
+        await this.validateAndAdvanceStep(userId, 7, 7, dto);
+
         return { message: 'Bank details saved successfully' };
     }
 
@@ -276,6 +367,8 @@ export class OnboardingService {
             }
         });
 
+        await this.validateAndAdvanceStep(userId, 8, 8, dto);
+
         return { message: 'Weighing machine details saved successfully' };
     }
 
@@ -296,6 +389,13 @@ export class OnboardingService {
             }
         });
 
+        await this.validateAndAdvanceStep(userId, 9, 9, { isCompleted: true });
+
+        await this.prisma.sellerProfile.update({
+            where: { userId },
+            data: { status: 'PENDING_APPROVAL' }
+        });
+
         return {
             message: 'Onboarding complete. Your account is pending Superadmin approval.',
             status: 'PENDING_APPROVAL'
@@ -304,8 +404,10 @@ export class OnboardingService {
 
     // Helper functions
     private async saveFile(userId: string, type: any, file: any, category?: string) {
+        const sellerProfile = await this.prisma.sellerProfile.findUnique({ where: { userId } });
         return this.prisma.sellerDocument.create({
             data: {
+                profileId: sellerProfile?.id || null,
                 uploadedByUserId: userId,
                 type,
                 url: file.path,
@@ -317,8 +419,10 @@ export class OnboardingService {
     }
 
     private async saveDocument(userId: string, type: any, name: string, category?: string) {
+        const sellerProfile = await this.prisma.sellerProfile.findUnique({ where: { userId } });
         return this.prisma.sellerDocument.create({
             data: {
+                profileId: sellerProfile?.id || null,
                 uploadedByUserId: userId,
                 type,
                 url: 'N/A', // Just storing the number/text as a doc entry for now

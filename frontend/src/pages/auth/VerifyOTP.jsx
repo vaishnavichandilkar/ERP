@@ -57,16 +57,32 @@ const VerifyOTP = () => {
             if (mode === 'signup') {
                 const { verifyOnboardingOtpApi, startOnboardingApi } = await import('../../services/onboardingService');
                 const response = await verifyOnboardingOtpApi(phone, enteredOtp, userId);
+
+                if (response.isApproved) {
+                    setError('Seller already registered. Please login.');
+                    return;
+                }
+
                 if (response.accessToken) {
                     localStorage.setItem('token', response.accessToken);
                 }
 
-                // Start the onboarding session to get the sessionId
-                if (userId) {
+                // Use the returned sessionId if existing, else start new
+                if (response.sessionId) {
+                    localStorage.setItem('sessionId', response.sessionId);
+                } else if (userId) {
                     await startOnboardingApi(userId);
                 }
 
-                navigate('/signup?step=1');
+                let frontendStep = 1; // Default to personal details
+                if (response.currentStep) {
+                    if (response.currentStep === 3) frontendStep = 1;
+                    else if (response.currentStep === 4) frontendStep = 2;
+                    else if (response.currentStep === 5) frontendStep = 3;
+                    else if (response.currentStep >= 6) frontendStep = 4;
+                }
+
+                navigate(`/signup?step=${frontendStep}`);
             } else {
                 const { loginApi } = await import('../../services/authService');
                 const response = await loginApi(phone, enteredOtp);

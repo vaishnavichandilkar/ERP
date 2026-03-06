@@ -2,17 +2,6 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-    // 1. Seed Modules
-    const modules = ['Dashboard', 'Reports', 'Masters', 'Purchase', 'Sales', 'Settings'];
-
-    for (const name of modules) {
-        await prisma.module.upsert({
-            where: { name },
-            update: {},
-            create: { name },
-        });
-    }
-    console.log('Modules seeded.');
 
     // 2. Seed System Admin (Superadmin)
     const adminPhone = '1111111111';

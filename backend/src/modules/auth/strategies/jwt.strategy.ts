@@ -27,40 +27,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             throw new UnauthorizedException('Session expired or revoked. Please log in again.');
         }
 
-        // 2. Fetch User and check status
-        if (payload.role === 'ADMINISTRATOR') {
-            const user = await this.prisma.administrator.findUnique({
-                where: { id: payload.sub },
-                include: { permissions: { include: { module: true } } },
-            });
-            if (!user || user.isActive === false) throw new UnauthorizedException('Account inactive or not found');
-            return {
-                id: user.id,
-                userId: user.id,
-                username: user.username,
-                role: 'ADMINISTRATOR',
-                facilityId: user.facilityId,
-                permissions: this.formatPermissions(user.permissions),
-            };
-        }
-
-        if (payload.role === 'OPERATOR') {
-            const user = await this.prisma.operator.findUnique({
-                where: { id: payload.sub },
-                include: { permissions: { include: { module: true } } },
-            });
-            if (!user || user.isActive === false) throw new UnauthorizedException('Account inactive or not found');
-            return {
-                id: user.id,
-                userId: user.id,
-                username: user.username,
-                role: 'OPERATOR',
-                facilityId: user.facilityId,
-                permissions: this.formatPermissions(user.permissions),
-            };
-        }
-
-        // Default: Platform User (Superadmin, Seller, Buyer)
+        // Platform User (Superadmin, Seller, Buyer)
         const user = await this.prisma.user.findUnique({
             where: { id: payload.sub },
         });
@@ -80,18 +47,5 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             isFirstApprovalLogin: user.isFirstApprovalLogin,
             onboarded: !!user.onboarded_at,
         };
-    }
-
-    private formatPermissions(permissions: any[]) {
-        if (!permissions) return {};
-        return permissions.reduce((acc, curr) => {
-            acc[curr.module.name] = {
-                canView: curr.canView,
-                canCreate: curr.canCreate,
-                canUpdate: curr.canUpdate,
-                canDelete: curr.canDelete
-            };
-            return acc;
-        }, {});
     }
 }

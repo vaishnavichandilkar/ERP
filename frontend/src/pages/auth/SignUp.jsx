@@ -150,59 +150,7 @@ const SignUp = () => {
         }
     }, [searchParams]);
 
-    // Resume logic: Check if a sessionId exists and fetch status to auto-navigate
-    useEffect(() => {
-        const resumeSession = async () => {
-            const sid = localStorage.getItem('sessionId');
-            if (sid && step === 0) {
-                try {
-                    const { getOnboardingStatusApi } = await import('../../services/onboardingService');
-                    const status = await getOnboardingStatusApi();
-
-                    // If onboarding is already submitted or finished, clear session and let them be
-                    if (status.status === 'SUBMITTED' || status.status === 'APPROVED') {
-                        localStorage.removeItem('sessionId');
-                        return;
-                    }
-
-                    // Map backend currentStep to frontend step
-                    // Backend Step 0/1/2/3/4 maps to roughly similar frontend logic
-                    // If currentStep > 0, it means they've passed phone verification
-                    if (status.currentStep >= 3) {
-                        // If they finished step 3 (verify), they should be on Personal Details (Step 1)
-                        // Note: Backend steps are 1-indexed for logic but stored as Int.
-                        // Let's rely on backend 'nextStep' if provided
-                        const targetStep = status.nextStep; // Backend says what's next
-
-                        // Map backend steps to frontend 'step' state (0=Phone, 1=Personal, 2=Business, 3=Shop, 4=Bank)
-                        // Backend: 3 (verified) -> Frontend: 1
-                        // Backend: 4 (personal) -> Frontend: 2
-                        // Backend: 5 (business) -> Frontend: 3
-                        // Backend: 6 (shop) -> Frontend: 4
-
-                        let frontendStep = 0;
-                        if (status.currentStep === 3) frontendStep = 1;
-                        else if (status.currentStep === 4) frontendStep = 2;
-                        else if (status.currentStep === 5) frontendStep = 3;
-                        else if (status.currentStep >= 6) frontendStep = 4;
-
-                        // Only redirect if we are not already on that step search param
-                        const currentStepParam = searchParams.get('step');
-                        if (frontendStep > 0 && currentStepParam !== frontendStep.toString()) {
-                            setSearchParams({ step: frontendStep.toString() });
-                        }
-                    }
-                } catch (err) {
-                    console.error("Failed to resume onboarding session", err);
-                    // If session is invalid/expired, clear it
-                    if (err.response?.status === 404) {
-                        localStorage.removeItem('sessionId');
-                    }
-                }
-            }
-        };
-        resumeSession();
-    }, []);
+    // Resume logic removed to enforce database-truth OTP verification before auto-navigating to next steps.
 
     const [formData, setFormData] = useState({
         phone: '',
@@ -321,26 +269,27 @@ const SignUp = () => {
                 const response = await registerMobileApi(formData.phone);
                 navigate('/verify-otp', { state: { phone: formData.phone, mode: 'signup', userId: response.userId } });
             } else if (step === 1) {
-                const { submitOnboardingStepApi } = await import('../../services/onboardingService');
-                await submitOnboardingStepApi(4, {
+                const { savePersonalDetailsApi } = await import('../../services/onboardingService');
+                await savePersonalDetailsApi({
                     first_name: formData.firstName,
                     last_name: formData.lastName,
                     email: formData.email
                 });
                 setSearchParams({ step: '2' });
             } else if (step === 2) {
-                const { submitOnboardingStepApi } = await import('../../services/onboardingService');
-                const formDataToUpload = new FormData();
-                formDataToUpload.append('udyogAadharNumber', formData.udyogAadhar);
-                formDataToUpload.append('gstNumber', formData.gstNumber);
-                if (formData.udyogAadharFile) formDataToUpload.append('udyogAadharCertificate', formData.udyogAadharFile);
-                if (formData.gstFile) formDataToUpload.append('gstCertificate', formData.gstFile);
-
-                await submitOnboardingStepApi(5, formDataToUpload);
+                const { saveBusinessDetailsApi } = await import('../../services/onboardingService');
+                await saveBusinessDetailsApi({
+                    udyogAadhar: formData.udyogAadhar,
+                    gstNumber: formData.gstNumber
+                }, {
+                    udyogAadharFile: formData.udyogAadharFile,
+                    gstFile: formData.gstFile,
+                    otherDocFile: formData.otherDocFile
+                });
                 setSearchParams({ step: '3' });
             } else if (step === 3) {
-                const { submitOnboardingStepApi } = await import('../../services/onboardingService');
-                await submitOnboardingStepApi(6, {
+                const { saveShopDetailsApi } = await import('../../services/onboardingService');
+                await saveShopDetailsApi({
                     shopName: formData.shopName,
                     address: formData.address,
                     village: formData.village,
@@ -350,27 +299,24 @@ const SignUp = () => {
                 });
                 setSearchParams({ step: '4' });
             } else if (step === 4) {
-                const { submitOnboardingStepApi } = await import('../../services/onboardingService');
+                const { saveBankDetailsApi, saveMachineDetailsDefaultApi, completeOnboardingApi } = await import('../../services/onboardingService');
 
                 // Submit bank details
-                await submitOnboardingStepApi(7, {
-                    holderName: formData.accountHolderName,
-                    accountNo: formData.accountNumber,
-                    ifsc: formData.ifscCode,
+                await saveBankDetailsApi({
+                    accountHolderName: formData.accountHolderName,
+                    accountNumber: formData.accountNumber,
+                    ifscCode: formData.ifscCode,
                     bankName: formData.bankName
+                }, {
+                    cancelledChequeFile: formData.cancelledChequeFile,
+                    panCardFile: formData.panCardFile
                 });
 
                 // Submit default machine details (Step 8) - Required to reach Step 9
-                await submitOnboardingStepApi(8, {
-                    isUsingOwnMachine: false,
-                    machineName: "Default Machine",
-                    make: "N/A",
-                    modelNumber: "N/A",
-                    machineType: "N/A"
-                });
+                await saveMachineDetailsDefaultApi();
 
                 // Submit final status or completion
-                await submitOnboardingStepApi(9, { isFinalStep: true });
+                await completeOnboardingApi();
 
                 navigate('/success', { state: { mode: 'signup' } });
             }

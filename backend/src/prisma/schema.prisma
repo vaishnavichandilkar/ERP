@@ -30,8 +30,6 @@ model User {
   sellerDocuments       SellerDocument[]       @relation("UploadedByUser")
   shopDetail            ShopDetail?
   weighingMachineDetail WeighingMachineDetail?
-  facilities            Facility[]             @relation("SellerFacilities")
-  otpVerifications      OtpVerification[]
 
   @@map("User")
 }
@@ -93,7 +91,8 @@ model Otp {
 
 model SellerDocument {
   id               Int                @id @default(autoincrement())
-  profileId        Int?
+  profileId        String?
+  sellerProfile    SellerProfile?     @relation(fields: [profileId], references: [id])
   type             SellerDocumentType
   url              String
   category         String?
@@ -107,105 +106,6 @@ model SellerDocument {
   @@map("SellerDocument")
 }
 
-model Facility {
-  id             String          @id @default(uuid())
-  name           String          @db.VarChar(150)
-  location       String          @db.VarChar(150)
-  address        String
-  totalMachines  Int
-  gstNumber      String?         @db.VarChar(15)
-  status         FacilityStatus  @default(ACTIVE)
-  isDeleted      Boolean         @default(false)
-  sellerId       String          @default("legacy")
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  administrators Administrator[]
-  seller         User            @relation("SellerFacilities", fields: [sellerId], references: [id])
-  operators      Operator[]
-
-  @@map("facilities")
-}
-
-model Administrator {
-  id          String                    @id @default(uuid())
-  name        String
-  username    String                    @unique
-  mobile      String?
-  facilityId  String
-  isActive    Boolean                   @default(true)
-  createdAt   DateTime                  @default(now())
-  updatedAt   DateTime                  @updatedAt
-  permissions AdministratorPermission[]
-  facility    Facility                  @relation(fields: [facilityId], references: [id])
-
-  @@map("administrators")
-}
-
-model Operator {
-  id          String               @id @default(uuid())
-  name        String
-  username    String               @unique
-  mobile      String?
-  facilityId  String
-  isActive    Boolean              @default(true)
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
-  permissions OperatorPermission[]
-  facility    Facility             @relation(fields: [facilityId], references: [id])
-
-  @@map("operators")
-}
-
-model Module {
-  id                       String                    @id @default(uuid())
-  name                     String                    @unique
-  administratorPermissions AdministratorPermission[]
-  operatorPermissions      OperatorPermission[]
-
-  @@map("modules")
-}
-
-model AdministratorPermission {
-  id              String        @id @default(uuid())
-  administratorId String
-  moduleId        String
-  canView         Boolean       @default(false)
-  canCreate       Boolean       @default(false)
-  canUpdate       Boolean       @default(false)
-  canDelete       Boolean       @default(false)
-  administrator   Administrator @relation(fields: [administratorId], references: [id], onDelete: Cascade)
-  module          Module        @relation(fields: [moduleId], references: [id])
-
-  @@unique([administratorId, moduleId])
-  @@map("administrator_permissions")
-}
-
-model OtpVerification {
-  id        String   @id @default(uuid())
-  userId    String
-  otp       String
-  expiresAt DateTime
-  isUsed    Boolean  @default(false)
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("otp_verifications")
-}
-
-model OperatorPermission {
-  id         String   @id @default(uuid())
-  operatorId String
-  moduleId   String
-  canView    Boolean  @default(false)
-  canCreate  Boolean  @default(false)
-  canUpdate  Boolean  @default(false)
-  canDelete  Boolean  @default(false)
-  module     Module   @relation(fields: [moduleId], references: [id])
-  operator   Operator @relation(fields: [operatorId], references: [id], onDelete: Cascade)
-
-  @@unique([operatorId, moduleId])
-  @@map("operator_permissions")
-}
 
 model Session {
   id               String   @id @default(uuid())
@@ -249,6 +149,7 @@ model SellerProfile {
   rejectionReason String?
 
   reviews         SellerStepReview[]
+  documents       SellerDocument[]
   @@map("SellerProfile")
 }
 
@@ -268,6 +169,7 @@ model SellerStepReview {
 
   @@unique([sellerProfileId, step])
   @@map("SellerStepReview")
+  
 }
 
 model Pincode {
