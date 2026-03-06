@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Download, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
+import { Search, Download } from 'lucide-react';
 import AddGroupModal from './components/AddGroupModal';
 
 const GroupMaster = () => {
@@ -107,41 +107,6 @@ const GroupMaster = () => {
             <div className="flex flex-col lg:flex-row gap-6 mb-8">
                 <MasterSection data={leftPanelData} />
                 <MasterSection data={rightPanelData} />
-            </div>
-
-            {/* Pagination */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-[#E5E7EB]">
-                <div className="flex items-center gap-3 text-[13px] text-[#6B7280]">
-                    <span>Show</span>
-                    <div className="flex items-center gap-2 px-3 h-[32px] border border-[#E5E7EB] rounded-[6px] bg-white cursor-pointer">
-                        <span className="font-medium text-[#111827]">5</span>
-                        <ChevronDown size={14} />
-                    </div>
-                    <span>per page</span>
-                </div>
-
-                <div className="flex items-center gap-6">
-                    <span className="text-[13px] text-[#6B7280]">1-10 of 52</span>
-                    <div className="flex items-center gap-2">
-                        <button className="p-1.5 rounded-md text-gray-400 hover:bg-gray-100 disabled:opacity-50">
-                            <ChevronLeft size={20} />
-                        </button>
-                        <div className="flex items-center gap-1">
-                            {[1, 2, 3, 4, 5].map((page) => (
-                                <button
-                                    key={page}
-                                    className={`w-8 h-8 flex items-center justify-center rounded-[6px] text-[13px] font-semibold transition-all
-                                        ${page === 2 ? 'bg-[#F3F4F6] text-[#014A36]' : 'text-[#6B7280] hover:text-[#111827] hover:bg-gray-50'}`}
-                                >
-                                    {page}
-                                </button>
-                            ))}
-                        </div>
-                        <button className="p-1.5 rounded-md text-gray-400 hover:bg-gray-100">
-                            <ChevronRight size={20} />
-                        </button>
-                    </div>
-                </div>
             </div>
 
             {/* Add Group Modal */}
