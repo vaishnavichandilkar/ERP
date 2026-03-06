@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import AuthLayout from '../../layout/auth/AuthLayout';
 import Button from '../../components/common/Button';
 import { CheckCircle2, X } from 'lucide-react';
-import logo from '../../assets/images/logo2.png';
+import logo from '../../assets/images/ERP_Logo2.png';
 
 const Landing = () => {
     const navigate = useNavigate();
@@ -71,13 +71,14 @@ const Landing = () => {
                 <div className="mb-6 md:mb-4">
                     <img
                         src={logo}
-                        alt="WeighPro Logo"
-                        className="h-10 mb-3 block"
+                        alt="ERP Logo"
+                        className="h-16 mb-3 block pl-0 ml-0"
+                        style={{ paddingLeft: '0px', marginLeft: '0px' }}
                         onError={(e) => { e.target.style.display = 'none' }}
                     />
 
                     <h2 className="text-[30px] font-['Geist_Sans'] font-bold leading-tight mb-1 text-gray-900">
-                        Welcome to WeighPro
+                        Welcome to ERP
                     </h2>
                     <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium text-gray-500 mb-6">
                         Login or create an account to continue
@@ -86,12 +87,12 @@ const Landing = () => {
 
                 <div className="flex flex-col gap-3 md:gap-4">
                     <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-semibold text-gray-900 mb-2 text-center block">
-                        Are you a GramUnati User?
+                        Are you a GramUnnati User?
                     </p>
 
                     <div className="flex flex-col gap-2 w-full">
                         <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium text-gray-500 m-0">
-                            Yes, I am a GramUnati user
+                            Yes, I am a GramUnnati user
                         </p>
                         <Button
                             variant="primary"

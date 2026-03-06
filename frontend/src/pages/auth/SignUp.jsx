@@ -2,26 +2,37 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import AuthLayout from '../../layout/auth/AuthLayout';
 import { Upload, FileText, Trash2, ChevronDown, CloudUpload } from 'lucide-react';
-import logo from '../../assets/images/logo2.png';
+import logo from '../../assets/images/ERP_Logo2.png';
 
-const FileUploadBox = ({ title, file, onFileChange, onRemove }) => {
+const FileUploadBox = ({ title, file, onFileChange, onRemove, onUploadStateChange }) => {
     const [progress, setProgress] = React.useState(0);
+    const onUploadStateChangeRef = React.useRef(onUploadStateChange);
+
+    React.useEffect(() => {
+        onUploadStateChangeRef.current = onUploadStateChange;
+    }, [onUploadStateChange]);
 
     React.useEffect(() => {
         if (file) {
             setProgress(0);
+            if (onUploadStateChangeRef.current) onUploadStateChangeRef.current(true);
             const interval = setInterval(() => {
                 setProgress(prev => {
                     if (prev >= 100) {
                         clearInterval(interval);
+                        if (onUploadStateChangeRef.current) onUploadStateChangeRef.current(false);
                         return 100;
                     }
                     return prev + 20;
                 });
             }, 300);
-            return () => clearInterval(interval);
+            return () => {
+                clearInterval(interval);
+                if (onUploadStateChangeRef.current) onUploadStateChangeRef.current(false);
+            };
         } else {
             setProgress(0);
+            if (onUploadStateChangeRef.current) onUploadStateChangeRef.current(false);
         }
     }, [file]);
 
@@ -225,6 +236,14 @@ const SignUp = () => {
         }
     };
 
+    const [uploadingFiles, setUploadingFiles] = useState({});
+
+    const handleUploadStateChange = React.useCallback((name, isUploading) => {
+        setUploadingFiles(prev => ({ ...prev, [name]: isUploading }));
+    }, []);
+
+    const isAnyUploading = Object.values(uploadingFiles).some(Boolean);
+
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         const newValue = type === 'checkbox' ? checked : value;
@@ -380,36 +399,36 @@ const SignUp = () => {
     };
 
     return (
-        <AuthLayout maxWidth={step >= 2 ? "100%" : "480px"} hideLeftPanel={true}>
+        <AuthLayout maxWidth={step >= 2 ? "100%" : "420px"} hideLeftPanel={true} disableRightScroll={step === 1}>
             {step < 2 ? (
-                <div className="text-left w-full max-w-[480px] mx-auto flex flex-col justify-center min-h-[100dvh] md:min-h-0 py-8 md:py-0">
+                <div className="text-left w-full max-w-[420px] mx-auto flex flex-col justify-center min-h-[100dvh] md:min-h-0 py-6 md:py-0 px-2 md:px-0 -mt-2 -mb-4">
                     {/* Header: Logo and Step Pill */}
-                    <div className="flex justify-between items-center mb-12">
+                    <div className="flex justify-between items-center mb-6 w-full -mt-2">
                         <img
                             src={logo}
                             alt="WeighPro Logo"
-                            className="h-7 block"
+                            className="h-10 block"
                             onError={(e) => { e.target.style.display = 'none' }}
                         />
                         <div className="bg-[#F3F4F6] text-[#374151] px-[12px] py-[6px] rounded-full text-[12px] font-medium">
-                            Step 0{step}/05
+                            Step 0{step}/04
                         </div>
                     </div>
 
                     {/* Step Content */}
                     {step === 0 ? (
-                        <div>
-                            <div className="mb-8">
-                                <h2 className="text-[30px] font-['Geist_Sans'] font-bold mb-1 leading-tight text-gray-900">
+                        <div className="w-full">
+                            <div className="mb-[24px]">
+                                <h2 className="text-[30px] font-['Geist_Sans'] font-bold mb-1.5 leading-tight text-gray-900">
                                     Create your<br />seller account
                                 </h2>
-                                <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium mb-6 text-gray-500">
+                                <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium text-gray-500">
                                     Start receiving farmer orders and grow your shop
                                 </p>
                             </div>
 
                             <form noValidate onSubmit={(e) => e.preventDefault()}>
-                                <div className="mb-6">
+                                <div className="mb-5">
                                     <CustomInput
                                         label="Phone number"
                                         placeholder="Enter your number"
@@ -441,7 +460,7 @@ const SignUp = () => {
                                             onChange={handleChange}
                                         />
                                         <span className="text-[14px] font-['Plus_Jakarta_Sans'] text-gray-500 mt-1 cursor-pointer">
-                                            By logging in, I agree to <Link to="#" className="text-gray-500 underline font-medium hover:text-[#0F3D2E] transition-colors">T&C</Link> and <Link to="#" className="text-gray-500 underline font-medium hover:text-[#0F3D2E] transition-colors">Privacy Policy</Link>
+                                            By logging in, I agree to <Link to="#" className="text-green-900 underline font-semibold hover:text-[#073318] transition-colors">T&C</Link> and <Link to="#" className="text-green-900 underline font-semibold hover:text-[#0F3D2E] transition-colors">Privacy Policy</Link>
                                         </span>
                                     </label>
                                 </div>
@@ -456,19 +475,19 @@ const SignUp = () => {
                             </form>
                         </div>
                     ) : (
-                        <div>
-                            <div className="mb-8">
-                                <h2 className="text-[30px] font-['Geist_Sans'] font-bold mb-1 leading-tight text-gray-900">
+                        <div className="w-full">
+                            <div className="mb-5">
+                                <h2 className="text-[30px] font-['Geist_Sans'] font-bold mb-1.5 leading-tight text-gray-900">
                                     Set up your<br />seller profile
                                 </h2>
-                                <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium mb-6 text-gray-500">
+                                <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium text-gray-500">
                                     Your journey to easier selling starts here
                                 </p>
                             </div>
 
-                            <form noValidate onSubmit={(e) => e.preventDefault()}>
+                            <form noValidate onSubmit={(e) => e.preventDefault()} className="w-full">
                                 {error && <div className="mb-4 text-red-500 text-[13px] font-medium animate-in fade-in slide-in-from-top-1 duration-300">{error}</div>}
-                                <div className="mb-6">
+                                <div className="mb-4">
                                     <CustomInput
                                         label="First name"
                                         placeholder="Enter your first name"
@@ -479,7 +498,7 @@ const SignUp = () => {
                                         error={fieldErrors.firstName}
                                     />
                                 </div>
-                                <div className="mb-6">
+                                <div className="mb-4">
                                     <CustomInput
                                         label="Last name"
                                         placeholder="Enter your last name"
@@ -490,7 +509,7 @@ const SignUp = () => {
                                         error={fieldErrors.lastName}
                                     />
                                 </div>
-                                <div className="mb-8">
+                                <div className="mb-6">
                                     <CustomInput
                                         label="Email"
                                         placeholder="Enter your email ID"
@@ -522,9 +541,9 @@ const SignUp = () => {
                         {step === 2 && (
                             <>
                                 <div className="flex justify-between items-center mb-8 w-full">
-                                    <img src={logo} alt="WeighPro Logo" className="h-6" onError={(e) => { e.target.style.display = 'none' }} />
+                                    <img src={logo} alt="WeighPro Logo" className="h-10" onError={(e) => { e.target.style.display = 'none' }} />
                                     <div className="bg-[#F3F4F6] text-[#374151] px-[12px] py-[6px] rounded-full text-[12px] font-medium">
-                                        Step 0{step}/05
+                                        Step 0{step}/04
                                     </div>
                                 </div>
 
@@ -561,12 +580,14 @@ const SignUp = () => {
                                             file={formData.udyogAadharFile}
                                             onFileChange={(e) => handleFileChange('udyogAadharFile', e.target.files[0])}
                                             onRemove={() => handleFileRemove('udyogAadharFile')}
+                                            onUploadStateChange={(isUploading) => handleUploadStateChange('udyogAadharFile', isUploading)}
                                         />
                                         <FileUploadBox
                                             title="Upload GST Certificate (Optional)"
                                             file={formData.gstFile}
                                             onFileChange={(e) => handleFileChange('gstFile', e.target.files[0])}
                                             onRemove={() => handleFileRemove('gstFile')}
+                                            onUploadStateChange={(isUploading) => handleUploadStateChange('gstFile', isUploading)}
                                         />
                                         <div className="col-span-1 md:col-span-2 w-full flex justify-center mb-2">
                                             <div className="w-full md:w-[calc(50%-12px)]">
@@ -575,6 +596,7 @@ const SignUp = () => {
                                                     file={formData.otherDocFile}
                                                     onFileChange={(e) => handleFileChange('otherDocFile', e.target.files[0])}
                                                     onRemove={() => handleFileRemove('otherDocFile')}
+                                                    onUploadStateChange={(isUploading) => handleUploadStateChange('otherDocFile', isUploading)}
                                                 />
                                             </div>
                                         </div>
@@ -582,7 +604,7 @@ const SignUp = () => {
 
                                     <div className="col-span-1 md:col-span-2 w-full flex justify-center mt-[12px]">
                                         <button
-                                            disabled={!formData.udyogAadhar || !formData.udyogAadharFile || !formData.gstFile || isLoading || !!fieldErrors.udyogAadhar || !!fieldErrors.gstNumber}
+                                            disabled={!formData.udyogAadhar || !formData.udyogAadharFile || !formData.gstFile || isLoading || !!fieldErrors.udyogAadhar || !!fieldErrors.gstNumber || isAnyUploading}
                                             onClick={handleNext}
                                             className="w-full md:w-[calc(50%-12px)] h-[56px] bg-[#0F3D2E] text-white text-[16px] font-['Plus_Jakarta_Sans'] font-medium rounded-[8px] hover:bg-[#0a291f] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                                         >
@@ -594,24 +616,24 @@ const SignUp = () => {
                         )}
 
                         {step === 3 && (
-                            <>
-                                <div className="flex justify-between items-center mb-8 w-full">
-                                    <img src={logo} alt="WeighPro Logo" className="h-6" onError={(e) => { e.target.style.display = 'none' }} />
+                            <div className="w-full sm:-mt-6">
+                                <div className="flex justify-between items-center mb-5 w-full">
+                                    <img src={logo} alt="WeighPro Logo" className="h-10" onError={(e) => { e.target.style.display = 'none' }} />
                                     <div className="bg-[#F3F4F6] text-[#374151] px-[12px] py-[6px] rounded-full text-[12px] font-medium">
-                                        Step 0{step}/05
+                                        Step 0{step}/04
                                     </div>
                                 </div>
 
-                                <h2 className="text-[30px] font-['Geist_Sans'] font-bold mb-1 leading-tight text-gray-900 w-full">
+                                <h2 className="text-[30px] font-['Geist_Sans'] font-bold mb-0.5 leading-tight text-gray-900 w-full">
                                     Tell us about your Shop
                                 </h2>
-                                <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium mb-[40px] text-gray-500 w-full">
+                                <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium mb-[24px] text-gray-500 w-full">
                                     We just need a few quick details to confirm your business
                                 </p>
 
                                 <form noValidate onSubmit={(e) => e.preventDefault()} className="w-full">
                                     {error && <div className="mb-4 text-red-500 text-[13px] font-medium animate-in fade-in slide-in-from-top-1 duration-300">{error}</div>}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-[24px] w-full">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-[24px] gap-y-[16px] w-full">
                                         <CustomInput
                                             label="Shop Name"
                                             placeholder="Enter your shop name"
@@ -681,7 +703,7 @@ const SignUp = () => {
                                         </CustomInput>
                                     </div>
 
-                                    <div className="col-span-1 md:col-span-2 w-full flex justify-center mt-[12px]">
+                                    <div className="col-span-1 md:col-span-2 w-full flex justify-center mt-[36px]">
                                         <button
                                             disabled={!formData.shopName || !formData.address || !formData.village || !formData.pinCode || !formData.district || !formData.state || isLoading || !!fieldErrors.shopName || !!fieldErrors.address || !!fieldErrors.village || !!fieldErrors.pinCode || !!fieldErrors.district || !!fieldErrors.state}
                                             onClick={handleNext}
@@ -691,28 +713,28 @@ const SignUp = () => {
                                         </button>
                                     </div>
                                 </form>
-                            </>
+                            </div>
                         )}
 
                         {step === 4 && (
-                            <>
-                                <div className="flex justify-between items-center mb-8 w-full">
-                                    <img src={logo} alt="WeighPro Logo" className="h-6" onError={(e) => { e.target.style.display = 'none' }} />
+                            <div className="w-full sm:-mt-6">
+                                <div className="flex justify-between items-center mb-5 w-full">
+                                    <img src={logo} alt="WeighPro Logo" className="h-10" onError={(e) => { e.target.style.display = 'none' }} />
                                     <div className="bg-[#F3F4F6] text-[#374151] px-[12px] py-[6px] rounded-full text-[12px] font-medium">
-                                        Step 0{step}/05
+                                        Step 0{step}/04
                                     </div>
                                 </div>
 
-                                <h2 className="text-[30px] font-['Geist_Sans'] font-bold mb-1 leading-tight text-gray-900 w-full">
+                                <h2 className="text-[30px] font-['Geist_Sans'] font-bold mb-0.5 leading-tight text-gray-900 w-full">
                                     Add your bank details
                                 </h2>
-                                <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium mb-[40px] text-gray-500 w-full">
+                                <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium mb-[24px] text-gray-500 w-full">
                                     So we can send your payments on time, we need your correct bank account details
                                 </p>
 
                                 <form noValidate onSubmit={(e) => e.preventDefault()} className="w-full">
                                     {error && <div className="mb-4 text-red-500 text-[13px] font-medium animate-in fade-in slide-in-from-top-1 duration-300">{error}</div>}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-[24px] w-full">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-[24px] gap-y-[16px] w-full">
                                         <CustomInput
                                             label="Account holder name"
                                             placeholder="Enter your account holder name"
@@ -762,18 +784,24 @@ const SignUp = () => {
                                             file={formData.cancelledChequeFile}
                                             onFileChange={(e) => handleFileChange('cancelledChequeFile', e.target.files[0])}
                                             onRemove={() => handleFileRemove('cancelledChequeFile')}
+                                            onUploadStateChange={(isUploading) => handleUploadStateChange('cancelledChequeFile', isUploading)}
                                         />
                                         <FileUploadBox
                                             title="Upload PAN Card (Optional)"
                                             file={formData.panCardFile}
                                             onFileChange={(e) => handleFileChange('panCardFile', e.target.files[0])}
                                             onRemove={() => handleFileRemove('panCardFile')}
+                                            onUploadStateChange={(isUploading) => handleUploadStateChange('panCardFile', isUploading)}
                                         />
                                     </div>
 
-                                    <div className="col-span-1 md:col-span-2 w-full flex justify-center mt-[12px]">
+                                    <div className="col-span-1 md:col-span-2 w-full flex justify-center mt-[36px]">
                                         <button
+<<<<<<< HEAD
                                             disabled={!formData.accountHolderName || !formData.accountNumber || !formData.ifscCode || !formData.bankName || !formData.cancelledChequeFile || isLoading || !!fieldErrors.accountHolderName || !!fieldErrors.accountNumber || !!fieldErrors.ifscCode}
+=======
+                                            disabled={!formData.accountHolderName || !formData.accountNumber || !formData.ifscCode || !formData.bankName || !formData.cancelledChequeFile || isAnyUploading}
+>>>>>>> 4a0df8b (style: frontend layout spacing and adjustments for auth pages)
                                             onClick={handleNext}
                                             className="w-full md:w-[calc(50%-12px)] h-[56px] bg-[#0F3D2E] text-white text-[16px] font-['Plus_Jakarta_Sans'] font-medium rounded-[8px] hover:bg-[#0a291f] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                                         >
@@ -781,7 +809,7 @@ const SignUp = () => {
                                         </button>
                                     </div>
                                 </form>
-                            </>
+                            </div>
                         )}
                     </div>
                 </div>

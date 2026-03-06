@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import AuthLayout from '../../layout/auth/AuthLayout';
 import Button from '../../components/common/Button';
 import { ArrowLeft } from 'lucide-react';
-import logo from '../../assets/images/logo2.png';
+import logo from '../../assets/images/ERP_Logo2.png';
 
 const VerifyOTP = () => {
     const [otp, setOtp] = useState(new Array(6).fill(''));
@@ -153,79 +153,92 @@ const VerifyOTP = () => {
 
     return (
         <AuthLayout hideLeftPanel={true}>
-            <div className="text-left pt-8 md:pt-0 w-full max-w-sm mx-auto">
-                <div className="mb-4">
+            <div className="text-left w-full max-w-[480px] mx-auto flex flex-col justify-center min-h-[100dvh] md:min-h-0 py-8 md:py-0">
+                <div className="flex justify-between items-center mb-12 w-full">
                     <img
                         src={logo}
                         alt="WeighPro Logo"
-                        className="h-10 mb-10 md:mb-4 block"
+                        className="h-10 block"
                         onError={(e) => { e.target.style.display = 'none' }}
                     />
+                    <div className="bg-[#F3F4F6] text-[#374151] px-[12px] py-[6px] rounded-full text-[12px] font-medium">
+                        Step 00/04
+                    </div>
                 </div>
-                <div className="text-left w-full">
+                <div className="text-left w-full mb-8">
                     <button
                         onClick={() => navigate(-1)}
                         className="p-2 -ml-2 mb-2 text-gray-900 rounded-full hover:bg-gray-100 transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center focus:outline-none"
                     >
                         <ArrowLeft size={20} />
                     </button>
-                    <h2 className="text-[30px] font-['Geist_Sans'] font-bold mb-2 leading-tight text-gray-900">
+                    <h2 className="text-[30px] font-['Geist_Sans'] font-bold mb-1 leading-tight text-gray-900">
                         We've sent a 6-digit OTP
                     </h2>
                     <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium mb-8 text-gray-500">
-                        to phone number <span className="font-bold">{maskedPhone}</span>
-                        {mode === 'signup' && (
-                            <button
-                                className="text-gray-500 ml-2 underline cursor-pointer text-sm font-medium border-none bg-transparent p-0 inline focus:outline-none"
-                                onClick={() => navigate(-1)}
-                            >
-                                Edit
-                            </button>
-                        )}
+                        to <span className="text-black font-semibold">{maskedPhone}</span>
+                        <button
+                            className="text-[#0F3D2E] ml-1 underline cursor-pointer text-sm font-semibold border-none bg-transparent p-0 inline focus:outline-none hover:text-[#073318] transition-colors"
+                            onClick={() => navigate(-1)}
+                        >
+                            Edit
+                        </button>
                     </p>
 
-                    <div className="flex justify-between gap-1 sm:gap-4 mb-8">
-                        {otp.map((digit, index) => (
-                            <input
-                                key={index}
-                                type="text"
-                                maxLength={1}
-                                value={digit}
-                                ref={(el) => inputRefs.current[index] = el}
-                                onChange={(e) => {
-                                    handleChange(e.target, index);
-                                    if (error) setError('');
-                                }}
-                                onKeyDown={(e) => handleKeyDown(e, index)}
-                                className={`w-10 h-10 sm:w-14 sm:h-14 text-center text-xl sm:text-2xl font-bold border rounded-[8px] bg-white text-gray-900 transition-all duration-300 outline-none
-                                    ${error ? 'border-red-500 hover:border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/20' : 'border-gray-300 focus:border-[#0F3D2E] focus:ring-1 focus:ring-[#0F3D2E]'}
-                                `}
-                            />
-                        ))}
-                    </div>
-
-                    <div className="mb-6 text-[14px] font-['Plus_Jakarta_Sans'] text-gray-500">
-                        {timer > 0 ? (
-                            <span>Didn't receive it? <span className="font-bold">Retry</span> in 00:{timer.toString().padStart(2, '0')}</span>
-                        ) : (
-                            <button
-                                onClick={handleResend}
-                                className="bg-transparent border-none text-[#0B3D2E] cursor-pointer font-bold p-0 text-sm no-underline hover:underline focus:outline-none"
-                            >
-                                Resend OTP
-                            </button>
-                        )}
-                    </div>
-
-                    {error && (
-                        <div className="mt-1.5 text-red-500 text-[13px] font-medium animate-in fade-in slide-in-from-top-1 duration-300 mb-4">
-                            {error}
+                    <form noValidate onSubmit={(e) => e.preventDefault()}>
+                        <div className="flex gap-2 justify-between mb-6">
+                            {otp.map((data, index) => (
+                                <input
+                                    key={index}
+                                    type="text"
+                                    ref={(el) => inputRefs.current[index] = el}
+                                    value={data}
+                                    onChange={(e) => {
+                                        if (e.target.value.length <= 1) {
+                                            handleChange(e.target, index)
+                                        }
+                                        if (error) setError('');
+                                    }}
+                                    onKeyDown={(e) => handleKeyDown(e, index)}
+                                    onFocus={(e) => e.target.select()}
+                                    maxLength={1}
+                                    className={`w-10 h-10 sm:w-[64px] sm:h-[56px] text-center text-[20px] border rounded-[8px] transition-colors bg-white font-medium text-gray-900 outline-none
+                                        ${error ? 'border-red-500 hover:border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500/20' : 'border-gray-300 focus:border-[#0B3D2E] focus:ring-1 focus:ring-[#0B3D2E]'}
+                                    `}
+                                />
+                            ))}
                         </div>
-                    )}
 
-                    <Button onClick={handleVerify} disabled={isLoading || otp.join('').length < 6} className="text-[16px] font-['Plus_Jakarta_Sans'] py-3 mt-2">
-                        {isLoading ? 'Verifying...' : 'Verify'}
-                    </Button>
+                        <div className="mb-6 text-[14px] font-['Plus_Jakarta_Sans'] text-gray-500 text-left">
+                            {timer > 0 ? (
+                                <span>Didn't receive it? <span className="font-semibold text-gray-900 underline cursor-pointer">Retry</span> in 00:{timer.toString().padStart(2, '0')}</span>
+                            ) : (
+                                <button
+                                    onClick={handleResend}
+                                    className="bg-transparent border-none text-gray-900 underline cursor-pointer font-semibold p-0 text-sm focus:outline-none hover:text-[#0F3D2E]"
+                                >
+                                    Resend OTP
+                                </button>
+                            )}
+                        </div>
+
+                        {error && (
+                            <div className="mt-1.5 text-red-500 text-[13px] font-medium animate-in fade-in slide-in-from-top-1 duration-300 mb-4">
+                                {error}
+                            </div>
+                        )}
+
+                        <button
+                            onClick={handleVerify}
+                            disabled={isLoading || otp.some(digit => !digit)}
+                            className="w-full h-[56px] bg-[#A7C0B8] text-white text-[16px] font-['Plus_Jakarta_Sans'] font-medium rounded-[8px] transition-colors disabled:opacity-100 disabled:cursor-not-allowed hover:bg-[#86a89d] mt-2"
+                            style={{
+                                backgroundColor: (otp.some(digit => !digit) || isLoading) ? '#A7C0B8' : '#0F3D2E'
+                            }}
+                        >
+                            {isLoading ? 'Verifying...' : 'Verify & Continue'}
+                        </button>
+                    </form>
                 </div>
             </div>
         </AuthLayout>

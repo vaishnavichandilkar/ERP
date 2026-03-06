@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Menu, Printer, Wifi, Settings as SettingsIcon, HelpCircle, Search, Bell, User, Globe, ChevronDown, LayoutDashboard, FileBarChart, Database, ShoppingCart, TrendingUp } from 'lucide-react';
-import logo from '../../assets/images/logo2.png';
+import { Menu, Printer, Wifi, Settings as SettingsIcon, HelpCircle, Search, Bell, User, Globe, ChevronDown, LayoutDashboard, FileBarChart, Database, ShoppingCart, TrendingUp, Activity, Box, Users, Layers, Wrench, DollarSign, FileText, ShieldCheck } from 'lucide-react';
+import logo from '../../assets/images/ERP_Logo2.png';
 import SearchPopup from '../../components/common/SearchPopup';
 import NotificationPopup from '../../components/common/NotificationPopup';
 import ProfilePopup from '../../components/common/ProfilePopup';

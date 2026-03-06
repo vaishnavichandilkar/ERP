@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
-import logo from '../../assets/images/logo2.png';
+import logo from '../../assets/images/ERP_Logo2.png';
 
 const ChangePasswordModal = ({ isOpen, onClose, onSuccess }) => {
     const [isVisible, setIsVisible] = useState(false);

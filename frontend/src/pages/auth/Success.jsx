@@ -32,13 +32,11 @@ const Success = () => {
                 </h2>
 
                 <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium mb-8 text-gray-500">
-                    {mode === 'signup'
-                        ? "Your account has been successfully verified. You'll be redirected shortly to the Registration Form"
-                        : "Your account has been successfully verified."}
+                    Your login verification is complete. To access the system, please select your weighing machine.
                 </p>
 
                 <Button onClick={handleNavigation} className="text-[16px] font-['Plus_Jakarta_Sans'] py-3 px-6 mt-4">
-                    {mode === 'signup' ? "Select Weighing Machine" : "Go To Dashboard"}
+                    Select Weighing Machine
                 </Button>
             </div>
         </AuthLayout>

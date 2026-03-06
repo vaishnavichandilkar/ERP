@@ -9,7 +9,7 @@ import {
     Settings,
     X
 } from 'lucide-react';
-import logo from '../../assets/images/logo2.png';
+import logo from '../../assets/images/ERP_Logo2.png';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
     const location = useLocation();

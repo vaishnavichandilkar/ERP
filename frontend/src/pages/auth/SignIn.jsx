@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AuthLayout from '../../layout/auth/AuthLayout';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
-import logo from '../../assets/images/logo2.png';
+import logo from '../../assets/images/ERP_Logo2.png';
 import { ChevronDown } from 'lucide-react';
 import { sendLoginOtpApi } from '../../services/authService';
 
@@ -108,7 +108,7 @@ const SignIn = () => {
                                 className="mt-1 mr-2 px-0 text-[#0B3D2E] rounded border-gray-300 focus:ring-[#0B3D2E]"
                             />
                             <span className="text-[14px] font-['Plus_Jakarta_Sans'] text-gray-500">
-                                By logging in, I agree to <a href="#" className="text-gray-500 underline font-medium">T&C</a> and <a href="#" className="text-gray-500 underline font-medium">Privacy Policy</a>
+                                By logging in, I agree to <a href="#" className="text-green-900 underline font-semibold hover:text-[#073318] transition-colors">T&C</a> and <a href="#" className="text-green-900 underline font-semibold hover:text-[#073318] transition-colors">Privacy Policy</a>
                             </span>
                         </label>
                     </div>

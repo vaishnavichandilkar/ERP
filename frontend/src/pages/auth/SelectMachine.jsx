@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AuthLayout from '../../layout/auth/AuthLayout';
 import Button from '../../components/common/Button';
 import { CheckCircle, XCircle, ChevronDown } from 'lucide-react';
-import logo from '../../assets/images/logo2.png';
+import logo from '../../assets/images/ERP_Logo2.png';
 
 const machineOptions = ['Machine 1', 'Machine 2', 'Others'];
 const modelOptions = ['HGDHJ764754675', 'JHFHFG76576556', 'Others'];
