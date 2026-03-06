@@ -37,7 +37,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-[260px] bg-white border-r border-[#E5E7EB] transform transition-transform duration-300 ease-in-out lg:translate-x-0 flex flex-col shrink-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 {/* Logo Area */}
                 <div className="h-[72px] px-6 flex items-center justify-between border-b border-[#E5E7EB] shrink-0">
-                    <img src={logo} alt="WeighPro Logo" className="h-[22px]" onError={(e) => { e.target.style.display = 'none' }} />
+                    <img src={logo} alt="WeighPro Logo" className="h-[90px]" onError={(e) => { e.target.style.display = 'none' }} />
                     <button onClick={() => setIsOpen(false)} className="lg:hidden text-gray-500 hover:text-gray-700">
                         <X size={20} />
                     </button>
