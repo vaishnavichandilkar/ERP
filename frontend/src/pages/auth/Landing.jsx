@@ -17,7 +17,7 @@ const Landing = () => {
 
             const timer = setTimeout(() => {
                 setShowPopup(false);
-            }, 4000);
+            }, 14000);
             return () => clearTimeout(timer);
         }
     }, [location]);
@@ -25,20 +25,44 @@ const Landing = () => {
     return (
         <AuthLayout hideLeftPanel={true}>
             {/* Success Popup */}
+            {/* Success Modal */}
             {showPopup && (
-                <div className="fixed top-6 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 p-4 min-w-[320px] max-w-[90vw] z-50 animate-in slide-in-from-top-4 fade-in duration-300">
-                    <div className="flex items-center gap-3">
-                        <CheckCircle2 className="w-6 h-6 text-[#16A34A] shrink-0 fill-green-50" />
-                        <div className="flex-1">
-                            <h3 className="text-gray-900 font-['Geist_Sans'] font-semibold text-[15px]">Success</h3>
-                            <p className="text-gray-500 font-['Plus_Jakarta_Sans'] text-[13px] mt-0.5">User Registered Successfully</p>
-                        </div>
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-2xl shadow-2xl w-[420px] max-w-[90vw] p-8 text-center relative animate-in fade-in zoom-in duration-300">
+
+                        {/* Close Button */}
                         <button
                             onClick={() => setShowPopup(false)}
-                            className="p-1 hover:bg-gray-100 rounded-full transition-colors self-start border-none bg-transparent cursor-pointer"
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
                         >
-                            <X className="w-4 h-4 text-gray-400" />
+                            <X className="w-5 h-5" />
                         </button>
+
+                        {/* Success Icon */}
+                        <div className="flex justify-center mb-4">
+                            <CheckCircle2 className="w-16 h-16 text-green-500" />
+                        </div>
+
+                        {/* Title */}
+                        <h2 className="text-2xl font-bold text-gray-900 mb-2 font-['Geist_Sans']">
+                            Congratulations!
+                        </h2>
+
+                        {/* Message */}
+                        <p className="text-gray-600 text-[15px] font-['Plus_Jakarta_Sans'] mb-6">
+                            Your account has been successfully registered.
+                            You can now login and start using WeighPro.
+                        </p>
+
+                        {/* Login Button */}
+                        <Button
+                            variant="primary"
+                            onClick={() => navigate('/login')}
+                            className="w-full py-3 text-[16px] font-semibold"
+                        >
+                            Go to Login
+                        </Button>
+
                     </div>
                 </div>
             )}
