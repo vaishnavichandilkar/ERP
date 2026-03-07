@@ -266,7 +266,9 @@ export class OnboardingService {
 
     async saveBusinessDetails(userId: number, dto: Step5BusinessDto, files: any) {
         // Save Udyog Aadhar Number as document entry
-        await this.saveDocument(userId, 'OTHER', dto.udyogAadharNumber, 'UDYOG_AADHAR');
+        if (dto.udyogAadharNumber) {
+            await this.saveDocument(userId, 'OTHER', `${dto.udyogAadharNumber}`, 'UDYOG_AADHAR');
+        }
 
         // Save Udyog Aadhar Certificate
         if (files?.udyogAadharCertificate?.[0]) {
@@ -274,7 +276,9 @@ export class OnboardingService {
         }
 
         // Save GST Number
-        await this.saveDocument(userId, 'GST', dto.gstNumber);
+        if (dto.gstNumber) {
+            await this.saveDocument(userId, 'GST', `${dto.gstNumber}`);
+        }
 
         // Save GST Certificate
         if (files?.gstCertificate?.[0]) {
@@ -445,7 +449,8 @@ export class OnboardingService {
                 uploadedByUserId: userId,
                 type,
                 url: 'N/A', // Just storing the number/text as a doc entry for now
-                name: name,
+                name: name !== undefined ? String(name) : undefined,
+                size: BigInt(0),
                 category: category || null,
             }
         });
