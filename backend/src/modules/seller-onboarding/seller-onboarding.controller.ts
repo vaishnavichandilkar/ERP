@@ -25,13 +25,14 @@ export class SellerOnboardingController {
     @ApiQuery({ name: 'userId', required: false, description: 'Check via URL Query parameter' })
     async getStatus(@Headers() headers: any, @Query('userId') userIdQuery?: string, @Query('sessionId') sessionIdQuery?: string) {
         // Express/Nest lowercases all header keys automatically
-        const sessionId = sessionIdQuery || headers['x-session-id'] || headers['X-Session-ID'];
+        const sessionIdStr = sessionIdQuery || headers['x-session-id'] || headers['x-session-id'];
+        const sessionId = sessionIdStr ? parseInt(sessionIdStr, 10) : undefined;
         const userIdHeader = headers['x-user-id'];
         const userId = userIdQuery || userIdHeader;
 
         if (!userId) {
-            if (sessionId) return this.onboardingService.getStatusBySession(sessionId);
-            throw new BadRequestException('userId or x-session-id is required');
+            if (sessionIdStr && !isNaN(sessionId as number)) return this.onboardingService.getStatusBySession(sessionId as number);
+            throw new BadRequestException('userId or valid x-session-id is required');
         }
         return this.onboardingService.getStatusByUser(Number(userId));
     }
@@ -46,9 +47,11 @@ export class SellerOnboardingController {
         @Body() body: any,
         @Query('sessionId') sessionIdQuery?: string
     ) {
-        const sessionId = sessionIdQuery || headers['x-session-id'] || headers['X-Session-ID'];
-        if (!sessionId) {
-            throw new BadRequestException('x-session-id header is required');
+        const sessionIdStr = sessionIdQuery || headers['x-session-id'] || headers['x-session-id'];
+        const sessionId = sessionIdStr ? parseInt(sessionIdStr, 10) : undefined;
+
+        if (!sessionId || isNaN(sessionId)) {
+            throw new BadRequestException('valid x-session-id header is required');
         }
         return this.onboardingService.submitStep(sessionId, stepNumber, body);
     }

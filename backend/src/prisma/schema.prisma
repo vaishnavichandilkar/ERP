@@ -121,7 +121,7 @@ model SellerProfile {
   userId          Int       @unique
   currentStep     Int       @default(0)
   status          String    @default("IN_PROGRESS")
-  sessionId       String    @unique
+  sessionId       Int       @unique @default(autoincrement())
   addressId       Int?
   bankDetailId    Int?
   sellerId        Int?

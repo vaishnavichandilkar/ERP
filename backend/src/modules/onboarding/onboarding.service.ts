@@ -158,7 +158,7 @@ export class OnboardingService {
             };
         }
 
-        let sessionId: string;
+        let sessionId: number;
         let currentStep: number;
 
         if (existingProfile) {
@@ -170,8 +170,7 @@ export class OnboardingService {
                 data: {
                     userId: user.id,
                     currentStep: 3, // Current step is 3 (OTP verified). Next is 4.
-                    status: 'IN_PROGRESS',
-                    sessionId: crypto.randomUUID()
+                    status: 'IN_PROGRESS'
                 }
             });
             sessionId = newProfile.sessionId;
