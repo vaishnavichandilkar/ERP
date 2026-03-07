@@ -1,0 +1,7 @@
+<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="300" fill="transparent"/>
+  <rect x="50" y="200" width="300" height="50" rx="10" fill="#0B3D2E"/>
+  <rect x="70" y="150" width="260" height="50" rx="5" fill="#9ACD32"/>
+  <rect x="100" y="100" width="200" height="50" fill="#E5E7EB"/>
+  <text x="50%" y="280" font-family="Arial" font-size="14" fill="#0B3D2E" text-anchor="middle">WeighPro Scale Illustration</text>
+</svg>

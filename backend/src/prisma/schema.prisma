@@ -1,0 +1,220 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String                 @id @default(uuid())
+  first_name            String?
+  last_name             String?
+  email                 String?                @unique
+  phone                 String?                @unique
+  selected_language     String?
+  role                  Role                   @default(buyer)
+  refresh_token         String?
+  onboarded_at          DateTime?
+  verified              Boolean                @default(false)
+  isApproved            Boolean                @default(false)
+  created_at            DateTime               @default(now())
+  updated_at            DateTime               @updatedAt
+  deleted_at            DateTime?
+  isBlocked             Boolean                @default(false)
+  approvalStatus        ApprovalStatus         @default(PENDING)
+  rejectionReason       String?
+  isFirstApprovalLogin  Boolean                @default(true)
+  bankDetail            BankDetail?
+  sellerDocuments       SellerDocument[]       @relation("UploadedByUser")
+  shopDetail            ShopDetail?
+  weighingMachineDetail WeighingMachineDetail?
+
+  @@map("User")
+}
+
+model BankDetail {
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  holderName String
+  accountNo  String   @unique
+  ifsc       String
+  bankName   String
+  panNumber  String?
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("BankDetail")
+}
+
+model ShopDetail {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  shopName  String
+  address   String
+  village   String?
+  pinCode   String
+  state     String
+  district  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("ShopDetail")
+}
+
+model WeighingMachineDetail {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  isUsingOwnMachine Boolean
+  make              String?
+  machineName       String
+  modelNumber       String?
+  machineType       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("WeighingMachineDetail")
+}
+
+model Otp {
+  id         Int      @id @default(autoincrement())
+  phone      String   @unique
+  otp        String
+  expiresAt  DateTime
+  isVerified Boolean  @default(false)
+
+  @@map("Otp")
+}
+
+model SellerDocument {
+  id               Int                @id @default(autoincrement())
+  profileId        String?
+  sellerProfile    SellerProfile?     @relation(fields: [profileId], references: [id])
+  type             SellerDocumentType
+  url              String
+  category         String?
+  uploadedByUserId String?
+  name             String?
+  size             BigInt             @default(0)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  uploadedByUser   User?              @relation("UploadedByUser", fields: [uploadedByUserId], references: [id])
+
+  @@map("SellerDocument")
+}
+
+
+model Session {
+  id               String   @id @default(uuid())
+  userId           String
+  userType         String
+  jti              String   @unique
+  refreshTokenHash String
+  expiresAt        DateTime
+  isRevoked        Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  @@map("sessions")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  action    String
+  resource  String
+  ip        String?
+  userAgent String?
+  details   Json?
+  createdAt DateTime @default(now())
+
+  @@map("audit_logs")
+}
+
+model SellerProfile {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  currentStep     Int      @default(0)
+  status          String   @default("IN_PROGRESS") 
+  sessionId       String   @unique
+  addressId       String?
+  bankDetailId    String?
+  sellerId        String?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  approvedAt      DateTime?
+  onHoldUntil     DateTime?
+  rejectionReason String?
+
+  reviews         SellerStepReview[]
+  documents       SellerDocument[]
+  @@map("SellerProfile")
+}
+
+model SellerStepReview {
+  id              String   @id @default(uuid())
+  sellerProfileId String
+  step            Int
+  status          String   @default("PENDING")
+  data            Json?
+  remark          String?
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  sellerProfile   SellerProfile @relation(fields: [sellerProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([sellerProfileId, step])
+  @@map("SellerStepReview")
+  
+}
+
+model Pincode {
+  id        String   @id @default(uuid())
+  pincode   String   @unique
+  state     String
+  district  String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("Pincode")
+}
+
+enum AdminStatus {
+  PENDING_OTP
+  PENDING_PROFILE
+  PENDING_APPROVAL
+  ACTIVE
+  REJECTED
+}
+
+enum Role {
+  buyer
+  seller
+  superadmin
+  administrator
+  operator
+}
+
+enum SellerDocumentType {
+  PAN
+  GST
+  AADHAR
+  BANK
+  OTHER
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum FacilityStatus {
+  ACTIVE
+  INACTIVE
+}
