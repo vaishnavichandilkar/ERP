@@ -14,6 +14,14 @@ import ApplicationStatus from '../pages/auth/ApplicationStatus';
 import DashboardLayout from '../layout/dashboard/DashboardLayout';
 import Home from '../pages/dashboard/home/Home';
 
+// Masters Pages
+import MastersLayout from '../pages/dashboard/masters/MastersLayout';
+import GroupMaster from '../pages/dashboard/masters/GroupMaster';
+import AccountMaster from '../pages/dashboard/masters/AccountMaster';
+import UnitMaster from '../pages/dashboard/masters/UnitMaster';
+import CategoryMaster from '../pages/dashboard/masters/CategoryMaster';
+import ProductMaster from '../pages/dashboard/masters/ProductMaster';
+
 // Placeholder for new modules
 const Placeholder = ({ title }) => (
     <div className="flex items-center justify-center h-[calc(100vh-200px)]">
@@ -84,7 +92,33 @@ export const router = createBrowserRouter([
             },
             {
                 path: 'masters',
-                element: <Placeholder title="Masters" />
+                element: <MastersLayout />,
+                children: [
+                    {
+                        index: true,
+                        element: <GroupMaster />
+                    },
+                    {
+                        path: 'group-master',
+                        element: <GroupMaster />
+                    },
+                    {
+                        path: 'account-master',
+                        element: <AccountMaster />
+                    },
+                    {
+                        path: 'unit-master',
+                        element: <UnitMaster />
+                    },
+                    {
+                        path: 'category',
+                        element: <CategoryMaster />
+                    },
+                    {
+                        path: 'product-master',
+                        element: <ProductMaster />
+                    }
+                ]
             },
             {
                 path: 'purchase',

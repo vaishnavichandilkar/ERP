@@ -6,7 +6,24 @@ import logo from '../../assets/images/ERP_Logo2.png';
 
 const FileUploadBox = ({ title, file, onFileChange, onRemove, onUploadStateChange }) => {
     const [progress, setProgress] = React.useState(0);
+    const [error, setError] = React.useState('');
     const onUploadStateChangeRef = React.useRef(onUploadStateChange);
+
+    const handleLocalFileChange = (e) => {
+        const selectedFile = e.target.files[0];
+        if (selectedFile) {
+            const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg'];
+            const validExtensions = /\.(pdf|jpg|jpeg)$/i;
+
+            if (validTypes.includes(selectedFile.type) || validExtensions.test(selectedFile.name)) {
+                setError('');
+                if (onFileChange) onFileChange(e);
+            } else {
+                setError('Only PDF, JPG, and JPEG files are allowed.');
+                e.target.value = '';
+            }
+        }
+    };
 
     React.useEffect(() => {
         onUploadStateChangeRef.current = onUploadStateChange;
@@ -39,6 +56,7 @@ const FileUploadBox = ({ title, file, onFileChange, onRemove, onUploadStateChang
     const handleRemove = (e) => {
         e.preventDefault();
         e.stopPropagation();
+        setError('');
         if (onRemove) onRemove();
     };
 
@@ -48,18 +66,25 @@ const FileUploadBox = ({ title, file, onFileChange, onRemove, onUploadStateChang
             {file ? (
                 <div className="h-[120px] border border-[#D1D5DB] rounded-[8px] bg-[#FFFFFF] px-5 flex items-center justify-between w-full relative overflow-hidden">
                     <div className="flex items-center gap-4 w-full">
-                        <div className="flex items-center justify-center w-8 h-10 border-[1.5px] border-red-500 rounded-[4px] relative shrink-0">
-                            <span className="text-[11px] text-red-500 font-bold uppercase leading-none">PDF</span>
-                        </div>
+                        {(() => {
+                            const isImage = file.type?.startsWith('image/') || /\.(jpg|jpeg)$/i.test(file.name || '');
+                            return (
+                                <div className={`flex items-center justify-center w-8 h-10 border-[1.5px] ${isImage ? 'border-blue-500' : 'border-red-500'} rounded-[4px] relative shrink-0`}>
+                                    <span className={`text-[11px] ${isImage ? 'text-blue-500' : 'text-red-500'} font-bold uppercase leading-none`}>
+                                        {isImage ? 'JPG' : 'PDF'}
+                                    </span>
+                                </div>
+                            );
+                        })()}
                         <div className="flex-1 min-w-0 flex flex-col justify-center">
                             <div className="flex justify-between items-center w-full mb-1">
-                                <div>
+                                <div className="flex-1 min-w-0 mr-3">
                                     <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium text-[#111827] truncate leading-tight">{file.name}</p>
                                     <p className="text-[12px] font-['Plus_Jakarta_Sans'] text-[#6B7280] mt-0.5">{Math.round((file.size || 204800) / 1024)} KB</p>
                                 </div>
                                 <div className="flex items-center gap-3 shrink-0">
                                     <label className="cursor-pointer flex items-center text-[#6B7280] hover:text-[#111827]">
-                                        <input type="file" className="hidden" onChange={onFileChange} accept=".pdf,.jpg,.jpeg" />
+                                        <input type="file" className="hidden" onChange={handleLocalFileChange} accept=".pdf,.jpg,.jpeg" />
                                         <CloudUpload size={20} strokeWidth={1.5} />
                                     </label>
                                     <span onClick={handleRemove} className="cursor-pointer flex items-center text-[#6B7280] hover:text-red-700">
@@ -80,11 +105,16 @@ const FileUploadBox = ({ title, file, onFileChange, onRemove, onUploadStateChang
                 </div>
             ) : (
                 <label className="h-[120px] border border-dashed border-[#D1D5DB] rounded-[8px] bg-[#FFFFFF] px-4 flex flex-col items-center justify-center cursor-pointer transition-colors hover:border-[#0F3D2E] w-full font-['Plus_Jakarta_Sans']">
-                    <input type="file" className="hidden" onChange={onFileChange} accept=".pdf,.jpg,.jpeg" />
+                    <input type="file" className="hidden" onChange={handleLocalFileChange} accept=".pdf,.jpg,.jpeg" />
                     <FileText size={20} className="text-[#6B7280] mb-2" strokeWidth={1.5} />
                     <span className="text-[15px] font-[600] text-[#0F3D2E] leading-tight mb-1">Click to upload</span>
                     <span className="text-[13px] text-[#9CA3AF] leading-tight">PDF or JPG (max. 10MB)</span>
                 </label>
+            )}
+            {error && (
+                <div className="mt-1.5 text-red-500 text-[13px] font-medium animate-in fade-in slide-in-from-top-1 duration-300">
+                    {error}
+                </div>
             )}
         </div>
     );
@@ -604,7 +634,7 @@ const SignUp = () => {
 
                                     <div className="col-span-1 md:col-span-2 w-full flex justify-center mt-[12px]">
                                         <button
-                                            disabled={!formData.udyogAadhar || !formData.udyogAadharFile || !formData.gstFile || isLoading || !!fieldErrors.udyogAadhar || !!fieldErrors.gstNumber || isAnyUploading}
+                                            disabled={!formData.udyogAadhar || !formData.udyogAadharFile || isLoading || !!fieldErrors.udyogAadhar || !!fieldErrors.gstNumber || isAnyUploading}
                                             onClick={handleNext}
                                             className="w-full md:w-[calc(50%-12px)] h-[56px] bg-[#0F3D2E] text-white text-[16px] font-['Plus_Jakarta_Sans'] font-medium rounded-[8px] hover:bg-[#0a291f] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                                         >
