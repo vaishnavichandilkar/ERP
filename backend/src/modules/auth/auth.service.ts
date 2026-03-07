@@ -98,7 +98,7 @@ export class AuthService {
         }
     }
 
-    async logout(userId: string) {
+    async logout(userId: number) {
         await this.prisma.session.updateMany({
             where: { userId, isRevoked: false },
             data: { isRevoked: true },
@@ -158,7 +158,7 @@ export class AuthService {
             },
         };
     }
-    async markApprovalLoginSeen(userId: string) {
+    async markApprovalLoginSeen(userId: number) {
         await this.prisma.user.update({
             where: { id: userId },
             data: { isFirstApprovalLogin: false }

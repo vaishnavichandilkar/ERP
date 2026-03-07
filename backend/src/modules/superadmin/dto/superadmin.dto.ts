@@ -1,11 +1,11 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsInt, IsNotEmpty } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ApproveSellerDto {
     @ApiProperty()
-    @IsString()
+    @IsInt()
     @IsNotEmpty()
-    sellerId: string;
+    sellerId: number;
 
     @ApiProperty({ required: false })
     @IsString()

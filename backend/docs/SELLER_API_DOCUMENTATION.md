@@ -84,8 +84,7 @@ The primary login gateway.
 | **Step 5** | `/onboarding/step5-business` | `POST` | Upload business docs |
 | **Step 6** | `/onboarding/step6-shop` | `POST` | Shop detail config |
 | **Step 7** | `/onboarding/step7-bank` | `POST` | Bank & PAN verification |
-| **Step 8** | `/onboarding/step8-machine` | `POST` | Machine configuration |
-| **Step 9** | `/onboarding/step9-complete` | `POST` | Final submit for approval |
+| **Step 8** | `/onboarding/step9-complete` | `POST` | Final submit for approval |
 
 ---
 
@@ -168,21 +167,8 @@ The primary login gateway.
     *   `cancelledCheque` (file): Required PDF.
     *   `panCard` (file): Required PDF.
 
-### Step 7: Machine Configuration
-*   **Endpoint**: `/onboarding/step7-machine` | `POST`
-*   **Body**:
-    ```json
-    {
-      "isUsingOwnMachine": true,
-      "make": "Essae",
-      "machineName": "High Precision Bridge A1",
-      "modelNumber": "XP-500",
-      "machineType": "Electronic"
-    }
-    ```
-
 ### Step 8: Final Submission
-*   **Endpoint**: `/onboarding/step8-complete` | `POST`
+*   **Endpoint**: `/onboarding/step9-complete` | `POST`
 *   **Effect**: Sets `onboarded_at` timestamp. User is moved to "Pending Superadmin Review" queue.
 
 ---

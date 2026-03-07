@@ -69,6 +69,23 @@ async function main() {
     }
     console.log('Pincodes seeded.');
 
+    // 4. Seed Languages
+    const languages = [
+        { name: 'English', code: 'en', isActive: true },
+        { name: 'Hindi', code: 'hi', isActive: true },
+        { name: 'Marathi', code: 'mr', isActive: true },
+        { name: 'Kannada', code: 'kn', isActive: true },
+    ];
+
+    for (const lang of languages) {
+        await prisma.language.upsert({
+            where: { code: lang.code },
+            update: { name: lang.name, isActive: lang.isActive },
+            create: lang,
+        });
+    }
+    console.log('Languages seeded.');
+
     console.log('Seeding completed.');
 }
 

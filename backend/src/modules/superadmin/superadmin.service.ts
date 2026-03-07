@@ -15,7 +15,6 @@ export class SuperAdminService {
             include: {
                 bankDetail: true,
                 shopDetail: true,
-                weighingMachineDetail: true,
                 sellerDocuments: true
             },
             orderBy: {
@@ -24,7 +23,7 @@ export class SuperAdminService {
         });
     }
 
-    async approveSeller(sellerId: string) {
+    async approveSeller(sellerId: number) {
         const user = await this.prisma.user.findUnique({ where: { id: sellerId } });
         if (!user) throw new BadRequestException('User not found');
         if (user.role !== 'seller') throw new BadRequestException('Not a Seller user');
@@ -43,7 +42,7 @@ export class SuperAdminService {
         return { message: 'Seller approved successfully' };
     }
 
-    async rejectSeller(sellerId: string, rejectionReason?: string) {
+    async rejectSeller(sellerId: number, rejectionReason?: string) {
         const user = await this.prisma.user.findUnique({ where: { id: sellerId } });
         if (!user) throw new BadRequestException('User not found');
         if (user.role !== 'seller') throw new BadRequestException('Not a Seller user');

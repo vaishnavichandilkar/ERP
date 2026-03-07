@@ -1,0 +1,39 @@
+﻿src/modules/audit/audit.service.ts(18,17): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/auth/auth.service.ts(103,22): error TS2322: Type 'string' is not assignable to type 'number | IntFilter<"Session">'.
+src/modules/auth/auth.service.ts(163,22): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/business/business.service.ts(10,22): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/business/business.service.ts(21,67): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/business/business.service.ts(28,22): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/business/business.service.ts(36,17): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/business/business.service.ts(45,22): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/business/business.service.ts(57,22): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/onboarding/onboarding.service.ts(26,26): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/onboarding/onboarding.service.ts(49,22): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/onboarding/onboarding.service.ts(84,17): error TS2322: Type 'number' is not assignable to type 'string'.
+src/modules/onboarding/onboarding.service.ts(90,26): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/onboarding/onboarding.service.ts(178,79): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/onboarding/onboarding.service.ts(229,22): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/onboarding/onboarding.service.ts(284,22): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/onboarding/onboarding.service.ts(294,17): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/onboarding/onboarding.service.ts(317,22): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/onboarding/onboarding.service.ts(326,17): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/onboarding/onboarding.service.ts(352,22): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/onboarding/onboarding.service.ts(361,17): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/onboarding/onboarding.service.ts(378,22): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/onboarding/onboarding.service.ts(386,22): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/onboarding/onboarding.service.ts(395,22): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/onboarding/onboarding.service.ts(407,85): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/onboarding/onboarding.service.ts(411,17): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/onboarding/onboarding.service.ts(422,85): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/onboarding/onboarding.service.ts(426,17): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/seller-onboarding/seller-onboarding.service.ts(26,22): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/seller-onboarding/seller-onboarding.service.ts(31,71): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/seller-onboarding/seller-onboarding.service.ts(36,21): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/seller-onboarding/seller-onboarding.service.ts(44,71): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/seller-onboarding/seller-onboarding.service.ts(85,22): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/seller-onboarding/seller-onboarding.service.ts(96,37): error TS2339: Property 'reviews' does not exist on type '{ id: number; created_at: Date; updated_at: Date; rejectionReason: string; userId: number; sessionId: string; currentStep: number; status: string; addressId: number; bankDetailId: number; sellerId: number; approvedAt: Date; onHoldUntil: Date; }'.
+src/modules/seller-onboarding/seller-onboarding.service.ts(97,36): error TS2339: Property 'reviews' does not exist on type '{ id: number; created_at: Date; updated_at: Date; rejectionReason: string; userId: number; sessionId: string; currentStep: number; status: string; addressId: number; bankDetailId: number; sellerId: number; approvedAt: Date; onHoldUntil: Date; }'.
+src/modules/superadmin/superadmin.service.ts(28,67): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/superadmin/superadmin.service.ts(34,22): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/superadmin/superadmin.service.ts(47,67): error TS2322: Type 'string' is not assignable to type 'number'.
+src/modules/superadmin/superadmin.service.ts(52,22): error TS2322: Type 'string' is not assignable to type 'number'.

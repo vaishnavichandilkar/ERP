@@ -4,7 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import { Step1LanguageDto, Step2MobileDto, Step3VerifyDto, Step4DetailsDto, Step5BusinessDto, Step6ShopDto, Step7BankDto, Step8MachineDto } from './dto/onboarding.dto';
+import { Step1LanguageDto, Step2MobileDto, Step3VerifyDto, Step4DetailsDto, Step5BusinessDto, Step6ShopDto, Step7BankDto } from './dto/onboarding.dto';
 
 import { SmsService } from '../otp/sms.service';
 
@@ -17,7 +17,22 @@ export class OnboardingService {
         private smsService: SmsService,
     ) { }
 
+    async getLanguages() {
+        return this.prisma.language.findMany({
+            where: { isActive: true },
+            select: { id: true, name: true, code: true }
+        });
+    }
+
     async saveLanguage(dto: Step1LanguageDto) {
+        const language = await this.prisma.language.findFirst({
+            where: { name: dto.language, isActive: true }
+        });
+
+        if (!language) {
+            throw new BadRequestException('Invalid or inactive language selected');
+        }
+
         // Step 1: Create a temporary user record to store the selection
         // This acts as a session for the onboarding flow
         let user;
@@ -174,7 +189,7 @@ export class OnboardingService {
         };
     }
 
-    private async validateAndAdvanceStep(userId: string, currentStepNumber: number, nextStepNumber: number, stepData: any) {
+    private async validateAndAdvanceStep(userId: number, currentStepNumber: number, nextStepNumber: number, stepData: any) {
         const profile = await this.prisma.sellerProfile.findUnique({ where: { userId } });
         if (!profile) throw new BadRequestException('Seller profile not found');
 
@@ -222,7 +237,7 @@ export class OnboardingService {
         return advanceTo;
     }
 
-    async updatePersonalDetails(userId: string, dto: Step4DetailsDto) {
+    async updatePersonalDetails(userId: number, dto: Step4DetailsDto) {
         await this.validateAndAdvanceStep(userId, 4, 4, dto);
 
         return this.prisma.user.update({
@@ -235,7 +250,7 @@ export class OnboardingService {
         });
     }
 
-    async saveBusinessDetails(userId: string, dto: Step5BusinessDto, files: any) {
+    async saveBusinessDetails(userId: number, dto: Step5BusinessDto, files: any) {
         // Save Udyog Aadhar Number as document entry
         await this.saveDocument(userId, 'OTHER', dto.udyogAadharNumber, 'UDYOG_AADHAR');
 
@@ -262,7 +277,7 @@ export class OnboardingService {
         return { message: 'Business details saved successfully' };
     }
 
-    async saveShopDetails(userId: string, dto: Step6ShopDto, files: any) {
+    async saveShopDetails(userId: number, dto: Step6ShopDto, files: any) {
         // Validate Pincode and get State and District
         const pincodeRecord = await this.prisma.pincode.findUnique({
             where: { pincode: dto.pinCode }
@@ -280,7 +295,7 @@ export class OnboardingService {
         const district = pincodeRecord.district;
 
         // Use the new ShopDetail model
-        await this.prisma.shopDetail.upsert({
+        const shopDetail = await this.prisma.shopDetail.upsert({
             where: { userId },
             update: {
                 shopName: dto.shopName,
@@ -306,14 +321,19 @@ export class OnboardingService {
             await this.saveFile(userId, 'OTHER', files.shopActLicense[0], 'SHOP_ACT_LICENSE');
         }
 
+        await this.prisma.sellerProfile.update({
+            where: { userId },
+            data: { addressId: shopDetail.id }
+        });
+
         await this.validateAndAdvanceStep(userId, 6, 6, dto);
 
         return { message: 'Shop details saved successfully' };
     }
 
-    async saveBankDetails(userId: string, dto: Step7BankDto, files: any) {
+    async saveBankDetails(userId: number, dto: Step7BankDto, files: any) {
         // Save Bank Details
-        await this.prisma.bankDetail.upsert({
+        const bankDetail = await this.prisma.bankDetail.upsert({
             where: { userId },
             update: {
                 holderName: dto.holderName,
@@ -342,44 +362,26 @@ export class OnboardingService {
             await this.saveFile(userId, 'PAN', files.panCard[0]);
         }
 
+        await this.prisma.sellerProfile.update({
+            where: { userId },
+            data: { bankDetailId: bankDetail.id }
+        });
+
         await this.validateAndAdvanceStep(userId, 7, 7, dto);
 
         return { message: 'Bank details saved successfully' };
     }
 
-    async saveMachineDetails(userId: string, dto: Step8MachineDto) {
-        await this.prisma.weighingMachineDetail.upsert({
-            where: { userId },
-            update: {
-                isUsingOwnMachine: dto.isUsingOwnMachine,
-                make: dto.isUsingOwnMachine ? dto.make : null,
-                machineName: dto.machineName,
-                modelNumber: dto.isUsingOwnMachine ? dto.modelNumber : null,
-                machineType: dto.isUsingOwnMachine ? dto.machineType : null,
-            },
-            create: {
-                userId,
-                isUsingOwnMachine: dto.isUsingOwnMachine,
-                make: dto.isUsingOwnMachine ? dto.make : null,
-                machineName: dto.machineName,
-                modelNumber: dto.isUsingOwnMachine ? dto.modelNumber : null,
-                machineType: dto.isUsingOwnMachine ? dto.machineType : null,
-            }
-        });
 
-        await this.validateAndAdvanceStep(userId, 8, 8, dto);
 
-        return { message: 'Weighing machine details saved successfully' };
-    }
-
-    async completeOnboarding(userId: string) {
-        // Check if mandatory Step 6 is completed
-        const machineDetail = await this.prisma.weighingMachineDetail.findUnique({
+    async completeOnboarding(userId: number) {
+        // Check if mandatory Step 7 (Bank detail) is completed
+        const bankDetail = await this.prisma.bankDetail.findUnique({
             where: { userId }
         });
 
-        if (!machineDetail) {
-            throw new BadRequestException('Weighing machine details are mandatory for onboarding completion');
+        if (!bankDetail) {
+            throw new BadRequestException('Bank details are mandatory for onboarding completion');
         }
 
         await this.prisma.user.update({
@@ -389,11 +391,14 @@ export class OnboardingService {
             }
         });
 
-        await this.validateAndAdvanceStep(userId, 9, 9, { isCompleted: true });
+        await this.validateAndAdvanceStep(userId, 8, 8, { isCompleted: true });
 
         await this.prisma.sellerProfile.update({
             where: { userId },
-            data: { status: 'PENDING_APPROVAL' }
+            data: {
+                status: 'PENDING_APPROVAL',
+                sellerId: userId // Set sellerId
+            }
         });
 
         return {
@@ -403,7 +408,7 @@ export class OnboardingService {
     }
 
     // Helper functions
-    private async saveFile(userId: string, type: any, file: any, category?: string) {
+    private async saveFile(userId: number, type: any, file: any, category?: string) {
         const sellerProfile = await this.prisma.sellerProfile.findUnique({ where: { userId } });
         return this.prisma.sellerDocument.create({
             data: {
@@ -418,7 +423,7 @@ export class OnboardingService {
         });
     }
 
-    private async saveDocument(userId: string, type: any, name: string, category?: string) {
+    private async saveDocument(userId: number, type: any, name: string, category?: string) {
         const sellerProfile = await this.prisma.sellerProfile.findUnique({ where: { userId } });
         return this.prisma.sellerDocument.create({
             data: {

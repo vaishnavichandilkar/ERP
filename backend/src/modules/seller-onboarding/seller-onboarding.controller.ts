@@ -15,7 +15,7 @@ export class SellerOnboardingController {
         if (!body.userId) {
             throw new BadRequestException('userId is required');
         }
-        return this.onboardingService.startOnboarding(body.userId);
+        return this.onboardingService.startOnboarding(Number(body.userId));
     }
 
     @Get('status')
@@ -33,7 +33,7 @@ export class SellerOnboardingController {
             if (sessionId) return this.onboardingService.getStatusBySession(sessionId);
             throw new BadRequestException('userId or x-session-id is required');
         }
-        return this.onboardingService.getStatusByUser(userId);
+        return this.onboardingService.getStatusByUser(Number(userId));
     }
 
     @Post('step/:stepNumber')

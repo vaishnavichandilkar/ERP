@@ -5,7 +5,7 @@ import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 export class BusinessService {
     constructor(private prisma: PrismaService) { }
 
-    async getBusinessProfile(userId: string) {
+    async getBusinessProfile(userId: number) {
         return this.prisma.user.findUnique({
             where: { id: userId },
             include: {
@@ -17,7 +17,7 @@ export class BusinessService {
     }
 
     // Compatibility method for AdminBusinessController
-    async createBusinessDetails(userId: string, dto: any) {
+    async createBusinessDetails(userId: number, dto: any) {
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
         if (!user) throw new BadRequestException('User not found');
 
@@ -52,7 +52,7 @@ export class BusinessService {
         return { message: 'Business details saved for legacy flow.' };
     }
 
-    async updateBusinessStatus(userId: string, isApproved: boolean) {
+    async updateBusinessStatus(userId: number, isApproved: boolean) {
         return this.prisma.user.update({
             where: { id: userId },
             data: {

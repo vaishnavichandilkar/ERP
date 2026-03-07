@@ -15,7 +15,7 @@ CREATE TYPE "FacilityStatus" AS ENUM ('ACTIVE', 'INACTIVE');
 
 -- CreateTable
 CREATE TABLE "User" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "first_name" TEXT,
     "last_name" TEXT,
     "email" TEXT,
@@ -39,8 +39,8 @@ CREATE TABLE "User" (
 
 -- CreateTable
 CREATE TABLE "BankDetail" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "userId" INTEGER NOT NULL,
     "holderName" TEXT NOT NULL,
     "accountNo" TEXT NOT NULL,
     "ifsc" TEXT NOT NULL,
@@ -53,8 +53,8 @@ CREATE TABLE "BankDetail" (
 
 -- CreateTable
 CREATE TABLE "ShopDetail" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "userId" INTEGER NOT NULL,
     "shopName" TEXT NOT NULL,
     "address" TEXT NOT NULL,
     "village" TEXT,
@@ -69,8 +69,8 @@ CREATE TABLE "ShopDetail" (
 
 -- CreateTable
 CREATE TABLE "WeighingMachineDetail" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "userId" INTEGER NOT NULL,
     "isUsingOwnMachine" BOOLEAN NOT NULL,
     "make" TEXT,
     "machineName" TEXT NOT NULL,
@@ -100,7 +100,7 @@ CREATE TABLE "SellerDocument" (
     "type" "SellerDocumentType" NOT NULL,
     "url" TEXT NOT NULL,
     "category" TEXT,
-    "uploadedByUserId" TEXT,
+    "uploadedByUserId" INTEGER,
     "name" TEXT,
     "size" BIGINT NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -111,8 +111,8 @@ CREATE TABLE "SellerDocument" (
 
 -- CreateTable
 CREATE TABLE "sessions" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "userId" INTEGER NOT NULL,
     "userType" TEXT NOT NULL,
     "jti" TEXT NOT NULL,
     "refreshTokenHash" TEXT NOT NULL,
@@ -125,8 +125,8 @@ CREATE TABLE "sessions" (
 
 -- CreateTable
 CREATE TABLE "audit_logs" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT,
+    "id" SERIAL NOT NULL,
+    "userId" INTEGER,
     "action" TEXT NOT NULL,
     "resource" TEXT NOT NULL,
     "ip" TEXT,
@@ -139,14 +139,14 @@ CREATE TABLE "audit_logs" (
 
 -- CreateTable
 CREATE TABLE "SellerProfile" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "userId" INTEGER NOT NULL,
     "currentStep" INTEGER NOT NULL DEFAULT 0,
     "status" TEXT NOT NULL DEFAULT 'IN_PROGRESS',
     "sessionId" TEXT NOT NULL,
-    "addressId" TEXT,
-    "bankDetailId" TEXT,
-    "sellerId" TEXT,
+    "addressId" INTEGER,
+    "bankDetailId" INTEGER,
+    "sellerId" INTEGER,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
     "approvedAt" TIMESTAMP(3),
@@ -158,8 +158,8 @@ CREATE TABLE "SellerProfile" (
 
 -- CreateTable
 CREATE TABLE "SellerStepReview" (
-    "id" TEXT NOT NULL,
-    "sellerProfileId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "sellerProfileId" INTEGER NOT NULL,
     "step" INTEGER NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'PENDING',
     "data" JSONB,
@@ -174,7 +174,7 @@ CREATE TABLE "SellerStepReview" (
 
 -- CreateTable
 CREATE TABLE "Pincode" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "pincode" TEXT NOT NULL,
     "state" TEXT NOT NULL,
     "district" TEXT NOT NULL,
@@ -229,6 +229,9 @@ ALTER TABLE "ShopDetail" ADD CONSTRAINT "ShopDetail_userId_fkey" FOREIGN KEY ("u
 
 -- AddForeignKey
 ALTER TABLE "WeighingMachineDetail" ADD CONSTRAINT "WeighingMachineDetail_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "SellerDocument" ADD CONSTRAINT "SellerDocument_profileId_fkey" FOREIGN KEY ("profileId") REFERENCES "SellerProfile"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "SellerDocument" ADD CONSTRAINT "SellerDocument_uploadedByUserId_fkey" FOREIGN KEY ("uploadedByUserId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;

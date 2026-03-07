@@ -1,8 +1,8 @@
-import { Controller, Post, Body, Put, UseInterceptors, UploadedFiles, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Put, UseInterceptors, UploadedFiles, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { OnboardingService } from './onboarding.service';
-import { Step1LanguageDto, Step2MobileDto, Step3VerifyDto, Step4DetailsDto, Step5BusinessDto, Step6ShopDto, Step7BankDto, Step8MachineDto } from './dto/onboarding.dto';
+import { Step1LanguageDto, Step2MobileDto, Step3VerifyDto, Step4DetailsDto, Step5BusinessDto, Step6ShopDto, Step7BankDto } from './dto/onboarding.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { multerConfig } from '../upload/multer.config';
 
@@ -10,6 +10,12 @@ import { multerConfig } from '../upload/multer.config';
 @Controller('onboarding')
 export class OnboardingController {
     constructor(private onboardingService: OnboardingService) { }
+
+    @Get('languages')
+    @ApiOperation({ summary: 'Get available languages' })
+    getLanguages() {
+        return this.onboardingService.getLanguages();
+    }
 
     @Post('step1-language')
     @ApiOperation({ summary: 'Step 1: Language Selection' })
@@ -138,27 +144,6 @@ export class OnboardingController {
         }
     ) {
         return this.onboardingService.saveBankDetails(req.user.userId, dto, files);
-    }
-
-    @Post('step8-machine')
-    @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth()
-    @ApiOperation({ summary: 'Step 8: Weighing Machine & Model Configuration' })
-    @ApiBody({
-        schema: {
-            type: 'object',
-            properties: {
-                isUsingOwnMachine: { type: 'boolean' },
-                make: { type: 'string' },
-                machineName: { type: 'string' },
-                modelNumber: { type: 'string' },
-                machineType: { type: 'string' },
-            },
-            required: ['isUsingOwnMachine', 'machineName']
-        }
-    })
-    saveMachineDetails(@Request() req, @Body() dto: Step8MachineDto) {
-        return this.onboardingService.saveMachineDetails(req.user.userId, dto);
     }
 
     @Post('step9-complete')

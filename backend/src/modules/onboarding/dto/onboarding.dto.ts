@@ -1,8 +1,8 @@
-import { IsEmail, IsNotEmpty, IsString, IsOptional, Length, IsBoolean, ValidateIf, Matches } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, IsOptional, Length, IsBoolean, ValidateIf, Matches, IsInt } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class Step1LanguageDto {
-    @ApiProperty({ example: 'English', description: 'Selected language (English, Hindi, Marathi, Kannada)' })
+    @ApiProperty({ example: 'English', description: 'Selected language' })
     @IsString()
     @IsNotEmpty()
     language: string;
@@ -10,7 +10,7 @@ export class Step1LanguageDto {
     // @ApiProperty({ example: 'uuid-of-existing-onboarding-session', description: 'Optional userId to update existing selection', required: false })
     // @IsString()
     // @IsOptional()
-    userId?: string;
+    userId?: number;
 }
 
 export class Step2MobileDto {
@@ -21,9 +21,9 @@ export class Step2MobileDto {
     phone: string;
 
     @ApiProperty({ example: 'uuid-from-step-1', description: 'The userId returned from Step 1' })
-    @IsString()
+    @IsInt()
     @IsNotEmpty()
-    userId: string;
+    userId: number;
 }
 
 export class Step3VerifyDto {
@@ -38,9 +38,9 @@ export class Step3VerifyDto {
     otp: string;
 
     @ApiProperty({ example: 'uuid-from-step-1', description: 'The userId returned from Step 1' })
-    @IsString()
+    @IsInt()
     @IsNotEmpty()
-    userId: string;
+    userId: number;
 }
 
 export class Step4DetailsDto {
@@ -139,34 +139,4 @@ export class Step7BankDto {
     @IsString()
     @IsNotEmpty()
     panNumber: string;
-}
-
-export class Step8MachineDto {
-    @ApiProperty({ example: true })
-    @IsBoolean()
-    @IsNotEmpty()
-    isUsingOwnMachine: boolean;
-
-    @ApiProperty({ example: 'Essae' })
-    @ValidateIf(o => o.isUsingOwnMachine === true)
-    @IsString()
-    @IsNotEmpty()
-    make: string;
-
-    @ApiProperty({ example: 'Machine 1' })
-    @IsString()
-    @IsNotEmpty()
-    machineName: string;
-
-    @ApiProperty({ example: 'HGDHJ764754675' })
-    @ValidateIf(o => o.isUsingOwnMachine === true)
-    @IsString()
-    @IsNotEmpty()
-    modelNumber: string;
-
-    @ApiProperty({ example: 'Digital' })
-    @ValidateIf(o => o.isUsingOwnMachine === true)
-    @IsString()
-    @IsNotEmpty()
-    machineType: string;
 }

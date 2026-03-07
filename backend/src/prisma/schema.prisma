@@ -8,7 +8,7 @@ datasource db {
 }
 
 model User {
-  id                    String                 @id @default(uuid())
+  id                    Int                    @id @default(autoincrement())
   first_name            String?
   last_name             String?
   email                 String?                @unique
@@ -29,14 +29,13 @@ model User {
   bankDetail            BankDetail?
   sellerDocuments       SellerDocument[]       @relation("UploadedByUser")
   shopDetail            ShopDetail?
-  weighingMachineDetail WeighingMachineDetail?
 
   @@map("User")
 }
 
 model BankDetail {
-  id         String   @id @default(uuid())
-  userId     String   @unique
+  id         Int      @id @default(autoincrement())
+  userId     Int      @unique
   holderName String
   accountNo  String   @unique
   ifsc       String
@@ -49,8 +48,8 @@ model BankDetail {
 }
 
 model ShopDetail {
-  id        String   @id @default(uuid())
-  userId    String   @unique
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique
   shopName  String
   address   String
   village   String?
@@ -62,21 +61,6 @@ model ShopDetail {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("ShopDetail")
-}
-
-model WeighingMachineDetail {
-  id                String   @id @default(uuid())
-  userId            String   @unique
-  isUsingOwnMachine Boolean
-  make              String?
-  machineName       String
-  modelNumber       String?
-  machineType       String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("WeighingMachineDetail")
 }
 
 model Otp {
@@ -91,12 +75,12 @@ model Otp {
 
 model SellerDocument {
   id               Int                @id @default(autoincrement())
-  profileId        String?
+  profileId        Int?
   sellerProfile    SellerProfile?     @relation(fields: [profileId], references: [id])
   type             SellerDocumentType
   url              String
   category         String?
-  uploadedByUserId String?
+  uploadedByUserId Int?
   name             String?
   size             BigInt             @default(0)
   createdAt        DateTime           @default(now())
@@ -106,10 +90,9 @@ model SellerDocument {
   @@map("SellerDocument")
 }
 
-
 model Session {
-  id               String   @id @default(uuid())
-  userId           String
+  id               Int      @id @default(autoincrement())
+  userId           Int
   userType         String
   jti              String   @unique
   refreshTokenHash String
@@ -121,8 +104,8 @@ model Session {
 }
 
 model AuditLog {
-  id        String   @id @default(uuid())
-  userId    String?
+  id        Int      @id @default(autoincrement())
+  userId    Int?
   action    String
   resource  String
   ip        String?
@@ -134,46 +117,46 @@ model AuditLog {
 }
 
 model SellerProfile {
-  id              String   @id @default(uuid())
-  userId          String   @unique
-  currentStep     Int      @default(0)
-  status          String   @default("IN_PROGRESS") 
-  sessionId       String   @unique
-  addressId       String?
-  bankDetailId    String?
-  sellerId        String?
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
+  id              Int       @id @default(autoincrement())
+  userId          Int       @unique
+  currentStep     Int       @default(0)
+  status          String    @default("IN_PROGRESS")
+  sessionId       String    @unique
+  addressId       Int?
+  bankDetailId    Int?
+  sellerId        Int?
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
   approvedAt      DateTime?
   onHoldUntil     DateTime?
   rejectionReason String?
 
-  reviews         SellerStepReview[]
-  documents       SellerDocument[]
+  reviews   SellerStepReview[]
+  documents SellerDocument[]
+
   @@map("SellerProfile")
 }
 
 model SellerStepReview {
-  id              String   @id @default(uuid())
-  sellerProfileId String
+  id              Int       @id @default(autoincrement())
+  sellerProfileId Int
   step            Int
-  status          String   @default("PENDING")
+  status          String    @default("PENDING")
   data            Json?
   remark          String?
   reviewedBy      String?
   reviewedAt      DateTime?
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
 
-  sellerProfile   SellerProfile @relation(fields: [sellerProfileId], references: [id], onDelete: Cascade)
+  sellerProfile SellerProfile @relation(fields: [sellerProfileId], references: [id], onDelete: Cascade)
 
   @@unique([sellerProfileId, step])
   @@map("SellerStepReview")
-  
 }
 
 model Pincode {
-  id        String   @id @default(uuid())
+  id        Int      @id @default(autoincrement())
   pincode   String   @unique
   state     String
   district  String
@@ -182,6 +165,17 @@ model Pincode {
   updatedAt DateTime @updatedAt
 
   @@map("Pincode")
+}
+
+model Language {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  code      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("Language")
 }
 
 enum AdminStatus {

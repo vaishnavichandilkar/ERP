@@ -11,7 +11,7 @@ This guide provides a comprehensive step-by-step walkthrough to test the **Weigh
 
 ## 🚀 Phase 1: Seller Onboarding (Strict 9-Step Flow)
 
-**Goal**: Select language, register mobile, provide all business evidence, machine configurations, and wait for Superadmin approval.
+**Goal**: Select language, register mobile, provide all business evidence, and wait for Superadmin approval.
 
 ### 🌟 New: Session Management (Resume Form Flow)
 You can test the backend's ability to save partially filled data and resume sessions before following the sequential steps below:
@@ -105,21 +105,7 @@ You can test the backend's ability to save partially filled data and resume sess
     *   `panCard`: [Upload PDF]
 *   **Result**: Bank records updated and verification documents stored.
 
-### Step 8: Machine Configuration
-*   **Endpoint**: `POST /onboarding/step8-machine`
-*   **Payload**:
-    ```json
-    {
-      "isUsingOwnMachine": true,
-      "machineName": "Industrial Weighbridge A1",
-      "make": "TATA Precision",
-      "modelNumber": "TP-9000",
-      "machineType": "Static-Pit"
-    }
-    ```
-*   **Result**: Weighing machine details stored for the seller.
-
-### Step 9: Finalize
+### Step 8: Finalize
 *   **Endpoint**: `POST /onboarding/step9-complete`
 *   **Result**: `{ "message": "Onboarding complete. Your account is pending Superadmin approval." }`.
 *   **Status**: `onboarded_at` is set in DB. Login is restricted until approved.

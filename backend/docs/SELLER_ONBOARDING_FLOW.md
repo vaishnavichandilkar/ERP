@@ -164,11 +164,7 @@ The onboarding follows a strict **9-step sequence**.
 **Endpoint**: `POST /onboarding/step7-bank` (Protected, Multipart)
 **Database**: Updates/Creates `BankDetail` and stores bank verification PDFs.
 
-### Step 8: Machine Configuration
-**Endpoint**: `POST /onboarding/step8-machine` (Protected)
-**Database**: Updates/Creates `WeighingMachineDetail`.
-
-### Step 9: Final Submission
+### Step 8: Final Submission
 **Endpoint**: `POST /onboarding/step9-complete` (Protected)
 **Database**: Sets `onboarded_at` in the `User` table.
 *   **System Action**: User is now locked in `PENDING_APPROVAL` state.
@@ -191,7 +187,6 @@ The onboarding follows a strict **9-step sequence**.
 | **OTP Verified** | `sessions` | `jti`, `refreshTokenHash` |
 | **Profile Fill** | `User` | `first_name`, `last_name`, `email` |
 | **Doc Upload** | `SellerDocument` | `url`, `type`, `category` |
-| **Machine Config**| `WeighingMachineDetail`| `make`, `modelNumber` |
 | **Approval** | `User` | `isApproved: true`, `onboarded_at` |
 
 ---
@@ -219,8 +214,7 @@ The onboarding follows a strict **9-step sequence**.
 3.  **T+15s**: User enters OTP. **Tokens received**.
 4.  **T+1m**: User completes Personal Details (Step 4).
 5.  **T+3m**: User uploads Docs (Steps 5-7).
-6.  **T+4m**: User configures machine (Step 8).
-7.  **T+5m**: User clicks "Finish" (Step 9). **Onboarding Complete**.
+6.  **T+5m**: User clicks "Finish" (Step 8). **Onboarding Complete**.
 8.  **T+1h**: **Superadmin** reviews and **Approves**.
 9.  **T+1h 1s**: Seller Dashboard unlocked.
 

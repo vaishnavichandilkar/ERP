@@ -21,7 +21,7 @@ export class SellerOnboardingService {
         return stepNames[step] || `step_${step}_completed`;
     }
 
-    async startOnboarding(userId: string) {
+    async startOnboarding(userId: number) {
         let profile = await this.prisma.sellerProfile.findUnique({
             where: { userId }
         });
@@ -80,7 +80,7 @@ export class SellerOnboardingService {
         };
     }
 
-    async getStatusByUser(userId: string) {
+    async getStatusByUser(userId: number) {
         const profile = await this.prisma.sellerProfile.findUnique({
             where: { userId },
             include: { reviews: { orderBy: { step: 'asc' } } }
