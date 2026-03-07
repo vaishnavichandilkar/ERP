@@ -11,7 +11,7 @@ const Success = () => {
 
     const handleNavigation = () => {
         if (mode === 'signup') {
-            navigate('/select-machine');
+            navigate('/', { state: { registered: true } });
         } else {
             navigate('/dashboard');
         }
@@ -32,11 +32,11 @@ const Success = () => {
                 </h2>
 
                 <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium mb-8 text-gray-500">
-                    Your login verification is complete. To access the system, please select your weighing machine.
+                    Your {mode === 'signup' ? 'registration' : 'login verification'} is complete. To access the system, please continue.
                 </p>
 
                 <Button onClick={handleNavigation} className="text-[16px] font-['Plus_Jakarta_Sans'] py-3 px-6 mt-4">
-                    Select Weighing Machine
+                    Continue
                 </Button>
             </div>
         </AuthLayout>

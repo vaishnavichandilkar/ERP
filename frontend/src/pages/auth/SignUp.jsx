@@ -62,7 +62,9 @@ const FileUploadBox = ({ title, file, onFileChange, onRemove, onUploadStateChang
 
     return (
         <div className="flex flex-col w-full">
-            <p className="text-[14px] text-[#374151] mb-2 font-['Plus_Jakarta_Sans'] font-medium">{title}</p>
+            <p className="text-[14px] text-[#374151] mb-2 font-['Plus_Jakarta_Sans'] font-medium">
+                {typeof title === 'string' && title.includes('(Optional)') ? title : <>{title} <span className="text-red-500">*</span></>}
+            </p>
             {file ? (
                 <div className="h-[120px] border border-[#D1D5DB] rounded-[8px] bg-[#FFFFFF] px-5 flex items-center justify-between w-full relative overflow-hidden">
                     <div className="flex items-center gap-4 w-full">
@@ -124,7 +126,7 @@ const CustomInput = ({ label, type = 'text', value, onChange, onBlur, placeholde
     <div className={`flex flex-col w-full ${className}`}>
         {label && (
             <label className="text-[14px] text-[#374151] mb-2 font-['Plus_Jakarta_Sans'] font-medium block">
-                {label}
+                {typeof label === 'string' && label.includes('(Optional)') ? label : <>{label} <span className="text-red-500">*</span></>}
             </label>
         )}
         <div className="relative w-full">
@@ -636,7 +638,7 @@ const SignUp = () => {
                                         <button
                                             disabled={!formData.udyogAadhar || !formData.udyogAadharFile || isLoading || !!fieldErrors.udyogAadhar || !!fieldErrors.gstNumber || isAnyUploading}
                                             onClick={handleNext}
-                                            className="w-full md:w-[calc(50%-12px)] h-[56px] bg-[#0F3D2E] text-white text-[16px] font-['Plus_Jakarta_Sans'] font-medium rounded-[8px] hover:bg-[#0a291f] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                                            className="w-full mt-6 mb-6 md:w-[calc(50%-12px)] h-[56px] bg-[#0F3D2E] text-white text-[16px] font-['Plus_Jakarta_Sans'] font-medium rounded-[8px] hover:bg-[#0a291f] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                                         >
                                             {isLoading ? 'Saving...' : 'Save & Continue'}
                                         </button>

@@ -58,7 +58,7 @@ const SignIn = () => {
                 />
                 <h2 className="text-[30px] font-['Geist_Sans'] font-bold mb-1 leading-tight text-gray-900">
                     Welcome back,<br />
-                    Seller! 🏬
+                    User! 🏬
                 </h2>
                 <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium mb-6 text-gray-500">
                     Sign in to manage your shop and orders
