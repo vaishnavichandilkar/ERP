@@ -13,6 +13,7 @@ import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { SellerOnboardingModule } from './modules/seller-onboarding/seller-onboarding.module';
 import { SuperAdminModule } from './modules/superadmin/superadmin.module';
 import { MasterModule } from './modules/Master/master.module';
+import { AppController } from './app.controller';
 @Module({
     imports: [
         ConfigModule.forRoot({
@@ -28,7 +29,7 @@ import { MasterModule } from './modules/Master/master.module';
         SuperAdminModule,
         MasterModule,
     ],
-    controllers: [],
+    controllers: [AppController],
     providers: [],
 })
 export class AppModule {

@@ -53,7 +53,7 @@ const SignIn = () => {
                 <img
                     src={logo}
                     alt="WeighPro Logo"
-                    className="h-10 mb-6 md:mb-4 block"
+                    className="h-18 mb-6 md:mb-4 block"
                     onError={(e) => { e.target.style.display = 'none' }}
                 />
                 <h2 className="text-[30px] font-['Geist_Sans'] font-bold mb-1 leading-tight text-gray-900">

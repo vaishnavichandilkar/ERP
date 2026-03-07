@@ -437,7 +437,7 @@ const SignUp = () => {
                         <img
                             src={logo}
                             alt="WeighPro Logo"
-                            className="h-10 block"
+                            className="h-18 block"
                             onError={(e) => { e.target.style.display = 'none' }}
                         />
                         <div className="bg-[#F3F4F6] text-[#374151] px-[12px] py-[6px] rounded-full text-[12px] font-medium">
@@ -571,7 +571,7 @@ const SignUp = () => {
                         {step === 2 && (
                             <>
                                 <div className="flex justify-between items-center mb-8 w-full">
-                                    <img src={logo} alt="WeighPro Logo" className="h-10" onError={(e) => { e.target.style.display = 'none' }} />
+                                    <img src={logo} alt="WeighPro Logo" className="h-18" onError={(e) => { e.target.style.display = 'none' }} />
                                     <div className="bg-[#F3F4F6] text-[#374151] px-[12px] py-[6px] rounded-full text-[12px] font-medium">
                                         Step 0{step}/04
                                     </div>
@@ -648,7 +648,7 @@ const SignUp = () => {
                         {step === 3 && (
                             <div className="w-full sm:-mt-6">
                                 <div className="flex justify-between items-center mb-5 w-full">
-                                    <img src={logo} alt="WeighPro Logo" className="h-10" onError={(e) => { e.target.style.display = 'none' }} />
+                                    <img src={logo} alt="WeighPro Logo" className="h-18" onError={(e) => { e.target.style.display = 'none' }} />
                                     <div className="bg-[#F3F4F6] text-[#374151] px-[12px] py-[6px] rounded-full text-[12px] font-medium">
                                         Step 0{step}/04
                                     </div>
@@ -749,7 +749,7 @@ const SignUp = () => {
                         {step === 4 && (
                             <div className="w-full sm:-mt-6">
                                 <div className="flex justify-between items-center mb-5 w-full">
-                                    <img src={logo} alt="WeighPro Logo" className="h-10" onError={(e) => { e.target.style.display = 'none' }} />
+                                    <img src={logo} alt="WeighPro Logo" className="h-18" onError={(e) => { e.target.style.display = 'none' }} />
                                     <div className="bg-[#F3F4F6] text-[#374151] px-[12px] py-[6px] rounded-full text-[12px] font-medium">
                                         Step 0{step}/04
                                     </div>

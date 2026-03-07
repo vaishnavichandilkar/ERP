@@ -59,13 +59,17 @@ export class OnboardingService {
     }
 
     async registerMobile(dto: Step2MobileDto) {
-        // 1. Find the temporary user session from Step 1
-        const tempUser = await this.prisma.user.findUnique({
-            where: { id: dto.userId }
-        });
+        let targetUserId: number;
+        let currentLanguage = dto.selectedLanguage || 'Hindi';
 
-        if (!tempUser) {
-            throw new BadRequestException('Onboarding session not found');
+        // 1. If userId is provided, sync with the temporary session
+        if (dto.userId) {
+            const tempUser = await this.prisma.user.findUnique({
+                where: { id: dto.userId }
+            });
+            if (tempUser) {
+                currentLanguage = tempUser.selected_language || currentLanguage;
+            }
         }
 
         // 2. Check if phone exists in user table
@@ -73,41 +77,52 @@ export class OnboardingService {
             where: { phone: dto.phone }
         });
 
-        let targetUserId = dto.userId;
-
         if (existingUser) {
             // Requirement 2: If phone exists
-            // A user is considered "fully registered" only if they have finished onboarding (onboarded_at is set).
-            // If they are verified but haven't finished onboarding (onboarded_at is null), 
-            // we allow them to continue/re-verify to move forward.
             if (existingUser.verified && existingUser.onboarded_at) {
-                // If verified = true AND onboarding is complete -> return error
                 throw new ConflictException('Phone number already registered and account is active');
             } else {
-                // If verified = false OR onboarding is incomplete -> reuse user
-                // Update existing user with language from temp session
+                // Update existing user with language
                 await this.prisma.user.update({
                     where: { id: existingUser.id },
-                    data: { selected_language: tempUser.selected_language }
+                    data: { selected_language: currentLanguage }
                 });
 
-                // Delete the temp session row if it's different from the record we're reusing
-                if (tempUser.id !== existingUser.id) {
-                    await this.prisma.user.delete({ where: { id: tempUser.id } });
+                // Cleanup temporary session if different
+                if (dto.userId && dto.userId !== existingUser.id) {
+                    try {
+                        await this.prisma.user.delete({ where: { id: dto.userId } });
+                    } catch (e) {
+                        // Ignore if already deleted
+                    }
                 }
-
                 targetUserId = existingUser.id;
             }
         } else {
             // Requirement 3: If phone does not exist
-            // Update the temporary session user with the phone number
-            await this.prisma.user.update({
-                where: { id: dto.userId },
-                data: {
-                    phone: dto.phone,
-                    verified: false
-                }
-            });
+            if (dto.userId) {
+                // Update existing session user
+                await this.prisma.user.update({
+                    where: { id: dto.userId },
+                    data: {
+                        phone: dto.phone,
+                        selected_language: currentLanguage,
+                        verified: false
+                    }
+                });
+                targetUserId = dto.userId;
+            } else {
+                // Create new user for the first time
+                const newUser = await this.prisma.user.create({
+                    data: {
+                        phone: dto.phone,
+                        selected_language: currentLanguage,
+                        verified: false,
+                        role: 'seller'
+                    }
+                });
+                targetUserId = newUser.id;
+            }
         }
 
         // 3. Send OTP

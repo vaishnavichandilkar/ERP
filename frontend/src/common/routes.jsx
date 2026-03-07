@@ -3,6 +3,8 @@ import { Navigate } from 'react-router-dom';
 
 // Auth Pages
 import Landing from '../pages/auth/Landing';
+import LanguageSelection from '../pages/auth/LanguageSelection';
+import LanguageGuard from '../components/auth/LanguageGuard';
 import SignIn from '../pages/auth/SignIn';
 import VerifyOTP from '../pages/auth/VerifyOTP';
 import Success from '../pages/auth/Success';
@@ -21,6 +23,7 @@ import AccountMaster from '../pages/dashboard/masters/AccountMaster';
 import UnitMaster from '../pages/dashboard/masters/UnitMaster';
 import CategoryMaster from '../pages/dashboard/masters/CategoryMaster';
 import ProductMaster from '../pages/dashboard/masters/ProductMaster';
+import SystemSettings from '../features/settings/pages/SystemSettings';
 
 // Placeholder for new modules
 const Placeholder = ({ title }) => (
@@ -32,8 +35,19 @@ const Placeholder = ({ title }) => (
     </div>
 );
 
+// Redirect logic
+const InitialRedirect = () => {
+    const isLanguageSelected = localStorage.getItem('languageConfirmed') === 'true';
+    if (isLanguageSelected) {
+        return <Navigate to="/landing" replace />;
+    }
+    return <Navigate to="/language-selection" replace />;
+};
+
 export const ROUTES = {
-    LANDING: '/',
+    HOME: '/',
+    LANGUAGE_SELECTION: '/language-selection',
+    LANDING: '/landing',
     LOGIN: '/login',
     SIGNUP: '/signup',
     VERIFY_OTP: '/verify-otp',
@@ -51,87 +65,100 @@ export const ROUTES = {
 
 export const router = createBrowserRouter([
     {
-        path: ROUTES.LANDING,
-        element: <Landing />,
+        path: ROUTES.HOME,
+        element: <InitialRedirect />,
     },
     {
-        path: ROUTES.LOGIN,
-        element: <SignIn />,
+        path: ROUTES.LANGUAGE_SELECTION,
+        element: <LanguageSelection />,
     },
     {
-        path: ROUTES.SIGNUP,
-        element: <SignUp />,
-    },
-    {
-        path: ROUTES.VERIFY_OTP,
-        element: <VerifyOTP />,
-    },
-    {
-        path: ROUTES.SUCCESS,
-        element: <Success />,
-    },
-    {
-        path: ROUTES.SELECT_MACHINE,
-        element: <SelectMachine />,
-    },
-    {
-        path: ROUTES.APPLICATION_STATUS,
-        element: <ApplicationStatus />,
-    },
-    {
-        path: ROUTES.DASHBOARD,
-        element: <DashboardLayout />,
+        element: <LanguageGuard />,
         children: [
             {
-                index: true,
-                element: <Home />,
+                path: ROUTES.LANDING,
+                element: <Landing />,
             },
             {
-                path: 'reports',
-                element: <Placeholder title="Reports" />
+                path: ROUTES.LOGIN,
+                element: <SignIn />,
             },
             {
-                path: 'masters',
-                element: <MastersLayout />,
+                path: ROUTES.SIGNUP,
+                element: <SignUp />,
+            },
+            {
+                path: ROUTES.VERIFY_OTP,
+                element: <VerifyOTP />,
+            },
+            {
+                path: ROUTES.SUCCESS,
+                element: <Success />,
+            },
+            {
+                path: ROUTES.SELECT_MACHINE,
+                element: <SelectMachine />,
+            },
+            {
+                path: ROUTES.APPLICATION_STATUS,
+                element: <ApplicationStatus />,
+            },
+            {
+                path: ROUTES.DASHBOARD,
+                element: <DashboardLayout />,
                 children: [
                     {
                         index: true,
-                        element: <GroupMaster />
+                        element: <Home />,
                     },
                     {
-                        path: 'group-master',
-                        element: <GroupMaster />
+                        path: 'reports',
+                        element: <Placeholder title="Reports" />
                     },
                     {
-                        path: 'account-master',
-                        element: <AccountMaster />
+                        path: 'masters',
+                        element: <MastersLayout />,
+                        children: [
+                            {
+                                index: true,
+                                element: <GroupMaster />
+                            },
+                            {
+                                path: 'group-master',
+                                element: <GroupMaster />
+                            },
+                            {
+                                path: 'account-master',
+                                element: <AccountMaster />
+                            },
+                            {
+                                path: 'unit-master',
+                                element: <UnitMaster />
+                            },
+                            {
+                                path: 'category',
+                                element: <CategoryMaster />
+                            },
+                            {
+                                path: 'product-master',
+                                element: <ProductMaster />
+                            }
+                        ]
                     },
                     {
-                        path: 'unit-master',
-                        element: <UnitMaster />
+                        path: 'purchase',
+                        element: <Placeholder title="Purchase" />
                     },
                     {
-                        path: 'category',
-                        element: <CategoryMaster />
+                        path: 'sales',
+                        element: <Placeholder title="Sales" />
                     },
                     {
-                        path: 'product-master',
-                        element: <ProductMaster />
+                        path: 'settings',
+                        element: <SystemSettings />
                     }
                 ]
             },
-            {
-                path: 'purchase',
-                element: <Placeholder title="Purchase" />
-            },
-            {
-                path: 'sales',
-                element: <Placeholder title="Sales" />
-            },
-            {
-                path: 'settings',
-                element: <Placeholder title="Settings" />
-            }
         ]
     },
     {

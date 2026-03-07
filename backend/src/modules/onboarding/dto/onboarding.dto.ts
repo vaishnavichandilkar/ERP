@@ -20,10 +20,15 @@ export class Step2MobileDto {
     @Length(10, 15)
     phone: string;
 
-    @ApiProperty({ example: 'uuid-from-step-1', description: 'The userId returned from Step 1' })
+    @ApiProperty({ example: 'Hindi', description: 'Selected language from localStorage' })
+    @IsString()
+    @IsOptional()
+    selectedLanguage?: string;
+
+    @ApiProperty({ example: 1, description: 'Optional userId if step 1 was already called', required: false })
     @IsInt()
-    @IsNotEmpty()
-    userId: number;
+    @IsOptional()
+    userId?: number;
 }
 
 export class Step3VerifyDto {

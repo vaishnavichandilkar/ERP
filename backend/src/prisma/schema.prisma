@@ -8,28 +8,27 @@ datasource db {
 }
 
 model User {
-  id                   Int              @id @default(autoincrement())
-  first_name           String?
-  last_name            String?
-  email                String?          @unique
-  phone                String?          @unique
-  selected_language    String?
-  role                 Role             @default(buyer)
-  refresh_token        String?
-  onboarded_at         DateTime?
-  verified             Boolean          @default(false)
-  isApproved           Boolean          @default(false)
-  created_at           DateTime         @default(now())
-  updated_at           DateTime         @updatedAt
-  deleted_at           DateTime?
-  isBlocked            Boolean          @default(false)
-  approvalStatus       ApprovalStatus   @default(PENDING)
-  rejectionReason      String?
-  isFirstApprovalLogin Boolean          @default(true)
-  bankDetail           BankDetail?
-  sellerDocuments      SellerDocument[] @relation("UploadedByUser")
-  shopDetail           ShopDetail?
-
+  id                    Int                    @id @default(autoincrement())
+  first_name            String?
+  last_name             String?
+  email                 String?                @unique
+  phone                 String?                @unique
+  selected_language     String?
+  role                  Role                   @default(buyer)
+  refresh_token         String?
+  onboarded_at          DateTime?
+  verified              Boolean                @default(false)
+  isApproved            Boolean                @default(false)
+  created_at            DateTime               @default(now())
+  updated_at            DateTime               @updatedAt
+  deleted_at            DateTime?
+  isBlocked             Boolean                @default(false)
+  approvalStatus        ApprovalStatus         @default(PENDING)
+  rejectionReason       String?
+  isFirstApprovalLogin  Boolean                @default(true)
+  bankDetail            BankDetail?
+  sellerDocuments       SellerDocument[]       @relation("UploadedByUser")
+  shopDetail            ShopDetail?
   @@map("User")
 }
 

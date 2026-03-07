@@ -24,12 +24,12 @@ export const submitOnboardingStepApi = async (stepNumber, data) => {
 };
 
 export const registerMobileApi = async (phone) => {
-    // The backend requires a generic user session (Step 1) to be created before sending an OTP
-    const step1Response = await axiosInstance.post(ONBOARDING_ENDPOINTS.STEP1_LANGUAGE, { language: 'English' });
-    const userId = step1Response.data.userId;
-
-    const response = await axiosInstance.post(ONBOARDING_ENDPOINTS.STEP2_MOBILE, { phone, userId });
-    return { ...response.data, userId };
+    const selectedLanguage = localStorage.getItem('selectedLanguage') || 'Hindi';
+    const response = await axiosInstance.post(ONBOARDING_ENDPOINTS.STEP2_MOBILE, {
+        phone,
+        selectedLanguage
+    });
+    return response.data;
 };
 
 export const verifyOnboardingOtpApi = async (phone, otp, userId) => {

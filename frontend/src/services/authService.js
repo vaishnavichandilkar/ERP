@@ -15,3 +15,8 @@ export const getProfileApi = async () => {
     const response = await axiosInstance.get(AUTH_ENDPOINTS.PROFILE);
     return response.data;
 };
+
+export const updateLanguageApi = async (language) => {
+    const response = await axiosInstance.post('/auth/language', { language });
+    return response.data;
+};

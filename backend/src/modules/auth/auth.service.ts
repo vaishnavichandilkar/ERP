@@ -150,11 +150,12 @@ export class AuthService {
             refreshToken,
             user: {
                 id: user.id,
-                name: user.first_name || user.name,
+                name: user.first_name || user.last_name || user.phone,
                 username: username,
                 role: roleType,
                 approvalStatus: user.approvalStatus,
                 isFirstApprovalLogin: user.isFirstApprovalLogin,
+                selectedLanguage: user.selected_language || 'Hindi',
             },
         };
     }
@@ -164,5 +165,13 @@ export class AuthService {
             data: { isFirstApprovalLogin: false }
         });
         return { message: 'Approval login screen marked as seen' };
+    }
+
+    async updateLanguage(userId: number, language: string) {
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: { selected_language: language }
+        });
+        return { message: 'Language updated successfully', language };
     }
 }

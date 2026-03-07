@@ -92,6 +92,18 @@ const VerifyOTP = () => {
                 if (response.user) {
                     localStorage.setItem('user', JSON.stringify(response.user));
 
+                    // Stage 3: Sync language from DB
+                    if (response.user.selectedLanguage) {
+                        const dbLanguage = response.user.selectedLanguage;
+                        localStorage.setItem('selectedLanguage', dbLanguage);
+                        localStorage.setItem('languageConfirmed', 'true');
+
+                        // Dynamically update i18n
+                        import('../../i18n').then(module => {
+                            module.default.changeLanguage(dbLanguage);
+                        });
+                    }
+
                     // Handle strictly DB-managed redirection for sellers
                     if (response.user.role === 'SELLER') {
                         try {
@@ -158,7 +170,7 @@ const VerifyOTP = () => {
                     <img
                         src={logo}
                         alt="WeighPro Logo"
-                        className="h-10 block"
+                        className="h-18 block"
                         onError={(e) => { e.target.style.display = 'none' }}
                     />
                     <div className="bg-[#F3F4F6] text-[#374151] px-[12px] py-[6px] rounded-full text-[12px] font-medium">
