@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
-import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class SellerOnboardingService {
@@ -35,8 +34,7 @@ export class SellerOnboardingService {
                 data: {
                     userId,
                     currentStep: initialStep,
-                    status: 'IN_PROGRESS',
-                    sessionId: uuidv4()
+                    status: 'IN_PROGRESS'
                 }
             });
         } else if (profile.currentStep < 3) {
@@ -57,7 +55,7 @@ export class SellerOnboardingService {
         };
     }
 
-    async getStatusBySession(sessionId: string) {
+    async getStatusBySession(sessionId: number) {
         const profile = await this.prisma.sellerProfile.findUnique({
             where: { sessionId },
             include: { reviews: { orderBy: { step: 'asc' } } }
@@ -103,7 +101,7 @@ export class SellerOnboardingService {
         };
     }
 
-    async submitStep(sessionId: string, stepNumber: number, stepData: any) {
+    async submitStep(sessionId: number, stepNumber: number, stepData: any) {
         const profile = await this.prisma.sellerProfile.findUnique({
             where: { sessionId }
         });
