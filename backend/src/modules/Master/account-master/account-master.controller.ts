@@ -20,7 +20,7 @@ import { CreateAccountMasterDto, UpdateAccountMasterDto, UpdateAccountStatusDto 
 import { Response } from 'express';
 
 @ApiTags('Account Master')
-@Controller('accounts')
+@Controller('account-master')
 export class AccountMasterController {
   constructor(private readonly accountMasterService: AccountMasterService) {}
 

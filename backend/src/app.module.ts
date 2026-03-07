@@ -12,6 +12,7 @@ import { AuditMiddleware } from './common/middleware/audit.middleware';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { SellerOnboardingModule } from './modules/seller-onboarding/seller-onboarding.module';
 import { SuperAdminModule } from './modules/superadmin/superadmin.module';
+import { MasterModule } from './modules/Master/master.module';
 @Module({
     imports: [
         ConfigModule.forRoot({
@@ -25,6 +26,7 @@ import { SuperAdminModule } from './modules/superadmin/superadmin.module';
         OnboardingModule,
         SellerOnboardingModule,
         SuperAdminModule,
+        MasterModule,
     ],
     controllers: [],
     providers: [],
