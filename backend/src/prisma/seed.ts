@@ -84,7 +84,21 @@ async function main() {
             create: lang,
         });
     }
-    console.log('Languages seeded.');
+    // 5. Seed GST UQC Codes
+    const uqcCodes = [
+        "BAG", "BAL", "BDL", "BKL", "BOU", "BOX", "BTL", "BUN", "CAN", "CBM", "CCM", "CMS", "CTN", "DOZ", "DRM",
+        "GGR", "GMS", "GRS", "GYD", "KGS", "KLR", "KME", "MLT", "MTR", "MTS", "NOS", "PAC", "PCS", "PRS",
+        "QTL", "ROL", "SET", "SQF", "SQM", "SQY", "TBS", "TGM", "THD", "TON", "TUB", "UGS", "UNT", "YDS", "OTH"
+    ];
+
+    for (const code of uqcCodes) {
+        await prisma.gstUqcMaster.upsert({
+            where: { uqcCode: code },
+            update: {},
+            create: { uqcCode: code }
+        });
+    }
+    console.log('GST UQC Codes seeded.');
 
     console.log('Seeding completed.');
 }

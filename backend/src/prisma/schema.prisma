@@ -248,3 +248,31 @@ model AccountMaster {
 
   @@map("account_master")
 }
+
+enum UnitStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model GstUqcMaster {
+  id           Int          @id @default(autoincrement())
+  quantity     String?
+  quantityType String?
+  uqcCode      String       @unique
+  units        UnitMaster[]
+
+  @@map("gst_uqc_master")
+}
+
+model UnitMaster {
+  id          Int          @id @default(autoincrement())
+  unitName    String       @unique
+  gstUom      String
+  gstUqc      GstUqcMaster @relation(fields: [gstUom], references: [uqcCode])
+  description String?
+  status      UnitStatus   @default(ACTIVE)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("unit_master")
+}
