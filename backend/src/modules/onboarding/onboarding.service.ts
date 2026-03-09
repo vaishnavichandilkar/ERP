@@ -185,7 +185,8 @@ export class OnboardingService {
                 data: {
                     userId: user.id,
                     currentStep: 3, // Current step is 3 (OTP verified). Next is 4.
-                    status: 'IN_PROGRESS'
+                    status: 'IN_PROGRESS',
+                    sessionId: Math.floor(Math.random() * 2000000000) // Explicitly generate ID to bypass constraint violation
                 }
             });
             sessionId = newProfile.sessionId;
