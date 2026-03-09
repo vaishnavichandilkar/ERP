@@ -14,4 +14,9 @@ export const ROUTES = {
     PURCHASE: '/dashboard/purchase',
     SALES: '/dashboard/sales',
     SETTINGS: '/dashboard/settings',
+    SELLER_DASHBOARD: '/seller/dashboard',
+    SUPERADMIN_DASHBOARD: '/superadmin/dashboard',
+    SUPERADMIN_PENDING_SELLERS: '/superadmin/pending-sellers',
+    SUPERADMIN_APPROVED_SELLERS: '/superadmin/approved-sellers',
+    SUPERADMIN_REJECTED_SELLERS: '/superadmin/rejected-sellers',
 };

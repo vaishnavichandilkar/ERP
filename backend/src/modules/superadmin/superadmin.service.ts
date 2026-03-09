@@ -23,6 +23,41 @@ export class SuperAdminService {
         });
     }
 
+    async getApprovedSellers() {
+        return this.prisma.user.findMany({
+            where: {
+                role: 'seller',
+                isApproved: true,
+                approvalStatus: 'APPROVED'
+            },
+            include: {
+                bankDetail: true,
+                shopDetail: true,
+                sellerDocuments: true
+            },
+            orderBy: {
+                updated_at: 'desc'
+            }
+        });
+    }
+
+    async getRejectedSellers() {
+        return this.prisma.user.findMany({
+            where: {
+                role: 'seller',
+                approvalStatus: 'REJECTED'
+            },
+            include: {
+                bankDetail: true,
+                shopDetail: true,
+                sellerDocuments: true
+            },
+            orderBy: {
+                updated_at: 'desc'
+            }
+        });
+    }
+
     async approveSeller(sellerId: number) {
         const user = await this.prisma.user.findUnique({ where: { id: sellerId } });
         if (!user) throw new BadRequestException('User not found');
@@ -39,6 +74,15 @@ export class SuperAdminService {
             }
         });
 
+        // Also update the SellerProfile
+        await this.prisma.sellerProfile.updateMany({
+            where: { userId: sellerId },
+            data: {
+                status: 'APPROVED',
+                approvedAt: new Date()
+            }
+        });
+
         return { message: 'Seller approved successfully' };
     }
 
@@ -52,6 +96,15 @@ export class SuperAdminService {
             data: {
                 isApproved: false,
                 approvalStatus: 'REJECTED',
+                rejectionReason: rejectionReason || 'Invalid documents or information provided'
+            }
+        });
+
+        // Also update the SellerProfile
+        await this.prisma.sellerProfile.updateMany({
+            where: { userId: sellerId },
+            data: {
+                status: 'REJECTED',
                 rejectionReason: rejectionReason || 'Invalid documents or information provided'
             }
         });

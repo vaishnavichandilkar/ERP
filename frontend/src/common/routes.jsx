@@ -45,6 +45,13 @@ const InitialRedirect = () => {
 
 import { ROUTES } from '../constants/routes';
 
+// Super Admin Imports
+import SuperAdminLayout from '../layout/superadmin/SuperAdminLayout';
+import SuperAdminDashboard from '../pages/superadmin/SuperAdminDashboard';
+import PendingSellers from '../pages/superadmin/PendingSellers';
+import ApprovedSellers from '../pages/superadmin/ApprovedSellers';
+import RejectedSellers from '../pages/superadmin/RejectedSellers';
+
 export const router = createBrowserRouter([
     {
         path: ROUTES.HOME,
@@ -82,7 +89,11 @@ export const router = createBrowserRouter([
                 element: <ApplicationStatus />,
             },
             {
-                path: ROUTES.DASHBOARD,
+                path: '/dashboard',
+                element: <Navigate to="/seller/dashboard" replace />
+            },
+            {
+                path: ROUTES.SELLER_DASHBOARD || '/seller/dashboard',
                 element: <DashboardLayout />,
                 children: [
                     {
@@ -137,6 +148,32 @@ export const router = createBrowserRouter([
                     }
                 ]
             },
+        ]
+    },
+    {
+        path: '/superadmin',
+        element: <SuperAdminLayout />,
+        children: [
+            {
+                index: true,
+                element: <Navigate to="dashboard" replace />
+            },
+            {
+                path: 'dashboard',
+                element: <SuperAdminDashboard />
+            },
+            {
+                path: 'pending-sellers',
+                element: <PendingSellers />
+            },
+            {
+                path: 'approved-sellers',
+                element: <ApprovedSellers />
+            },
+            {
+                path: 'rejected-sellers',
+                element: <RejectedSellers />
+            }
         ]
     },
     {

@@ -81,7 +81,7 @@ const Header = ({ setSidebarOpen }) => {
             {/* Right Box: Setup icons */}
             <div className="flex items-center gap-2 lg:gap-5">
                 {/* Indicator Group */}
-                {(location.pathname !== '/dashboard/facility/add' && location.pathname !== '/dashboard/facility/view' && location.pathname !== '/dashboard/facility/update') && (
+                {(location.pathname !== '/seller/dashboard/facility/add' && location.pathname !== '/seller/dashboard/facility/view' && location.pathname !== '/seller/dashboard/facility/update') && (
                     <div className="hidden lg:flex items-center gap-4 lg:gap-5 border-r border-[#E5E7EB] pr-4 lg:pr-5">
                         <div className="flex items-center gap-1.5">
                             <Printer size={18} className={isConnected ? "text-[#22C55E]" : "text-[#EF4444] opacity-80"} />
@@ -124,7 +124,7 @@ const Header = ({ setSidebarOpen }) => {
                             <ChevronDown size={14} strokeWidth={1.5} className="ml-0.5 transition-transform duration-200" />
                         )}
                     </button>
-                    {(location.pathname !== '/dashboard/facility/add' && location.pathname !== '/dashboard/facility/view' && location.pathname !== '/dashboard/facility/update') && (
+                    {(location.pathname !== '/seller/dashboard/facility/add' && location.pathname !== '/seller/dashboard/facility/view' && location.pathname !== '/seller/dashboard/facility/update') && (
                         <button className="hidden lg:block text-[#4B5563] hover:text-[#111827] transition-colors">
                             <HelpCircle size={20} strokeWidth={1.5} />
                         </button>

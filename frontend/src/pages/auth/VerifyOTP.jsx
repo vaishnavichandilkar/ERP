@@ -89,6 +89,18 @@ const VerifyOTP = () => {
                 if (response.accessToken) {
                     localStorage.setItem('token', response.accessToken);
                 }
+
+                let userRole = response.user?.role;
+                if (!userRole && response.accessToken) {
+                    try {
+                        const { jwtDecode } = await import('jwt-decode');
+                        const decoded = jwtDecode(response.accessToken);
+                        userRole = decoded.role || decoded.userRole;
+                    } catch (e) {
+                        console.error("Failed to decode token", e);
+                    }
+                }
+
                 if (response.user) {
                     localStorage.setItem('user', JSON.stringify(response.user));
 
@@ -104,48 +116,53 @@ const VerifyOTP = () => {
                         });
                     }
 
-                    // Handle strictly DB-managed redirection for sellers
-                    if (response.user.role === 'SELLER') {
-                        try {
-                            const { getProfileApi } = await import('../../services/authService');
-                            const freshProfile = await getProfileApi();
-                            const status = freshProfile.approvalStatus;
-                            const isFirst = freshProfile.isFirstApprovalLogin;
+                    if (userRole === 'SUPERADMIN' || userRole === 'superadmin') {
+                        navigate('/superadmin/dashboard', { replace: true });
+                        return;
+                    }
+                }
 
-                            // Update local user state from fresh DB response
-                            const updatedUser = { ...response.user, approvalStatus: status, isFirstApprovalLogin: isFirst };
-                            localStorage.setItem('user', JSON.stringify(updatedUser));
+                // Handle strictly DB-managed redirection for sellers
+                if (userRole === 'SELLER' || userRole === 'seller') {
+                    try {
+                        const { getProfileApi } = await import('../../services/authService');
+                        const freshProfile = await getProfileApi();
+                        const status = freshProfile.approvalStatus;
+                        const isFirst = freshProfile.isFirstApprovalLogin;
 
-                            // APPROVED Flow
-                            if (status === 'APPROVED') {
-                                if (isFirst) {
-                                    // Redirect to status page to see the "You're all set" celebration screen
-                                    navigate('/application-status', {
-                                        state: { status, isFirstApprovalLogin: true },
-                                        replace: true
-                                    });
-                                } else {
-                                    // Direct to dashboard
-                                    navigate('/dashboard', { replace: true });
-                                }
-                                return;
+                        // Update local user state from fresh DB response
+                        const updatedUser = { ...response.user, approvalStatus: status, isFirstApprovalLogin: isFirst };
+                        localStorage.setItem('user', JSON.stringify(updatedUser));
+
+                        // APPROVED Flow
+                        if (status === 'APPROVED') {
+                            if (isFirst) {
+                                // Redirect to status page to see the "You're all set" celebration screen
+                                navigate('/application-status', {
+                                    state: { status, isFirstApprovalLogin: true },
+                                    replace: true
+                                });
+                            } else {
+                                // Direct to dashboard
+                                navigate('/seller/dashboard', { replace: true });
                             }
-
-                            // PENDING or REJECTED Flow
-                            navigate('/application-status', {
-                                state: {
-                                    status,
-                                    rejectionReason: freshProfile.rejectionReason,
-                                    isFirstApprovalLogin: isFirst
-                                },
-                                replace: true
-                            });
-                            return;
-                        } catch (err) {
-                            console.error("Failed to fetch DB status during login", err);
-                            navigate('/application-status', { replace: true });
                             return;
                         }
+
+                        // PENDING or REJECTED Flow
+                        navigate('/application-status', {
+                            state: {
+                                status,
+                                rejectionReason: freshProfile.rejectionReason,
+                                isFirstApprovalLogin: isFirst
+                            },
+                            replace: true
+                        });
+                        return;
+                    } catch (err) {
+                        console.error("Failed to fetch DB status during login", err);
+                        navigate('/application-status', { replace: true });
+                        return;
                     }
                 }
                 navigate('/success', { state: { mode } });

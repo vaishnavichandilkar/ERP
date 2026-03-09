@@ -87,14 +87,6 @@ export const saveBankDetailsApi = async (data, files) => {
     return response.data;
 };
 
-// Machine is missing from form, so we provide default wrapper to bypass completeness check
-export const saveMachineDetailsDefaultApi = async () => {
-    const response = await axiosInstance.post(ONBOARDING_ENDPOINTS.STEP8_MACHINE, {
-        isUsingOwnMachine: false,
-        machineName: "Default Assign"
-    });
-    return response.data;
-};
 
 export const completeOnboardingApi = async () => {
     const response = await axiosInstance.post(ONBOARDING_ENDPOINTS.STEP9_COMPLETE, {});

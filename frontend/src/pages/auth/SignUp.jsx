@@ -350,7 +350,7 @@ const SignUp = () => {
                 });
                 setSearchParams({ step: '4' });
             } else if (step === 4) {
-                const { saveBankDetailsApi, saveMachineDetailsDefaultApi, completeOnboardingApi } = await import('../../services/onboardingService');
+                const { saveBankDetailsApi, completeOnboardingApi } = await import('../../services/onboardingService');
 
                 // Submit bank details
                 await saveBankDetailsApi({
@@ -362,9 +362,6 @@ const SignUp = () => {
                     cancelledChequeFile: formData.cancelledChequeFile,
                     panCardFile: formData.panCardFile
                 });
-
-                // Submit default machine details (Step 8) - Required to reach Step 9
-                await saveMachineDetailsDefaultApi();
 
                 // Submit final status or completion
                 await completeOnboardingApi();

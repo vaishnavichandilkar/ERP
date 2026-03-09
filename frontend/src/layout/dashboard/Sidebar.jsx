@@ -15,12 +15,12 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     const location = useLocation();
 
     const menuItems = [
-        { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { path: '/dashboard/reports', label: 'Reports', icon: FileBarChart },
-        { path: '/dashboard/masters', label: 'Masters', icon: Database },
-        { path: '/dashboard/purchase', label: 'Purchase', icon: ShoppingCart },
-        { path: '/dashboard/sales', label: 'Sales', icon: TrendingUp },
-        { path: '/dashboard/settings', label: 'Settings', icon: Settings },
+        { path: '/seller/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { path: '/seller/dashboard/reports', label: 'Reports', icon: FileBarChart },
+        { path: '/seller/dashboard/masters', label: 'Masters', icon: Database },
+        { path: '/seller/dashboard/purchase', label: 'Purchase', icon: ShoppingCart },
+        { path: '/seller/dashboard/sales', label: 'Sales', icon: TrendingUp },
+        { path: '/seller/dashboard/settings', label: 'Settings', icon: Settings },
     ];
 
     return (
@@ -47,7 +47,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 <div className="flex-1 overflow-y-auto py-5 px-3 flex flex-col gap-1.5 custom-scrollbar">
                     {menuItems.map((item, index) => {
                         const Icon = item.icon;
-                        const isActive = location.pathname === item.path || (item.path === '/dashboard' && location.pathname === '/dashboard/');
+                        const isActive = location.pathname === item.path || (item.path === '/seller/dashboard' && location.pathname === '/seller/dashboard/');
 
                         return (
                             <NavLink
