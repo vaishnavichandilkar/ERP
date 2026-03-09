@@ -89,6 +89,6 @@ export const saveBankDetailsApi = async (data, files) => {
 
 
 export const completeOnboardingApi = async () => {
-    const response = await axiosInstance.post(ONBOARDING_ENDPOINTS.STEP9_COMPLETE, {});
+    const response = await axiosInstance.post(ONBOARDING_ENDPOINTS.STEP8_COMPLETE, {});
     return response.data;
 };

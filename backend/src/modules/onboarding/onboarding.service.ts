@@ -403,12 +403,6 @@ export class OnboardingService {
         return { message: 'Bank details saved successfully' };
     }
 
-    async saveMachineDetails(userId: number, stepData: any) {
-        // Since machine selection is skipped in UI, we just mark step 8 as complete.
-        await this.validateAndAdvanceStep(userId, 8, 8, stepData);
-        return { message: 'Machine details (default) saved' };
-    }
-
     async completeOnboarding(userId: number) {
         // Check if mandatory Step 7 (Bank detail) is completed
         const bankDetail = await this.prisma.bankDetail.findUnique({
@@ -426,8 +420,8 @@ export class OnboardingService {
             }
         });
 
-        // Step 9 is completion
-        await this.validateAndAdvanceStep(userId, 9, 9, { isCompleted: true });
+        // Step 8 is completion
+        await this.validateAndAdvanceStep(userId, 8, 8, { isCompleted: true });
 
         await this.prisma.sellerProfile.update({
             where: { userId },

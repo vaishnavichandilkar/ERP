@@ -13,6 +13,9 @@ CREATE TYPE "ApprovalStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
 -- CreateEnum
 CREATE TYPE "FacilityStatus" AS ENUM ('ACTIVE', 'INACTIVE');
 
+-- CreateEnum
+CREATE TYPE "ContactPrefix" AS ENUM ('Mr', 'Mrs', 'Miss', 'Ms');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
@@ -182,6 +185,39 @@ CREATE TABLE "Language" (
     CONSTRAINT "Language_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "account_master" (
+    "id" TEXT NOT NULL,
+    "accountName" TEXT NOT NULL,
+    "group" TEXT NOT NULL,
+    "vendorCode" TEXT NOT NULL,
+    "msme" TEXT,
+    "pan" TEXT NOT NULL,
+    "gstNo" TEXT,
+    "openingBalance" DECIMAL(65,30) DEFAULT 0,
+    "creditDays" INTEGER,
+    "addressLine1" TEXT NOT NULL,
+    "addressLine2" TEXT,
+    "area" TEXT,
+    "pincode" TEXT NOT NULL,
+    "city" TEXT NOT NULL,
+    "state" TEXT NOT NULL,
+    "country" TEXT NOT NULL,
+    "prefix" "ContactPrefix",
+    "contactPersonName" TEXT,
+    "emailId" TEXT,
+    "mobileNo" TEXT,
+    "accountHolderName" TEXT,
+    "bankName" TEXT,
+    "accountNumber" TEXT,
+    "ifscCode" TEXT,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "account_master_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
@@ -220,6 +256,9 @@ CREATE UNIQUE INDEX "Language_name_key" ON "Language"("name");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Language_code_key" ON "Language"("code");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "account_master_vendorCode_key" ON "account_master"("vendorCode");
 
 -- AddForeignKey
 ALTER TABLE "BankDetail" ADD CONSTRAINT "BankDetail_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
