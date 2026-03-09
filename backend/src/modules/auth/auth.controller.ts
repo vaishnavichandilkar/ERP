@@ -61,4 +61,13 @@ export class AuthController {
     markApprovalSeen(@Request() req) {
         return this.authService.markApprovalLoginSeen(req.user.userId);
     }
+
+    @Post('language')
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard)
+    @ApiOperation({ summary: 'Update user language preference' })
+    @ApiResponse({ status: 200, description: 'Language updated successfully.' })
+    updateLanguage(@Request() req, @Body('language') language: string) {
+        return this.authService.updateLanguage(req.user.userId, language);
+    }
 }

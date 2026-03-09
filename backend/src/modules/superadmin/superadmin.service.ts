@@ -13,12 +13,44 @@ export class SuperAdminService {
                 onboarded_at: { not: null } // Only those who finished documentation
             },
             include: {
-                bankDetail: true,
                 shopDetail: true,
                 sellerDocuments: true
             },
             orderBy: {
                 created_at: 'desc'
+            }
+        });
+    }
+
+    async getApprovedSellers() {
+        return this.prisma.user.findMany({
+            where: {
+                role: 'seller',
+                isApproved: true,
+                approvalStatus: 'APPROVED'
+            },
+            include: {
+                shopDetail: true,
+                sellerDocuments: true
+            },
+            orderBy: {
+                updated_at: 'desc'
+            }
+        });
+    }
+
+    async getRejectedSellers() {
+        return this.prisma.user.findMany({
+            where: {
+                role: 'seller',
+                approvalStatus: 'REJECTED'
+            },
+            include: {
+                shopDetail: true,
+                sellerDocuments: true
+            },
+            orderBy: {
+                updated_at: 'desc'
             }
         });
     }
@@ -39,6 +71,15 @@ export class SuperAdminService {
             }
         });
 
+        // Also update the SellerProfile
+        await this.prisma.sellerProfile.updateMany({
+            where: { userId: sellerId },
+            data: {
+                status: 'APPROVED',
+                approvedAt: new Date()
+            }
+        });
+
         return { message: 'Seller approved successfully' };
     }
 
@@ -52,6 +93,15 @@ export class SuperAdminService {
             data: {
                 isApproved: false,
                 approvalStatus: 'REJECTED',
+                rejectionReason: rejectionReason || 'Invalid documents or information provided'
+            }
+        });
+
+        // Also update the SellerProfile
+        await this.prisma.sellerProfile.updateMany({
+            where: { userId: sellerId },
+            data: {
+                status: 'REJECTED',
                 rejectionReason: rejectionReason || 'Invalid documents or information provided'
             }
         });

@@ -4,7 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import { Step1LanguageDto, Step2MobileDto, Step3VerifyDto, Step4DetailsDto, Step5BusinessDto, Step6ShopDto, Step7BankDto } from './dto/onboarding.dto';
+import { Step1LanguageDto, Step2MobileDto, Step3VerifyDto, Step4DetailsDto, Step5BusinessDto, Step6ShopDto } from './dto/onboarding.dto';
 
 import { SmsService } from '../otp/sms.service';
 
@@ -16,6 +16,13 @@ export class OnboardingService {
         private configService: ConfigService,
         private smsService: SmsService,
     ) { }
+
+    async getPincodeInfo(pincode: string) {
+        return this.prisma.pincode.findUnique({
+            where: { pincode },
+            select: { pincode: true, state: true, district: true, isActive: true }
+        });
+    }
 
     async getLanguages() {
         return this.prisma.language.findMany({
@@ -59,13 +66,17 @@ export class OnboardingService {
     }
 
     async registerMobile(dto: Step2MobileDto) {
-        // 1. Find the temporary user session from Step 1
-        const tempUser = await this.prisma.user.findUnique({
-            where: { id: dto.userId }
-        });
+        let targetUserId: number;
+        let currentLanguage = dto.selectedLanguage || 'Hindi';
 
-        if (!tempUser) {
-            throw new BadRequestException('Onboarding session not found');
+        // 1. If userId is provided, sync with the temporary session
+        if (dto.userId) {
+            const tempUser = await this.prisma.user.findUnique({
+                where: { id: dto.userId }
+            });
+            if (tempUser) {
+                currentLanguage = tempUser.selected_language || currentLanguage;
+            }
         }
 
         // 2. Check if phone exists in user table
@@ -73,41 +84,52 @@ export class OnboardingService {
             where: { phone: dto.phone }
         });
 
-        let targetUserId = dto.userId;
-
         if (existingUser) {
             // Requirement 2: If phone exists
-            // A user is considered "fully registered" only if they have finished onboarding (onboarded_at is set).
-            // If they are verified but haven't finished onboarding (onboarded_at is null), 
-            // we allow them to continue/re-verify to move forward.
             if (existingUser.verified && existingUser.onboarded_at) {
-                // If verified = true AND onboarding is complete -> return error
                 throw new ConflictException('Phone number already registered and account is active');
             } else {
-                // If verified = false OR onboarding is incomplete -> reuse user
-                // Update existing user with language from temp session
+                // Update existing user with language
                 await this.prisma.user.update({
                     where: { id: existingUser.id },
-                    data: { selected_language: tempUser.selected_language }
+                    data: { selected_language: currentLanguage }
                 });
 
-                // Delete the temp session row if it's different from the record we're reusing
-                if (tempUser.id !== existingUser.id) {
-                    await this.prisma.user.delete({ where: { id: tempUser.id } });
+                // Cleanup temporary session if different
+                if (dto.userId && dto.userId !== existingUser.id) {
+                    try {
+                        await this.prisma.user.delete({ where: { id: dto.userId } });
+                    } catch (e) {
+                        // Ignore if already deleted
+                    }
                 }
-
                 targetUserId = existingUser.id;
             }
         } else {
             // Requirement 3: If phone does not exist
-            // Update the temporary session user with the phone number
-            await this.prisma.user.update({
-                where: { id: dto.userId },
-                data: {
-                    phone: dto.phone,
-                    verified: false
-                }
-            });
+            if (dto.userId) {
+                // Update existing session user
+                await this.prisma.user.update({
+                    where: { id: dto.userId },
+                    data: {
+                        phone: dto.phone,
+                        selected_language: currentLanguage,
+                        verified: false
+                    }
+                });
+                targetUserId = dto.userId;
+            } else {
+                // Create new user for the first time
+                const newUser = await this.prisma.user.create({
+                    data: {
+                        phone: dto.phone,
+                        selected_language: currentLanguage,
+                        verified: false,
+                        role: 'seller'
+                    }
+                });
+                targetUserId = newUser.id;
+            }
         }
 
         // 3. Send OTP
@@ -170,7 +192,8 @@ export class OnboardingService {
                 data: {
                     userId: user.id,
                     currentStep: 3, // Current step is 3 (OTP verified). Next is 4.
-                    status: 'IN_PROGRESS'
+                    status: 'IN_PROGRESS',
+                    sessionId: Math.floor(Math.random() * 2000000000) // Explicitly generate ID to bypass constraint violation
                 }
             });
             sessionId = newProfile.sessionId;
@@ -237,6 +260,18 @@ export class OnboardingService {
     }
 
     async updatePersonalDetails(userId: number, dto: Step4DetailsDto) {
+        // Check for email uniqueness before updating
+        const existingWithEmail = await this.prisma.user.findFirst({
+            where: {
+                email: dto.email,
+                id: { not: userId }
+            }
+        });
+
+        if (existingWithEmail) {
+            throw new BadRequestException(`Email '${dto.email}' is already in use by another account.`);
+        }
+
         await this.validateAndAdvanceStep(userId, 4, 4, dto);
 
         return this.prisma.user.update({
@@ -251,7 +286,9 @@ export class OnboardingService {
 
     async saveBusinessDetails(userId: number, dto: Step5BusinessDto, files: any) {
         // Save Udyog Aadhar Number as document entry
-        await this.saveDocument(userId, 'OTHER', dto.udyogAadharNumber, 'UDYOG_AADHAR');
+        if (dto.udyogAadharNumber) {
+            await this.saveDocument(userId, 'OTHER', `${dto.udyogAadharNumber}`, 'UDYOG_AADHAR');
+        }
 
         // Save Udyog Aadhar Certificate
         if (files?.udyogAadharCertificate?.[0]) {
@@ -259,7 +296,9 @@ export class OnboardingService {
         }
 
         // Save GST Number
-        await this.saveDocument(userId, 'GST', dto.gstNumber);
+        if (dto.gstNumber) {
+            await this.saveDocument(userId, 'GST', `${dto.gstNumber}`);
+        }
 
         // Save GST Certificate
         if (files?.gstCertificate?.[0]) {
@@ -278,20 +317,32 @@ export class OnboardingService {
 
     async saveShopDetails(userId: number, dto: Step6ShopDto, files: any) {
         // Validate Pincode and get State and District
-        const pincodeRecord = await this.prisma.pincode.findUnique({
-            where: { pincode: dto.pinCode }
+        // Automatically save/update the pincode in our local database
+        const pincodeRecord = await this.prisma.pincode.upsert({
+            where: { pincode: dto.pinCode },
+            update: {
+                state: dto.state,
+                district: dto.district,
+                isActive: true
+            },
+            create: {
+                pincode: dto.pinCode,
+                state: dto.state,
+                district: dto.district,
+                isActive: true
+            }
         });
 
-        if (!pincodeRecord) {
-            throw new BadRequestException('Invalid pincode. Pincode not found.');
+        const state = dto.state;
+        const district = dto.district;
+
+        if (!state || !district) {
+            throw new BadRequestException('Invalid pincode. State and District not found.');
         }
 
-        if (!pincodeRecord.isActive) {
+        if (pincodeRecord && !pincodeRecord.isActive) {
             throw new BadRequestException('Service is not active for this pincode yet.');
         }
-
-        const state = pincodeRecord.state;
-        const district = pincodeRecord.district;
 
         // Use the new ShopDetail model
         const shopDetail = await this.prisma.shopDetail.upsert({
@@ -301,8 +352,8 @@ export class OnboardingService {
                 address: dto.address,
                 village: dto.village,
                 pinCode: dto.pinCode,
-                state: state,
-                district: district,
+                state: dto.state || state,
+                district: dto.district || district,
             },
             create: {
                 userId,
@@ -310,8 +361,8 @@ export class OnboardingService {
                 address: dto.address,
                 village: dto.village,
                 pinCode: dto.pinCode,
-                state: state,
-                district: district,
+                state: dto.state || state,
+                district: dto.district || district,
             }
         });
 
@@ -329,60 +380,7 @@ export class OnboardingService {
 
         return { message: 'Shop details saved successfully' };
     }
-
-    async saveBankDetails(userId: number, dto: Step7BankDto, files: any) {
-        // Save Bank Details
-        const bankDetail = await this.prisma.bankDetail.upsert({
-            where: { userId },
-            update: {
-                holderName: dto.holderName,
-                accountNo: dto.accountNo,
-                ifsc: dto.ifsc,
-                bankName: dto.bankName,
-                panNumber: dto.panNumber,
-            },
-            create: {
-                userId,
-                holderName: dto.holderName,
-                accountNo: dto.accountNo,
-                ifsc: dto.ifsc,
-                bankName: dto.bankName,
-                panNumber: dto.panNumber,
-            }
-        });
-
-        // Save Cancelled Cheque
-        if (files?.cancelledCheque?.[0]) {
-            await this.saveFile(userId, 'BANK', files.cancelledCheque[0], 'CANCELLED_CHEQUE');
-        }
-
-        // Save PAN Card
-        if (files?.panCard?.[0]) {
-            await this.saveFile(userId, 'PAN', files.panCard[0]);
-        }
-
-        await this.prisma.sellerProfile.update({
-            where: { userId },
-            data: { bankDetailId: bankDetail.id }
-        });
-
-        await this.validateAndAdvanceStep(userId, 7, 7, dto);
-
-        return { message: 'Bank details saved successfully' };
-    }
-
-
-
     async completeOnboarding(userId: number) {
-        // Check if mandatory Step 7 (Bank detail) is completed
-        const bankDetail = await this.prisma.bankDetail.findUnique({
-            where: { userId }
-        });
-
-        if (!bankDetail) {
-            throw new BadRequestException('Bank details are mandatory for onboarding completion');
-        }
-
         await this.prisma.user.update({
             where: { id: userId },
             data: {
@@ -390,7 +388,8 @@ export class OnboardingService {
             }
         });
 
-        await this.validateAndAdvanceStep(userId, 8, 8, { isCompleted: true });
+        // Step 7 is completion
+        await this.validateAndAdvanceStep(userId, 7, 7, { isCompleted: true });
 
         await this.prisma.sellerProfile.update({
             where: { userId },
@@ -430,7 +429,8 @@ export class OnboardingService {
                 uploadedByUserId: userId,
                 type,
                 url: 'N/A', // Just storing the number/text as a doc entry for now
-                name: name,
+                name: name !== undefined ? String(name) : undefined,
+                size: BigInt(0),
                 category: category || null,
             }
         });

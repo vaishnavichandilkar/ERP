@@ -1,4 +1,4 @@
-import { IsString, IsInt, IsNotEmpty } from 'class-validator';
+import { IsString, IsInt, IsNotEmpty, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ApproveSellerDto {
@@ -8,6 +8,7 @@ export class ApproveSellerDto {
     sellerId: number;
 
     @ApiProperty({ required: false })
+    @IsOptional()
     @IsString()
     rejectionReason?: string;
 }

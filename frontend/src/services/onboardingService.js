@@ -24,12 +24,12 @@ export const submitOnboardingStepApi = async (stepNumber, data) => {
 };
 
 export const registerMobileApi = async (phone) => {
-    // The backend requires a generic user session (Step 1) to be created before sending an OTP
-    const step1Response = await axiosInstance.post(ONBOARDING_ENDPOINTS.STEP1_LANGUAGE, { language: 'English' });
-    const userId = step1Response.data.userId;
-
-    const response = await axiosInstance.post(ONBOARDING_ENDPOINTS.STEP2_MOBILE, { phone, userId });
-    return { ...response.data, userId };
+    const selectedLanguage = localStorage.getItem('selectedLanguage') || 'Hindi';
+    const response = await axiosInstance.post(ONBOARDING_ENDPOINTS.STEP2_MOBILE, {
+        phone,
+        selectedLanguage
+    });
+    return response.data;
 };
 
 export const verifyOnboardingOtpApi = async (phone, otp, userId) => {
@@ -69,34 +69,11 @@ export const saveShopDetailsApi = async (data) => {
         headers: { 'Content-Type': 'multipart/form-data' }
     });
     return response.data;
-};
-
-export const saveBankDetailsApi = async (data, files) => {
-    const formData = new FormData();
-    formData.append('holderName', data.accountHolderName);
-    formData.append('accountNo', data.accountNumber);
-    formData.append('ifsc', data.ifscCode);
-    formData.append('bankName', data.bankName);
-    formData.append('panNumber', data.panNumber || 'UNKNOWN'); // Default since no input
-    if (files.cancelledChequeFile) formData.append('cancelledCheque', files.cancelledChequeFile);
-    if (files.panCardFile) formData.append('panCard', files.panCardFile);
-
-    const response = await axiosInstance.post(ONBOARDING_ENDPOINTS.STEP7_BANK, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-    });
+}; export const getPincodeInfoApi = async (pincode) => {
+    const response = await axiosInstance.get(`/onboarding/pincode/${pincode}`);
     return response.data;
 };
-
-// Machine is missing from form, so we provide default wrapper to bypass completeness check
-export const saveMachineDetailsDefaultApi = async () => {
-    const response = await axiosInstance.post(ONBOARDING_ENDPOINTS.STEP8_MACHINE, {
-        isUsingOwnMachine: false,
-        machineName: "Default Assign"
-    });
-    return response.data;
-};
-
 export const completeOnboardingApi = async () => {
-    const response = await axiosInstance.post(ONBOARDING_ENDPOINTS.STEP9_COMPLETE, {});
+    const response = await axiosInstance.post(ONBOARDING_ENDPOINTS.STEP7_COMPLETE, {});
     return response.data;
 };

@@ -15,12 +15,12 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     const location = useLocation();
 
     const menuItems = [
-        { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { path: '/dashboard/reports', label: 'Reports', icon: FileBarChart },
-        { path: '/dashboard/masters', label: 'Masters', icon: Database },
-        { path: '/dashboard/purchase', label: 'Purchase', icon: ShoppingCart },
-        { path: '/dashboard/sales', label: 'Sales', icon: TrendingUp },
-        { path: '/dashboard/settings', label: 'Settings', icon: Settings },
+        { path: '/seller/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { path: '/seller/dashboard/reports', label: 'Reports', icon: FileBarChart },
+        { path: '/seller/dashboard/masters', label: 'Masters', icon: Database },
+        { path: '/seller/dashboard/purchase', label: 'Purchase', icon: ShoppingCart },
+        { path: '/seller/dashboard/sales', label: 'Sales', icon: TrendingUp },
+        { path: '/seller/dashboard/settings', label: 'Settings', icon: Settings },
     ];
 
     return (
@@ -37,7 +37,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-[260px] bg-white border-r border-[#E5E7EB] transform transition-transform duration-300 ease-in-out lg:translate-x-0 flex flex-col shrink-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 {/* Logo Area */}
                 <div className="h-[72px] px-6 flex items-center justify-between border-b border-[#E5E7EB] shrink-0">
-                    <img src={logo} alt="WeighPro Logo" className="h-[100px]" onError={(e) => { e.target.style.display = 'none' }} />
+                    <img src={logo} alt="WeighPro Logo" className="h-[70px]" onError={(e) => { e.target.style.display = 'none' }} />
                     <button onClick={() => setIsOpen(false)} className="lg:hidden text-gray-500 hover:text-gray-700">
                         <X size={20} />
                     </button>
@@ -47,7 +47,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 <div className="flex-1 overflow-y-auto py-5 px-3 flex flex-col gap-1.5 custom-scrollbar">
                     {menuItems.map((item, index) => {
                         const Icon = item.icon;
-                        const isActive = location.pathname === item.path || (item.path === '/dashboard' && location.pathname === '/dashboard/');
+                        const isActive = location.pathname === item.path || (item.path === '/seller/dashboard' && location.pathname === '/seller/dashboard/');
 
                         return (
                             <NavLink

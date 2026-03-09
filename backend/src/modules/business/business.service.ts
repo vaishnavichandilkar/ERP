@@ -9,7 +9,6 @@ export class BusinessService {
         return this.prisma.user.findUnique({
             where: { id: userId },
             include: {
-                bankDetail: true,
                 shopDetail: true,
                 sellerDocuments: true
             }
@@ -24,22 +23,7 @@ export class BusinessService {
         // Note: This maps the old "all-in-one" business details to the new split tables
         // In a real scenario, we'd want to use the Step-by-Step OnboardingService instead.
 
-        await this.prisma.bankDetail.upsert({
-            where: { userId },
-            update: {
-                bankName: dto.bankName || 'Legacy',
-                accountNo: dto.accountNo || 'Legacy',
-                ifsc: dto.ifsc || 'Legacy',
-                holderName: user.first_name || 'Legacy',
-            },
-            create: {
-                userId,
-                bankName: dto.bankName || 'Legacy',
-                accountNo: dto.accountNo || 'Legacy',
-                ifsc: dto.ifsc || 'Legacy',
-                holderName: user.first_name || 'Legacy',
-            }
-        });
+
 
         await this.prisma.user.update({
             where: { id: userId },

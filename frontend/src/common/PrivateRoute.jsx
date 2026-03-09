@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { ROUTES } from '../constants/routeConstants';
+import { ROUTES } from '../constants/routes';
 
 const PrivateRoute = () => {
     const { user, loading } = useAuth();
@@ -10,7 +10,7 @@ const PrivateRoute = () => {
         return <div>Loading...</div>; // Replace with Loader component
     }
 
-    return user ? <Outlet /> : <Navigate to={ROUTES.AUTH.SIGN_IN} />;
+    return user ? <Outlet /> : <Navigate to={ROUTES.LOGIN} />;
 };
 
 export default PrivateRoute;

@@ -19,6 +19,22 @@ export class SuperAdminController {
         return this.superAdminService.getPendingSellers();
     }
 
+    @Get('approved-sellers')
+    @ApiOperation({ summary: 'Get list of approved sellers' })
+    @ApiResponse({ status: 200, description: 'Returns list of approved sellers.' })
+    async getApprovedSellers(@Request() req) {
+        if (req.user.role !== 'SUPERADMIN') throw new ForbiddenException('Only Super Admin can access this resource');
+        return this.superAdminService.getApprovedSellers();
+    }
+
+    @Get('rejected-sellers')
+    @ApiOperation({ summary: 'Get list of rejected sellers' })
+    @ApiResponse({ status: 200, description: 'Returns list of rejected sellers.' })
+    async getRejectedSellers(@Request() req) {
+        if (req.user.role !== 'SUPERADMIN') throw new ForbiddenException('Only Super Admin can access this resource');
+        return this.superAdminService.getRejectedSellers();
+    }
+
     @Post('approve-seller')
     @ApiOperation({ summary: 'Approve a pending seller' })
     @ApiResponse({ status: 200, description: 'Seller approved successfully.' })

@@ -8,44 +8,30 @@ datasource db {
 }
 
 model User {
-  id                   Int              @id @default(autoincrement())
-  first_name           String?
-  last_name            String?
-  email                String?          @unique
-  phone                String?          @unique
-  selected_language    String?
-  role                 Role             @default(buyer)
-  refresh_token        String?
-  onboarded_at         DateTime?
-  verified             Boolean          @default(false)
-  isApproved           Boolean          @default(false)
-  created_at           DateTime         @default(now())
-  updated_at           DateTime         @updatedAt
-  deleted_at           DateTime?
-  isBlocked            Boolean          @default(false)
-  approvalStatus       ApprovalStatus   @default(PENDING)
-  rejectionReason      String?
-  isFirstApprovalLogin Boolean          @default(true)
-  bankDetail           BankDetail?
-  sellerDocuments      SellerDocument[] @relation("UploadedByUser")
-  shopDetail           ShopDetail?
-
+  id                    Int                    @id @default(autoincrement())
+  first_name            String?
+  last_name             String?
+  email                 String?                @unique
+  phone                 String?                @unique
+  selected_language     String?
+  role                  Role                   @default(buyer)
+  refresh_token         String?
+  onboarded_at          DateTime?
+  verified              Boolean                @default(false)
+  isApproved            Boolean                @default(false)
+  created_at            DateTime               @default(now())
+  updated_at            DateTime               @updatedAt
+  deleted_at            DateTime?
+  isBlocked             Boolean                @default(false)
+  approvalStatus        ApprovalStatus         @default(PENDING)
+  rejectionReason       String?
+  isFirstApprovalLogin  Boolean                @default(true)
+  sellerDocuments       SellerDocument[]       @relation("UploadedByUser")
+  shopDetail            ShopDetail?
   @@map("User")
 }
 
-model BankDetail {
-  id         Int      @id @default(autoincrement())
-  userId     Int      @unique
-  holderName String
-  accountNo  String   @unique
-  ifsc       String
-  bankName   String
-  panNumber  String?
-  createdAt  DateTime @default(now())
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("BankDetail")
-}
 
 model ShopDetail {
   id        Int      @id @default(autoincrement())
@@ -123,7 +109,6 @@ model SellerProfile {
   status          String    @default("IN_PROGRESS")
   sessionId       Int       @unique @default(autoincrement())
   addressId       Int?
-  bankDetailId    Int?
   sellerId        Int?
   created_at      DateTime  @default(now())
   updated_at      DateTime  @updatedAt

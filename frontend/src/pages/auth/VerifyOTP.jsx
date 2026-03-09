@@ -89,51 +89,80 @@ const VerifyOTP = () => {
                 if (response.accessToken) {
                     localStorage.setItem('token', response.accessToken);
                 }
+
+                let userRole = response.user?.role;
+                if (!userRole && response.accessToken) {
+                    try {
+                        const { jwtDecode } = await import('jwt-decode');
+                        const decoded = jwtDecode(response.accessToken);
+                        userRole = decoded.role || decoded.userRole;
+                    } catch (e) {
+                        console.error("Failed to decode token", e);
+                    }
+                }
+
                 if (response.user) {
                     localStorage.setItem('user', JSON.stringify(response.user));
 
-                    // Handle strictly DB-managed redirection for sellers
-                    if (response.user.role === 'SELLER') {
-                        try {
-                            const { getProfileApi } = await import('../../services/authService');
-                            const freshProfile = await getProfileApi();
-                            const status = freshProfile.approvalStatus;
-                            const isFirst = freshProfile.isFirstApprovalLogin;
+                    // Stage 3: Sync language from DB
+                    if (response.user.selectedLanguage) {
+                        const dbLanguage = response.user.selectedLanguage;
+                        localStorage.setItem('selectedLanguage', dbLanguage);
+                        localStorage.setItem('languageConfirmed', 'true');
 
-                            // Update local user state from fresh DB response
-                            const updatedUser = { ...response.user, approvalStatus: status, isFirstApprovalLogin: isFirst };
-                            localStorage.setItem('user', JSON.stringify(updatedUser));
+                        // Dynamically update i18n
+                        import('../../i18n').then(module => {
+                            module.default.changeLanguage(dbLanguage);
+                        });
+                    }
 
-                            // APPROVED Flow
-                            if (status === 'APPROVED') {
-                                if (isFirst) {
-                                    // Redirect to status page to see the "You're all set" celebration screen
-                                    navigate('/application-status', {
-                                        state: { status, isFirstApprovalLogin: true },
-                                        replace: true
-                                    });
-                                } else {
-                                    // Direct to dashboard
-                                    navigate('/dashboard', { replace: true });
-                                }
-                                return;
+                    if (userRole === 'SUPERADMIN' || userRole === 'superadmin') {
+                        navigate('/superadmin/dashboard', { replace: true });
+                        return;
+                    }
+                }
+
+                // Handle strictly DB-managed redirection for sellers
+                if (userRole === 'SELLER' || userRole === 'seller') {
+                    try {
+                        const { getProfileApi } = await import('../../services/authService');
+                        const freshProfile = await getProfileApi();
+                        const status = freshProfile.approvalStatus;
+                        const isFirst = freshProfile.isFirstApprovalLogin;
+
+                        // Update local user state from fresh DB response
+                        const updatedUser = { ...response.user, approvalStatus: status, isFirstApprovalLogin: isFirst };
+                        localStorage.setItem('user', JSON.stringify(updatedUser));
+
+                        // APPROVED Flow
+                        if (status === 'APPROVED') {
+                            if (isFirst) {
+                                // Redirect to status page to see the "You're all set" celebration screen
+                                navigate('/application-status', {
+                                    state: { status, isFirstApprovalLogin: true },
+                                    replace: true
+                                });
+                            } else {
+                                // Direct to dashboard
+                                navigate('/seller/dashboard', { replace: true });
                             }
-
-                            // PENDING or REJECTED Flow
-                            navigate('/application-status', {
-                                state: {
-                                    status,
-                                    rejectionReason: freshProfile.rejectionReason,
-                                    isFirstApprovalLogin: isFirst
-                                },
-                                replace: true
-                            });
-                            return;
-                        } catch (err) {
-                            console.error("Failed to fetch DB status during login", err);
-                            navigate('/application-status', { replace: true });
                             return;
                         }
+
+                        // PENDING or REJECTED Flow
+                        navigate('/application-status', {
+                            state: {
+                                status,
+                                rejectionReason: freshProfile.rejectionReason,
+                                isFirstApprovalLogin: isFirst
+                            },
+                            replace: true
+                        });
+                        return;
+                    } catch (err) {
+                        console.error("Failed to fetch DB status during login", err);
+                        navigate('/application-status', { replace: true });
+                        return;
                     }
                 }
                 navigate('/success', { state: { mode } });
@@ -158,7 +187,7 @@ const VerifyOTP = () => {
                     <img
                         src={logo}
                         alt="WeighPro Logo"
-                        className="h-10 block"
+                        className="h-18 block"
                         onError={(e) => { e.target.style.display = 'none' }}
                     />
                     <div className="bg-[#F3F4F6] text-[#374151] px-[12px] py-[6px] rounded-full text-[12px] font-medium">

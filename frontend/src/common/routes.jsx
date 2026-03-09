@@ -3,11 +3,12 @@ import { Navigate } from 'react-router-dom';
 
 // Auth Pages
 import Landing from '../pages/auth/Landing';
+import LanguageSelection from '../pages/auth/LanguageSelection';
+import LanguageGuard from '../components/auth/LanguageGuard';
 import SignIn from '../pages/auth/SignIn';
 import VerifyOTP from '../pages/auth/VerifyOTP';
 import Success from '../pages/auth/Success';
 import SignUp from '../pages/auth/SignUp';
-import SelectMachine from '../pages/auth/SelectMachine';
 import ApplicationStatus from '../pages/auth/ApplicationStatus';
 
 // Dashboard Pages
@@ -21,6 +22,7 @@ import AccountMaster from '../pages/dashboard/masters/AccountMaster';
 import UnitMaster from '../pages/dashboard/masters/UnitMaster';
 import CategoryMaster from '../pages/dashboard/masters/CategoryMaster';
 import ProductMaster from '../pages/dashboard/masters/ProductMaster';
+import SystemSettings from '../features/settings/pages/SystemSettings';
 
 // Placeholder for new modules
 const Placeholder = ({ title }) => (
@@ -32,105 +34,145 @@ const Placeholder = ({ title }) => (
     </div>
 );
 
-export const ROUTES = {
-    LANDING: '/',
-    LOGIN: '/login',
-    SIGNUP: '/signup',
-    VERIFY_OTP: '/verify-otp',
-    SUCCESS: '/success',
-    REGISTRATION_FORM: '/registration-form',
-    SELECT_MACHINE: '/select-machine',
-    APPLICATION_STATUS: '/application-status',
-    DASHBOARD: '/dashboard',
-    REPORTS: '/dashboard/reports',
-    MASTERS: '/dashboard/masters',
-    PURCHASE: '/dashboard/purchase',
-    SALES: '/dashboard/sales',
-    SETTINGS: '/dashboard/settings',
+// Redirect logic
+const InitialRedirect = () => {
+    const isLanguageSelected = localStorage.getItem('languageConfirmed') === 'true';
+    if (isLanguageSelected) {
+        return <Navigate to="/landing" replace />;
+    }
+    return <Navigate to="/language-selection" replace />;
 };
+
+import { ROUTES } from '../constants/routes';
+
+// Super Admin Imports
+import SuperAdminLayout from '../layout/superadmin/SuperAdminLayout';
+import SuperAdminDashboard from '../pages/superadmin/SuperAdminDashboard';
+import PendingSellers from '../pages/superadmin/PendingSellers';
+import ApprovedSellers from '../pages/superadmin/ApprovedSellers';
+import RejectedSellers from '../pages/superadmin/RejectedSellers';
 
 export const router = createBrowserRouter([
     {
-        path: ROUTES.LANDING,
-        element: <Landing />,
+        path: ROUTES.HOME,
+        element: <InitialRedirect />,
     },
     {
-        path: ROUTES.LOGIN,
-        element: <SignIn />,
+        path: ROUTES.LANGUAGE_SELECTION,
+        element: <LanguageSelection />,
     },
     {
-        path: ROUTES.SIGNUP,
-        element: <SignUp />,
-    },
-    {
-        path: ROUTES.VERIFY_OTP,
-        element: <VerifyOTP />,
-    },
-    {
-        path: ROUTES.SUCCESS,
-        element: <Success />,
-    },
-    {
-        path: ROUTES.SELECT_MACHINE,
-        element: <SelectMachine />,
-    },
-    {
-        path: ROUTES.APPLICATION_STATUS,
-        element: <ApplicationStatus />,
-    },
-    {
-        path: ROUTES.DASHBOARD,
-        element: <DashboardLayout />,
+        element: <LanguageGuard />,
         children: [
             {
-                index: true,
-                element: <Home />,
+                path: ROUTES.LANDING,
+                element: <Landing />,
             },
             {
-                path: 'reports',
-                element: <Placeholder title="Reports" />
+                path: ROUTES.LOGIN,
+                element: <SignIn />,
             },
             {
-                path: 'masters',
-                element: <MastersLayout />,
+                path: ROUTES.SIGNUP,
+                element: <SignUp />,
+            },
+            {
+                path: ROUTES.VERIFY_OTP,
+                element: <VerifyOTP />,
+            },
+            {
+                path: ROUTES.SUCCESS,
+                element: <Success />,
+            },
+            {
+                path: ROUTES.APPLICATION_STATUS,
+                element: <ApplicationStatus />,
+            },
+            {
+                path: '/dashboard',
+                element: <Navigate to="/seller/dashboard" replace />
+            },
+            {
+                path: ROUTES.SELLER_DASHBOARD || '/seller/dashboard',
+                element: <DashboardLayout />,
                 children: [
                     {
                         index: true,
-                        element: <GroupMaster />
+                        element: <Home />,
                     },
                     {
-                        path: 'group-master',
-                        element: <GroupMaster />
+                        path: 'reports',
+                        element: <Placeholder title="Reports" />
                     },
                     {
-                        path: 'account-master',
-                        element: <AccountMaster />
+                        path: 'masters',
+                        element: <MastersLayout />,
+                        children: [
+                            {
+                                index: true,
+                                element: <GroupMaster />
+                            },
+                            {
+                                path: 'group-master',
+                                element: <GroupMaster />
+                            },
+                            {
+                                path: 'account-master',
+                                element: <AccountMaster />
+                            },
+                            {
+                                path: 'unit-master',
+                                element: <UnitMaster />
+                            },
+                            {
+                                path: 'category',
+                                element: <CategoryMaster />
+                            },
+                            {
+                                path: 'product-master',
+                                element: <ProductMaster />
+                            }
+                        ]
                     },
                     {
-                        path: 'unit-master',
-                        element: <UnitMaster />
+                        path: 'purchase',
+                        element: <Placeholder title="Purchase" />
                     },
                     {
-                        path: 'category',
-                        element: <CategoryMaster />
+                        path: 'sales',
+                        element: <Placeholder title="Sales" />
                     },
                     {
-                        path: 'product-master',
-                        element: <ProductMaster />
+                        path: 'settings',
+                        element: <SystemSettings />
                     }
                 ]
             },
+        ]
+    },
+    {
+        path: '/superadmin',
+        element: <SuperAdminLayout />,
+        children: [
             {
-                path: 'purchase',
-                element: <Placeholder title="Purchase" />
+                index: true,
+                element: <Navigate to="dashboard" replace />
             },
             {
-                path: 'sales',
-                element: <Placeholder title="Sales" />
+                path: 'dashboard',
+                element: <SuperAdminDashboard />
             },
             {
-                path: 'settings',
-                element: <Placeholder title="Settings" />
+                path: 'pending-sellers',
+                element: <PendingSellers />
+            },
+            {
+                path: 'approved-sellers',
+                element: <ApprovedSellers />
+            },
+            {
+                path: 'rejected-sellers',
+                element: <RejectedSellers />
             }
         ]
     },
