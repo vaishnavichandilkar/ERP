@@ -38,7 +38,7 @@ export class AccountMasterService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: number) {
     const account = await this.prisma.accountMaster.findUnique({
       where: { id },
     });
@@ -50,7 +50,7 @@ export class AccountMasterService {
     return account;
   }
 
-  async update(id: string, updateDto: UpdateAccountMasterDto) {
+  async update(id: number, updateDto: UpdateAccountMasterDto) {
     await this.findOne(id);
 
     if (updateDto.vendorCode) {
@@ -72,7 +72,7 @@ export class AccountMasterService {
     });
   }
 
-  async updateStatus(id: string, updateStatusDto: UpdateAccountStatusDto) {
+  async updateStatus(id: number, updateStatusDto: UpdateAccountStatusDto) {
     await this.findOne(id);
     return this.prisma.accountMaster.update({
       where: { id },

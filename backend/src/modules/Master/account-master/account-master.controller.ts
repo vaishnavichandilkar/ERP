@@ -11,6 +11,7 @@ import {
   Res, 
   DefaultValuePipe, 
   ParseBoolPipe, 
+  ParseIntPipe,
   HttpCode, 
   HttpStatus
 } from '@nestjs/common';
@@ -70,24 +71,24 @@ export class AccountMasterController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get full details of a specific account' })
-  @ApiParam({ name: 'id', required: true, description: 'UUID of the account' })
-  findOne(@Param('id') id: string) {
+  @ApiParam({ name: 'id', required: true, description: 'ID of the account' })
+  findOne(@Param('id', ParseIntPipe) id: number) {
     return this.accountMasterService.findOne(id);
   }
 
   @Put(':id')
   @ApiOperation({ summary: 'Update existing account details' })
-  @ApiParam({ name: 'id', required: true, description: 'UUID of the account' })
-  update(@Param('id') id: string, @Body() updateAccountMasterDto: UpdateAccountMasterDto) {
+  @ApiParam({ name: 'id', required: true, description: 'ID of the account' })
+  update(@Param('id', ParseIntPipe) id: number, @Body() updateAccountMasterDto: UpdateAccountMasterDto) {
     return this.accountMasterService.update(id, updateAccountMasterDto);
   }
 
   @Patch(':id/status')
   @ApiOperation({ summary: 'Toggle status of an account (Active/Inactive)' })
-  @ApiParam({ name: 'id', required: true, description: 'UUID of the account' })
+  @ApiParam({ name: 'id', required: true, description: 'ID of the account' })
   @HttpCode(HttpStatus.OK)
   updateStatus(
-    @Param('id') id: string,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateStatusDto: UpdateAccountStatusDto
   ) {
     return this.accountMasterService.updateStatus(id, updateStatusDto);
