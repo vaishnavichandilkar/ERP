@@ -252,6 +252,18 @@ export class OnboardingService {
     }
 
     async updatePersonalDetails(userId: number, dto: Step4DetailsDto) {
+        // Check for email uniqueness before updating
+        const existingWithEmail = await this.prisma.user.findFirst({
+            where: {
+                email: dto.email,
+                id: { not: userId }
+            }
+        });
+
+        if (existingWithEmail) {
+            throw new BadRequestException(`Email '${dto.email}' is already in use by another account.`);
+        }
+
         await this.validateAndAdvanceStep(userId, 4, 4, dto);
 
         return this.prisma.user.update({
@@ -390,7 +402,11 @@ export class OnboardingService {
         return { message: 'Bank details saved successfully' };
     }
 
-
+    async saveMachineDetails(userId: number, stepData: any) {
+        // Since machine selection is skipped in UI, we just mark step 8 as complete.
+        await this.validateAndAdvanceStep(userId, 8, 8, stepData);
+        return { message: 'Machine details (default) saved' };
+    }
 
     async completeOnboarding(userId: number) {
         // Check if mandatory Step 7 (Bank detail) is completed
@@ -409,7 +425,8 @@ export class OnboardingService {
             }
         });
 
-        await this.validateAndAdvanceStep(userId, 8, 8, { isCompleted: true });
+        // Step 9 is completion
+        await this.validateAndAdvanceStep(userId, 9, 9, { isCompleted: true });
 
         await this.prisma.sellerProfile.update({
             where: { userId },

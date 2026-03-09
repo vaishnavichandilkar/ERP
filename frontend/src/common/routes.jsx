@@ -43,23 +43,7 @@ const InitialRedirect = () => {
     return <Navigate to="/language-selection" replace />;
 };
 
-export const ROUTES = {
-    HOME: '/',
-    LANGUAGE_SELECTION: '/language-selection',
-    LANDING: '/landing',
-    LOGIN: '/login',
-    SIGNUP: '/signup',
-    VERIFY_OTP: '/verify-otp',
-    SUCCESS: '/success',
-    REGISTRATION_FORM: '/registration-form',
-    APPLICATION_STATUS: '/application-status',
-    DASHBOARD: '/dashboard',
-    REPORTS: '/dashboard/reports',
-    MASTERS: '/dashboard/masters',
-    PURCHASE: '/dashboard/purchase',
-    SALES: '/dashboard/sales',
-    SETTINGS: '/dashboard/settings',
-};
+import { ROUTES } from '../constants/routes';
 
 export const router = createBrowserRouter([
     {

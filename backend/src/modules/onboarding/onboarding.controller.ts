@@ -146,6 +146,14 @@ export class OnboardingController {
         return this.onboardingService.saveBankDetails(req.user.userId, dto, files);
     }
 
+    @Post('step8-machine')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Step 8: Machine Details (Skip/Default)' })
+    saveMachineDetails(@Request() req, @Body() dto: any) {
+        return this.onboardingService.saveMachineDetails(req.user.userId, dto);
+    }
+
     @Post('step9-complete')
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth()
