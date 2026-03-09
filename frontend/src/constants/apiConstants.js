@@ -17,8 +17,7 @@ export const ONBOARDING_ENDPOINTS = {
   STEP4_DETAILS: '/onboarding/step4-details',
   STEP5_BUSINESS: '/onboarding/step5-business',
   STEP6_SHOP: '/onboarding/step6-shop',
-  STEP7_BANK: '/onboarding/step7-bank',
-  STEP8_COMPLETE: '/onboarding/step8-complete',
+  STEP7_COMPLETE: '/onboarding/step7-complete',
 };
 export const DASHBOARD_ENDPOINTS = {
   STATS: '/dashboard/stats',

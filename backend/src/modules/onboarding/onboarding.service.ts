@@ -4,7 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import { Step1LanguageDto, Step2MobileDto, Step3VerifyDto, Step4DetailsDto, Step5BusinessDto, Step6ShopDto, Step7BankDto } from './dto/onboarding.dto';
+import { Step1LanguageDto, Step2MobileDto, Step3VerifyDto, Step4DetailsDto, Step5BusinessDto, Step6ShopDto } from './dto/onboarding.dto';
 
 import { SmsService } from '../otp/sms.service';
 
@@ -16,6 +16,13 @@ export class OnboardingService {
         private configService: ConfigService,
         private smsService: SmsService,
     ) { }
+
+    async getPincodeInfo(pincode: string) {
+        return this.prisma.pincode.findUnique({
+            where: { pincode },
+            select: { pincode: true, state: true, district: true, isActive: true }
+        });
+    }
 
     async getLanguages() {
         return this.prisma.language.findMany({
@@ -310,20 +317,32 @@ export class OnboardingService {
 
     async saveShopDetails(userId: number, dto: Step6ShopDto, files: any) {
         // Validate Pincode and get State and District
-        const pincodeRecord = await this.prisma.pincode.findUnique({
-            where: { pincode: dto.pinCode }
+        // Automatically save/update the pincode in our local database
+        const pincodeRecord = await this.prisma.pincode.upsert({
+            where: { pincode: dto.pinCode },
+            update: {
+                state: dto.state,
+                district: dto.district,
+                isActive: true
+            },
+            create: {
+                pincode: dto.pinCode,
+                state: dto.state,
+                district: dto.district,
+                isActive: true
+            }
         });
 
-        if (!pincodeRecord) {
-            throw new BadRequestException('Invalid pincode. Pincode not found.');
+        const state = dto.state;
+        const district = dto.district;
+
+        if (!state || !district) {
+            throw new BadRequestException('Invalid pincode. State and District not found.');
         }
 
-        if (!pincodeRecord.isActive) {
+        if (pincodeRecord && !pincodeRecord.isActive) {
             throw new BadRequestException('Service is not active for this pincode yet.');
         }
-
-        const state = pincodeRecord.state;
-        const district = pincodeRecord.district;
 
         // Use the new ShopDetail model
         const shopDetail = await this.prisma.shopDetail.upsert({
@@ -333,8 +352,8 @@ export class OnboardingService {
                 address: dto.address,
                 village: dto.village,
                 pinCode: dto.pinCode,
-                state: state,
-                district: district,
+                state: dto.state || state,
+                district: dto.district || district,
             },
             create: {
                 userId,
@@ -342,8 +361,8 @@ export class OnboardingService {
                 address: dto.address,
                 village: dto.village,
                 pinCode: dto.pinCode,
-                state: state,
-                district: district,
+                state: dto.state || state,
+                district: dto.district || district,
             }
         });
 
@@ -361,58 +380,7 @@ export class OnboardingService {
 
         return { message: 'Shop details saved successfully' };
     }
-
-    async saveBankDetails(userId: number, dto: Step7BankDto, files: any) {
-        // Save Bank Details
-        const bankDetail = await this.prisma.bankDetail.upsert({
-            where: { userId },
-            update: {
-                holderName: dto.holderName,
-                accountNo: dto.accountNo,
-                ifsc: dto.ifsc,
-                bankName: dto.bankName,
-                panNumber: dto.panNumber,
-            },
-            create: {
-                userId,
-                holderName: dto.holderName,
-                accountNo: dto.accountNo,
-                ifsc: dto.ifsc,
-                bankName: dto.bankName,
-                panNumber: dto.panNumber,
-            }
-        });
-
-        // Save Cancelled Cheque
-        if (files?.cancelledCheque?.[0]) {
-            await this.saveFile(userId, 'BANK', files.cancelledCheque[0], 'CANCELLED_CHEQUE');
-        }
-
-        // Save PAN Card
-        if (files?.panCard?.[0]) {
-            await this.saveFile(userId, 'PAN', files.panCard[0]);
-        }
-
-        await this.prisma.sellerProfile.update({
-            where: { userId },
-            data: { bankDetailId: bankDetail.id }
-        });
-
-        await this.validateAndAdvanceStep(userId, 7, 7, dto);
-
-        return { message: 'Bank details saved successfully' };
-    }
-
     async completeOnboarding(userId: number) {
-        // Check if mandatory Step 7 (Bank detail) is completed
-        const bankDetail = await this.prisma.bankDetail.findUnique({
-            where: { userId }
-        });
-
-        if (!bankDetail) {
-            throw new BadRequestException('Bank details are mandatory for onboarding completion');
-        }
-
         await this.prisma.user.update({
             where: { id: userId },
             data: {
@@ -420,8 +388,8 @@ export class OnboardingService {
             }
         });
 
-        // Step 8 is completion
-        await this.validateAndAdvanceStep(userId, 8, 8, { isCompleted: true });
+        // Step 7 is completion
+        await this.validateAndAdvanceStep(userId, 7, 7, { isCompleted: true });
 
         await this.prisma.sellerProfile.update({
             where: { userId },

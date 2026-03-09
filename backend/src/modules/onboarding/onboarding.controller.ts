@@ -1,8 +1,8 @@
-import { Controller, Get, Post, Body, Put, UseInterceptors, UploadedFiles, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Put, UseInterceptors, UploadedFiles, UseGuards, Request, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { OnboardingService } from './onboarding.service';
-import { Step1LanguageDto, Step2MobileDto, Step3VerifyDto, Step4DetailsDto, Step5BusinessDto, Step6ShopDto, Step7BankDto } from './dto/onboarding.dto';
+import { Step1LanguageDto, Step2MobileDto, Step3VerifyDto, Step4DetailsDto, Step5BusinessDto, Step6ShopDto } from './dto/onboarding.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { multerConfig } from '../upload/multer.config';
 
@@ -58,7 +58,7 @@ export class OnboardingController {
                 gstCertificate: { type: 'string', format: 'binary', description: 'GST Certificate (PDF)' },
                 businessProof: { type: 'string', format: 'binary', description: 'Proof of Business (Optional PDF)' },
             },
-            required: ['udyogAadharNumber', 'gstNumber', 'udyogAadharCertificate', 'gstCertificate']
+            required: []
         },
     })
     @UseInterceptors(FileFieldsInterceptor([
@@ -95,7 +95,7 @@ export class OnboardingController {
                 district: { type: 'string' },
                 shopActLicense: { type: 'string', format: 'binary', description: 'Shop Act License (PDF)' },
             },
-            required: ['shopName', 'address', 'pinCode', 'state', 'district', 'shopActLicense']
+            required: ['shopName', 'address', 'pinCode']
         },
     })
     @UseInterceptors(FileFieldsInterceptor([
@@ -111,45 +111,17 @@ export class OnboardingController {
         return this.onboardingService.saveShopDetails(req.user.userId, dto, files);
     }
 
-    @Post('step7-bank')
-    @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth()
-    @ApiConsumes('multipart/form-data')
-    @ApiOperation({ summary: 'Step 7: Bank Details (PDF Uploads)' })
-    @ApiBody({
-        schema: {
-            type: 'object',
-            properties: {
-                holderName: { type: 'string' },
-                accountNo: { type: 'string' },
-                ifsc: { type: 'string' },
-                bankName: { type: 'string' },
-                panNumber: { type: 'string' },
-                cancelledCheque: { type: 'string', format: 'binary', description: 'Cancelled Cheque (PDF)' },
-                panCard: { type: 'string', format: 'binary', description: 'PAN Card (PDF)' },
-            },
-            required: ['holderName', 'accountNo', 'ifsc', 'bankName', 'panNumber', 'cancelledCheque', 'panCard']
-        },
-    })
-    @UseInterceptors(FileFieldsInterceptor([
-        { name: 'cancelledCheque', maxCount: 1 },
-        { name: 'panCard', maxCount: 1 },
-    ], multerConfig))
-    saveBankDetails(
-        @Request() req,
-        @Body() dto: Step7BankDto,
-        @UploadedFiles() files: {
-            cancelledCheque?: Express.Multer.File[],
-            panCard?: Express.Multer.File[]
-        }
-    ) {
-        return this.onboardingService.saveBankDetails(req.user.userId, dto, files);
+
+    @Get('pincode/:pincode')
+    @ApiOperation({ summary: 'Lookup pincode in local database' })
+    lookupPincode(@Param('pincode') pincode: string) {
+        return this.onboardingService.getPincodeInfo(pincode);
     }
 
-    @Post('step8-complete')
+    @Post('step7-complete')
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth()
-    @ApiOperation({ summary: 'Step 8: Final Onboarding Completion' })
+    @ApiOperation({ summary: 'Step 7: Final Onboarding Completion' })
     completeOnboarding(@Request() req) {
         return this.onboardingService.completeOnboarding(req.user.userId);
     }

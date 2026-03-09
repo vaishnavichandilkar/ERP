@@ -13,8 +13,7 @@ export class SellerOnboardingService {
             4: 'personal_details_completed',
             5: 'business_details_completed',
             6: 'shop_details_completed',
-            7: 'bank_details_completed',
-            8: 'document_upload_completed'
+            7: 'document_upload_completed'
         };
         return stepNames[step] || `step_${step}_completed`;
     }
@@ -119,10 +118,10 @@ export class SellerOnboardingService {
 
         const newCurrentStep = Math.max(profile.currentStep, stepNumber);
 
-        // Optional: If stepNumber === 8 (final), set to SUBMITTED
-        // To be safe, look for a custom flag in body, or hardcode step 8.
+        // Optional: If stepNumber === 7 (final), set to SUBMITTED
+        // To be safe, look for a custom flag in body, or hardcode step 7.
         let updatedStatus = profile.status;
-        if (stepNumber === 8) { // Adjust based on max steps
+        if (stepNumber === 7) { // Adjust based on max steps
             updatedStatus = 'SUBMITTED';
         } else if (stepData && stepData.isFinalStep) {
             updatedStatus = 'SUBMITTED';

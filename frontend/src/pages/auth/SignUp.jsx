@@ -122,7 +122,7 @@ const FileUploadBox = ({ title, file, onFileChange, onRemove, onUploadStateChang
     );
 };
 
-const CustomInput = ({ label, type = 'text', value, onChange, onBlur, placeholder, name, select, children, className = '', prefix, error }) => (
+const CustomInput = ({ label, type = 'text', value, onChange, onBlur, placeholder, name, select, children, className = '', prefix, error, info, ...rest }) => (
     <div className={`flex flex-col w-full ${className}`}>
         {label && (
             <label className="text-[14px] text-[#374151] mb-2 font-['Plus_Jakarta_Sans'] font-medium block">
@@ -158,6 +158,7 @@ const CustomInput = ({ label, type = 'text', value, onChange, onBlur, placeholde
                         onBlur={onBlur}
                         placeholder={placeholder}
                         className="flex-1 w-full h-full font-['Plus_Jakarta_Sans'] placeholder:text-[#9CA3AF] text-[#111827] outline-none bg-transparent px-[2px] text-[15px]"
+                        {...rest}
                     />
                 </div>
             ) : (
@@ -168,13 +169,20 @@ const CustomInput = ({ label, type = 'text', value, onChange, onBlur, placeholde
                     onChange={onChange}
                     onBlur={onBlur}
                     placeholder={placeholder}
-                    className={`w-full h-[56px] px-[16px] text-[15px] border ${error ? 'border-red-500 hover:border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-[#D1D5DB] focus:border-[#0F3D2E] focus:ring-[#0F3D2E]'} rounded-[8px] outline-none bg-[#FFFFFF] font-['Plus_Jakarta_Sans'] transition-all duration-300 focus:ring-1 placeholder:text-[#9CA3AF] text-[#111827]`}
+                    className={`w-full h-[56px] px-[16px] text-[15px] border ${error ? 'border-red-500 hover:border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-[#D1D5DB] focus:border-[#0F3D2E] focus:ring-[#0F3D2E]'} rounded-[8px] outline-none bg-[#FFFFFF] font-['Plus_Jakarta_Sans'] transition-all duration-300 focus:ring-1 placeholder:text-[#9CA3AF] text-[#111827] ${rest.readOnly ? 'bg-gray-100 cursor-not-allowed opacity-80' : ''}`}
+                    {...rest}
                 />
             )}
         </div>
         {error && (
             <div className="mt-1.5 text-red-500 text-[13px] font-medium animate-in fade-in slide-in-from-top-1 duration-300">
                 {error}
+            </div>
+        )}
+        {info && !error && (
+            <div className="mt-1.5 text-blue-600 text-[13px] font-medium flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1 duration-300">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></div>
+                {info}
             </div>
         )}
     </div>
@@ -188,10 +196,12 @@ const SignUp = () => {
 
     useEffect(() => {
         const stepParam = parseInt(searchParams.get('step') || '0', 10);
-        if (stepParam >= 0 && stepParam <= 4) {
+        if (stepParam >= 0 && stepParam <= 3) {
             setStep(stepParam);
         }
     }, [searchParams]);
+
+
 
     // Resume logic removed to enforce database-truth OTP verification before auto-navigating to next steps.
 
@@ -212,13 +222,68 @@ const SignUp = () => {
         pinCode: '',
         district: '',
         state: '',
-        accountHolderName: '',
-        accountNumber: '',
-        ifscCode: '',
-        bankName: '',
-        cancelledChequeFile: null,
-        panCardFile: null,
     });
+    const [isManualLocation, setIsManualLocation] = useState(false);
+
+    useEffect(() => {
+        if (formData.pinCode.length === 6 && /^\d{6}$/.test(formData.pinCode)) {
+            // First try External API
+            fetch(`https://api.postalpincode.in/pincode/${formData.pinCode}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data[0] && data[0].Status === 'Success' && data[0].PostOffice && data[0].PostOffice.length > 0) {
+                        const details = data[0].PostOffice[0];
+                        setFormData(prev => ({
+                            ...prev,
+                            district: details.District,
+                            state: details.State
+                        }));
+                        setIsManualLocation(false);
+                        setFieldErrors(prev => {
+                            const { pinCode, ...rest } = prev;
+                            return rest;
+                        });
+                    } else {
+                        // API Failed, try Local Database
+                        import('../../services/onboardingService').then(({ getPincodeInfoApi }) => {
+                            getPincodeInfoApi(formData.pinCode)
+                                .then(localData => {
+                                    if (localData && localData.state && localData.district) {
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            district: localData.district,
+                                            state: localData.state
+                                        }));
+                                        setIsManualLocation(false);
+                                        setFieldErrors(prev => {
+                                            const { pinCode, ...rest } = prev;
+                                            return rest;
+                                        });
+                                    } else {
+                                        // Both failed - allow manual entry
+                                        setIsManualLocation(true);
+                                        setFieldErrors(prev => {
+                                            const { pinCode, ...rest } = prev;
+                                            return rest;
+                                        });
+                                    }
+                                })
+                                .catch(() => {
+                                    setIsManualLocation(true);
+                                    setFieldErrors(prev => {
+                                        const { pinCode, ...rest } = prev;
+                                        return rest;
+                                    });
+                                });
+                        });
+                    }
+                })
+                .catch(err => {
+                    console.error('Pincode fetch error:', err);
+                    setIsManualLocation(true);
+                });
+        }
+    }, [formData.pinCode]);
 
     const validateField = (name, value) => {
         if (!value) return '';
@@ -242,12 +307,7 @@ const SignUp = () => {
             case 'ifscCode':
                 if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(value)) return 'IFSC code must be valid, e.g., SBIN0001234.';
                 break;
-            case 'udyogAadhar':
-                if (!/^\d{12}$/.test(value)) return 'Udyog Aadhar must be exactly 12 digits long.';
-                break;
-            case 'gstNumber':
-                if (value && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(value)) return 'GST number must be a valid 15 character string format e.g. 22AAAAA0000A1Z5';
-                break;
+
             case 'village':
                 if (value && !/^[a-zA-Z\s]+$/.test(value)) return 'Village name must contain only letters and spaces.';
                 break;
@@ -339,7 +399,7 @@ const SignUp = () => {
                 });
                 setSearchParams({ step: '3' });
             } else if (step === 3) {
-                const { saveShopDetailsApi } = await import('../../services/onboardingService');
+                const { saveShopDetailsApi, completeOnboardingApi } = await import('../../services/onboardingService');
                 await saveShopDetailsApi({
                     shopName: formData.shopName,
                     address: formData.address,
@@ -348,24 +408,7 @@ const SignUp = () => {
                     state: formData.state,
                     district: formData.district
                 });
-                setSearchParams({ step: '4' });
-            } else if (step === 4) {
-                const { saveBankDetailsApi, completeOnboardingApi } = await import('../../services/onboardingService');
-
-                // Submit bank details
-                await saveBankDetailsApi({
-                    accountHolderName: formData.accountHolderName,
-                    accountNumber: formData.accountNumber,
-                    ifscCode: formData.ifscCode,
-                    bankName: formData.bankName
-                }, {
-                    cancelledChequeFile: formData.cancelledChequeFile,
-                    panCardFile: formData.panCardFile
-                });
-
-                // Submit final status or completion
                 await completeOnboardingApi();
-
                 navigate('/success', { state: { mode: 'signup' } });
             }
         } catch (err) {
@@ -406,15 +449,6 @@ const SignUp = () => {
                     else if (lowErr.includes('district')) newFieldErrors.district = err;
                     else if (lowErr.includes('state')) newFieldErrors.state = err;
                 });
-            } else if (step === 4) {
-                const errors = msgStr.split(',').map(e => e.trim());
-                errors.forEach(err => {
-                    const lowErr = err.toLowerCase();
-                    if (lowErr.includes('holder') || lowErr.includes('name')) newFieldErrors.accountHolderName = err;
-                    else if (lowErr.includes('account number') || lowErr.includes('accountno')) newFieldErrors.accountNumber = err;
-                    else if (lowErr.includes('ifsc')) newFieldErrors.ifscCode = err;
-                    else if (lowErr.includes('bank')) newFieldErrors.bankName = err;
-                });
             }
 
             if (Object.keys(newFieldErrors).length > 0) {
@@ -440,7 +474,7 @@ const SignUp = () => {
                             onError={(e) => { e.target.style.display = 'none' }}
                         />
                         <div className="bg-[#F3F4F6] text-[#374151] px-[12px] py-[6px] rounded-full text-[12px] font-medium">
-                            Step 0{step}/04
+                            Step 0{step}/03
                         </div>
                     </div>
 
@@ -540,7 +574,7 @@ const SignUp = () => {
                                 </div>
                                 <div className="mb-6">
                                     <CustomInput
-                                        label="Email"
+                                        label="Email (Optional)"
                                         placeholder="Enter your email ID"
                                         name="email"
                                         type="email"
@@ -551,11 +585,11 @@ const SignUp = () => {
                                     />
                                 </div>
                                 <button
-                                    disabled={!formData.firstName || !formData.lastName || !formData.email || isLoading || !!fieldErrors.firstName || !!fieldErrors.lastName || !!fieldErrors.email}
+                                    disabled={!formData.firstName || !formData.lastName || isLoading || !!fieldErrors.firstName || !!fieldErrors.lastName || !!fieldErrors.email}
                                     onClick={handleNext}
                                     className="w-full h-[56px] text-white text-[16px] font-['Plus_Jakarta_Sans'] font-medium rounded-[8px] transition-colors disabled:opacity-100 disabled:cursor-not-allowed hover:bg-[#86a89d]"
                                     style={{
-                                        backgroundColor: (!formData.firstName || !formData.lastName || !formData.email || !!fieldErrors.firstName || !!fieldErrors.lastName || !!fieldErrors.email) ? '#A7C0B8' : '#0F3D2E'
+                                        backgroundColor: (!formData.firstName || !formData.lastName || !!fieldErrors.firstName || !!fieldErrors.lastName || !!fieldErrors.email) ? '#A7C0B8' : '#0F3D2E'
                                     }}
                                 >
                                     {isLoading ? 'Saving...' : 'Save & Continue'}
@@ -572,7 +606,7 @@ const SignUp = () => {
                                 <div className="flex justify-between items-center mb-8 w-full">
                                     <img src={logo} alt="WeighPro Logo" className="h-18" onError={(e) => { e.target.style.display = 'none' }} />
                                     <div className="bg-[#F3F4F6] text-[#374151] px-[12px] py-[6px] rounded-full text-[12px] font-medium">
-                                        Step 0{step}/04
+                                        Step 0{step}/03
                                     </div>
                                 </div>
 
@@ -587,7 +621,7 @@ const SignUp = () => {
                                     {error && <div className="mb-4 text-red-500 text-[13px] font-medium animate-in fade-in slide-in-from-top-1 duration-300">{error}</div>}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-[24px] w-full">
                                         <CustomInput
-                                            label="Udyog aadhar"
+                                            label="Udyog aadhar (Optional)"
                                             placeholder="Enter your 12 digit udyam registration no."
                                             name="udyogAadhar"
                                             value={formData.udyogAadhar}
@@ -605,7 +639,7 @@ const SignUp = () => {
                                             error={fieldErrors.gstNumber}
                                         />
                                         <FileUploadBox
-                                            title="Upload udyog aadhar certificate"
+                                            title="Upload udyog aadhar certificate (Optional)"
                                             file={formData.udyogAadharFile}
                                             onFileChange={(e) => handleFileChange('udyogAadharFile', e.target.files[0])}
                                             onRemove={() => handleFileRemove('udyogAadharFile')}
@@ -633,7 +667,7 @@ const SignUp = () => {
 
                                     <div className="col-span-1 md:col-span-2 w-full flex justify-center mt-[12px]">
                                         <button
-                                            disabled={!formData.udyogAadhar || !formData.udyogAadharFile || isLoading || !!fieldErrors.udyogAadhar || !!fieldErrors.gstNumber || isAnyUploading}
+                                            disabled={isLoading || !!fieldErrors.udyogAadhar || !!fieldErrors.gstNumber || isAnyUploading}
                                             onClick={handleNext}
                                             className="w-full mt-6 mb-6 md:w-[calc(50%-12px)] h-[56px] bg-[#0F3D2E] text-white text-[16px] font-['Plus_Jakarta_Sans'] font-medium rounded-[8px] hover:bg-[#0a291f] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                                         >
@@ -649,7 +683,7 @@ const SignUp = () => {
                                 <div className="flex justify-between items-center mb-5 w-full">
                                     <img src={logo} alt="WeighPro Logo" className="h-18" onError={(e) => { e.target.style.display = 'none' }} />
                                     <div className="bg-[#F3F4F6] text-[#374151] px-[12px] py-[6px] rounded-full text-[12px] font-medium">
-                                        Step 0{step}/04
+                                        Step 0{step}/03
                                     </div>
                                 </div>
 
@@ -699,37 +733,28 @@ const SignUp = () => {
                                             onChange={handleChange}
                                             onBlur={handleBlur}
                                             error={fieldErrors.pinCode}
+                                            info={isManualLocation ? "Location not found. Please enter manually." : null}
                                         />
                                         <CustomInput
-                                            select
                                             label="District"
+                                            placeholder="Enter district"
                                             name="district"
                                             value={formData.district}
                                             onChange={handleChange}
                                             onBlur={handleBlur}
                                             error={fieldErrors.district}
-                                        >
-                                            <option value="" disabled className="hidden">Select district</option>
-                                            <option value="District 1">Kolhapur</option>
-                                            <option value="District 2">Satara</option>
-                                            <option value="District 3">Sangli</option>
-                                            <option value="District 4">Solapur</option>
-                                        </CustomInput>
+                                            readOnly={!isManualLocation}
+                                        />
                                         <CustomInput
-                                            select
                                             label="State"
+                                            placeholder="Enter state"
                                             name="state"
                                             value={formData.state}
                                             onChange={handleChange}
                                             onBlur={handleBlur}
                                             error={fieldErrors.state}
-                                        >
-                                            <option value="" disabled className="hidden">Select state</option>
-                                            <option value="State 1">Maharashtra</option>
-                                            <option value="State 2">Goa</option>
-                                            <option value="State 3">Karnataka</option>
-                                            <option value="State 4">Gujarat</option>
-                                        </CustomInput>
+                                            readOnly={!isManualLocation}
+                                        />
                                     </div>
 
                                     <div className="col-span-1 md:col-span-2 w-full flex justify-center mt-[36px]">
@@ -745,97 +770,7 @@ const SignUp = () => {
                             </div>
                         )}
 
-                        {step === 4 && (
-                            <div className="w-full sm:-mt-6">
-                                <div className="flex justify-between items-center mb-5 w-full">
-                                    <img src={logo} alt="WeighPro Logo" className="h-18" onError={(e) => { e.target.style.display = 'none' }} />
-                                    <div className="bg-[#F3F4F6] text-[#374151] px-[12px] py-[6px] rounded-full text-[12px] font-medium">
-                                        Step 0{step}/04
-                                    </div>
-                                </div>
 
-                                <h2 className="text-[30px] font-['Geist_Sans'] font-bold mb-0.5 leading-tight text-gray-900 w-full">
-                                    Add your bank details
-                                </h2>
-                                <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium mb-[24px] text-gray-500 w-full">
-                                    So we can send your payments on time, we need your correct bank account details
-                                </p>
-
-                                <form noValidate onSubmit={(e) => e.preventDefault()} className="w-full">
-                                    {error && <div className="mb-4 text-red-500 text-[13px] font-medium animate-in fade-in slide-in-from-top-1 duration-300">{error}</div>}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-[24px] gap-y-[16px] w-full">
-                                        <CustomInput
-                                            label="Account holder name"
-                                            placeholder="Enter your account holder name"
-                                            name="accountHolderName"
-                                            value={formData.accountHolderName}
-                                            onChange={handleChange}
-                                            onBlur={handleBlur}
-                                            error={fieldErrors.accountHolderName}
-                                        />
-                                        <CustomInput
-                                            label="Account number"
-                                            placeholder="Enter your account number"
-                                            name="accountNumber"
-                                            value={formData.accountNumber}
-                                            onChange={handleChange}
-                                            onBlur={handleBlur}
-                                            error={fieldErrors.accountNumber}
-                                        />
-                                        <CustomInput
-                                            label="IFSC code"
-                                            placeholder="Enter your IFSC code"
-                                            name="ifscCode"
-                                            value={formData.ifscCode}
-                                            onChange={handleChange}
-                                            onBlur={handleBlur}
-                                            error={fieldErrors.ifscCode}
-                                        />
-                                        <CustomInput
-                                            select
-                                            label="Bank name"
-                                            name="bankName"
-                                            value={formData.bankName}
-                                            onChange={handleChange}
-                                            error={fieldErrors.bankName}
-                                        >
-                                            <option value="" disabled className="hidden">Select bank</option>
-                                            <option value="ICICI Bank">ICICI Bank</option>
-                                            <option value="Bank of India">Bank of India</option>
-                                            <option value="HDFC Bank">HDFC Bank</option>
-                                            <option value="State Bank of India">State Bank of India</option>
-                                            <option value="Axis Bank">Axis Bank</option>
-                                            <option value="Kotak Mahindra Bank">Kotak Mahindra Bank</option>
-                                        </CustomInput>
-
-                                        <FileUploadBox
-                                            title="Upload Cancelled Cheque"
-                                            file={formData.cancelledChequeFile}
-                                            onFileChange={(e) => handleFileChange('cancelledChequeFile', e.target.files[0])}
-                                            onRemove={() => handleFileRemove('cancelledChequeFile')}
-                                            onUploadStateChange={(isUploading) => handleUploadStateChange('cancelledChequeFile', isUploading)}
-                                        />
-                                        <FileUploadBox
-                                            title="Upload PAN Card (Optional)"
-                                            file={formData.panCardFile}
-                                            onFileChange={(e) => handleFileChange('panCardFile', e.target.files[0])}
-                                            onRemove={() => handleFileRemove('panCardFile')}
-                                            onUploadStateChange={(isUploading) => handleUploadStateChange('panCardFile', isUploading)}
-                                        />
-                                    </div>
-
-                                    <div className="col-span-1 md:col-span-2 w-full flex justify-center mt-[36px]">
-                                        <button
-                                            disabled={!formData.accountHolderName || !formData.accountNumber || !formData.ifscCode || !formData.bankName || !formData.cancelledChequeFile || isLoading || isAnyUploading || !!fieldErrors.accountHolderName || !!fieldErrors.accountNumber || !!fieldErrors.ifscCode}
-                                            onClick={handleNext}
-                                            className="w-full md:w-[calc(50%-12px)] h-[56px] bg-[#0F3D2E] text-white text-[16px] font-['Plus_Jakarta_Sans'] font-medium rounded-[8px] hover:bg-[#0a291f] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-                                        >
-                                            {isLoading ? 'Saving...' : (!formData.accountHolderName || !formData.accountNumber || !formData.ifscCode || !formData.bankName || !formData.cancelledChequeFile) ? "Save & Continue" : "Save & Finish"}
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        )}
                     </div>
                 </div>
             )}

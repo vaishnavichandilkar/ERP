@@ -26,25 +26,12 @@ model User {
   approvalStatus        ApprovalStatus         @default(PENDING)
   rejectionReason       String?
   isFirstApprovalLogin  Boolean                @default(true)
-  bankDetail            BankDetail?
   sellerDocuments       SellerDocument[]       @relation("UploadedByUser")
   shopDetail            ShopDetail?
   @@map("User")
 }
 
-model BankDetail {
-  id         Int      @id @default(autoincrement())
-  userId     Int      @unique
-  holderName String
-  accountNo  String   @unique
-  ifsc       String
-  bankName   String
-  panNumber  String?
-  createdAt  DateTime @default(now())
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("BankDetail")
-}
 
 model ShopDetail {
   id        Int      @id @default(autoincrement())
@@ -122,7 +109,6 @@ model SellerProfile {
   status          String    @default("IN_PROGRESS")
   sessionId       Int       @unique @default(autoincrement())
   addressId       Int?
-  bankDetailId    Int?
   sellerId        Int?
   created_at      DateTime  @default(now())
   updated_at      DateTime  @updatedAt
