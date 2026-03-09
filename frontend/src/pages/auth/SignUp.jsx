@@ -408,6 +408,22 @@ const SignUp = () => {
                     state: formData.state,
                     district: formData.district
                 });
+                setSearchParams({ step: '4' });
+            } else if (step === 4) {
+                const { saveBankDetailsApi, completeOnboardingApi } = await import('../../services/onboardingService');
+
+                // Submit bank details
+                await saveBankDetailsApi({
+                    accountHolderName: formData.accountHolderName,
+                    accountNumber: formData.accountNumber,
+                    ifscCode: formData.ifscCode,
+                    bankName: formData.bankName
+                }, {
+                    cancelledChequeFile: formData.cancelledChequeFile,
+                    panCardFile: formData.panCardFile
+                });
+
+                // Submit final status or completion
                 await completeOnboardingApi();
                 navigate('/success', { state: { mode: 'signup' } });
             }

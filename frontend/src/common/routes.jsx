@@ -24,6 +24,8 @@ import CategoryMaster from '../pages/dashboard/masters/CategoryMaster';
 import ProductMaster from '../pages/dashboard/masters/ProductMaster';
 import SystemSettings from '../features/settings/pages/SystemSettings';
 
+import { ROUTES } from '../constants/routes';
+
 // Placeholder for new modules
 const Placeholder = ({ title }) => (
     <div className="flex items-center justify-center h-[calc(100vh-200px)]">
@@ -42,8 +44,6 @@ const InitialRedirect = () => {
     }
     return <Navigate to="/language-selection" replace />;
 };
-
-import { ROUTES } from '../constants/routes';
 
 // Super Admin Imports
 import SuperAdminLayout from '../layout/superadmin/SuperAdminLayout';
