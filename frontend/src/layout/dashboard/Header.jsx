@@ -28,9 +28,10 @@ const Header = ({ setSidebarOpen }) => {
         const segments = path.split('/').filter(Boolean);
 
         let IconComponent = LayoutDashboard;
-        if (segments.length > 0) {
-            const firstSegment = segments[0] === 'dashboard' ? segments[1] : segments[0];
-            switch (firstSegment) {
+        const pathSegments = segments.filter(seg => seg !== 'seller' && seg !== 'dashboard');
+
+        if (pathSegments.length > 0) {
+            switch (pathSegments[0]) {
                 case 'reports': IconComponent = FileBarChart; break;
                 case 'masters': IconComponent = Database; break;
                 case 'purchase': IconComponent = ShoppingCart; break;
@@ -40,23 +41,32 @@ const Header = ({ setSidebarOpen }) => {
             }
         }
 
-        let breadcrumbText = "Dashboard";
-        if (segments.length > 0 && !(segments.length === 1 && segments[0] === 'dashboard')) {
-            const tempSegments = [...segments];
-            if (tempSegments[0] === 'dashboard') tempSegments.shift();
-
-            if (tempSegments.length > 0) {
-                const formattedSegments = tempSegments.map(segment => {
-                    return segment.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-                });
-                breadcrumbText = formattedSegments.length === 1 ? `${formattedSegments[0]}` : formattedSegments.join(' > ');
-            }
+        let breadcrumbElements = (
+            <span className="font-bold text-[#111827]">Dashboard</span>
+        );
+        
+        if (pathSegments.length > 0) {
+            const formattedSegments = pathSegments.map(segment => {
+                return segment.split(/[_-]/).map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+            });
+            
+            breadcrumbElements = formattedSegments.map((segment, index) => {
+                const isLast = index === formattedSegments.length - 1;
+                return (
+                    <span key={index} className="flex items-center">
+                        <span className={isLast ? "font-bold text-[#111827]" : "text-[#4B5563]"}>
+                            {segment}
+                        </span>
+                        {!isLast && <span className="mx-1.5 font-normal text-[#4B5563]">&gt;</span>}
+                    </span>
+                );
+            });
         }
 
         return (
             <div className="flex items-center text-[#4B5563] text-[14px] lg:text-[15px] font-medium uppercase tracking-wide">
                 <IconComponent size={18} strokeWidth={2.5} className="mr-[10px] text-[#111827]" />
-                {breadcrumbText}
+                {breadcrumbElements}
             </div>
         );
     };

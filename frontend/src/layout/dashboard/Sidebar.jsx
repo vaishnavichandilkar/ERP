@@ -47,7 +47,10 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 <div className="flex-1 overflow-y-auto py-5 px-3 flex flex-col gap-1.5 custom-scrollbar">
                     {menuItems.map((item, index) => {
                         const Icon = item.icon;
-                        const isActive = location.pathname === item.path || (item.path === '/seller/dashboard' && location.pathname === '/seller/dashboard/');
+                        const isDashboard = item.path === '/seller/dashboard';
+                        const isActive = isDashboard 
+                            ? (location.pathname === '/seller/dashboard' || location.pathname === '/seller/dashboard/') 
+                            : location.pathname.startsWith(item.path);
 
                         return (
                             <NavLink

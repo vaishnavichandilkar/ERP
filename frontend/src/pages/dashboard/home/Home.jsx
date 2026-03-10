@@ -50,36 +50,7 @@ const Home = () => {
 
     return (
         <div className="flex flex-col w-full max-w-[1400px] mx-auto pb-10">
-            {/* Header section */}
-            <div className="flex items-center justify-between mb-5 md:mb-8 pt-1">
-                <div>
-                    <h1 className="text-[20px] md:text-[26px] font-bold text-[#111827] mb-1 tracking-tight font-['Plus_Jakarta_Sans'] flex items-center gap-1.5">
-                        Welcome <span className="text-[#0B3D2E] font-medium">{firstName} !</span>
-                    </h1>
-                    <p className="text-[#9CA3AF] text-[10px] md:text-[14px] font-medium max-w-[280px] md:max-w-none leading-[1.3]">
-                        Track, manage and forecast your customer and orders.
-                    </p>
-                </div>
-
-                {/* Mobile Filter Funnel icon */}
-                <button className="lg:hidden p-1.5 text-[#6B7280] hover:text-[#111827] transition-colors focus:outline-none shrink-0 self-start mt-1">
-                    <Filter size={20} strokeWidth={1.5} />
-                </button>
-
-                {/* Desktop Filter Button */}
-                <button className="hidden lg:flex items-center gap-2 bg-white border border-[#E5E7EB] px-4 py-2.5 rounded-lg text-[14px] text-[#4B5563] hover:bg-gray-50 transition-colors shadow-sm self-start">
-                    Filter by <ChevronDown size={18} className="text-gray-400" />
-                </button>
-            </div>
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
-                <StatCard title="Total Stock" value="18000 kg" trend="up" percentage="20%" />
-                <StatCard title="To Deliver" value="15000 kg" trend="down" percentage="10%" />
-                <StatCard title="Booking" value="1486" trend="up" percentage="30%" />
-                <StatCard title="Total Outstanding" value="₹ 4.2 L" trend="down" percentage="15%" />
-            </div>
-
+            {/* Blank Dashboard Page */}
         </div>
 
     );
