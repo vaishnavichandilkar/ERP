@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchable = false, disabled = false, showAsterisk = false }) => {
+    const { t } = useTranslation('common');
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const dropdownRef = useRef(null);
@@ -41,7 +43,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                         <div className="p-2 border-b border-gray-100">
                             <input
                                 type="text"
-                                placeholder="Search..."
+                                placeholder={t('search')}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full h-[36px] px-3 text-[14px] border border-gray-200 rounded-[6px] outline-none focus:border-[#014A36]"
@@ -65,7 +67,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                                 </div>
                             ))
                         ) : (
-                            <div className="px-4 py-3 text-[14px] text-gray-500 text-center">No options found</div>
+                            <div className="px-4 py-3 text-[14px] text-gray-500 text-center">{t('no_options_found')}</div>
                         )}
                     </div>
                 </div>
@@ -75,6 +77,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
 };
 
 const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
+    const { t } = useTranslation(['modules', 'common']);
     // Mode can be 'add', 'edit', 'view'
 
     // Format UOM to match the full name style if needed, or stick to provided list. 
@@ -105,7 +108,7 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
         'UGC', 'UNT', 'YDS', 'OTHER'
     ];
 
-    const PRODUCT_TYPES = ['Goods', 'Service'];
+    const PRODUCT_TYPES = [t('modules:goods'), t('modules:service')];
     const CATEGORIES = ['Cattle Feed', 'Fertilizer', 'Weighing Equipment', 'Agricultural Inputs', 'Silage', 'Animal Feed', 'Seeds'];
     const SUBCATEGORIES = ['Maize Silage', 'Cattle Feed', 'Wheat Seeds', 'Organic Fertilizer', 'Digital Indicator', 'Crop Nutrients'];
 
@@ -142,7 +145,7 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
                         onClick={onBack}
                         className="px-6 h-[44px] bg-white border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors shadow-sm"
                     >
-                        Back
+                        {t('common:back')}
                     </button>
                 </div>
             )}
@@ -152,19 +155,19 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
                 {/* Header */}
                 <div className="px-6 py-5 border-b border-[#E5E7EB]">
                     <h2 className="text-[18px] font-bold text-[#111827]">
-                        {mode === 'add' ? 'Add Product' : mode === 'edit' ? 'Update Product' : 'View Product'}
+                        {mode === 'add' ? t('modules:add_product') : mode === 'edit' ? t('modules:update_product') : t('modules:view_product')}
                     </h2>
                 </div>
 
                 {/* Form Body */}
                 <div className="p-6 md:p-8 flex flex-col gap-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                        {renderInput('Product Name', 'productName', 'Enter Product name')}
-                        {renderInput('Product Code', 'productCode', 'Product code will be auto Generated')}
+                        {renderInput(t('modules:product_name'), 'productName', t('modules:enter_product_name'))}
+                        {renderInput(t('modules:product_code'), 'productCode', t('modules:product_code_auto'))}
 
                         <CustomSelect
-                            label="UOM"
-                            placeholder="Select UOM"
+                            label={t('modules:uom')}
+                            placeholder={t('common:select') + ' ' + t('modules:uom')}
                             options={UOM_LIST}
                             value={formData.uom}
                             onChange={(val) => handleInputChange('uom', val)}
@@ -174,8 +177,8 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
                         />
 
                         <CustomSelect
-                            label="Product Type"
-                            placeholder="Select Type"
+                            label={t('modules:product_type')}
+                            placeholder={t('common:select') + ' ' + t('modules:product_type')}
                             options={PRODUCT_TYPES}
                             value={formData.productType}
                             onChange={(val) => handleInputChange('productType', val)}
@@ -184,8 +187,8 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
                         />
 
                         <CustomSelect
-                            label="Category"
-                            placeholder="Select Category"
+                            label={t('modules:category')}
+                            placeholder={t('common:select') + ' ' + t('modules:category')}
                             options={CATEGORIES}
                             value={formData.category}
                             onChange={(val) => handleInputChange('category', val)}
@@ -194,8 +197,8 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
                         />
 
                         <CustomSelect
-                            label="Sub-Category"
-                            placeholder="Select Sub Category"
+                            label={t('modules:sub_category')}
+                            placeholder={t('common:select') + ' ' + t('modules:sub_category')}
                             options={SUBCATEGORIES}
                             value={formData.subcategory}
                             onChange={(val) => handleInputChange('subcategory', val)}
@@ -203,11 +206,11 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
                             showAsterisk={showAsterisk}
                         />
 
-                        {renderInput('HSN Code', 'hsnCode', 'Enter HSN code')}
-                        {renderInput('Tax (%)', 'tax', 'Tax will be auto fetched')}
+                        {renderInput(t('modules:hsn_code'), 'hsnCode', t('common:enter') + ' ' + t('modules:hsn_code'))}
+                        {renderInput(t('modules:tax_percent'), 'tax', t('modules:tax_auto'))}
                     </div>
 
-                    {renderInput('Product Description', 'description', 'Enter product description')}
+                    {renderInput(t('modules:product_desc'), 'description', t('modules:enter_product_desc'))}
                 </div>
 
                 {/* Footer Buttons */}
@@ -217,7 +220,7 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
                             onClick={onBack}
                             className="px-8 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors bg-white"
                         >
-                            Back
+                            {t('common:back')}
                         </button>
                     ) : (
                         <>
@@ -225,13 +228,13 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
                                 onClick={onBack}
                                 className="px-8 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors bg-white"
                             >
-                                Cancel
+                                {t('common:cancel')}
                             </button>
                             <button
                                 onClick={onBack}
                                 className="px-8 h-[44px] bg-[#014A36] text-white rounded-[8px] text-[14px] font-bold hover:bg-[#013b2b] transition-colors shadow-sm opacity-90 hover:opacity-100"
                             >
-                                {mode === 'add' ? 'Add Product' : 'Update Product'}
+                                {mode === 'add' ? t('modules:add_product') : t('modules:update_product')}
                             </button>
                         </>
                     )}

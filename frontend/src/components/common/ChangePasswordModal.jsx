@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import logo from '../../assets/images/ERP_Logo2.png';
 
 const ChangePasswordModal = ({ isOpen, onClose, onSuccess }) => {
+    const { t } = useTranslation(['auth', 'common']);
     const [isVisible, setIsVisible] = useState(false);
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
@@ -77,19 +79,19 @@ const ChangePasswordModal = ({ isOpen, onClose, onSuccess }) => {
                 {/* Header Section */}
                 <div className="flex flex-col mb-8 mt-2">
                     <img src={logo} alt="Logo" className="h-6 w-auto object-contain self-start mb-6" />
-                    <h2 className="text-[26px] font-bold text-gray-900 tracking-tight leading-tight">Change your password</h2>
-                    <p className="text-[15px] text-gray-500 mt-2 font-medium">Create a new password that's safe and easy to remember</p>
+                    <h2 className="text-[26px] font-bold text-gray-900 tracking-tight leading-tight">{t('change_pwd_title')}</h2>
+                    <p className="text-[15px] text-gray-500 mt-2 font-medium">{t('change_pwd_desc')}</p>
                 </div>
 
                 {/* Form Section */}
                 <div className="flex flex-col space-y-5">
                     {/* Current Password */}
                     <div className="flex flex-col">
-                        <label className="text-[14px] font-semibold text-gray-700 mb-2">Current password</label>
+                        <label className="text-[14px] font-semibold text-gray-700 mb-2">{t('current_pwd')}</label>
                         <div className="relative">
                             <input
                                 type={showCurrentPassword ? "text" : "password"}
-                                placeholder="Enter current password here"
+                                placeholder={t('enter_current_pwd')}
                                 className="w-full border border-gray-200 rounded-[10px] px-4 py-3.5 text-[15px] text-gray-800 outline-none focus:border-[#166534] focus:ring-1 focus:ring-[#166534] transition-all placeholder:text-gray-400 shadow-sm"
                             />
                             <button
@@ -100,16 +102,16 @@ const ChangePasswordModal = ({ isOpen, onClose, onSuccess }) => {
                                 {showCurrentPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                             </button>
                         </div>
-                        <span className="text-[13px] text-gray-500 mt-2 ml-1">Must be at least 8 characters</span>
+                        <span className="text-[13px] text-gray-500 mt-2 ml-1">{t('pwd_min_chars')}</span>
                     </div>
 
                     {/* New Password */}
                     <div className="flex flex-col">
-                        <label className="text-[14px] font-semibold text-gray-700 mb-2">Enter new password</label>
+                        <label className="text-[14px] font-semibold text-gray-700 mb-2">{t('new_pwd')}</label>
                         <div className="relative">
                             <input
                                 type={showNewPassword ? "text" : "password"}
-                                placeholder="Enter new password here"
+                                placeholder={t('enter_new_pwd')}
                                 className="w-full border border-gray-200 rounded-[10px] px-4 py-3.5 text-[15px] text-gray-800 outline-none focus:border-[#166534] focus:ring-1 focus:ring-[#166534] transition-all placeholder:text-gray-400 shadow-sm"
                             />
                             <button
@@ -129,7 +131,7 @@ const ChangePasswordModal = ({ isOpen, onClose, onSuccess }) => {
                         onClick={onSuccess}
                         className="w-full bg-[#166534] hover:bg-[#14532d] text-white font-semibold py-3.5 rounded-[12px] transition-colors shadow-sm text-[15px]"
                     >
-                        Change Password
+                        {t('change_password', { ns: 'dashboard' })}
                     </button>
 
                     <button
@@ -137,7 +139,7 @@ const ChangePasswordModal = ({ isOpen, onClose, onSuccess }) => {
                         className="flex items-center justify-center w-full py-2 text-[14px] font-semibold text-gray-500 hover:text-gray-800 transition-colors group"
                     >
                         <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-                        Back to Dashboard
+                        {t('back_to_dashboard')}
                     </button>
                 </div>
             </div>

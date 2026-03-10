@@ -3,8 +3,11 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import AuthLayout from '../../layout/auth/AuthLayout';
 import { Upload, FileText, Trash2, ChevronDown, CloudUpload } from 'lucide-react';
 import logo from '../../assets/images/ERP_Logo2.png';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '../../components/common/LanguageSwitcher';
 
 const FileUploadBox = ({ title, file, onFileChange, onRemove, onUploadStateChange }) => {
+    const { t } = useTranslation(['auth', 'common']);
     const [progress, setProgress] = React.useState(0);
     const [error, setError] = React.useState('');
     const onUploadStateChangeRef = React.useRef(onUploadStateChange);
@@ -109,8 +112,8 @@ const FileUploadBox = ({ title, file, onFileChange, onRemove, onUploadStateChang
                 <label className="h-[120px] border border-dashed border-[#D1D5DB] rounded-[8px] bg-[#FFFFFF] px-4 flex flex-col items-center justify-center cursor-pointer transition-colors hover:border-[#0F3D2E] w-full font-['Plus_Jakarta_Sans']">
                     <input type="file" className="hidden" onChange={handleLocalFileChange} accept=".pdf,.jpg,.jpeg" />
                     <FileText size={20} className="text-[#6B7280] mb-2" strokeWidth={1.5} />
-                    <span className="text-[15px] font-[600] text-[#0F3D2E] leading-tight mb-1">Click to upload</span>
-                    <span className="text-[13px] text-[#9CA3AF] leading-tight">PDF or JPG (max. 10MB)</span>
+                    <span className="text-[15px] font-[600] text-[#0F3D2E] leading-tight mb-1">{t('auth:click_to_upload')}</span>
+                    <span className="text-[13px] text-[#9CA3AF] leading-tight">PDF or JPG ({t('auth:max_size')})</span>
                 </label>
             )}
             {error && (
@@ -189,6 +192,7 @@ const CustomInput = ({ label, type = 'text', value, onChange, onBlur, placeholde
 );
 
 const SignUp = () => {
+    const { t } = useTranslation(['auth', 'common']);
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
 
@@ -454,7 +458,11 @@ const SignUp = () => {
     return (
         <AuthLayout maxWidth={step >= 2 ? "100%" : "420px"} hideLeftPanel={true} disableRightScroll={step === 1}>
             {step < 2 ? (
-                <div className="text-left w-full max-w-[420px] mx-auto flex flex-col justify-center min-h-[100dvh] md:min-h-0 py-6 md:py-0 px-2 md:px-0 -mt-2 -mb-4">
+                <div className="text-left w-full max-w-[420px] mx-auto flex flex-col justify-center min-h-[100dvh] md:min-h-0 py-6 md:py-0 px-2 md:px-0 -mt-2 -mb-4 relative">
+                    {/* Language Switcher */}
+                    <div className="absolute -top-12 -right-4 lg:-top-16 lg:-right-8">
+                        <LanguageSwitcher />
+                    </div>
                     {/* Header: Logo and Step Pill */}
                     <div className="flex justify-between items-center mb-6 w-full -mt-2">
                         <img
@@ -464,7 +472,7 @@ const SignUp = () => {
                             onError={(e) => { e.target.style.display = 'none' }}
                         />
                         <div className="bg-[#F3F4F6] text-[#374151] px-[12px] py-[6px] rounded-full text-[12px] font-medium">
-                            Step 0{step}/03
+                            {t('auth:step_label')} 0{step}/04
                         </div>
                     </div>
 
@@ -473,18 +481,18 @@ const SignUp = () => {
                         <div className="w-full">
                             <div className="mb-[24px]">
                                 <h2 className="text-[30px] font-['Geist_Sans'] font-bold mb-1.5 leading-tight text-gray-900">
-                                    Create your<br />seller account
+                                    {t('auth:signup_title')}
                                 </h2>
                                 <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium text-gray-500">
-                                    Start receiving farmer orders and grow your shop
+                                    {t('auth:signup_subtitle')}
                                 </p>
                             </div>
 
                             <form noValidate onSubmit={(e) => e.preventDefault()}>
                                 <div className="mb-5">
                                     <CustomInput
-                                        label="Phone number"
-                                        placeholder="Enter your number"
+                                        label={t('auth:phone_number')}
+                                        placeholder={t('auth:enter_number')}
                                         name="phone"
                                         type="tel"
                                         value={formData.phone}
@@ -513,7 +521,7 @@ const SignUp = () => {
                                             onChange={handleChange}
                                         />
                                         <span className="text-[14px] font-['Plus_Jakarta_Sans'] text-gray-500 mt-1 cursor-pointer">
-                                            By logging in, I agree to <Link to="#" className="text-green-900 underline font-semibold hover:text-[#073318] transition-colors">T&C</Link> and <Link to="#" className="text-green-900 underline font-semibold hover:text-[#0F3D2E] transition-colors">Privacy Policy</Link>
+                                            {t('auth:agree_prefix')} <Link to="#" className="text-green-900 underline font-semibold hover:text-[#073318] transition-colors">{t('auth:tc')}</Link> {t('auth:and')} <Link to="#" className="text-green-900 underline font-semibold hover:text-[#0F3D2E] transition-colors">{t('auth:privacy_policy')}</Link> {t('auth:agree_suffix')}
                                         </span>
                                     </label>
                                 </div>
@@ -523,7 +531,7 @@ const SignUp = () => {
                                     onClick={handleNext}
                                     className="w-full h-[56px] bg-[#0F3D2E] text-white text-[16px] font-['Plus_Jakarta_Sans'] font-medium rounded-[8px] transition-colors disabled:opacity-60 disabled:cursor-not-allowed hover:bg-[#0a291f]"
                                 >
-                                    {isLoading ? 'Sending...' : 'Get OTP'}
+                                    {isLoading ? t('auth:sending') : t('auth:get_otp')}
                                 </button>
                             </form>
                         </div>
@@ -531,10 +539,10 @@ const SignUp = () => {
                         <div className="w-full">
                             <div className="mb-5">
                                 <h2 className="text-[30px] font-['Geist_Sans'] font-bold mb-1.5 leading-tight text-gray-900">
-                                    Set up your<br />seller profile
+                                    {t('auth:profile_title')}
                                 </h2>
                                 <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium text-gray-500">
-                                    Your journey to easier selling starts here
+                                    {t('auth:profile_subtitle')}
                                 </p>
                             </div>
 
@@ -542,8 +550,8 @@ const SignUp = () => {
                                 {error && <div className="mb-4 text-red-500 text-[13px] font-medium animate-in fade-in slide-in-from-top-1 duration-300">{error}</div>}
                                 <div className="mb-4">
                                     <CustomInput
-                                        label="First name"
-                                        placeholder="Enter your first name"
+                                        label={t('auth:first_name')}
+                                        placeholder={t('auth:placeholder_first')}
                                         name="firstName"
                                         value={formData.firstName}
                                         onChange={handleChange}
@@ -553,8 +561,8 @@ const SignUp = () => {
                                 </div>
                                 <div className="mb-4">
                                     <CustomInput
-                                        label="Last name"
-                                        placeholder="Enter your last name"
+                                        label={t('auth:last_name')}
+                                        placeholder={t('auth:placeholder_last')}
                                         name="lastName"
                                         value={formData.lastName}
                                         onChange={handleChange}
@@ -564,8 +572,8 @@ const SignUp = () => {
                                 </div>
                                 <div className="mb-6">
                                     <CustomInput
-                                        label="Email (Optional)"
-                                        placeholder="Enter your email ID"
+                                        label={t('auth:email')}
+                                        placeholder={t('auth:placeholder_email')}
                                         name="email"
                                         type="email"
                                         value={formData.email}
@@ -582,7 +590,7 @@ const SignUp = () => {
                                         backgroundColor: (!formData.firstName || !formData.lastName || !!fieldErrors.firstName || !!fieldErrors.lastName || !!fieldErrors.email) ? '#A7C0B8' : '#0F3D2E'
                                     }}
                                 >
-                                    {isLoading ? 'Saving...' : 'Save & Continue'}
+                                    {isLoading ? t('auth:saving') : t('auth:save_continue')}
                                 </button>
                             </form>
                         </div>
@@ -593,26 +601,26 @@ const SignUp = () => {
                     <div className="w-full max-w-[860px] sm:px-[40px] px-6 flex flex-col justify-center items-start">
                         {step === 2 && (
                             <>
-                                <div className="flex justify-between items-center mb-8 w-full">
+                                <div className="flex justify-between items-center mb-8 w-full relative">
                                     <img src={logo} alt="WeighPro Logo" className="h-18" onError={(e) => { e.target.style.display = 'none' }} />
                                     <div className="bg-[#F3F4F6] text-[#374151] px-[12px] py-[6px] rounded-full text-[12px] font-medium">
-                                        Step 0{step}/03
+                                        {t('auth:step_label')} 0{step}/04
                                     </div>
                                 </div>
 
                                 <h2 className="text-[30px] font-['Geist_Sans'] font-bold mb-1 leading-tight text-gray-900 w-full">
-                                    Tell us about your Business
+                                    {t('auth:business_title')}
                                 </h2>
                                 <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium mb-[40px] text-gray-500 w-full">
-                                    We just need a few quick details to confirm your business
+                                    {t('auth:business_subtitle')}
                                 </p>
 
                                 <form noValidate onSubmit={(e) => e.preventDefault()} className="w-full">
                                     {error && <div className="mb-4 text-red-500 text-[13px] font-medium animate-in fade-in slide-in-from-top-1 duration-300">{error}</div>}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-[24px] w-full">
                                         <CustomInput
-                                            label="Udyog aadhar (Optional)"
-                                            placeholder="Enter your 12 digit udyam registration no."
+                                            label={t('auth:udyog_aadhar') + " " + t('auth:optional')}
+                                            placeholder={t('auth:placeholder_udyog')}
                                             name="udyogAadhar"
                                             value={formData.udyogAadhar}
                                             onChange={handleChange}
@@ -620,8 +628,8 @@ const SignUp = () => {
                                             error={fieldErrors.udyogAadhar}
                                         />
                                         <CustomInput
-                                            label="GST number (Optional)"
-                                            placeholder="Enter your 15 digit GSTIN"
+                                            label={t('auth:placeholder_gst_opt')}
+                                            placeholder={t('auth:placeholder_gst')}
                                             name="gstNumber"
                                             value={formData.gstNumber}
                                             onChange={handleChange}
@@ -629,14 +637,14 @@ const SignUp = () => {
                                             error={fieldErrors.gstNumber}
                                         />
                                         <FileUploadBox
-                                            title="Upload udyog aadhar certificate (Optional)"
+                                            title={t('auth:upload_udyog') + " " + t('auth:optional')}
                                             file={formData.udyogAadharFile}
                                             onFileChange={(e) => handleFileChange('udyogAadharFile', e.target.files[0])}
                                             onRemove={() => handleFileRemove('udyogAadharFile')}
                                             onUploadStateChange={(isUploading) => handleUploadStateChange('udyogAadharFile', isUploading)}
                                         />
                                         <FileUploadBox
-                                            title="Upload GST Certificate (Optional)"
+                                            title={t('auth:upload_gst') + " " + t('auth:optional')}
                                             file={formData.gstFile}
                                             onFileChange={(e) => handleFileChange('gstFile', e.target.files[0])}
                                             onRemove={() => handleFileRemove('gstFile')}
@@ -645,7 +653,7 @@ const SignUp = () => {
                                         <div className="col-span-1 md:col-span-2 w-full flex justify-center mb-2">
                                             <div className="w-full md:w-[calc(50%-12px)]">
                                                 <FileUploadBox
-                                                    title="Upload other document (Optional)"
+                                                    title={t('auth:upload_other') + " " + t('auth:optional')}
                                                     file={formData.otherDocFile}
                                                     onFileChange={(e) => handleFileChange('otherDocFile', e.target.files[0])}
                                                     onRemove={() => handleFileRemove('otherDocFile')}
@@ -661,7 +669,7 @@ const SignUp = () => {
                                             onClick={handleNext}
                                             className="w-full mt-6 mb-6 md:w-[calc(50%-12px)] h-[56px] bg-[#0F3D2E] text-white text-[16px] font-['Plus_Jakarta_Sans'] font-medium rounded-[8px] hover:bg-[#0a291f] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                                         >
-                                            {isLoading ? 'Saving...' : 'Save & Continue'}
+                                            {isLoading ? t('auth:saving') : t('auth:save_continue')}
                                         </button>
                                     </div>
                                 </form>
@@ -673,23 +681,23 @@ const SignUp = () => {
                                 <div className="flex justify-between items-center mb-5 w-full">
                                     <img src={logo} alt="WeighPro Logo" className="h-18" onError={(e) => { e.target.style.display = 'none' }} />
                                     <div className="bg-[#F3F4F6] text-[#374151] px-[12px] py-[6px] rounded-full text-[12px] font-medium">
-                                        Step 0{step}/03
+                                        {t('auth:step_label')} 0{step}/04
                                     </div>
                                 </div>
 
                                 <h2 className="text-[30px] font-['Geist_Sans'] font-bold mb-0.5 leading-tight text-gray-900 w-full">
-                                    Tell us about your Shop
+                                    {t('auth:shop_title')}
                                 </h2>
                                 <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium mb-[24px] text-gray-500 w-full">
-                                    We just need a few quick details to confirm your business
+                                    {t('auth:shop_subtitle')}
                                 </p>
 
                                 <form noValidate onSubmit={(e) => e.preventDefault()} className="w-full">
                                     {error && <div className="mb-4 text-red-500 text-[13px] font-medium animate-in fade-in slide-in-from-top-1 duration-300">{error}</div>}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-[24px] gap-y-[16px] w-full">
                                         <CustomInput
-                                            label="Shop Name"
-                                            placeholder="Enter your shop name"
+                                            label={t('auth:placeholder_shop')}
+                                            placeholder={t('auth:placeholder_shop')}
                                             name="shopName"
                                             value={formData.shopName}
                                             onChange={handleChange}
@@ -697,8 +705,8 @@ const SignUp = () => {
                                             error={fieldErrors.shopName}
                                         />
                                         <CustomInput
-                                            label="Address"
-                                            placeholder="Enter your address"
+                                            label={t('auth:address')}
+                                            placeholder={t('auth:placeholder_address')}
                                             name="address"
                                             value={formData.address}
                                             onChange={handleChange}
@@ -706,8 +714,8 @@ const SignUp = () => {
                                             error={fieldErrors.address}
                                         />
                                         <CustomInput
-                                            label="Village"
-                                            placeholder="Enter your village name"
+                                            label={t('auth:village')}
+                                            placeholder={t('auth:placeholder_village')}
                                             name="village"
                                             value={formData.village}
                                             onChange={handleChange}
@@ -715,8 +723,8 @@ const SignUp = () => {
                                             error={fieldErrors.village}
                                         />
                                         <CustomInput
-                                            label="Pin Code"
-                                            placeholder="Enter your pincode"
+                                            label={t('auth:pincode')}
+                                            placeholder={t('auth:placeholder_pincode')}
                                             name="pinCode"
                                             type="text"
                                             value={formData.pinCode}
@@ -726,8 +734,8 @@ const SignUp = () => {
                                             info={isManualLocation ? "Location not found. Please enter manually." : null}
                                         />
                                         <CustomInput
-                                            label="District"
-                                            placeholder="Enter district"
+                                            label={t('auth:district')}
+                                            placeholder={t('auth:district')}
                                             name="district"
                                             value={formData.district}
                                             onChange={handleChange}
@@ -736,8 +744,8 @@ const SignUp = () => {
                                             readOnly={!isManualLocation}
                                         />
                                         <CustomInput
-                                            label="State"
-                                            placeholder="Enter state"
+                                            label={t('auth:state')}
+                                            placeholder={t('auth:state')}
                                             name="state"
                                             value={formData.state}
                                             onChange={handleChange}
@@ -753,18 +761,108 @@ const SignUp = () => {
                                             onClick={handleNext}
                                             className="w-full md:w-[calc(50%-12px)] h-[56px] bg-[#0F3D2E] text-white text-[16px] font-['Plus_Jakarta_Sans'] font-medium rounded-[8px] hover:bg-[#0a291f] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                                         >
-                                            {isLoading ? 'Saving...' : 'Save & Continue'}
+                                            {isLoading ? t('auth:saving') : t('auth:save_continue')}
                                         </button>
                                     </div>
                                 </form>
                             </div>
                         )}
+                        {step === 4 && (
+                            <div className="w-full sm:-mt-6">
+                                <div className="flex justify-between items-center mb-5 w-full">
+                                    <img src={logo} alt="WeighPro Logo" className="h-18" onError={(e) => { e.target.style.display = 'none' }} />
+                                    <div className="bg-[#F3F4F6] text-[#374151] px-[12px] py-[6px] rounded-full text-[12px] font-medium">
+                                        {t('auth:step_label')} 0{step}/04
+                                    </div>
+                                </div>
 
+                                <h2 className="text-[30px] font-['Geist_Sans'] font-bold mb-0.5 leading-tight text-gray-900 w-full">
+                                    {t('auth:bank_title')}
+                                </h2>
+                                <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium mb-[24px] text-gray-500 w-full">
+                                    {t('auth:bank_subtitle')}
+                                </p>
 
-                    </div>
-                </div>
-            )}
-        </AuthLayout>
+                                <form noValidate onSubmit={(e) => e.preventDefault()} className="w-full">
+                                    {error && <div className="mb-4 text-red-500 text-[13px] font-medium animate-in fade-in slide-in-from-top-1 duration-300">{error}</div>}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-[24px] gap-y-[16px] w-full">
+                                        <CustomInput
+                                            label={t('auth:acc_holder_label')}
+                                            placeholder={t('auth:placeholder_acc_holder')}
+                                            name="accountHolderName"
+                                            value={formData.accountHolderName}
+                                            onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            error={fieldErrors.accountHolderName}
+                                        />
+                                        <CustomInput
+                                            label={t('auth:acc_num_label')}
+                                            placeholder={t('auth:placeholder_acc_num')}
+                                            name="accountNumber"
+                                            value={formData.accountNumber}
+                                            onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            error={fieldErrors.accountNumber}
+                                        />
+                                        <CustomInput
+                                            label={t('auth:ifsc_label')}
+                                            placeholder={t('auth:placeholder_ifsc')}
+                                            name="ifscCode"
+                                            value={formData.ifscCode}
+                                            onChange={handleChange}
+                                            onBlur={handleBlur}
+                                            error={fieldErrors.ifscCode}
+                                        />
+                                        <CustomInput
+                                            select
+                                            label={t('auth:bank_label')}
+                                            name="bankName"
+                                            value={formData.bankName}
+                                            onChange={handleChange}
+                                            error={fieldErrors.bankName}
+                                        >
+                                            <option value="" disabled className="hidden">{t('auth:select_bank')}</option>
+                                            <option value="ICICI Bank">ICICI Bank</option>
+                                            <option value="Bank of India">Bank of India</option>
+                                            <option value="HDFC Bank">HDFC Bank</option>
+                                            <option value="State Bank of India">State Bank of India</option>
+                                            <option value="Axis Bank">Axis Bank</option>
+                                            <option value="Kotak Mahindra Bank">Kotak Mahindra Bank</option>
+                                        </CustomInput>
+
+                                        <FileUploadBox
+                                            title={t('auth:upload_cheque')}
+                                            file={formData.cancelledChequeFile}
+                                            onFileChange={(e) => handleFileChange('cancelledChequeFile', e.target.files[0])}
+                                            onRemove={() => handleFileRemove('cancelledChequeFile')}
+                                            onUploadStateChange={(isUploading) => handleUploadStateChange('cancelledChequeFile', isUploading)}
+                                        />
+                                        <FileUploadBox
+                                            title={t('auth:upload_pan') + " " + t('auth:optional')}
+                                            file={formData.panCardFile}
+                                            onFileChange={(e) => handleFileChange('panCardFile', e.target.files[0])}
+                                            onRemove={() => handleFileRemove('panCardFile')}
+                                            onUploadStateChange={(isUploading) => handleUploadStateChange('panCardFile', isUploading)}
+                                        />
+                                    </div>
+
+                                    <div className="col-span-1 md:col-span-2 w-full flex justify-center mt-[36px]">
+                                        <button
+                                            disabled={!formData.accountHolderName || !formData.accountNumber || !formData.ifscCode || !formData.bankName || !formData.cancelledChequeFile || isLoading || isAnyUploading || !!fieldErrors.accountHolderName || !!fieldErrors.accountNumber || !!fieldErrors.ifscCode}
+                                            onClick={handleNext}
+                                            className="w-full md:w-[calc(50%-12px)] h-[56px] bg-[#0F3D2E] text-white text-[16px] font-['Plus_Jakarta_Sans'] font-medium rounded-[8px] hover:bg-[#0a291f] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            {isLoading ? t('auth:saving') : (!formData.accountHolderName || !formData.accountNumber || !formData.ifscCode || !formData.bankName || !formData.cancelledChequeFile) ? t('auth:save_continue') : t('auth:save_finish')}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        )}
+                    </div >
+                </div >
+            )
+            }
+        </AuthLayout >
     );
 };
 

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { User, Lock } from 'lucide-react';
-
+import { useTranslation } from 'react-i18next';
 const ProfilePopup = ({ isOpen, activeTrigger, onClose, onChangePassword, onLogout }) => {
+    const { t } = useTranslation(['dashboard', 'common']);
     const [isVisible, setIsVisible] = useState(false);
     const popupRef = useRef(null);
 
@@ -92,7 +93,7 @@ const ProfilePopup = ({ isOpen, activeTrigger, onClose, onChangePassword, onLogo
                     <div className="flex flex-col py-2 bg-white">
                         <button className="flex items-center px-5 py-3 hover:bg-gray-50 text-gray-700 hover:text-[#166534] transition-colors group">
                             <User className="w-[18px] h-[18px] text-gray-400 group-hover:text-[#166534] transition-colors" />
-                            <span className="ml-3 text-[14px] font-medium">My Profile</span>
+                            <span className="ml-3 text-[14px] font-medium">{t('my_profile')}</span>
                         </button>
                         <button
                             onClick={() => {
@@ -102,7 +103,7 @@ const ProfilePopup = ({ isOpen, activeTrigger, onClose, onChangePassword, onLogo
                             className="flex items-center w-full px-5 py-3 hover:bg-gray-50 text-gray-700 hover:text-[#166534] transition-colors group"
                         >
                             <Lock className="w-[18px] h-[18px] text-gray-400 group-hover:text-[#166534] transition-colors" />
-                            <span className="ml-3 text-[14px] font-medium">Change Password</span>
+                            <span className="ml-3 text-[14px] font-medium">{t('change_password')}</span>
                         </button>
                     </div>
 
@@ -115,7 +116,7 @@ const ProfilePopup = ({ isOpen, activeTrigger, onClose, onChangePassword, onLogo
                             }}
                             className="w-full py-2.5 bg-white border border-gray-200 text-gray-700 text-[14px] font-semibold rounded-[8px] hover:border-[#166534] hover:text-[#166534] hover:bg-green-50 transition-all shadow-sm flex items-center justify-center"
                         >
-                            Log Out
+                            {t('log_out')}
                         </button>
                     </div>
                 </div>

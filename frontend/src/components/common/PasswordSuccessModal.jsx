@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Check } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const PasswordSuccessModal = ({ isOpen, onClose, onGoToSignIn }) => {
+    const { t } = useTranslation('dashboard');
     const [isVisible, setIsVisible] = useState(false);
     const modalRef = useRef(null);
 
@@ -66,18 +68,18 @@ const PasswordSuccessModal = ({ isOpen, onClose, onGoToSignIn }) => {
                     </div>
 
                     <h2 className="text-[20px] font-semibold text-gray-900 mb-3 tracking-snug">
-                        Password changed successfully!
+                        {t('pwd_changed_title')}
                     </h2>
 
                     <p className="text-[14px] text-gray-500 mb-8 leading-relaxed font-medium">
-                        Your new password has been set, kindly sign in again with your new password
+                        {t('pwd_changed_desc')}
                     </p>
 
                     <button
                         onClick={onGoToSignIn}
                         className="w-full bg-[#052e16] hover:bg-[#02180a] text-white font-semibold py-3.5 rounded-[10px] transition-colors shadow-lg text-[14px]"
                     >
-                        Go to SignIn
+                        {t('goto_signin')}
                     </button>
                 </div>
             </div>

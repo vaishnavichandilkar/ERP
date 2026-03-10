@@ -7,7 +7,7 @@ import { CheckCircle2, X, ArrowLeft } from 'lucide-react';
 import logo from '../../assets/images/ERP_Logo2.png';
 
 const Landing = () => {
-    const { t } = useTranslation();
+    const { t } = useTranslation('auth');
     const navigate = useNavigate();
     const location = useLocation();
     const [showPopup, setShowPopup] = useState(false);
@@ -47,12 +47,11 @@ const Landing = () => {
                         </div>
 
                         <h2 className="text-2xl font-bold text-gray-900 mb-2 font-['Geist_Sans']">
-                            Congratulations!
+                            {t('auth:congratulations')}
                         </h2>
 
                         <p className="text-gray-600 text-[15px] font-['Plus_Jakarta_Sans'] mb-6">
-                            Your account has been successfully registered.
-                            You can now login and start using WeighPro.
+                            {t('auth:account_registered_success')}
                         </p>
 
                         <Button
@@ -60,7 +59,7 @@ const Landing = () => {
                             onClick={() => navigate('/login')}
                             className="w-full py-3 text-[16px] font-semibold"
                         >
-                            Go to Login
+                            {t('auth:landing.go_to_login')}
                         </Button>
                     </div>
                 </div>

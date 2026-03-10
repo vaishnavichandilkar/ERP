@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-
-const tabs = ['All', 'Product', 'Customer', 'Users', 'Inventory'];
+import { useTranslation } from 'react-i18next';
 
 // Expanded mock data to ensure scrolling (more than 5 items)
 const mockProducts = [
@@ -46,6 +45,15 @@ const mockInventory = [
 ];
 
 const SearchPopup = ({ isOpen, activeTrigger, onClose }) => {
+    const { t } = useTranslation('dashboard');
+    const tabs = [
+        { id: 'All', label: t('all_tab') },
+        { id: 'Product', label: t('product_tab') },
+        { id: 'Customer', label: t('customer_tab') },
+        { id: 'Users', label: t('users_tab') },
+        { id: 'Inventory', label: t('inventory_tab') }
+    ];
+
     const [activeTab, setActiveTab] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
     const [isVisible, setIsVisible] = useState(false);
@@ -134,7 +142,7 @@ const SearchPopup = ({ isOpen, activeTrigger, onClose }) => {
                         <Search className="w-5 h-5 text-gray-400 ml-2" />
                         <input
                             type="text"
-                            placeholder="Tap to start search.."
+                            placeholder={t('search_placeholder')}
                             className="w-full bg-transparent border-none outline-none px-4 text-[15px] font-medium text-gray-800 placeholder-gray-400"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -150,12 +158,12 @@ const SearchPopup = ({ isOpen, activeTrigger, onClose }) => {
                         <div className="flex px-4 min-w-max">
                             {tabs.map((tab) => (
                                 <button
-                                    key={tab}
-                                    onClick={() => setActiveTab(tab)}
-                                    className={`relative px-4 py-3.5 text-[14px] font-medium transition-colors ${activeTab === tab ? 'text-[#166534]' : 'text-gray-500 hover:text-gray-800'}`}
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`relative px-4 py-3.5 text-[14px] font-medium transition-colors ${activeTab === tab.id ? 'text-[#166534]' : 'text-gray-500 hover:text-gray-800'}`}
                                 >
-                                    {tab}
-                                    {activeTab === tab && (
+                                    {tab.label}
+                                    {activeTab === tab.id && (
                                         <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#166534] rounded-t-sm" />
                                     )}
                                 </button>
@@ -168,8 +176,8 @@ const SearchPopup = ({ isOpen, activeTrigger, onClose }) => {
                         {/* All Tab - Empty State */}
                         {activeTab === 'All' && (
                             <div className="flex-1 min-h-[300px] flex flex-col items-center justify-center text-center p-8 animate-in fade-in zoom-in duration-300">
-                                <h3 className="text-[17px] font-semibold text-gray-800 mb-2">Looking for something..</h3>
-                                <p className="text-[14px] text-gray-500 max-w-[280px]">Initiate your digital experience with our intuitive dashboard</p>
+                                <h3 className="text-[17px] font-semibold text-gray-800 mb-2">{t('looking_for_something')}</h3>
+                                <p className="text-[14px] text-gray-500 max-w-[280px]">{t('initiate_experience')}</p>
                             </div>
                         )}
 
@@ -190,7 +198,7 @@ const SearchPopup = ({ isOpen, activeTrigger, onClose }) => {
                                 </div>
                                 <div className="p-4 pt-3 bg-white border-t border-gray-50 shrink-0">
                                     <button className="w-full py-2.5 bg-white border border-gray-200 text-gray-700 text-[14px] font-semibold rounded-[8px] hover:border-[#166534] hover:text-[#166534] hover:bg-green-50 transition-all shadow-sm">
-                                        Go To Product Management
+                                        {t('go_to_product_mgmt')}
                                     </button>
                                 </div>
                             </div>
@@ -213,7 +221,7 @@ const SearchPopup = ({ isOpen, activeTrigger, onClose }) => {
                                 </div>
                                 <div className="p-4 pt-3 bg-white border-t border-gray-50 shrink-0">
                                     <button className="w-full py-2.5 bg-white border border-gray-200 text-gray-700 text-[14px] font-semibold rounded-[8px] hover:border-[#166534] hover:text-[#166534] hover:bg-green-50 transition-all shadow-sm">
-                                        Go To Customer Management
+                                        {t('go_to_customer_mgmt')}
                                     </button>
                                 </div>
                             </div>
@@ -236,7 +244,7 @@ const SearchPopup = ({ isOpen, activeTrigger, onClose }) => {
                                 </div>
                                 <div className="p-4 pt-3 bg-white border-t border-gray-50 shrink-0">
                                     <button className="w-full py-2.5 bg-white border border-gray-200 text-gray-700 text-[14px] font-semibold rounded-[8px] hover:border-[#166534] hover:text-[#166534] hover:bg-green-50 transition-all shadow-sm">
-                                        Go To User Management
+                                        {t('go_to_user_mgmt')}
                                     </button>
                                 </div>
                             </div>
@@ -267,7 +275,7 @@ const SearchPopup = ({ isOpen, activeTrigger, onClose }) => {
                                 </div>
                                 <div className="p-4 pt-3 bg-white border-t border-gray-50 shrink-0">
                                     <button className="w-full py-2.5 bg-white border border-gray-200 text-gray-700 text-[14px] font-semibold rounded-[8px] hover:border-[#166534] hover:text-[#166534] hover:bg-green-50 transition-all shadow-sm">
-                                        Go To Inventory
+                                        {t('go_to_inventory')}
                                     </button>
                                 </div>
                             </div>

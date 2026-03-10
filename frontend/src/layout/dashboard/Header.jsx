@@ -9,9 +9,11 @@ import ChangePasswordModal from '../../components/common/ChangePasswordModal';
 import PasswordSuccessModal from '../../components/common/PasswordSuccessModal';
 import LogoutModal from '../../components/common/LogoutModal';
 import StatusPopup from '../../components/common/StatusPopup';
+import LanguageSwitcher from '../../components/common/LanguageSwitcher';
+import { useTranslation } from 'react-i18next';
 
 const Header = ({ setSidebarOpen }) => {
-    // For visual representation only. Mocking an 'off' / 'on' state.
+    const { t } = useTranslation(['dashboard', 'common', 'modules', 'terms']);
     const isConnected = false;
     const location = useLocation();
     const navigate = useNavigate();
@@ -42,14 +44,17 @@ const Header = ({ setSidebarOpen }) => {
         }
 
         let breadcrumbElements = (
-            <span className="font-bold text-[#111827]">Dashboard</span>
+            <span className="font-bold text-[#111827]">{t('terms:dashboard')}</span>
         );
-        
+
         if (pathSegments.length > 0) {
             const formattedSegments = pathSegments.map(segment => {
+                const key = segment.replace(/-/g, '_');
+                const translated = t(`modules:${key}`, { defaultValue: '' }) || t(`common:${key}`, { defaultValue: '' });
+                if (translated) return translated;
                 return segment.split(/[_-]/).map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
             });
-            
+
             breadcrumbElements = formattedSegments.map((segment, index) => {
                 const isLast = index === formattedSegments.length - 1;
                 return (
@@ -96,21 +101,21 @@ const Header = ({ setSidebarOpen }) => {
                         <div className="flex items-center gap-1.5">
                             <Printer size={18} className={isConnected ? "text-[#22C55E]" : "text-[#EF4444] opacity-80"} />
                             <span className={`text-[14px] font-medium ${isConnected ? "text-[#22C55E]" : "text-[#EF4444] opacity-80"}`}>
-                                {isConnected ? 'On' : 'Off'}
+                                {isConnected ? t('on') : t('off')}
                             </span>
                         </div>
                         <div className="w-px h-4 bg-[#E5E7EB]"></div>
                         <div className="flex items-center gap-1.5">
                             <Wifi size={18} className={isConnected ? "text-[#22C55E]" : "text-[#EF4444] opacity-80"} />
                             <span className={`text-[14px] font-medium ${isConnected ? "text-[#22C55E]" : "text-[#EF4444] opacity-80"}`}>
-                                {isConnected ? 'On' : 'Off'}
+                                {isConnected ? t('on') : t('off')}
                             </span>
                         </div>
                         <div className="w-px h-4 bg-[#E5E7EB]"></div>
                         <div className="flex items-center gap-1.5">
                             <SettingsIcon size={18} className={isConnected ? "text-[#22C55E]" : "text-[#EF4444] opacity-80"} />
                             <span className={`text-[14px] font-medium ${isConnected ? "text-[#22C55E]" : "text-[#EF4444] opacity-80"}`}>
-                                {isConnected ? 'On' : 'Off'}
+                                {isConnected ? t('on') : t('off')}
                             </span>
                         </div>
                     </div>
@@ -118,6 +123,8 @@ const Header = ({ setSidebarOpen }) => {
 
                 {/* Rightmost Action icons */}
                 <div className="flex items-center gap-3 lg:gap-4 relative">
+                    <LanguageSwitcher />
+
                     {/* Globe specifically shown on mobile */}
                     <button
                         onClick={() => setActivePopupType('status')}
@@ -173,6 +180,7 @@ const Header = ({ setSidebarOpen }) => {
                     </button>
                 </div>
             </div>
+
 
             {/* Popups */}
             <StatusPopup isOpen={activePopupType === 'status'} activeTrigger={activePopupType} onClose={() => setActivePopupType(null)} />

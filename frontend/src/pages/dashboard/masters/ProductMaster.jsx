@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, Download, Plus, Filter, MoreVertical, X, FileText, FileSpreadsheet, Eye, FileEdit, ChevronLeft, ChevronRight, ChevronsUpDown, CheckCircle2, XCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import ProductForm from './components/ProductForm';
 import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
 
 const ProductMaster = () => {
+    const { t } = useTranslation(['common', 'modules']);
     const defaultFilters = { uom: '', status: '', productType: '' };
     const [searchQuery, setSearchQuery] = useState('');
     const [isExportOpen, setIsExportOpen] = useState(false);
@@ -140,8 +142,8 @@ const ProductMaster = () => {
         ]);
 
         exportToPDF(
-            'Product Master Report',
-            ['#', 'Code', 'Name', 'UOM', 'Type', 'Category', 'HSN Code', 'Tax %', 'Status'],
+            t('modules:product_master_report'),
+            [t('common:sr_no_short'), t('modules:product_code'), t('modules:product_name'), t('modules:uom'), t('modules:product_type'), t('common:category'), t('modules:hsn_code'), t('modules:tax_percent'), t('common:status')],
             tableRows,
             'product-master.pdf'
         );
@@ -150,18 +152,18 @@ const ProductMaster = () => {
 
     const handleExportExcel = () => {
         const excelData = filteredData.map(row => ({
-            'Product Code': row.code,
-            'Product Name': row.name,
-            'UOM': row.uom,
-            'Product Type': row.type,
-            'Category': row.category,
-            'Sub Category': row.subcategory,
-            'HSN Code': row.hsn,
-            'Tax %': row.tax,
-            'Status': row.status
+            [t('modules:product_code')]: row.code,
+            [t('modules:product_name')]: row.name,
+            [t('modules:uom')]: row.uom,
+            [t('modules:product_type')]: row.type,
+            [t('common:category')]: row.category,
+            [t('modules:sub_category')]: row.subcategory,
+            [t('modules:hsn_code')]: row.hsn,
+            [t('modules:tax_percent')]: row.tax,
+            [t('common:status')]: row.status
         }));
 
-        exportToExcel(excelData, 'Product Master', 'product-master.xlsx');
+        exportToExcel(excelData, t('modules:product_master'), 'product-master.xlsx');
         setIsExportOpen(false);
     };
 
@@ -184,7 +186,7 @@ const ProductMaster = () => {
                     className="w-full sm:w-auto px-6 h-[44px] bg-[#014A36] text-white rounded-[8px] text-[14px] font-bold hover:bg-[#013b2b] transition-all shadow-sm flex items-center justify-center gap-2"
                 >
                     <Plus size={18} />
-                    Add Product
+                    {t('modules:add_product')}
                 </button>
             </div>
 
@@ -195,7 +197,7 @@ const ProductMaster = () => {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <input
                             type="text"
-                            placeholder="Search by anything"
+                            placeholder={t('common:search_anything')}
                             value={searchQuery}
                             onChange={(e) => {
                                 setSearchQuery(e.target.value);
@@ -209,7 +211,7 @@ const ProductMaster = () => {
                         className="flex items-center gap-2 px-6 h-[44px] border border-[#E5E7EB] rounded-[8px] text-[14px] font-semibold text-[#4B5563] hover:bg-gray-50 transition-all bg-white"
                     >
                         <Filter size={18} className="text-gray-400" />
-                        Filter
+                        {t('common:filter')}
                     </button>
                 </div>
 
@@ -220,7 +222,7 @@ const ProductMaster = () => {
                             ${isExportOpen ? 'border-[#014A36] text-[#014A36]' : 'border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
                     >
                         <Download size={18} className={isExportOpen ? 'text-[#014A36]' : 'text-gray-400'} />
-                        Export
+                        {t('common:export')}
                     </button>
 
                     {/* Export Dropdown */}
@@ -228,11 +230,11 @@ const ProductMaster = () => {
                         <div className="absolute top-full right-0 mt-2 w-[160px] bg-white border border-gray-100 rounded-[12px] shadow-[0_10px_30px_rgba(0,0,0,0.1)] z-[50] py-2 animate-in fade-in slide-in-from-top-2 duration-200">
                             <button onClick={handleExportPDF} className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors">
                                 <FileText size={18} className="text-red-500" />
-                                PDF
+                                {t('common:pdf')}
                             </button>
                             <button onClick={handleExportExcel} className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors">
                                 <FileSpreadsheet size={18} className="text-green-600" />
-                                Excel
+                                {t('common:excel')}
                             </button>
                         </div>
                     )}
@@ -246,33 +248,33 @@ const ProductMaster = () => {
                         <thead>
                             <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB] text-[13px] font-semibold text-[#6B7280]">
                                 <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
-                                    <div className="flex items-center gap-2">Product Code <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
+                                    <div className="flex items-center gap-2">{t('modules:product_code')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
                                 </th>
                                 <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
-                                    <div className="flex items-center gap-2">Product Name <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
+                                    <div className="flex items-center gap-2">{t('modules:product_name')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
                                 </th>
                                 <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
-                                    <div className="flex items-center gap-2">UOM <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
+                                    <div className="flex items-center gap-2">{t('modules:uom')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
                                 </th>
                                 <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
-                                    <div className="flex items-center gap-2">Product Type <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
+                                    <div className="flex items-center gap-2">{t('modules:product_type')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
                                 </th>
                                 <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
-                                    <div className="flex items-center gap-2">Category <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
+                                    <div className="flex items-center gap-2">{t('common:category')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
                                 </th>
                                 <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
-                                    <div className="flex items-center gap-2">Sub Category <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
+                                    <div className="flex items-center gap-2">{t('modules:sub_category')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
                                 </th>
                                 <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
-                                    <div className="flex items-center gap-2">HSN Code <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
+                                    <div className="flex items-center gap-2">{t('modules:hsn_code')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
                                 </th>
                                 <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
-                                    <div className="flex items-center gap-2">Tax % <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
+                                    <div className="flex items-center gap-2">{t('modules:tax_percent')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
                                 </th>
                                 <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
-                                    <div className="flex items-center gap-2">Status <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
+                                    <div className="flex items-center gap-2">{t('common:status')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
                                 </th>
-                                <th className="px-6 py-4 whitespace-nowrap text-center">Action</th>
+                                <th className="px-6 py-4 whitespace-nowrap text-center">{t('common:action')}</th>
                             </tr>
                         </thead>
                         <tbody className="text-[14px] text-[#111827]">
@@ -286,7 +288,11 @@ const ProductMaster = () => {
                                     <td className="px-6 py-4">{row.subcategory}</td>
                                     <td className="px-6 py-4">{row.hsn}</td>
                                     <td className="px-6 py-4">{row.tax}</td>
-                                    <td className="px-6 py-4">{row.status}</td>
+                                    <td className="px-6 py-4">
+                                        <span className={row.status === 'Active' ? 'text-[#014A36] font-medium' : 'text-gray-500'}>
+                                            {row.status === 'Active' ? t('common:active') : t('common:inactive')}
+                                        </span>
+                                    </td>
                                     <td className={`px-6 py-4 text-center relative ${activeDropdown === row.id ? 'z-50' : ''}`}>
                                         <button
                                             onClick={(e) => toggleDropdown(row.id, e)}
@@ -309,14 +315,14 @@ const ProductMaster = () => {
                                                     className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors whitespace-nowrap font-medium"
                                                 >
                                                     <Eye size={16} />
-                                                    View Product
+                                                    {t('modules:view_product')}
                                                 </button>
                                                 <button
                                                     onClick={() => setCurrentView({ type: 'edit', data: row })}
                                                     className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors whitespace-nowrap font-medium"
                                                 >
                                                     <FileEdit size={16} />
-                                                    Update Product
+                                                    {t('modules:update_product')}
                                                 </button>
                                                 <button
                                                     onClick={() => handleToggleStatus(row.id)}
@@ -325,12 +331,12 @@ const ProductMaster = () => {
                                                     {row.status === 'Active' ? (
                                                         <>
                                                             <CheckCircle2 size={16} className="text-gray-500" />
-                                                            Inactive
+                                                            {t('common:inactive')}
                                                         </>
                                                     ) : (
                                                         <>
                                                             <CheckCircle2 size={16} className="text-[#014A36]" />
-                                                            Active
+                                                            {t('common:active')}
                                                         </>
                                                     )}
                                                 </button>
@@ -341,7 +347,7 @@ const ProductMaster = () => {
                             )) : (
                                 <tr>
                                     <td colSpan="10" className="px-6 py-12 text-center text-gray-500">
-                                        No products found matching your search.
+                                        {t('modules:no_products_found')}
                                     </td>
                                 </tr>
                             )}
@@ -352,7 +358,7 @@ const ProductMaster = () => {
                 {/* Pagination */}
                 <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-[#E5E7EB] bg-white gap-4">
                     <div className="flex items-center gap-3 text-[14px] text-[#4B5563]">
-                        <span>Show</span>
+                        <span>{t('common:show')}</span>
                         <select
                             value={itemsPerPage}
                             onChange={(e) => {
@@ -366,7 +372,7 @@ const ProductMaster = () => {
                             <option value={20}>20</option>
                             <option value={50}>50</option>
                         </select>
-                        <span>per page</span>
+                        <span>{t('common:per_page')}</span>
                     </div>
 
                     <div className="flex items-center gap-4 text-[14px]">
@@ -423,7 +429,7 @@ const ProductMaster = () => {
             <div className={`fixed top-0 right-0 h-full w-full sm:w-[400px] bg-white shadow-2xl z-[70] transform transition-transform duration-300 ease-in-out flex flex-col ${isFilterOpen ? 'translate-x-0' : 'translate-x-full'}`}>
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-5 border-b border-[#E5E7EB]">
-                    <h2 className="text-[18px] font-bold text-[#111827]">Apply Filters</h2>
+                    <h2 className="text-[18px] font-bold text-[#111827]">{t('modules:apply_filters')}</h2>
                     <button
                         onClick={() => setIsFilterOpen(false)}
                         className="text-gray-400 hover:text-gray-600 transition-colors p-1"
@@ -436,14 +442,14 @@ const ProductMaster = () => {
                 <div className="flex-1 px-6 py-6 overflow-y-auto space-y-6">
                     {/* UOM Filter */}
                     <div className="space-y-2">
-                        <label className="text-[13px] font-semibold text-[#4B5563]">UMO</label>
+                        <label className="text-[13px] font-semibold text-[#4B5563]">{t('modules:uom')}</label>
                         <div className="relative">
                             <select
                                 value={filterInputs.uom}
                                 onChange={(e) => setFilterInputs({ ...filterInputs, uom: e.target.value })}
                                 className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] pl-4 pr-10 text-[14px] text-[#111827] outline-none focus:border-[#014A36] appearance-none bg-white"
                             >
-                                <option value="">All</option>
+                                <option value="">{t('common:all')}</option>
                                 <option value="KG">KG</option>
                                 <option value="Liters">Liters</option>
                                 <option value="Pieces">Pieces</option>
@@ -457,16 +463,16 @@ const ProductMaster = () => {
 
                     {/* Status Filter */}
                     <div className="space-y-2">
-                        <label className="text-[13px] font-semibold text-[#4B5563]">Status</label>
+                        <label className="text-[13px] font-semibold text-[#4B5563]">{t('common:status')}</label>
                         <div className="relative">
                             <select
                                 value={filterInputs.status}
                                 onChange={(e) => setFilterInputs({ ...filterInputs, status: e.target.value })}
                                 className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] pl-4 pr-10 text-[14px] text-[#111827] outline-none focus:border-[#014A36] appearance-none bg-white"
                             >
-                                <option value="">All</option>
-                                <option value="Active">Active</option>
-                                <option value="Inactive">Inactive</option>
+                                <option value="">{t('common:all')}</option>
+                                <option value="Active">{t('common:active')}</option>
+                                <option value="Inactive">{t('common:inactive')}</option>
                             </select>
                             <div className="absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none text-gray-400">
                                 <ChevronsUpDown size={14} />
@@ -476,7 +482,7 @@ const ProductMaster = () => {
 
                     {/* Product Type Filter */}
                     <div className="space-y-2">
-                        <label className="text-[13px] font-semibold text-[#4B5563]">Product Type</label>
+                        <label className="text-[13px] font-semibold text-[#4B5563]">{t('modules:product_type')}</label>
                         <div className="relative">
                             <input
                                 type="text"
@@ -495,13 +501,13 @@ const ProductMaster = () => {
                         onClick={handleClearFilter}
                         className="flex-1 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors"
                     >
-                        Clear
+                        {t('common:clear_filter')}
                     </button>
                     <button
                         onClick={handleApplyFilter}
                         className="flex-1 h-[44px] bg-[#014A36] text-white rounded-[8px] text-[14px] font-bold hover:bg-[#013b2b] transition-colors shadow-sm"
                     >
-                        Apply Filter
+                        {t('common:apply_filter')}
                     </button>
                 </div>
             </div>

@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '../../components/common/LanguageSwitcher';
 import AuthLayout from '../../layout/auth/AuthLayout';
 import Button from '../../components/common/Button';
 import { ArrowLeft } from 'lucide-react';
 import logo from '../../assets/images/ERP_Logo2.png';
 
 const VerifyOTP = () => {
+    const { t } = useTranslation('auth');
     const [otp, setOtp] = useState(new Array(6).fill(''));
     const [timer, setTimer] = useState(60);
     const inputRefs = useRef([]);
@@ -59,7 +62,7 @@ const VerifyOTP = () => {
                 const response = await verifyOnboardingOtpApi(phone, enteredOtp, userId);
 
                 if (response.isApproved) {
-                    setError('Seller already registered. Please login.');
+                    setError(t('already_registered'));
                     return;
                 }
 
@@ -67,14 +70,13 @@ const VerifyOTP = () => {
                     localStorage.setItem('token', response.accessToken);
                 }
 
-                // Use the returned sessionId if existing, else start new
                 if (response.sessionId) {
                     localStorage.setItem('sessionId', response.sessionId);
                 } else if (userId) {
                     await startOnboardingApi(userId);
                 }
 
-                let frontendStep = 1; // Default to personal details
+                let frontendStep = 1;
                 if (response.currentStep) {
                     if (response.currentStep === 3) frontendStep = 1;
                     else if (response.currentStep === 4) frontendStep = 2;
@@ -110,7 +112,6 @@ const VerifyOTP = () => {
                         localStorage.setItem('selectedLanguage', dbLanguage);
                         localStorage.setItem('languageConfirmed', 'true');
 
-                        // Dynamically update i18n
                         import('../../i18n').then(module => {
                             module.default.changeLanguage(dbLanguage);
                         });
@@ -130,20 +131,16 @@ const VerifyOTP = () => {
                         const status = freshProfile.approvalStatus;
                         const isFirst = freshProfile.isFirstApprovalLogin;
 
-                        // Update local user state from fresh DB response
                         const updatedUser = { ...response.user, approvalStatus: status, isFirstApprovalLogin: isFirst };
                         localStorage.setItem('user', JSON.stringify(updatedUser));
 
-                        // APPROVED Flow
                         if (status === 'APPROVED') {
                             if (isFirst) {
-                                // Redirect to status page to see the "You're all set" celebration screen
                                 navigate('/application-status', {
                                     state: { status, isFirstApprovalLogin: true },
                                     replace: true
                                 });
                             } else {
-                                // Direct to dashboard
                                 navigate('/seller/dashboard', { replace: true });
                             }
                             return;
@@ -159,6 +156,7 @@ const VerifyOTP = () => {
                             replace: true
                         });
                         return;
+
                     } catch (err) {
                         console.error("Failed to fetch DB status during login", err);
                         navigate('/application-status', { replace: true });
@@ -169,7 +167,7 @@ const VerifyOTP = () => {
                 navigate('/success', { state: { mode } });
             }
         } catch (err) {
-            setError(err.response?.data?.message || 'Invalid OTP. Please try again.');
+            setError(err.response?.data?.message || t('invalid_otp'));
         } finally {
             setIsLoading(false);
         }
@@ -183,7 +181,12 @@ const VerifyOTP = () => {
 
     return (
         <AuthLayout hideLeftPanel={true}>
-            <div className="text-left w-full max-w-[480px] mx-auto flex flex-col justify-center min-h-[100dvh] md:min-h-0 py-8 md:py-0">
+            <div className="text-left w-full max-w-[480px] mx-auto flex flex-col justify-center min-h-[100dvh] md:min-h-0 py-8 md:py-0 relative">
+                {/* Language Switcher */}
+                <div className="absolute top-8 right-0 md:top-0">
+                    <LanguageSwitcher />
+                </div>
+
                 <div className="flex justify-between items-center mb-12 w-full">
                     <img
                         src={logo}
@@ -192,7 +195,7 @@ const VerifyOTP = () => {
                         onError={(e) => { e.target.style.display = 'none' }}
                     />
                     <div className="bg-[#F3F4F6] text-[#374151] px-[12px] py-[6px] rounded-full text-[12px] font-medium">
-                        Step 00/04
+                        {t('step_label')} 00/04
                     </div>
                 </div>
                 <div className="text-left w-full mb-8">
@@ -203,15 +206,15 @@ const VerifyOTP = () => {
                         <ArrowLeft size={20} />
                     </button>
                     <h2 className="text-[30px] font-['Geist_Sans'] font-bold mb-1 leading-tight text-gray-900">
-                        We've sent a 6-digit OTP
+                        {t('otp_sent_title')}
                     </h2>
                     <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium mb-8 text-gray-500">
-                        to <span className="text-black font-semibold">{maskedPhone}</span>
+                        {t('sent_to')} <span className="text-black font-semibold">{maskedPhone}</span>
                         <button
                             className="text-[#0F3D2E] ml-1 underline cursor-pointer text-sm font-semibold border-none bg-transparent p-0 inline focus:outline-none hover:text-[#073318] transition-colors"
                             onClick={() => navigate(-1)}
                         >
-                            Edit
+                            {t('edit_phone')}
                         </button>
                     </p>
 
@@ -241,13 +244,13 @@ const VerifyOTP = () => {
 
                         <div className="mb-6 text-[14px] font-['Plus_Jakarta_Sans'] text-gray-500 text-left">
                             {timer > 0 ? (
-                                <span>Didn't receive it? <span className="font-semibold text-gray-900 underline cursor-pointer">Retry</span> in 00:{timer.toString().padStart(2, '0')}</span>
+                                <span>{t('didnt_receive')} <span className="font-semibold text-gray-900 underline cursor-pointer">{t('retry')}</span> in 00:{timer.toString().padStart(2, '0')}</span>
                             ) : (
                                 <button
                                     onClick={handleResend}
                                     className="bg-transparent border-none text-gray-900 underline cursor-pointer font-semibold p-0 text-sm focus:outline-none hover:text-[#0F3D2E]"
                                 >
-                                    Resend OTP
+                                    {t('resend_otp')}
                                 </button>
                             )}
                         </div>
@@ -266,7 +269,7 @@ const VerifyOTP = () => {
                                 backgroundColor: (otp.some(digit => !digit) || isLoading) ? '#A7C0B8' : '#0F3D2E'
                             }}
                         >
-                            {isLoading ? 'Verifying...' : 'Verify & Continue'}
+                            {isLoading ? t('verifying') : t('verify_continue')}
                         </button>
                     </form>
                 </div>
@@ -274,6 +277,7 @@ const VerifyOTP = () => {
         </AuthLayout>
     );
 };
+
 
 export default VerifyOTP;
 

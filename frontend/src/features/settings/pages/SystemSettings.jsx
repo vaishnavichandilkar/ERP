@@ -4,7 +4,7 @@ import { Globe, Check } from 'lucide-react';
 import { updateLanguageApi } from '../../../services/authService';
 
 const SystemSettings = () => {
-    const { t, i18n } = useTranslation();
+    const { t, i18n } = useTranslation(['modules', 'common']);
     const [selectedLanguage, setSelectedLanguage] = useState(localStorage.getItem('selectedLanguage') || 'hi');
     const [isLoading, setIsLoading] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
@@ -29,13 +29,13 @@ const SystemSettings = () => {
             i18n.changeLanguage(langCode);
             setSelectedLanguage(langCode);
 
-            setMessage({ type: 'success', text: 'Language updated successfully. Reloading UI...' });
+            setMessage({ type: 'success', text: t('modules:lang_updated_success') });
 
             // Optional: Hard reload to ensure all components refresh if needed
             // setTimeout(() => window.location.reload(), 1500);
         } catch (error) {
             console.error("Failed to update language:", error);
-            setMessage({ type: 'error', text: 'Failed to update language. Please try again.' });
+            setMessage({ type: 'error', text: t('modules:lang_updated_error') });
         } finally {
             setIsLoading(false);
         }
@@ -44,8 +44,8 @@ const SystemSettings = () => {
     return (
         <div className="max-w-4xl">
             <div className="mb-8">
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">System Settings</h1>
-                <p className="text-gray-500">Manage your application preferences and regional settings.</p>
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('modules:system_settings')}</h1>
+                <p className="text-gray-500">{t('modules:system_settings_desc')}</p>
             </div>
 
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
@@ -54,8 +54,8 @@ const SystemSettings = () => {
                         <Globe size={20} />
                     </div>
                     <div>
-                        <h2 className="text-lg font-semibold text-gray-900">Language Preference</h2>
-                        <p className="text-sm text-gray-500">Choose your preferred language for the application interface.</p>
+                        <h2 className="text-lg font-semibold text-gray-900">{t('modules:language_preference')}</h2>
+                        <p className="text-sm text-gray-500">{t('modules:language_pref_desc')}</p>
                     </div>
                 </div>
 

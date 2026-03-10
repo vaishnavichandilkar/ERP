@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, ChevronDown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const AddGroupModal = ({ isOpen, onClose }) => {
+    const { t } = useTranslation(['common', 'modules']);
     const [isVisible, setIsVisible] = useState(false);
     const [selectedGroup, setSelectedGroup] = useState('');
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const modalRef = useRef(null);
     const dropdownRef = useRef(null);
 
-    const groups = ['Direct Expenses', 'Indirect Expenses', 'Sales', 'Purchase'];
+    const groups = [t('modules:direct_expense'), t('modules:indirect_expense'), t('modules:sales'), t('modules:purchase')];
 
     useEffect(() => {
         if (isOpen) {
@@ -47,7 +49,7 @@ const AddGroupModal = ({ isOpen, onClose }) => {
             >
                 {/* Header */}
                 <div className="flex items-center justify-between p-5 border-b border-[#F3F4F6]">
-                    <h2 className="text-[15px] font-bold text-[#111827]">Add Group</h2>
+                    <h2 className="text-[15px] font-bold text-[#111827]">{t('modules:add_group')}</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
                         <X size={18} />
                     </button>
@@ -57,24 +59,24 @@ const AddGroupModal = ({ isOpen, onClose }) => {
                 <div className="p-6 space-y-6">
                     {/* Group Input */}
                     <div className="space-y-1.5">
-                        <label className="text-[13px] font-medium text-[#4B5563]">Group</label>
+                        <label className="text-[13px] font-medium text-[#4B5563]">{t('common:group')}</label>
                         <input
                             type="text"
-                            placeholder="Enter group text"
+                            placeholder={t('common:enter_group_text')}
                             className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-3.5 outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all placeholder:text-[#9CA3AF] text-[14px] text-[#111827]"
                         />
                     </div>
 
                     {/* Group Under Dropdown */}
                     <div className="space-y-1.5 pb-2">
-                        <label className="text-[13px] font-medium text-[#4B5563]">Group Under</label>
+                        <label className="text-[13px] font-medium text-[#4B5563]">{t('common:group_under')}</label>
                         <div className="relative" ref={dropdownRef}>
                             <div
                                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                                 className={`w-full h-[44px] border ${isDropdownOpen ? 'border-[#014A36] ring-1 ring-[#014A36]/10' : 'border-[#E5E7EB] hover:border-gray-300'} rounded-[8px] px-3.5 flex items-center justify-between cursor-pointer transition-all bg-white`}
                             >
                                 <span className={`text-[14px] ${selectedGroup ? 'text-[#111827]' : 'text-[#9CA3AF]'}`}>
-                                    {selectedGroup || 'Select group under'}
+                                    {selectedGroup || t('common:select_group_under')}
                                 </span>
                                 <ChevronDown size={18} className={`text-[#6B7280] transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : 'rotate-0'}`} />
                             </div>
@@ -105,13 +107,13 @@ const AddGroupModal = ({ isOpen, onClose }) => {
                             className="px-10 h-[44px] bg-[#014A36] text-white font-semibold rounded-[8px] hover:bg-[#013b2b] transition-colors text-[14px]"
                             onClick={onClose}
                         >
-                            Save
+                            {t('common:save')}
                         </button>
                         <button
                             className="px-6 h-[44px] border border-[#E5E7EB] text-[#4B5563] font-semibold rounded-[8px] hover:bg-gray-50 transition-colors text-[14px]"
                             onClick={onClose}
                         >
-                            Exit
+                            {t('common:exit')}
                         </button>
                     </div>
                 </div>

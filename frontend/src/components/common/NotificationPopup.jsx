@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
-
-const tabs = ['All', 'New User', 'Products', 'Complaints', 'Payments'];
+import { useTranslation } from 'react-i18next';
 
 const mockNotifications = [
     {
@@ -26,6 +25,15 @@ const mockNotifications = [
 ];
 
 const NotificationPopup = ({ isOpen, activeTrigger, onClose }) => {
+    const { t } = useTranslation('dashboard');
+    const tabs = [
+        { id: 'All', label: t('all_tab') },
+        { id: 'New User', label: t('new_user_tab') },
+        { id: 'Products', label: t('products_tab') },
+        { id: 'Complaints', label: t('complaints_tab') },
+        { id: 'Payments', label: t('payments_tab') }
+    ];
+
     const [activeTab, setActiveTab] = useState('All');
     const [isVisible, setIsVisible] = useState(false);
     const popupRef = useRef(null);
@@ -106,7 +114,7 @@ const NotificationPopup = ({ isOpen, activeTrigger, onClose }) => {
                 >
                     {/* Header */}
                     <div className="flex items-center justify-between p-4 border-b border-gray-100 shrink-0">
-                        <h3 className="text-[16px] font-semibold text-gray-800 px-2">Notifications</h3>
+                        <h3 className="text-[16px] font-semibold text-gray-800 px-2">{t('notifications')}</h3>
                         <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors">
                             <X className="w-5 h-5" />
                         </button>
@@ -117,15 +125,15 @@ const NotificationPopup = ({ isOpen, activeTrigger, onClose }) => {
                         <div className="flex px-4 min-w-max">
                             {tabs.map((tab) => (
                                 <button
-                                    key={tab}
-                                    onClick={() => setActiveTab(tab)}
-                                    className={`relative px-4 py-3.5 text-[14px] font-medium transition-colors cursor-pointer ${activeTab === tab ? 'text-[#166534]' : 'text-gray-500 hover:text-gray-800'}`}
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`relative px-4 py-3.5 text-[14px] font-medium transition-colors cursor-pointer ${activeTab === tab.id ? 'text-[#166534]' : 'text-gray-500 hover:text-gray-800'}`}
                                 >
-                                    {tab}
-                                    {tab === 'New User' && (
+                                    {tab.label}
+                                    {tab.id === 'New User' && (
                                         <div className="absolute top-3.5 right-1 w-1.5 h-1.5 bg-[#22C55E] rounded-full" />
                                     )}
-                                    {activeTab === tab && (
+                                    {activeTab === tab.id && (
                                         <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#166534] rounded-t-sm" />
                                     )}
                                 </button>
@@ -159,7 +167,7 @@ const NotificationPopup = ({ isOpen, activeTrigger, onClose }) => {
                                                             <p className="text-[13px] text-gray-600 mb-3">{notification.message}</p>
                                                             <input
                                                                 type="text"
-                                                                placeholder="Reply"
+                                                                placeholder={t('reply')}
                                                                 className="w-full bg-white border border-gray-200 rounded-[6px] px-3 py-2 text-[13px] outline-none focus:border-[#166534] focus:ring-1 focus:ring-[#166534] transition-all shadow-sm"
                                                                 onClick={e => e.stopPropagation()}
                                                             />
@@ -171,13 +179,13 @@ const NotificationPopup = ({ isOpen, activeTrigger, onClose }) => {
                                     ))
                                 ) : (
                                     <div className="h-full min-h-[200px] flex flex-col items-center justify-center text-center p-8">
-                                        <p className="text-[14px] text-gray-500">No new notifications</p>
+                                        <p className="text-[14px] text-gray-500">{t('no_notifications')}</p>
                                     </div>
                                 )}
                             </div>
                             <div className="p-4 pt-3 bg-white border-t border-gray-50 shrink-0">
                                 <button className="w-full py-2.5 bg-white border border-gray-200 text-gray-700 text-[14px] font-semibold rounded-[8px] hover:border-[#166534] hover:text-[#166534] hover:bg-green-50 transition-all shadow-sm">
-                                    Mark All as Read
+                                    {t('mark_all_read')}
                                 </button>
                             </div>
                         </div>

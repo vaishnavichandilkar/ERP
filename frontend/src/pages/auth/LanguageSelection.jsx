@@ -6,7 +6,7 @@ import Button from '../../components/common/Button';
 import logo from '../../assets/images/ERP_Logo2.png';
 
 const LanguageSelection = () => {
-    const { t, i18n } = useTranslation();
+    const { t, i18n } = useTranslation('auth');
     const navigate = useNavigate();
     const [selectedLang, setSelectedLang] = useState('hi');
 

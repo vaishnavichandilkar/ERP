@@ -10,18 +10,21 @@ import {
     X
 } from 'lucide-react';
 import logo from '../../assets/images/ERP_Logo2.png';
+import { useTranslation } from 'react-i18next';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
+    const { t } = useTranslation(['modules', 'terms']);
     const location = useLocation();
 
     const menuItems = [
-        { path: '/seller/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { path: '/seller/dashboard/reports', label: 'Reports', icon: FileBarChart },
-        { path: '/seller/dashboard/masters', label: 'Masters', icon: Database },
-        { path: '/seller/dashboard/purchase', label: 'Purchase', icon: ShoppingCart },
-        { path: '/seller/dashboard/sales', label: 'Sales', icon: TrendingUp },
-        { path: '/seller/dashboard/settings', label: 'Settings', icon: Settings },
+        { path: '/seller/dashboard', label: t('terms:dashboard'), icon: LayoutDashboard },
+        { path: '/seller/dashboard/reports', label: t('reports'), icon: FileBarChart },
+        { path: '/seller/dashboard/masters', label: t('masters'), icon: Database },
+        { path: '/seller/dashboard/purchase', label: t('purchase'), icon: ShoppingCart },
+        { path: '/seller/dashboard/sales', label: t('sales'), icon: TrendingUp },
+        { path: '/seller/dashboard/settings', label: t('settings'), icon: Settings },
     ];
+
 
     return (
         <>
@@ -48,8 +51,8 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                     {menuItems.map((item, index) => {
                         const Icon = item.icon;
                         const isDashboard = item.path === '/seller/dashboard';
-                        const isActive = isDashboard 
-                            ? (location.pathname === '/seller/dashboard' || location.pathname === '/seller/dashboard/') 
+                        const isActive = isDashboard
+                            ? (location.pathname === '/seller/dashboard' || location.pathname === '/seller/dashboard/')
                             : location.pathname.startsWith(item.path);
 
                         return (

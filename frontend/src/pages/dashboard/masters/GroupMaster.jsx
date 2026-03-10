@@ -1,9 +1,11 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Search, Download, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, CheckCircle2, XCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import AddGroupModal from './components/AddGroupModal';
 import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
 
 const GroupMaster = () => {
+    const { t } = useTranslation(['modules', 'common']);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedGroups, setExpandedGroups] = useState({});
@@ -11,15 +13,15 @@ const GroupMaster = () => {
     const exportRef = useRef(null);
 
     const masterData = useMemo(() => ([
-        { id: 'exp-direct', name: 'Direct Expense', items: ['Light Bill', 'Labour Charges'] },
-        { id: 'exp-indirect', name: 'Indirect Expense', items: ['Bank Charges', 'Company Promotions'] },
-        { id: 'exp-purchase', name: 'Purchase', items: ['Light Bill', 'Labour Charges'] },
-        { id: 'exp-opening', name: 'Opening Stock', items: ['Product-Opening Stock', 'Store-Opening Stock'] },
-        { id: 'rev-direct', name: 'Direct Sale', items: ['Light Bill', 'Labour Charges'] },
-        { id: 'rev-indirect', name: 'Indirect Sale', items: ['Light Bill', 'Labour Charges'] },
-        { id: 'rev-sale', name: 'Sale', items: ['Light Bill', 'Labour Charges'] },
-        { id: 'rev-closing', name: 'Closing Stock', items: ['Product-Closing Stock', 'Store-Closing Stock'] }
-    ]), []);
+        { id: 'exp-direct', name: t('modules:direct_expense'), items: [t('modules:light_bill'), t('modules:labour_charges')] },
+        { id: 'exp-indirect', name: t('modules:indirect_expense'), items: [t('modules:bank_charges'), t('modules:company_promotions')] },
+        { id: 'exp-purchase', name: t('modules:purchase'), items: [t('modules:light_bill'), t('modules:labour_charges')] },
+        { id: 'exp-opening', name: t('modules:opening_stock'), items: [t('modules:product_opening_stock'), t('modules:store_opening_stock')] },
+        { id: 'rev-direct', name: t('modules:direct_sale'), items: [t('modules:light_bill'), t('modules:labour_charges')] },
+        { id: 'rev-indirect', name: t('modules:indirect_sale'), items: [t('modules:light_bill'), t('modules:labour_charges')] },
+        { id: 'rev-sale', name: t('modules:sale'), items: [t('modules:light_bill'), t('modules:labour_charges')] },
+        { id: 'rev-closing', name: t('modules:closing_stock'), items: [t('modules:product_closing_stock'), t('modules:store_closing_stock')] }
+    ]), [t]);
 
     const [itemStatuses, setItemStatuses] = useState({});
     const [activeRowDropdown, setActiveRowDropdown] = useState(null);
@@ -89,7 +91,7 @@ const GroupMaster = () => {
 
         prepareRows(masterData);
 
-        exportToPDF('Group Master Report', ['#', 'Group Name'], tableRows, 'group-master.pdf');
+        exportToPDF(t('modules:group_master_report'), [t('common:sr_no_short'), t('common:group')], tableRows, 'group-master.pdf');
         setIsExportOpen(false);
     };
 
@@ -97,9 +99,9 @@ const GroupMaster = () => {
         const data = [];
         const handlePrepareData = (sections) => {
             sections.forEach(sec => {
-                data.push({ 'Type': '', 'Group': sec.name, 'Sub-Group': '' });
+                data.push({ [t('common:type')]: '', [t('common:group')]: sec.name, [t('common:sub_group')]: '' });
                 sec.items.forEach(item => {
-                    data.push({ 'Type': '', 'Group': '', 'Sub-Group': item });
+                    data.push({ [t('common:type')]: '', [t('common:group')]: '', [t('common:sub_group')]: item });
                 });
             });
             data.push({}); // Empty row
@@ -107,7 +109,7 @@ const GroupMaster = () => {
 
         handlePrepareData(masterData);
 
-        exportToExcel(data, 'Group Master', 'group-master.xlsx');
+        exportToExcel(data, t('modules:group_master'), 'group-master.xlsx');
         setIsExportOpen(false);
     };
 
@@ -122,7 +124,7 @@ const GroupMaster = () => {
                     className="w-full sm:w-auto px-6 h-[44px] bg-[#014A36] text-white rounded-[8px] text-[14px] font-bold hover:bg-[#013b2b] transition-all shadow-sm flex items-center justify-center gap-2"
                 >
                     <Plus size={18} />
-                    Add Group
+                    {t('modules:add_group')}
                 </button>
             </div>
 
@@ -132,7 +134,7 @@ const GroupMaster = () => {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                     <input
                         type="text"
-                        placeholder="Search by anything"
+                        placeholder={t('common:search_anything')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full h-[44px] bg-[#F9FAFB]/50 border border-[#E5E7EB] rounded-[8px] pl-10 pr-4 text-[14px] outline-none focus:border-[#014A36] transition-all"
@@ -144,8 +146,17 @@ const GroupMaster = () => {
                         onClick={toggleExpandAll}
                         className="flex items-center gap-2 px-4 h-[44px] border border-[#E5E7EB] rounded-[8px] text-[14px] font-semibold text-[#4B5563] hover:bg-gray-50 transition-all bg-white"
                     >
-                        <Minimize2 size={16} className="text-gray-400" />
-                        Colaps All
+                        {isAllExpanded ? (
+                            <>
+                                <Minimize2 size={16} className="text-gray-400" />
+                                {t('common:collapse_all')}
+                            </>
+                        ) : (
+                            <>
+                                <Maximize2 size={16} className="text-gray-400" />
+                                {t('common:expand_all')}
+                            </>
+                        )}
                     </button>
 
                     <div className="relative" ref={exportRef}>
@@ -155,7 +166,7 @@ const GroupMaster = () => {
                                 ${isExportOpen ? 'border-[#014A36] text-[#014A36] shadow-md' : 'border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
                         >
                             <Download size={18} className={isExportOpen ? 'text-[#014A36]' : 'text-gray-400'} />
-                            Export
+                            {t('common:export')}
                         </button>
 
                         {/* Export Dropdown */}
@@ -166,14 +177,14 @@ const GroupMaster = () => {
                                     className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
                                 >
                                     <FileText size={18} className="text-red-500" />
-                                    PDF
+                                    {t('common:pdf')}
                                 </button>
                                 <button
                                     onClick={handleExportExcel}
                                     className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
                                 >
                                     <FileSpreadsheet size={18} className="text-green-600" />
-                                    Excel
+                                    {t('common:excel')}
                                 </button>
                             </div>
                         )}
@@ -230,14 +241,14 @@ const GroupMaster = () => {
                                                     className="w-full px-4 py-2 flex items-center gap-2 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors"
                                                 >
                                                     <CheckCircle2 size={15} className={(itemStatuses[`group-${section.id}`] || 'Active') === 'Active' ? 'text-green-600' : 'text-gray-400'} />
-                                                    Active
+                                                    {t('common:active')}
                                                 </button>
                                                 <button
                                                     onClick={() => handleToggleStatus(`group-${section.id}`, itemStatuses[`group-${section.id}`] || 'Active')}
                                                     className="w-full px-4 py-2 flex items-center gap-2 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors"
                                                 >
                                                     <XCircle size={15} className={(itemStatuses[`group-${section.id}`] || 'Active') === 'Inactive' ? 'text-red-500' : 'text-gray-400'} />
-                                                    Inactive
+                                                    {t('common:inactive')}
                                                 </button>
                                             </div>
                                         )}
@@ -280,14 +291,14 @@ const GroupMaster = () => {
                                                                 className="w-full px-4 py-2 flex items-center gap-2 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors"
                                                             >
                                                                 <CheckCircle2 size={15} className={currentStatus === 'Active' ? 'text-green-600' : 'text-gray-400'} />
-                                                                Active
+                                                                {t('common:active')}
                                                             </button>
                                                             <button
                                                                 onClick={() => handleToggleStatus(dropdownId, currentStatus)}
                                                                 className="w-full px-4 py-2 flex items-center gap-2 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors"
                                                             >
                                                                 <XCircle size={15} className={currentStatus === 'Inactive' ? 'text-red-500' : 'text-gray-400'} />
-                                                                Inactive
+                                                                {t('common:inactive')}
                                                             </button>
                                                         </div>
                                                     )}
@@ -301,7 +312,7 @@ const GroupMaster = () => {
                     })
                 ) : (
                     <div className="p-12 text-center text-gray-400 text-[14px]">
-                        No matching groups found
+                        {t('modules:no_matching_groups')}
                     </div>
                 )}
             </div>

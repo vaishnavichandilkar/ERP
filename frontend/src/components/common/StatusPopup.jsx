@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Monitor, Wifi, Printer, CheckCircle2, XCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const StatusPopup = ({ isOpen, activeTrigger, onClose }) => {
+    const { t } = useTranslation('common');
     const [isVisible, setIsVisible] = useState(false);
     const popupRef = useRef(null);
 
@@ -87,10 +89,10 @@ const StatusPopup = ({ isOpen, activeTrigger, onClose }) => {
                     <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50">
                         <div className="flex items-center text-gray-700">
                             <Monitor className="w-[18px] h-[18px] text-gray-500 mr-3" strokeWidth={1.5} />
-                            <span className="text-[14px] font-medium">Machine</span>
+                            <span className="text-[14px] font-medium">{t('machine')}</span>
                         </div>
                         <div className="flex items-center">
-                            <span className="text-[10px] font-medium text-gray-400 mr-1 mt-0.5">{isMachineConnected ? 'Connected' : 'Disconnected'}</span>
+                            <span className="text-[10px] font-medium text-gray-400 mr-1 mt-0.5">{isMachineConnected ? t('connected') : t('disconnected')}</span>
                             {isMachineConnected ? (
                                 <CheckCircle2 className="w-3.5 h-3.5 text-[#22C55E]" strokeWidth={2.5} />
                             ) : (
@@ -103,10 +105,10 @@ const StatusPopup = ({ isOpen, activeTrigger, onClose }) => {
                     <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50">
                         <div className="flex items-center text-gray-700">
                             <Wifi className="w-[18px] h-[18px] text-gray-500 mr-3" strokeWidth={1.5} />
-                            <span className="text-[14px] font-medium">Wifi</span>
+                            <span className="text-[14px] font-medium">{t('wifi')}</span>
                         </div>
                         <div className="flex items-center">
-                            <span className="text-[10px] font-medium text-gray-400 mr-1 mt-0.5">{isWifiConnected ? 'Connected' : 'Disconnected'}</span>
+                            <span className="text-[10px] font-medium text-gray-400 mr-1 mt-0.5">{isWifiConnected ? t('connected') : t('disconnected')}</span>
                             {isWifiConnected ? (
                                 <CheckCircle2 className="w-3.5 h-3.5 text-[#22C55E]" strokeWidth={2.5} />
                             ) : (
@@ -119,10 +121,10 @@ const StatusPopup = ({ isOpen, activeTrigger, onClose }) => {
                     <div className="flex items-center justify-between px-4 py-3">
                         <div className="flex items-center text-gray-700">
                             <Printer className="w-[18px] h-[18px] text-gray-500 mr-3" strokeWidth={1.5} />
-                            <span className="text-[14px] font-medium">Printer</span>
+                            <span className="text-[14px] font-medium">{t('printer')}</span>
                         </div>
                         <div className="flex items-center">
-                            <span className="text-[10px] font-medium text-gray-400 mr-1 mt-0.5">{isPrinterConnected ? 'Connected' : 'Disconnected'}</span>
+                            <span className="text-[10px] font-medium text-gray-400 mr-1 mt-0.5">{isPrinterConnected ? t('connected') : t('disconnected')}</span>
                             {isPrinterConnected ? (
                                 <CheckCircle2 className="w-3.5 h-3.5 text-[#22C55E]" strokeWidth={2.5} />
                             ) : (

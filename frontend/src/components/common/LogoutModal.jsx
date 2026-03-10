@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const LogoutModal = ({ isOpen, onClose, onConfirm }) => {
+    const { t } = useTranslation('dashboard');
     const [isVisible, setIsVisible] = useState(false);
     const modalRef = useRef(null);
 
@@ -50,9 +52,9 @@ const LogoutModal = ({ isOpen, onClose, onConfirm }) => {
                         <AlertCircle className="w-5 h-5 text-[#DC2626]" strokeWidth={2.5} />
                     </div>
                     <div className="ml-5">
-                        <h2 className="text-[18px] font-bold text-gray-900 mb-1">Logout?</h2>
+                        <h2 className="text-[18px] font-bold text-gray-900 mb-1">{t('logout_title')}</h2>
                         <p className="text-[14px] text-gray-500 leading-relaxed font-medium pb-1 pr-2">
-                            Are you sure you want to logout from your account?
+                            {t('logout_confirm')}
                         </p>
                     </div>
                 </div>
@@ -63,13 +65,13 @@ const LogoutModal = ({ isOpen, onClose, onConfirm }) => {
                         onClick={onConfirm}
                         className="w-full bg-[#DE352B] hover:bg-[#B91C1C] text-white font-semibold py-3 rounded-[10px] transition-colors shadow-sm text-[15px]"
                     >
-                        Logout
+                        {t('logout_btn')}
                     </button>
                     <button
                         onClick={onClose}
                         className="w-full bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 font-semibold py-3 rounded-[10px] transition-colors shadow-sm text-[15px]"
                     >
-                        Stay
+                        {t('stay_btn')}
                     </button>
                 </div>
             </div>
