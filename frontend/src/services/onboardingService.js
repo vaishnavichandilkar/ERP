@@ -74,23 +74,7 @@ export const saveShopDetailsApi = async (data) => {
     return response.data;
 };
 
-export const saveBankDetailsApi = async (data, files) => {
-    const formData = new FormData();
-    formData.append('holderName', data.accountHolderName);
-    formData.append('accountNo', data.accountNumber);
-    formData.append('ifsc', data.ifscCode);
-    formData.append('bankName', data.bankName);
-    formData.append('panNumber', data.panNumber || 'UNKNOWN'); // Default since no input
-    if (files.cancelledChequeFile) formData.append('cancelledCheque', files.cancelledChequeFile);
-    if (files.panCardFile) formData.append('panCard', files.panCardFile);
-
-    const response = await axiosInstance.post(ONBOARDING_ENDPOINTS.STEP7_BANK, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    return response.data;
-};
-
 export const completeOnboardingApi = async () => {
-    const response = await axiosInstance.post(ONBOARDING_ENDPOINTS.STEP9_COMPLETE, {});
+    const response = await axiosInstance.post(ONBOARDING_ENDPOINTS.STEP7_COMPLETE, {});
     return response.data;
 };

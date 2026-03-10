@@ -30,7 +30,6 @@ export class SuperAdminService {
                 approvalStatus: 'APPROVED'
             },
             include: {
-                bankDetail: true,
                 shopDetail: true,
                 sellerDocuments: true
             },
@@ -47,7 +46,6 @@ export class SuperAdminService {
                 approvalStatus: 'REJECTED'
             },
             include: {
-                bankDetail: true,
                 shopDetail: true,
                 sellerDocuments: true
             },
