@@ -134,7 +134,7 @@ When a protected API (e.g., `PUT /onboarding/step4-details`) is called:
 
 ## SECTION 8: STEP-BY-STEP ONBOARDING PROCESS (STRICT SEQUENCE)
 
-The onboarding follows a strict **9-step sequence**.
+The onboarding follows a strict **7-step sequence**.
 
 ### Step 1: Language Selection
 **Endpoint**: `POST /onboarding/step1-language`
@@ -160,12 +160,8 @@ The onboarding follows a strict **9-step sequence**.
 **Endpoint**: `POST /onboarding/step6-shop` (Protected, Multipart)
 **Database**: Verifies `pinCode` against `Pincode` table to auto-fetch `state` and `district`. Updates/Creates `ShopDetail` and stores license PDF.
 
-### Step 7: Bank Details
-**Endpoint**: `POST /onboarding/step7-bank` (Protected, Multipart)
-**Database**: Updates/Creates `BankDetail` and stores bank verification PDFs.
-
-### Step 8: Final Submission
-**Endpoint**: `POST /onboarding/step9-complete` (Protected)
+### Step 7: Final Submission
+**Endpoint**: `POST /onboarding/step7-complete` (Protected)
 **Database**: Sets `onboarded_at` in the `User` table.
 *   **System Action**: User is now locked in `PENDING_APPROVAL` state.
 
@@ -213,8 +209,8 @@ The onboarding follows a strict **9-step sequence**.
 2.  **T+5s**: User enter phone & clicks Send OTP. **OTP sent**.
 3.  **T+15s**: User enters OTP. **Tokens received**.
 4.  **T+1m**: User completes Personal Details (Step 4).
-5.  **T+3m**: User uploads Docs (Steps 5-7).
-6.  **T+5m**: User clicks "Finish" (Step 8). **Onboarding Complete**.
+5.  **T+3m**: User uploads Docs (Steps 5-6).
+6.  **T+5m**: User clicks "Finish" (Step 7). **Onboarding Complete**.
 8.  **T+1h**: **Superadmin** reviews and **Approves**.
 9.  **T+1h 1s**: Seller Dashboard unlocked.
 

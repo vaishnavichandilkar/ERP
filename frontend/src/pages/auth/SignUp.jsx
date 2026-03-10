@@ -298,16 +298,6 @@ const SignUp = () => {
             case 'phone':
                 if (!/^\d{10}$/.test(value)) return 'Invalid phone number format.';
                 break;
-            case 'accountHolderName':
-                if (!/^[a-zA-Z\s]+$/.test(value)) return 'Account holder name must contain only letters and spaces.';
-                break;
-            case 'accountNumber':
-                if (!/^\d+$/.test(value)) return 'Account number must contain only numbers.';
-                break;
-            case 'ifscCode':
-                if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(value)) return 'IFSC code must be valid, e.g., SBIN0001234.';
-                break;
-
             case 'village':
                 if (value && !/^[a-zA-Z\s]+$/.test(value)) return 'Village name must contain only letters and spaces.';
                 break;
@@ -408,22 +398,6 @@ const SignUp = () => {
                     state: formData.state,
                     district: formData.district
                 });
-                setSearchParams({ step: '4' });
-            } else if (step === 4) {
-                const { saveBankDetailsApi, completeOnboardingApi } = await import('../../services/onboardingService');
-
-                // Submit bank details
-                await saveBankDetailsApi({
-                    accountHolderName: formData.accountHolderName,
-                    accountNumber: formData.accountNumber,
-                    ifscCode: formData.ifscCode,
-                    bankName: formData.bankName
-                }, {
-                    cancelledChequeFile: formData.cancelledChequeFile,
-                    panCardFile: formData.panCardFile
-                });
-
-                // Submit final status or completion
                 await completeOnboardingApi();
                 navigate('/success', { state: { mode: 'signup' } });
             }

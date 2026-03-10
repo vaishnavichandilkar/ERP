@@ -1,8 +1,9 @@
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AuthLayout from '../../layout/auth/AuthLayout';
+import Button from '../../components/common/Button';
 import { ArrowLeft } from 'lucide-react';
 import logo from '../../assets/images/ERP_Logo2.png';
-import React, { useState, useEffect, useRef } from 'react';
 
 const VerifyOTP = () => {
     const [otp, setOtp] = useState(new Array(6).fill(''));
@@ -103,9 +104,9 @@ const VerifyOTP = () => {
                 if (response.user) {
                     localStorage.setItem('user', JSON.stringify(response.user));
 
-                    // Sync language from DB
-                    if (response.user.selectedLanguage) {
-                        const dbLanguage = response.user.selectedLanguage;
+                    // Stage 3: Sync language from DB
+                    if (response.user.selected_language) {
+                        const dbLanguage = response.user.selected_language;
                         localStorage.setItem('selectedLanguage', dbLanguage);
                         localStorage.setItem('languageConfirmed', 'true');
 
@@ -114,56 +115,57 @@ const VerifyOTP = () => {
                             module.default.changeLanguage(dbLanguage);
                         });
                     }
+                }
 
-                    if (userRole === 'SUPERADMIN' || userRole === 'superadmin') {
-                        navigate('/superadmin/dashboard', { replace: true });
-                        return;
-                    }
+                if (userRole === 'SUPERADMIN' || userRole === 'superadmin') {
+                    navigate('/superadmin/dashboard', { replace: true });
+                    return;
+                }
 
-                    // Handle strictly DB-managed redirection for sellers
-                    if (userRole === 'SELLER' || userRole === 'seller') {
-                        try {
-                            const { getProfileApi } = await import('../../services/authService');
-                            const freshProfile = await getProfileApi();
-                            const status = freshProfile.approvalStatus;
-                            const isFirst = freshProfile.isFirstApprovalLogin;
+                // Handle strictly DB-managed redirection for sellers
+                if (userRole === 'SELLER' || userRole === 'seller') {
+                    try {
+                        const { getProfileApi } = await import('../../services/authService');
+                        const freshProfile = await getProfileApi();
+                        const status = freshProfile.approvalStatus;
+                        const isFirst = freshProfile.isFirstApprovalLogin;
 
-                            // Update local user state from fresh DB response
-                            const updatedUser = { ...response.user, approvalStatus: status, isFirstApprovalLogin: isFirst };
-                            localStorage.setItem('user', JSON.stringify(updatedUser));
+                        // Update local user state from fresh DB response
+                        const updatedUser = { ...response.user, approvalStatus: status, isFirstApprovalLogin: isFirst };
+                        localStorage.setItem('user', JSON.stringify(updatedUser));
 
-                            // APPROVED Flow
-                            if (status === 'APPROVED') {
-                                if (isFirst) {
-                                    // Redirect to status page to see the "You're all set" celebration screen
-                                    navigate('/application-status', {
-                                        state: { status, isFirstApprovalLogin: true },
-                                        replace: true
-                                    });
-                                } else {
-                                    // Direct to dashboard
-                                    navigate('/seller/dashboard', { replace: true });
-                                }
-                                return;
+                        // APPROVED Flow
+                        if (status === 'APPROVED') {
+                            if (isFirst) {
+                                // Redirect to status page to see the "You're all set" celebration screen
+                                navigate('/application-status', {
+                                    state: { status, isFirstApprovalLogin: true },
+                                    replace: true
+                                });
+                            } else {
+                                // Direct to dashboard
+                                navigate('/seller/dashboard', { replace: true });
                             }
-
-                            // PENDING or REJECTED Flow
-                            navigate('/application-status', {
-                                state: {
-                                    status,
-                                    rejectionReason: freshProfile.rejectionReason,
-                                    isFirstApprovalLogin: isFirst
-                                },
-                                replace: true
-                            });
-                            return;
-                        } catch (err) {
-                            console.error("Failed to fetch DB status during login", err);
-                            navigate('/application-status', { replace: true });
                             return;
                         }
+
+                        // PENDING or REJECTED Flow
+                        navigate('/application-status', {
+                            state: {
+                                status,
+                                rejectionReason: freshProfile.rejectionReason,
+                                isFirstApprovalLogin: isFirst
+                            },
+                            replace: true
+                        });
+                        return;
+                    } catch (err) {
+                        console.error("Failed to fetch DB status during login", err);
+                        navigate('/application-status', { replace: true });
+                        return;
                     }
                 }
+
                 navigate('/success', { state: { mode } });
             }
         } catch (err) {
@@ -274,3 +276,4 @@ const VerifyOTP = () => {
 };
 
 export default VerifyOTP;
+
