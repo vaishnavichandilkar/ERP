@@ -1,11 +1,9 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Search, Download, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, CheckCircle2, XCircle } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { Search, Download, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, CheckCircle2, XCircle, ArrowLeft, ArrowRight } from 'lucide-react';
 import AddGroupModal from './components/AddGroupModal';
 import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
 
 const GroupMaster = () => {
-    const { t } = useTranslation(['modules', 'common']);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedGroups, setExpandedGroups] = useState({});
@@ -13,18 +11,22 @@ const GroupMaster = () => {
     const exportRef = useRef(null);
 
     const masterData = useMemo(() => ([
-        { id: 'exp-direct', name: t('modules:direct_expense'), items: [t('modules:light_bill'), t('modules:labour_charges')] },
-        { id: 'exp-indirect', name: t('modules:indirect_expense'), items: [t('modules:bank_charges'), t('modules:company_promotions')] },
-        { id: 'exp-purchase', name: t('modules:purchase'), items: [t('modules:light_bill'), t('modules:labour_charges')] },
-        { id: 'exp-opening', name: t('modules:opening_stock'), items: [t('modules:product_opening_stock'), t('modules:store_opening_stock')] },
-        { id: 'rev-direct', name: t('modules:direct_sale'), items: [t('modules:light_bill'), t('modules:labour_charges')] },
-        { id: 'rev-indirect', name: t('modules:indirect_sale'), items: [t('modules:light_bill'), t('modules:labour_charges')] },
-        { id: 'rev-sale', name: t('modules:sale'), items: [t('modules:light_bill'), t('modules:labour_charges')] },
-        { id: 'rev-closing', name: t('modules:closing_stock'), items: [t('modules:product_closing_stock'), t('modules:store_closing_stock')] }
-    ]), [t]);
+        { id: 'exp-direct', name: 'Direct Expense', items: ['Light Bill', 'Labour Charges'] },
+        { id: 'exp-indirect', name: 'Indirect Expense', items: ['Bank Charges', 'Company Promotions'] },
+        { id: 'exp-purchase', name: 'Purchase', items: ['Light Bill', 'Labour Charges'] },
+        { id: 'exp-opening', name: 'Opening Stock', items: ['Product-Opening Stock', 'Store-Opening Stock'] },
+        { id: 'rev-direct', name: 'Direct Sale', items: ['Light Bill', 'Labour Charges'] },
+        { id: 'rev-indirect', name: 'Indirect Sale', items: ['Light Bill', 'Labour Charges'] },
+        { id: 'rev-sale', name: 'Sale', items: ['Light Bill', 'Labour Charges'] },
+        { id: 'rev-closing', name: 'Closing Stock', items: ['Product-Closing Stock', 'Store-Closing Stock'] }
+    ]), []);
 
     const [itemStatuses, setItemStatuses] = useState({});
     const [activeRowDropdown, setActiveRowDropdown] = useState(null);
+
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(5);
 
     // Handle click outside for export dropdown
     useEffect(() => {
@@ -91,7 +93,7 @@ const GroupMaster = () => {
 
         prepareRows(masterData);
 
-        exportToPDF(t('modules:group_master_report'), [t('common:sr_no_short'), t('common:group')], tableRows, 'group-master.pdf');
+        exportToPDF('Group Master Report', ['#', 'Group Name'], tableRows, 'group-master.pdf');
         setIsExportOpen(false);
     };
 
@@ -99,9 +101,9 @@ const GroupMaster = () => {
         const data = [];
         const handlePrepareData = (sections) => {
             sections.forEach(sec => {
-                data.push({ [t('common:type')]: '', [t('common:group')]: sec.name, [t('common:sub_group')]: '' });
+                data.push({ 'Type': '', 'Group': sec.name, 'Sub-Group': '' });
                 sec.items.forEach(item => {
-                    data.push({ [t('common:type')]: '', [t('common:group')]: '', [t('common:sub_group')]: item });
+                    data.push({ 'Type': '', 'Group': '', 'Sub-Group': item });
                 });
             });
             data.push({}); // Empty row
@@ -109,11 +111,43 @@ const GroupMaster = () => {
 
         handlePrepareData(masterData);
 
-        exportToExcel(data, t('modules:group_master'), 'group-master.xlsx');
+        exportToExcel(data, 'Group Master', 'group-master.xlsx');
         setIsExportOpen(false);
     };
 
     const processedData = filteredData();
+
+    // Pagination Calculations
+    const totalItems = processedData.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+    const paginatedData = processedData.slice(startIndex, endIndex);
+
+    const handlePageChange = (page) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page);
+        }
+    };
+
+    const getVisiblePages = () => {
+        const maxVisible = 4;
+        let startPage = Math.max(1, currentPage - 1);
+        let endPage = startPage + maxVisible - 1;
+
+        if (endPage > totalPages) {
+            endPage = totalPages;
+            startPage = Math.max(1, endPage - maxVisible + 1);
+        }
+
+        const pages = [];
+        for (let i = startPage; i <= endPage; i++) {
+            if (i >= 1 && i <= totalPages) {
+                pages.push(i);
+            }
+        }
+        return pages;
+    };
 
     return (
         <div className="flex flex-col animate-in fade-in duration-500">
@@ -123,79 +157,71 @@ const GroupMaster = () => {
                     onClick={() => setIsModalOpen(true)}
                     className="w-full sm:w-auto px-6 h-[44px] bg-[#014A36] text-white rounded-[8px] text-[14px] font-bold hover:bg-[#013b2b] transition-all shadow-sm flex items-center justify-center gap-2"
                 >
-                    <Plus size={18} />
-                    {t('modules:add_group')}
+                    Add Group
                 </button>
             </div>
 
-            {/* Action Bar (Search + Export) */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
-                <div className="relative w-full sm:w-[320px]">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <input
-                        type="text"
-                        placeholder={t('common:search_anything')}
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full h-[44px] bg-[#F9FAFB]/50 border border-[#E5E7EB] rounded-[8px] pl-10 pr-4 text-[14px] outline-none focus:border-[#014A36] transition-all"
-                    />
-                </div>
+            {/* Content List Array */}
+            <div className={`flex flex-col bg-white rounded-[12px] border border-[#E5E7EB] shadow-sm mb-8 ${activeRowDropdown ? '!overflow-visible' : 'overflow-hidden'}`}>
+                {/* Action Bar (Search + Export) inner */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-b border-[#E5E7EB] bg-white">
+                    <div className="relative w-full sm:w-[320px]">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                        <input
+                            type="text"
+                            placeholder="Search by anything"
+                            value={searchQuery}
+                            onChange={(e) => {
+                                setSearchQuery(e.target.value);
+                                setCurrentPage(1); // Reset page on search
+                            }}
+                            className="w-full h-[40px] bg-[#F9FAFB] border border-[#E5E7EB] rounded-[8px] pl-10 pr-4 text-[14px] outline-none focus:border-[#014A36] transition-all"
+                        />
+                    </div>
 
-                <div className="flex flex-wrap items-center gap-4">
-                    <button
-                        onClick={toggleExpandAll}
-                        className="flex items-center gap-2 px-4 h-[44px] border border-[#E5E7EB] rounded-[8px] text-[14px] font-semibold text-[#4B5563] hover:bg-gray-50 transition-all bg-white"
-                    >
-                        {isAllExpanded ? (
-                            <>
-                                <Minimize2 size={16} className="text-gray-400" />
-                                {t('common:collapse_all')}
-                            </>
-                        ) : (
-                            <>
-                                <Maximize2 size={16} className="text-gray-400" />
-                                {t('common:expand_all')}
-                            </>
-                        )}
-                    </button>
-
-                    <div className="relative" ref={exportRef}>
+                    <div className="flex flex-wrap items-center gap-3">
                         <button
-                            onClick={() => setIsExportOpen(!isExportOpen)}
-                            className={`flex items-center gap-2 px-4 h-[44px] border rounded-[8px] text-[14px] font-semibold transition-all duration-200 bg-white
-                                ${isExportOpen ? 'border-[#014A36] text-[#014A36] shadow-md' : 'border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
+                            onClick={toggleExpandAll}
+                            className="flex items-center gap-2 px-4 h-[40px] border border-[#E5E7EB] rounded-[8px] text-[14px] font-medium text-[#4B5563] hover:bg-gray-50 transition-all bg-white"
                         >
-                            <Download size={18} className={isExportOpen ? 'text-[#014A36]' : 'text-gray-400'} />
-                            {t('common:export')}
+                            {isAllExpanded ? <Minimize2 size={16} className="text-gray-400" /> : <Maximize2 size={16} className="text-gray-400" />}
+                            {isAllExpanded ? 'Collapse All' : 'Expand All'}
                         </button>
 
-                        {/* Export Dropdown */}
-                        {isExportOpen && (
-                            <div className="absolute top-full right-0 mt-2 w-[160px] bg-white border border-gray-100 rounded-[12px] shadow-[0_10px_30px_rgba(0,0,0,0.1)] z-[50] py-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                                <button
-                                    onClick={handleExportPDF}
-                                    className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
-                                >
-                                    <FileText size={18} className="text-red-500" />
-                                    {t('common:pdf')}
-                                </button>
-                                <button
-                                    onClick={handleExportExcel}
-                                    className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
-                                >
-                                    <FileSpreadsheet size={18} className="text-green-600" />
-                                    {t('common:excel')}
-                                </button>
-                            </div>
-                        )}
+                        <div className="relative" ref={exportRef}>
+                            <button
+                                onClick={() => setIsExportOpen(!isExportOpen)}
+                                className={`flex items-center gap-2 px-4 h-[40px] border rounded-[8px] text-[14px] font-medium transition-all duration-200 bg-white
+                                    ${isExportOpen ? 'border-[#014A36] text-[#014A36] shadow-sm' : 'border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
+                            >
+                                <Download size={18} className={isExportOpen ? 'text-[#014A36]' : 'text-gray-400'} />
+                                Export
+                            </button>
+
+                            {/* Export Dropdown */}
+                            {isExportOpen && (
+                                <div className="absolute top-full right-0 mt-2 w-[160px] bg-white border border-gray-100 rounded-[12px] shadow-[0_10px_30px_rgba(0,0,0,0.1)] z-[50] py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <button
+                                        onClick={handleExportPDF}
+                                        className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
+                                    >
+                                        <FileText size={18} className="text-red-500" />
+                                        PDF
+                                    </button>
+                                    <button
+                                        onClick={handleExportExcel}
+                                        className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
+                                    >
+                                        <FileSpreadsheet size={18} className="text-green-600" />
+                                        Excel
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            {/* Content List Array */}
-            <div className="flex flex-col bg-white rounded-[12px] border border-[#E5E7EB] shadow-sm overflow-hidden mb-8">
-                {processedData.length > 0 ? (
-                    processedData.map((section) => {
+                {paginatedData.length > 0 ? (
+                    paginatedData.map((section) => {
                         // If searching and items match, auto-expand
                         const isSearchExpanding = searchQuery && section.items.some(item =>
                             item.toLowerCase().includes(searchQuery.toLowerCase())
@@ -222,7 +248,7 @@ const GroupMaster = () => {
                                             {section.name}
                                         </span>
                                     </div>
-                                    <div className="relative">
+                                    <div className="relative flex items-center">
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
@@ -235,20 +261,20 @@ const GroupMaster = () => {
 
                                         {/* Group Action Dropdown */}
                                         {activeRowDropdown === `group-${section.id}` && (
-                                            <div className="absolute right-8 top-8 w-[140px] bg-white border border-gray-100 rounded-[8px] shadow-lg z-50 py-1.5 animate-in fade-in zoom-in-95 duration-200">
+                                            <div className="absolute right-full mr-2 top-1/2 -translate-y-1/2 w-[110px] bg-white border border-gray-100 rounded-[8px] shadow-[0_4px_20px_rgba(0,0,0,0.08)] z-[100] py-1.5 animate-in zoom-in-95 duration-200">
                                                 <button
-                                                    onClick={() => handleToggleStatus(`group-${section.id}`, itemStatuses[`group-${section.id}`] || 'Active')}
-                                                    className="w-full px-4 py-2 flex items-center gap-2 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors"
+                                                    onClick={(e) => { e.stopPropagation(); handleToggleStatus(`group-${section.id}`, 'Active'); }}
+                                                    className="w-full px-4 py-2 flex items-center gap-2.5 text-[13px] text-[#4B5563] hover:bg-gray-50 transition-colors"
                                                 >
-                                                    <CheckCircle2 size={15} className={(itemStatuses[`group-${section.id}`] || 'Active') === 'Active' ? 'text-green-600' : 'text-gray-400'} />
-                                                    {t('common:active')}
+                                                    <CheckCircle2 size={15} className="text-gray-400" />
+                                                    Active
                                                 </button>
                                                 <button
-                                                    onClick={() => handleToggleStatus(`group-${section.id}`, itemStatuses[`group-${section.id}`] || 'Active')}
-                                                    className="w-full px-4 py-2 flex items-center gap-2 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors"
+                                                    onClick={(e) => { e.stopPropagation(); handleToggleStatus(`group-${section.id}`, 'Inactive'); }}
+                                                    className="w-full px-4 py-2 flex items-center gap-2.5 text-[13px] text-[#4B5563] hover:bg-gray-50 transition-colors"
                                                 >
-                                                    <XCircle size={15} className={(itemStatuses[`group-${section.id}`] || 'Active') === 'Inactive' ? 'text-red-500' : 'text-gray-400'} />
-                                                    {t('common:inactive')}
+                                                    <XCircle size={15} className="text-gray-400" />
+                                                    Inactive
                                                 </button>
                                             </div>
                                         )}
@@ -256,7 +282,7 @@ const GroupMaster = () => {
                                 </div>
 
                                 {/* Sub-items with smooth transition */}
-                                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                                <div className={`transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'} ${activeRowDropdown?.startsWith(`${section.id}-item-`) ? '!overflow-visible' : 'overflow-hidden'}`}>
                                     <div className="flex flex-col bg-gray-50/30 border-t border-[#E5E7EB]/50">
                                         {section.items.map((item, itemIdx) => {
                                             const isHighlighted = searchQuery && item.toLowerCase().includes(searchQuery.toLowerCase());
@@ -273,35 +299,37 @@ const GroupMaster = () => {
                                                         {itemIdx + 1}. {item}
                                                     </span>
 
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setActiveRowDropdown(activeRowDropdown === dropdownId ? null : dropdownId);
-                                                        }}
-                                                        className="p-1 px-2 text-gray-400 hover:text-gray-600 transition-colors rounded-md"
-                                                    >
-                                                        <MoreVertical size={16} />
-                                                    </button>
+                                                    <div className="relative flex items-center">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setActiveRowDropdown(activeRowDropdown === dropdownId ? null : dropdownId);
+                                                            }}
+                                                            className="p-1 px-2 text-gray-400 hover:text-gray-600 transition-colors rounded-md"
+                                                        >
+                                                            <MoreVertical size={16} />
+                                                        </button>
 
-                                                    {/* Row Action Dropdown */}
-                                                    {activeRowDropdown === dropdownId && (
-                                                        <div className="absolute right-8 top-8 w-[140px] bg-white border border-gray-100 rounded-[8px] shadow-lg z-50 py-1.5 animate-in fade-in zoom-in-95 duration-200">
-                                                            <button
-                                                                onClick={() => handleToggleStatus(dropdownId, currentStatus)}
-                                                                className="w-full px-4 py-2 flex items-center gap-2 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors"
-                                                            >
-                                                                <CheckCircle2 size={15} className={currentStatus === 'Active' ? 'text-green-600' : 'text-gray-400'} />
-                                                                {t('common:active')}
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleToggleStatus(dropdownId, currentStatus)}
-                                                                className="w-full px-4 py-2 flex items-center gap-2 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors"
-                                                            >
-                                                                <XCircle size={15} className={currentStatus === 'Inactive' ? 'text-red-500' : 'text-gray-400'} />
-                                                                {t('common:inactive')}
-                                                            </button>
-                                                        </div>
-                                                    )}
+                                                        {/* Row Action Dropdown */}
+                                                        {activeRowDropdown === dropdownId && (
+                                                            <div className="absolute right-full mr-2 top-1/2 -translate-y-1/2 w-[110px] bg-white border border-gray-100 rounded-[8px] shadow-[0_4px_20px_rgba(0,0,0,0.08)] z-[100] py-1.5 animate-in zoom-in-95 duration-200">
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); handleToggleStatus(dropdownId, 'Active'); }}
+                                                                    className="w-full px-4 py-2 flex items-center gap-2.5 text-[13px] text-[#4B5563] hover:bg-gray-50 transition-colors"
+                                                                >
+                                                                    <CheckCircle2 size={15} className="text-gray-400" />
+                                                                    Active
+                                                                </button>
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); handleToggleStatus(dropdownId, 'Inactive'); }}
+                                                                    className="w-full px-4 py-2 flex items-center gap-2.5 text-[13px] text-[#4B5563] hover:bg-gray-50 transition-colors"
+                                                                >
+                                                                    <XCircle size={15} className="text-gray-400" />
+                                                                    Inactive
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             );
                                         })}
@@ -312,9 +340,70 @@ const GroupMaster = () => {
                     })
                 ) : (
                     <div className="p-12 text-center text-gray-400 text-[14px]">
-                        {t('modules:no_matching_groups')}
+                        No matching groups found
                     </div>
                 )}
+
+                {/* Pagination Footer */}
+                <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-[#E5E7EB] bg-white gap-4">
+                    <div className="flex items-center gap-3 text-[14px] text-[#4B5563]">
+                        <span>Show</span>
+                        <select
+                            value={itemsPerPage}
+                            onChange={(e) => {
+                                setItemsPerPage(Number(e.target.value));
+                                setCurrentPage(1); // Reset to first page when changing page size
+                            }}
+                            className="border border-[#E5E7EB] rounded-[6px] px-2 py-1 outline-none focus:border-[#014A36] text-[#111827] bg-white cursor-pointer"
+                        >
+                            <option value={5}>5</option>
+                            <option value={10}>10</option>
+                            <option value={20}>20</option>
+                            <option value={50}>50</option>
+                        </select>
+                        <span>per page</span>
+                    </div>
+
+                    <div className="flex items-center gap-4 text-[14px]">
+                        <span className="text-[#6B7280]">
+                            {totalItems > 0 ? `${startIndex + 1}-${endIndex} of ${totalItems}` : '0-0 of 0'}
+                        </span>
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 1}
+                                className="p-1.5 text-[#6B7280] hover:text-[#111827] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                <ArrowLeft size={18} />
+                            </button>
+                            <div className="flex items-center gap-1 px-2">
+                                {getVisiblePages().map((page, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => typeof page === 'number' ? handlePageChange(page) : null}
+                                        disabled={typeof page !== 'number'}
+                                        className={`w-8 h-8 rounded-[8px] flex items-center justify-center transition-colors text-[14px]
+                                            ${page === '...'
+                                                ? 'text-[#6B7280] cursor-default bg-transparent'
+                                                : currentPage === page
+                                                    ? 'bg-[#F3F4F6] text-[#111827] font-semibold'
+                                                    : 'text-[#6B7280] font-medium hover:bg-gray-50'
+                                            }`}
+                                    >
+                                        {page}
+                                    </button>
+                                ))}
+                            </div>
+                            <button
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={currentPage === totalPages || totalPages === 0}
+                                className="p-1.5 text-[#6B7280] hover:text-[#111827] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                <ArrowRight size={18} />
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* Add Group Modal */}

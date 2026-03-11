@@ -1,4 +1,4 @@
-﻿{
+{
     "search_anything": "Search by anything",
     "filter": "Filter",
     "export": "Export",
@@ -44,5 +44,8 @@
     "disconnected": "Disconnected",
     "type": "Type",
     "on": "On",
-    "off": "Off"
+    "off": "Off",
+    "category_under": "Category Under",
+    "select_category_under": "Select Category Under",
+    "enter_category_name": "Enter Category Name"
 }

@@ -1,9 +1,7 @@
 import React from 'react';
 import { NavLink, Outlet, useLocation, Navigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 
 const MastersLayout = () => {
-    const { t } = useTranslation('modules');
     const location = useLocation();
 
     // Required Tab Sequence from User:
@@ -13,11 +11,11 @@ const MastersLayout = () => {
     // 4. Category
     // 5. Product Master
     const tabs = [
-        { name: t('group_master'), path: '/seller/dashboard/masters/group-master' },
-        { name: t('account_master'), path: '/seller/dashboard/masters/account-master' },
-        { name: t('unit_master'), path: '/seller/dashboard/masters/unit-master' },
-        { name: t('category_master'), path: '/seller/dashboard/masters/category' },
-        { name: t('product_master'), path: '/seller/dashboard/masters/product-master' },
+        { name: 'Group Master', path: '/seller/dashboard/masters/group-master' },
+        { name: 'Account Master', path: '/seller/dashboard/masters/account-master' },
+        { name: 'Unit Master', path: '/seller/dashboard/masters/unit-master' },
+        { name: 'Category Master', path: '/seller/dashboard/masters/category' },
+        { name: 'Product Master', path: '/seller/dashboard/masters/product-master' },
     ];
 
     // If we are on the base /seller/dashboard/masters route, redirect to the first tab (Group Master)
@@ -30,10 +28,10 @@ const MastersLayout = () => {
             {/* Header section */}
             <div className="mb-6 md:mb-8 transition-all duration-300 ease-in-out">
                 <h1 className="text-[24px] md:text-[32px] font-bold text-[#111827] mb-2 tracking-tight">
-                    {t('masters')}
+                    Masters
                 </h1>
                 <p className="text-[#6B7280] text-[13px] md:text-[15px] font-medium max-w-[600px] leading-relaxed">
-                    {t('masters_desc')}
+                    Manage and organize core business data used across the system.
                 </p>
             </div>
 

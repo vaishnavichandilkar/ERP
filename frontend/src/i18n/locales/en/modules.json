@@ -1,4 +1,4 @@
-﻿{
+{
     "reports": "Reports",
     "masters": "Masters",
     "purchase": "Purchase",
@@ -74,5 +74,6 @@
     "product_opening_stock": "Product-Opening Stock",
     "store_opening_stock": "Store-Opening Stock",
     "product_closing_stock": "Product-Closing Stock",
-    "store_closing_stock": "Store-Closing Stock"
+    "store_closing_stock": "Store-Closing Stock",
+    "add_category": "Add Category"
 }
