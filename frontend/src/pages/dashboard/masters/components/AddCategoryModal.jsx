@@ -67,7 +67,7 @@ const AddCategoryModal = ({ isOpen, onClose }) => {
                 <div className="p-6 space-y-6">
                     {/* Category Input */}
                     <div className="space-y-1.5">
-                        <label className="text-[13px] font-medium text-[#4B5563]">{t('common:category', 'Category Name')}</label>
+                        <label className="text-[13px] font-medium text-[#4B5563]">{t('modules:category', 'Category Name')}</label>
                         <input
                             type="text"
                             placeholder={t('common:enter_category_name', 'Enter category name')}
@@ -98,7 +98,7 @@ const AddCategoryModal = ({ isOpen, onClose }) => {
                                         }}
                                         className={`px-3.5 py-2.5 mx-1.5 rounded-[6px] hover:bg-[#F3F4F6] cursor-pointer text-[14px] italic text-gray-500 transition-colors`}
                                     >
-                                        None (Main Category)
+                                        {t('common:main_category', 'None (Main Category)')}
                                     </div>
                                     {categories.map((category) => (
                                         <div

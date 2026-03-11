@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchable = false }) => {
+    const { t } = useTranslation('common');
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const dropdownRef = useRef(null);
@@ -41,7 +42,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                         <div className="p-2 border-b border-gray-100">
                             <input
                                 type="text"
-                                placeholder="Search..."
+                                placeholder={t('search')}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full h-[36px] px-3 text-[14px] border border-gray-200 rounded-[6px] outline-none focus:border-[#014A36]"
@@ -65,7 +66,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                                 </div>
                             ))
                         ) : (
-                            <div className="px-4 py-3 text-[14px] text-gray-500 text-center">No options found</div>
+                            <div className="px-4 py-3 text-[14px] text-gray-500 text-center">{t('no_options_found')}</div>
                         )}
                     </div>
                 </div>
@@ -75,6 +76,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
 };
 
 const AddProduct = ({ onBack }) => {
+    const { t } = useTranslation(['modules', 'common']);
     const [formData, setFormData] = useState({
         productName: '',
         productCode: '',
@@ -95,9 +97,9 @@ const AddProduct = ({ onBack }) => {
         'UGC', 'UNT', 'YDS', 'OTHER'
     ];
 
-    const PRODUCT_TYPES = ['Goods', 'Service'];
-    const CATEGORIES = ['Cattle Feed', 'Fertilizer', 'Weighing Equipment', 'Agricultural Inputs'];
-    const SUBCATEGORIES = ['Maize Silage', 'Organic Fertilizer', 'Digital Indicator', 'Crop Nutrients'];
+    const PRODUCT_TYPES = [t('goods'), t('service')];
+    const CATEGORIES = [t('cattle_feed'), t('fertilizers'), 'Weighing Equipment', 'Agricultural Inputs'];
+    const SUBCATEGORIES = [t('maize_silage'), t('organic_fertilizers'), 'Digital Indicator', 'Crop Nutrients'];
 
     const handleInputChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -111,7 +113,7 @@ const AddProduct = ({ onBack }) => {
                     onClick={onBack}
                     className="px-6 h-[44px] bg-white border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors shadow-sm"
                 >
-                    Back
+                    {t('common:back')}
                 </button>
             </div>
 
@@ -119,7 +121,7 @@ const AddProduct = ({ onBack }) => {
             <div className="bg-white rounded-[12px] border border-[#E5E7EB] shadow-sm flex flex-col w-full">
                 {/* Header */}
                 <div className="px-6 py-5 border-b border-[#E5E7EB]">
-                    <h2 className="text-[18px] font-bold text-[#111827]">Add Product</h2>
+                    <h2 className="text-[18px] font-bold text-[#111827]">{t('add_product')}</h2>
                 </div>
 
                 {/* Form Body */}
@@ -128,11 +130,11 @@ const AddProduct = ({ onBack }) => {
                         {/* Product Name */}
                         <div className="flex flex-col gap-1.5">
                             <label className="text-[13px] font-semibold text-[#4B5563]">
-                                Product Name <span className="text-red-500">*</span>
+                                {t('product_name')} <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
-                                placeholder="Enter Product name"
+                                placeholder={t('enter_product_name')}
                                 className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
                                 value={formData.productName}
                                 onChange={(e) => handleInputChange('productName', e.target.value)}
@@ -142,11 +144,11 @@ const AddProduct = ({ onBack }) => {
                         {/* Product Code */}
                         <div className="flex flex-col gap-1.5">
                             <label className="text-[13px] font-semibold text-[#4B5563]">
-                                Product Code <span className="text-red-500">*</span>
+                                {t('product_code')} <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
-                                placeholder="Product code will be auto Generated"
+                                placeholder={t('product_code_auto')}
                                 className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
                                 value={formData.productCode}
                                 onChange={(e) => handleInputChange('productCode', e.target.value)}
@@ -155,8 +157,8 @@ const AddProduct = ({ onBack }) => {
 
                         {/* UOM */}
                         <CustomSelect
-                            label="UOM"
-                            placeholder="Select UOM"
+                            label={t('uom')}
+                            placeholder={t('common:select')}
                             options={UOM_LIST}
                             value={formData.uom}
                             onChange={(val) => handleInputChange('uom', val)}
@@ -165,8 +167,8 @@ const AddProduct = ({ onBack }) => {
 
                         {/* Product Type */}
                         <CustomSelect
-                            label="Product Type"
-                            placeholder="Select Type"
+                            label={t('product_type')}
+                            placeholder={t('common:select')}
                             options={PRODUCT_TYPES}
                             value={formData.productType}
                             onChange={(val) => handleInputChange('productType', val)}
@@ -174,8 +176,8 @@ const AddProduct = ({ onBack }) => {
 
                         {/* Category */}
                         <CustomSelect
-                            label="Category"
-                            placeholder="Select Category"
+                            label={t('category')}
+                            placeholder={t('common:select')}
                             options={CATEGORIES}
                             value={formData.category}
                             onChange={(val) => handleInputChange('category', val)}
@@ -183,8 +185,8 @@ const AddProduct = ({ onBack }) => {
 
                         {/* Sub Category */}
                         <CustomSelect
-                            label="Sub-Category"
-                            placeholder="Select Sub Category"
+                            label={t('sub_category')}
+                            placeholder={t('common:select')}
                             options={SUBCATEGORIES}
                             value={formData.subcategory}
                             onChange={(val) => handleInputChange('subcategory', val)}
@@ -193,11 +195,11 @@ const AddProduct = ({ onBack }) => {
                         {/* HSN Code */}
                         <div className="flex flex-col gap-1.5">
                             <label className="text-[13px] font-semibold text-[#4B5563]">
-                                HSN Code <span className="text-red-500">*</span>
+                                {t('hsn_code')} <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
-                                placeholder="Enter HSN code"
+                                placeholder={t('enter_hsn_code')}
                                 className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
                                 value={formData.hsnCode}
                                 onChange={(e) => handleInputChange('hsnCode', e.target.value)}
@@ -207,11 +209,11 @@ const AddProduct = ({ onBack }) => {
                         {/* Tax */}
                         <div className="flex flex-col gap-1.5">
                             <label className="text-[13px] font-semibold text-[#4B5563]">
-                                Tax (%) <span className="text-red-500">*</span>
+                                {t('tax_percent')} <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
-                                placeholder="Tax will be auto fetched"
+                                placeholder={t('tax_auto')}
                                 className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
                                 value={formData.tax}
                                 onChange={(e) => handleInputChange('tax', e.target.value)}
@@ -222,11 +224,11 @@ const AddProduct = ({ onBack }) => {
                     {/* Product Description */}
                     <div className="flex flex-col gap-1.5 w-full">
                         <label className="text-[13px] font-semibold text-[#4B5563]">
-                            Product Description <span className="text-red-500">*</span>
+                            {t('product_desc')} <span className="text-red-500">*</span>
                         </label>
                         <input
                             type="text"
-                            placeholder="Enter product description"
+                            placeholder={t('enter_product_desc')}
                             className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
                             value={formData.description}
                             onChange={(e) => handleInputChange('description', e.target.value)}
@@ -240,12 +242,12 @@ const AddProduct = ({ onBack }) => {
                         onClick={onBack}
                         className="px-8 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors"
                     >
-                        Cancel
+                        {t('common:cancel')}
                     </button>
                     <button
                         className="px-8 h-[44px] bg-[#014A36] text-white rounded-[8px] text-[14px] font-bold hover:bg-[#013b2b] transition-colors shadow-sm opacity-60 hover:opacity-100"
                     >
-                        Add Product
+                        {t('add_product')}
                     </button>
                 </div>
             </div>

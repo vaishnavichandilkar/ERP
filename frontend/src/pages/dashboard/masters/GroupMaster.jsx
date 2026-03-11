@@ -1,9 +1,11 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Search, Download, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, CheckCircle2, XCircle, ArrowLeft, ArrowRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import AddGroupModal from './components/AddGroupModal';
 import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
 
 const GroupMaster = () => {
+    const { t } = useTranslation(['modules', 'common']);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedGroups, setExpandedGroups] = useState({});
@@ -11,15 +13,15 @@ const GroupMaster = () => {
     const exportRef = useRef(null);
 
     const masterData = useMemo(() => ([
-        { id: 'exp-direct', name: 'Direct Expense', items: ['Light Bill', 'Labour Charges'] },
-        { id: 'exp-indirect', name: 'Indirect Expense', items: ['Bank Charges', 'Company Promotions'] },
-        { id: 'exp-purchase', name: 'Purchase', items: ['Light Bill', 'Labour Charges'] },
-        { id: 'exp-opening', name: 'Opening Stock', items: ['Product-Opening Stock', 'Store-Opening Stock'] },
-        { id: 'rev-direct', name: 'Direct Sale', items: ['Light Bill', 'Labour Charges'] },
-        { id: 'rev-indirect', name: 'Indirect Sale', items: ['Light Bill', 'Labour Charges'] },
-        { id: 'rev-sale', name: 'Sale', items: ['Light Bill', 'Labour Charges'] },
-        { id: 'rev-closing', name: 'Closing Stock', items: ['Product-Closing Stock', 'Store-Closing Stock'] }
-    ]), []);
+        { id: 'exp-direct', name: t('direct_expense'), items: [t('light_bill'), t('labour_charges')] },
+        { id: 'exp-indirect', name: t('indirect_expense'), items: [t('bank_charges'), t('company_promotions')] },
+        { id: 'exp-purchase', name: t('purchase'), items: [t('light_bill'), t('labour_charges')] },
+        { id: 'exp-opening', name: t('opening_stock'), items: [t('product_opening_stock'), t('store_opening_stock')] },
+        { id: 'rev-direct', name: t('direct_sale'), items: [t('light_bill'), t('labour_charges')] },
+        { id: 'rev-indirect', name: t('indirect_sale'), items: [t('light_bill'), t('labour_charges')] },
+        { id: 'rev-sale', name: t('sale'), items: [t('light_bill'), t('labour_charges')] },
+        { id: 'rev-closing', name: t('closing_stock'), items: [t('product_closing_stock'), t('store_closing_stock')] }
+    ]), [t]);
 
     const [itemStatuses, setItemStatuses] = useState({});
     const [activeRowDropdown, setActiveRowDropdown] = useState(null);
@@ -157,7 +159,7 @@ const GroupMaster = () => {
                     onClick={() => setIsModalOpen(true)}
                     className="w-full sm:w-auto px-6 h-[44px] bg-[#014A36] text-white rounded-[8px] text-[14px] font-bold hover:bg-[#013b2b] transition-all shadow-sm flex items-center justify-center gap-2"
                 >
-                    Add Group
+                    {t('add_group')}
                 </button>
             </div>
 
@@ -169,7 +171,7 @@ const GroupMaster = () => {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <input
                             type="text"
-                            placeholder="Search by anything"
+                            placeholder={t('common:search_anything')}
                             value={searchQuery}
                             onChange={(e) => {
                                 setSearchQuery(e.target.value);
@@ -185,7 +187,7 @@ const GroupMaster = () => {
                             className="flex items-center gap-2 px-4 h-[40px] border border-[#E5E7EB] rounded-[8px] text-[14px] font-medium text-[#4B5563] hover:bg-gray-50 transition-all bg-white"
                         >
                             {isAllExpanded ? <Minimize2 size={16} className="text-gray-400" /> : <Maximize2 size={16} className="text-gray-400" />}
-                            {isAllExpanded ? 'Collapse All' : 'Expand All'}
+                            {isAllExpanded ? t('common:collapse_all') : t('common:expand_all')}
                         </button>
 
                         <div className="relative" ref={exportRef}>
@@ -195,7 +197,7 @@ const GroupMaster = () => {
                                     ${isExportOpen ? 'border-[#014A36] text-[#014A36] shadow-sm' : 'border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
                             >
                                 <Download size={18} className={isExportOpen ? 'text-[#014A36]' : 'text-gray-400'} />
-                                Export
+                                {t('common:export')}
                             </button>
 
                             {/* Export Dropdown */}
@@ -206,14 +208,14 @@ const GroupMaster = () => {
                                         className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
                                     >
                                         <FileText size={18} className="text-red-500" />
-                                        PDF
+                                        {t('common:pdf')}
                                     </button>
                                     <button
                                         onClick={handleExportExcel}
                                         className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
                                     >
                                         <FileSpreadsheet size={18} className="text-green-600" />
-                                        Excel
+                                        {t('common:excel')}
                                     </button>
                                 </div>
                             )}
@@ -267,14 +269,14 @@ const GroupMaster = () => {
                                                     className="w-full px-4 py-2 flex items-center gap-2.5 text-[13px] text-[#4B5563] hover:bg-gray-50 transition-colors"
                                                 >
                                                     <CheckCircle2 size={15} className="text-gray-400" />
-                                                    Active
+                                                    {t('common:active')}
                                                 </button>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); handleToggleStatus(`group-${section.id}`, 'Inactive'); }}
                                                     className="w-full px-4 py-2 flex items-center gap-2.5 text-[13px] text-[#4B5563] hover:bg-gray-50 transition-colors"
                                                 >
                                                     <XCircle size={15} className="text-gray-400" />
-                                                    Inactive
+                                                    {t('common:inactive')}
                                                 </button>
                                             </div>
                                         )}
@@ -318,14 +320,14 @@ const GroupMaster = () => {
                                                                     className="w-full px-4 py-2 flex items-center gap-2.5 text-[13px] text-[#4B5563] hover:bg-gray-50 transition-colors"
                                                                 >
                                                                     <CheckCircle2 size={15} className="text-gray-400" />
-                                                                    Active
+                                                                    {t('common:active')}
                                                                 </button>
                                                                 <button
                                                                     onClick={(e) => { e.stopPropagation(); handleToggleStatus(dropdownId, 'Inactive'); }}
                                                                     className="w-full px-4 py-2 flex items-center gap-2.5 text-[13px] text-[#4B5563] hover:bg-gray-50 transition-colors"
                                                                 >
                                                                     <XCircle size={15} className="text-gray-400" />
-                                                                    Inactive
+                                                                    {t('common:inactive')}
                                                                 </button>
                                                             </div>
                                                         )}
@@ -340,14 +342,14 @@ const GroupMaster = () => {
                     })
                 ) : (
                     <div className="p-12 text-center text-gray-400 text-[14px]">
-                        No matching groups found
+                        {t('no_matching_groups')}
                     </div>
                 )}
 
                 {/* Pagination Footer */}
                 <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-[#E5E7EB] bg-white gap-4">
                     <div className="flex items-center gap-3 text-[14px] text-[#4B5563]">
-                        <span>Show</span>
+                        <span>{t('common:show')}</span>
                         <select
                             value={itemsPerPage}
                             onChange={(e) => {
@@ -361,12 +363,12 @@ const GroupMaster = () => {
                             <option value={20}>20</option>
                             <option value={50}>50</option>
                         </select>
-                        <span>per page</span>
+                        <span>{t('common:per_page')}</span>
                     </div>
 
                     <div className="flex items-center gap-4 text-[14px]">
                         <span className="text-[#6B7280]">
-                            {totalItems > 0 ? `${startIndex + 1}-${endIndex} of ${totalItems}` : '0-0 of 0'}
+                            {totalItems > 0 ? `${startIndex + 1}-${endIndex} ${t('common:of')} ${totalItems}` : `0-0 ${t('common:of')} 0`}
                         </span>
                         <div className="flex items-center gap-1">
                             <button

@@ -1,9 +1,11 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Search, Download, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, CheckCircle2, XCircle, ArrowLeft, ArrowRight, ChevronDown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import AddCategoryModal from './components/AddCategoryModal';
 import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
 
 const CategoryMaster = () => {
+    const { t } = useTranslation(['modules', 'common']);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedGroups, setExpandedGroups] = useState({});
@@ -16,19 +18,19 @@ const CategoryMaster = () => {
     const exportRef = useRef(null);
 
     const masterData = useMemo(() => ([
-        { id: 'cat-silage', name: 'Silage', items: ['Maize Silage', 'Napier Silage', 'Oat Silage'] },
-        { id: 'cat-animal-feed', name: 'Animal Feed', items: ['Cattle Feed', 'Poultry Feed', 'Swine Feed'] },
-        { id: 'cat-fertilizers', name: 'Fertilizers', items: ['Organic Fertilizers', 'Chemical Fertilizers', 'Liquid Fertilizers'] },
-        { id: 'cat-seeds', name: 'Seeds', items: ['Hybrid Seeds', 'Vegetable Seeds', 'Flower Seeds'] },
-        { id: 'cat-equipment', name: 'Farm Equipment', items: ['Tractors', 'Harvesters', 'Ploughs'] },
-        { id: 'cat-chemicals', name: 'Agri Chemicals', items: ['Pesticides', 'Herbicides', 'Fungicides'] },
-        { id: 'cat-packaging', name: 'Packaging Materials', items: ['Gunny Bags', 'Plastic Crates', 'Cartons'] },
-        { id: 'cat-irrigation', name: 'Irrigation Systems', items: ['Drip Irrigation', 'Sprinklers', 'Pipes'] },
-        { id: 'cat-livestock', name: 'Livestock Care', items: ['Veterinary Medicines', 'Vitamins', 'Vaccines'] },
-        { id: 'cat-soil', name: 'Soil Care', items: ['Compost', 'Peat Moss', 'Soil Conditioners'] },
-        { id: 'cat-greenhouse', name: 'Greenhouse Accessories', items: ['Shade Nets', 'UV Films', 'Trays'] },
-        { id: 'cat-tools', name: 'Hand Tools', items: ['Spades', 'Rakes', 'Pruners'] },
-    ]), []);
+        { id: 'cat-silage', name: t('silage'), items: [t('maize_silage'), t('napier_silage'), t('oat_silage')] },
+        { id: 'cat-animal-feed', name: t('animal_feed'), items: [t('cattle_feed'), t('poultry_feed'), t('swine_feed')] },
+        { id: 'cat-fertilizers', name: t('fertilizers'), items: [t('organic_fertilizers'), t('chemical_fertilizers'), t('liquid_fertilizers')] },
+        { id: 'cat-seeds', name: t('seeds'), items: [t('hybrid_seeds'), t('vegetable_seeds'), t('flower_seeds')] },
+        { id: 'cat-equipment', name: t('farm_equipment'), items: [t('tractors'), t('harvesters'), t('ploughs')] },
+        { id: 'cat-chemicals', name: t('agri_chemicals'), items: [t('pesticides'), t('herbicides'), t('fungicides')] },
+        { id: 'cat-packaging', name: t('packaging_materials'), items: [t('gunny_bags'), t('plastic_crates'), t('cartons')] },
+        { id: 'cat-irrigation', name: t('irrigation_systems'), items: [t('drip_irrigation'), t('sprinklers'), t('pipes')] },
+        { id: 'cat-livestock', name: t('livestock_care'), items: [t('veterinary_medicines'), t('vitamins'), t('vaccines')] },
+        { id: 'cat-soil', name: t('soil_care'), items: [t('compost'), t('peat_moss'), t('soil_conditioners')] },
+        { id: 'cat-greenhouse', name: t('greenhouse_accessories'), items: [t('shade_nets'), t('uv_films'), t('trays')] },
+        { id: 'cat-tools', name: t('hand_tools'), items: [t('spades'), t('rakes'), t('pruners')] },
+    ]), [t]);
 
     const [itemStatuses, setItemStatuses] = useState({});
     const [activeRowDropdown, setActiveRowDropdown] = useState(null);
@@ -168,7 +170,7 @@ const CategoryMaster = () => {
                     onClick={() => setIsModalOpen(true)}
                     className="w-full sm:w-auto px-6 h-[44px] bg-[#014A36] text-white rounded-[8px] text-[14px] font-bold hover:bg-[#013b2b] transition-all shadow-sm flex items-center justify-center gap-2"
                 >
-                    Add Category
+                    {t('add_category')}
                 </button>
             </div>
 
@@ -180,7 +182,7 @@ const CategoryMaster = () => {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <input
                             type="text"
-                            placeholder="Search by anything"
+                            placeholder={t('common:search_anything')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full h-[40px] bg-[#F9FAFB] border border-[#E5E7EB] rounded-[8px] pl-10 pr-4 text-[14px] outline-none focus:border-[#014A36] transition-all"
@@ -193,7 +195,7 @@ const CategoryMaster = () => {
                             className="flex items-center gap-2 px-4 h-[40px] border border-[#E5E7EB] rounded-[8px] text-[14px] font-medium text-[#4B5563] hover:bg-gray-50 transition-all bg-white"
                         >
                             {isAllExpanded ? <Minimize2 size={16} className="text-gray-400" /> : <Maximize2 size={16} className="text-gray-400" />}
-                            {isAllExpanded ? 'Collapse All' : 'Expand All'}
+                            {isAllExpanded ? t('common:collapse_all') : t('common:expand_all')}
                         </button>
 
                         <div className="relative" ref={exportRef}>
@@ -203,7 +205,7 @@ const CategoryMaster = () => {
                                     ${isExportOpen ? 'border-[#014A36] text-[#014A36] shadow-sm' : 'border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
                             >
                                 <Download size={18} className={isExportOpen ? 'text-[#014A36]' : 'text-gray-400'} />
-                                Export
+                                {t('common:export')}
                             </button>
 
                             {/* Export Dropdown */}
@@ -214,14 +216,14 @@ const CategoryMaster = () => {
                                         className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
                                     >
                                         <FileText size={18} className="text-red-500" />
-                                        PDF
+                                        {t('common:pdf')}
                                     </button>
                                     <button
                                         onClick={handleExportExcel}
                                         className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
                                     >
                                         <FileSpreadsheet size={18} className="text-green-600" />
-                                        Excel
+                                        {t('common:excel')}
                                     </button>
                                 </div>
                             )}
@@ -230,7 +232,7 @@ const CategoryMaster = () => {
                 </div>
                 {/* Header title internally */}
                 <div className="p-4 border-b border-[#E5E7EB] bg-white text-[16px] font-bold text-[#111827]">
-                    Category & Sub category
+                    {t('category_sub_category')}
                 </div>
 
                 <div className="min-h-[300px]">
@@ -281,14 +283,14 @@ const CategoryMaster = () => {
                                                         className="w-full px-4 py-2 flex items-center gap-2.5 text-[13px] text-[#4B5563] hover:bg-gray-50 transition-colors"
                                                     >
                                                         <CheckCircle2 size={15} className="text-gray-400" />
-                                                        Active
+                                                        {t('common:active')}
                                                     </button>
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); handleToggleStatus(`group-${section.id}`, 'Inactive'); }}
                                                         className="w-full px-4 py-2 flex items-center gap-2.5 text-[13px] text-[#4B5563] hover:bg-gray-50 transition-colors"
                                                     >
                                                         <XCircle size={15} className="text-gray-400" />
-                                                        Inactive
+                                                        {t('common:inactive')}
                                                     </button>
                                                 </div>
                                             )}
@@ -332,14 +334,14 @@ const CategoryMaster = () => {
                                                                         className="w-full px-4 py-2 flex items-center gap-2.5 text-[13px] text-[#4B5563] hover:bg-gray-50 transition-colors"
                                                                     >
                                                                         <CheckCircle2 size={15} className="text-gray-400" />
-                                                                        Active
+                                                                        {t('common:active')}
                                                                     </button>
                                                                     <button
                                                                         onClick={(e) => { e.stopPropagation(); handleToggleStatus(dropdownId, 'Inactive'); }}
                                                                         className="w-full px-4 py-2 flex items-center gap-2.5 text-[13px] text-[#4B5563] hover:bg-gray-50 transition-colors"
                                                                     >
                                                                         <XCircle size={15} className="text-gray-400" />
-                                                                        Inactive
+                                                                        {t('common:inactive')}
                                                                     </button>
                                                                 </div>
                                                             )}
@@ -354,7 +356,7 @@ const CategoryMaster = () => {
                         })
                     ) : (
                         <div className="p-12 text-center text-gray-400 text-[14px]">
-                            No matching categories found
+                            {t('no_matching_categories')}
                         </div>
                     )}
                 </div>
@@ -362,7 +364,7 @@ const CategoryMaster = () => {
                 {/* Pagination Footer */}
                 <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-[#E5E7EB] bg-white gap-4">
                     <div className="flex items-center gap-3 text-[14px] text-[#4B5563]">
-                        <span>Show</span>
+                        <span>{t('common:show')}</span>
                         <select
                             value={itemsPerPage}
                             onChange={(e) => {
@@ -376,12 +378,12 @@ const CategoryMaster = () => {
                             <option value={20}>20</option>
                             <option value={50}>50</option>
                         </select>
-                        <span>per page</span>
+                        <span>{t('common:per_page')}</span>
                     </div>
 
                     <div className="flex items-center gap-4 text-[14px]">
                         <span className="text-[#6B7280]">
-                            {totalItems > 0 ? `${startIndex + 1}-${endIndex} of ${totalItems}` : '0-0 of 0'}
+                            {totalItems > 0 ? `${startIndex + 1}-${endIndex} ${t('common:of')} ${totalItems}` : `0-0 ${t('common:of')} 0`}
                         </span>
                         <div className="flex items-center gap-1">
                             <button

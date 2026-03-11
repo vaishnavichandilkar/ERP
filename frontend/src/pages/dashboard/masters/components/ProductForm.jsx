@@ -109,8 +109,23 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
     ];
 
     const PRODUCT_TYPES = [t('modules:goods'), t('modules:service')];
-    const CATEGORIES = ['Cattle Feed', 'Fertilizer', 'Weighing Equipment', 'Agricultural Inputs', 'Silage', 'Animal Feed', 'Seeds'];
-    const SUBCATEGORIES = ['Maize Silage', 'Cattle Feed', 'Wheat Seeds', 'Organic Fertilizer', 'Digital Indicator', 'Crop Nutrients'];
+    const CATEGORIES = [
+        t('modules:cattle_feed'),
+        t('modules:fertilizers'),
+        t('modules:weighing_equipment'),
+        t('modules:agricultural_inputs'),
+        t('modules:silage'),
+        t('modules:animal_feed'),
+        t('modules:seeds')
+    ];
+    const SUBCATEGORIES = [
+        t('modules:maize_silage'),
+        t('modules:cattle_feed'),
+        t('modules:wheat_seeds'),
+        t('modules:organic_fertilizers'),
+        t('modules:digital_indicator'),
+        t('modules:crop_nutrients')
+    ];
 
     const handleInputChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));

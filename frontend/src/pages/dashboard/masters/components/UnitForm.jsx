@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchable = false, disabled = false, showAsterisk = false }) => {
+    const { t } = useTranslation(['common']);
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const dropdownRef = useRef(null);
@@ -41,7 +43,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                         <div className="p-2 border-b border-gray-100">
                             <input
                                 type="text"
-                                placeholder="Search..."
+                                placeholder={t('common:search')}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full h-[36px] px-3 text-[14px] border border-gray-200 rounded-[6px] outline-none focus:border-[#014A36]"
@@ -65,7 +67,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                                 </div>
                             ))
                         ) : (
-                            <div className="px-4 py-3 text-[14px] text-gray-500 text-center">No options found</div>
+                            <div className="px-4 py-3 text-[14px] text-gray-500 text-center">{t('common:no_options_found')}</div>
                         )}
                     </div>
                 </div>
@@ -75,6 +77,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
 };
 
 const UnitForm = ({ mode = 'add', initialData = null, onBack }) => {
+    const { t } = useTranslation(['modules', 'common']);
     const [formData, setFormData] = useState({
         unitName: initialData?.name || '',
         gstUom: initialData?.gstUom || '',
@@ -122,7 +125,7 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack }) => {
                         onClick={onBack}
                         className="px-6 py-1.5 bg-white border border-[#E5E7EB] text-[#111827] rounded-[6px] text-[13px] font-semibold hover:bg-gray-50 transition-colors shadow-sm"
                     >
-                        Back
+                        {t('common:back')}
                     </button>
                 </div>
             )}
@@ -131,11 +134,11 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack }) => {
             <div className="flex flex-col w-full">
                 {/* Form Body */}
                 <div className="flex flex-col gap-6">
-                    {renderInput('Unit name', 'unitName', 'Enter unit name')}
+                    {renderInput(t('unit_name'), 'unitName', t('enter_unit_name'))}
 
                     <CustomSelect
-                        label="GST UOM"
-                        placeholder="Select GST UOM"
+                        label={t('gst_uom')}
+                        placeholder={t('select_gst_uom')}
                         options={UOM_LIST}
                         value={formData.gstUom}
                         onChange={(val) => handleInputChange('gstUom', val)}
@@ -144,7 +147,7 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack }) => {
                         showAsterisk={showAsterisk}
                     />
 
-                    {renderInput('Description', 'description', 'Enter description')}
+                    {renderInput(t('common:description'), 'description', t('common:enter_description'))}
 
                     {/* Footer Buttons */}
                     <div className={`pt-6 flex items-center ${mode === 'view' ? 'justify-end' : 'justify-end gap-4'}`}>
@@ -153,7 +156,7 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack }) => {
                                 onClick={onBack}
                                 className="px-8 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors bg-white"
                             >
-                                Back
+                                {t('common:back')}
                             </button>
                         ) : (
                             <>
@@ -161,13 +164,13 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack }) => {
                                     onClick={onBack}
                                     className="px-8 h-[44px] bg-[#014A36] text-white rounded-[8px] text-[14px] font-bold hover:bg-[#013b2b] transition-colors shadow-sm opacity-90 hover:opacity-100"
                                 >
-                                    {mode === 'add' ? 'Add Unit' : 'Update Unit'}
+                                    {mode === 'add' ? t('add_unit') : t('update_unit')}
                                 </button>
                                 <button
                                     onClick={onBack}
                                     className="px-8 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors bg-white"
                                 >
-                                    Exit
+                                    {t('common:exit')}
                                 </button>
                             </>
                         )}

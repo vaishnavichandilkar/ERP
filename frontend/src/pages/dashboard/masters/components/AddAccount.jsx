@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchable = false, required = false, widthClass = "w-full" }) => {
+    const { t } = useTranslation(['common']);
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const dropdownRef = useRef(null);
@@ -43,7 +45,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                         <div className="p-2 border-b border-gray-100">
                             <input
                                 type="text"
-                                placeholder="Search..."
+                                placeholder={t('common:search')}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full h-[36px] px-3 text-[14px] border border-gray-200 rounded-[6px] outline-none focus:border-[#014A36]"
@@ -67,7 +69,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                                 </div>
                             ))
                         ) : (
-                            <div className="px-4 py-3 text-[14px] text-gray-500 text-center">No options found</div>
+                            <div className="px-4 py-3 text-[14px] text-gray-500 text-center">{t('common:no_options_found')}</div>
                         )}
                     </div>
                 </div>
@@ -77,6 +79,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
 };
 
 const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
+    const { t } = useTranslation(['modules', 'common']);
     const isEditMode = !!initialData;
     const [formData, setFormData] = useState(initialData ? {
         accountName: initialData.account || '',
@@ -215,7 +218,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                     onClick={() => currentStep === 2 ? setCurrentStep(1) : onBack()}
                     className="px-6 h-[44px] bg-white border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors shadow-sm"
                 >
-                    Back
+                    {currentStep === 2 ? t('common:back') : t('common:back')}
                 </button>
             </div>
 
@@ -224,7 +227,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
             <div className="bg-white rounded-[12px] border border-[#E5E7EB] shadow-sm flex flex-col w-full animate-in fade-in slide-in-from-left-2 duration-300">
                 {/* Header */}
                 <div className="px-6 py-5 border-b border-[#E5E7EB]">
-                    <h2 className="text-[18px] font-bold text-[#111827]">{isEditMode ? 'Update Account' : 'Add Account'}</h2>
+                    <h2 className="text-[18px] font-bold text-[#111827]">{isEditMode ? t('update_account') : t('add_account')}</h2>
                 </div>
 
                 {/* Form Body */}
@@ -233,11 +236,11 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                         {/* Account Name */}
                         <div className="flex flex-col gap-1.5">
                             <label className="text-[13px] font-semibold text-[#4B5563]">
-                                Account Name <span className="text-red-500">*</span>
+                                {t('account_name')} <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
-                                placeholder="Enter account name"
+                                placeholder={t('enter_account_name')}
                                 className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
                                 value={formData.accountName}
                                 onChange={(e) => handleInputChange('accountName', e.target.value)}
@@ -246,8 +249,8 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
 
                         {/* Group Name */}
                         <CustomSelect
-                            label="Group Name"
-                            placeholder="Select group name"
+                            label={t('common:group')}
+                            placeholder={t('common:select_group_under')}
                             options={GROUP_NAMES}
                             value={formData.groupName}
                             onChange={(val) => handleInputChange('groupName', val)}
@@ -257,11 +260,11 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                         {/* GST.No */}
                         <div className="flex flex-col gap-1.5">
                             <label className="text-[13px] font-semibold text-[#4B5563]">
-                                GST.No(Optional)
+                                {t('gst_no')}({t('common:optional')})
                             </label>
                             <input
                                 type="text"
-                                placeholder="Enter GST Number"
+                                placeholder={t('enter_gst_number')}
                                 className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
                                 value={formData.gstNo}
                                 onChange={(e) => handleInputChange('gstNo', e.target.value)}
@@ -271,11 +274,11 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                         {/* PAN.No */}
                         <div className="flex flex-col gap-1.5">
                             <label className="text-[13px] font-semibold text-[#4B5563]">
-                                PAN.No <span className="text-red-500">*</span>
+                                {t('pan_no')} <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
-                                placeholder="Enter PAN number"
+                                placeholder={t('enter_pan_number')}
                                 className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
                                 value={formData.panNo}
                                 onChange={(e) => handleInputChange('panNo', e.target.value)}
@@ -285,11 +288,11 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                         {/* Credit Days */}
                         <div className="flex flex-col gap-1.5">
                             <label className="text-[13px] font-semibold text-[#4B5563]">
-                                Credit Days <span className="text-red-500">*</span>
+                                {t('credit_days')} <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
-                                placeholder="Enter '30' number"
+                                placeholder={t('enter_credit_days')}
                                 className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
                                 value={formData.creditDays}
                                 onChange={(e) => handleInputChange('creditDays', e.target.value)}
@@ -299,12 +302,12 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                         {/* OP Balance */}
                         <div className="flex flex-col gap-1.5">
                             <label className="text-[13px] font-semibold text-[#4B5563]">
-                                OP Balance (Optional)
+                                {t('op_balance')} ({t('common:optional')})
                             </label>
                             <div className="flex gap-2 text-[#111827]">
                                 <input
                                     type="text"
-                                    placeholder="Enter op.balance"
+                                    placeholder={t('enter_op_balance')}
                                     className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white flex-1"
                                     value={formData.opBalance}
                                     onChange={(e) => handleInputChange('opBalance', e.target.value)}
@@ -322,11 +325,11 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                         {/* Vendor Code */}
                         <div className="flex flex-col gap-1.5">
                             <label className="text-[13px] font-semibold text-[#4B5563]">
-                                {isEditMode ? 'Code' : 'Vendor Code'} <span className="text-red-500">*</span>
+                                {isEditMode ? t('common:code') : t('vendor_code')} <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
-                                placeholder="Vendor code"
+                                placeholder={t('vendor_code')}
                                 className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
                                 value={formData.vendorCode}
                                 onChange={(e) => handleInputChange('vendorCode', e.target.value)}
@@ -336,11 +339,11 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                         {/* Address 1 */}
                         <div className="flex flex-col gap-1.5 col-span-1 md:col-span-2">
                             <label className="text-[13px] font-semibold text-[#4B5563]">
-                                Address 1 <span className="text-red-500">*</span>
+                                {t('address_1')} <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
-                                placeholder="Enter address line 1"
+                                placeholder={t('enter_address_1')}
                                 className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
                                 value={formData.address1}
                                 onChange={(e) => handleInputChange('address1', e.target.value)}
@@ -350,11 +353,11 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                         {/* Address 2 */}
                         <div className="flex flex-col gap-1.5 col-span-1 md:col-span-2">
                             <label className="text-[13px] font-semibold text-[#4B5563]">
-                                Address 2(Optional)
+                                {t('address_2')}({t('common:optional')})
                             </label>
                             <input
                                 type="text"
-                                placeholder="Enter address line 2"
+                                placeholder={t('enter_address_2')}
                                 className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
                                 value={formData.address2}
                                 onChange={(e) => handleInputChange('address2', e.target.value)}
@@ -364,11 +367,11 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                         {/* Area */}
                         <div className="flex flex-col gap-1.5">
                             <label className="text-[13px] font-semibold text-[#4B5563]">
-                                Area(Optional)
+                                {t('area')}({t('common:optional')})
                             </label>
                             <input
                                 type="text"
-                                placeholder="Enter Area"
+                                placeholder={t('enter_area')}
                                 className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
                                 value={formData.area}
                                 onChange={(e) => handleInputChange('area', e.target.value)}
@@ -378,11 +381,11 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                         {/* Pin Code */}
                         <div className="flex flex-col gap-1.5">
                             <label className="text-[13px] font-semibold text-[#4B5563]">
-                                Pin Code <span className="text-red-500">*</span>
+                                {t('pin_code')} <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
-                                placeholder="Enter pin code"
+                                placeholder={t('enter_pin_code')}
                                 className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
                                 value={formData.pinCode}
                                 onChange={(e) => handleInputChange('pinCode', e.target.value)}
@@ -392,11 +395,11 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                         {/* City */}
                         <div className="flex flex-col gap-1.5">
                             <label className="text-[13px] font-semibold text-[#4B5563]">
-                                City(Optional)
+                                {t('city')}({t('common:optional')})
                             </label>
                             <input
                                 type="text"
-                                placeholder="city will fetch system initially by entering pin code"
+                                placeholder={t('enter_city')}
                                 className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
                                 value={formData.city}
                                 onChange={(e) => handleInputChange('city', e.target.value)}
@@ -406,11 +409,11 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                         {/* State */}
                         <div className="flex flex-col gap-1.5">
                             <label className="text-[13px] font-semibold text-[#4B5563]">
-                                State(Optional)
+                                {t('state')}({t('common:optional')})
                             </label>
                             <input
                                 type="text"
-                                placeholder="city will fetch system initially by entering pin code"
+                                placeholder={t('enter_state')}
                                 className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
                                 value={formData.state}
                                 onChange={(e) => handleInputChange('state', e.target.value)}
@@ -420,7 +423,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                         {/* MSME Section Container */}
                         <div className="flex flex-col gap-1.5 w-full transition-all duration-300">
                             <label className="text-[13px] font-semibold text-[#4B5563]">
-                                MSME (Optional)
+                                {t('msme')} ({t('common:optional')})
                             </label>
                             <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
                                 {/* Toggle Switch */}
@@ -436,7 +439,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                     <div className="w-full md:flex-1 animate-in fade-in slide-in-from-left-2 duration-300">
                                         <input
                                             type="text"
-                                            placeholder="UDYAM-MH-26-0067891"
+                                            placeholder={t('enter_msme_id')}
                                             className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
                                             value={formData.msmeId}
                                             onChange={(e) => handleInputChange('msmeId', e.target.value)}
@@ -450,8 +453,8 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                         {msmeEnabled && (
                             <div className="animate-in fade-in flex items-end">
                                 <CustomSelect
-                                    label="Reg.Under"
-                                    placeholder="Select"
+                                    label={t('reg_under')}
+                                    placeholder={t('common:select')}
                                     options={REG_UNDER}
                                     value={formData.regUnder}
                                     onChange={(val) => handleInputChange('regUnder', val)}
@@ -463,8 +466,8 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                         {msmeEnabled && (
                             <div className="animate-in fade-in">
                                 <CustomSelect
-                                    label="Reg.Type"
-                                    placeholder="Select"
+                                    label={t('reg_type')}
+                                    placeholder={t('common:select')}
                                     options={REG_TYPES}
                                     value={formData.regType}
                                     onChange={(val) => handleInputChange('regType', val)}
@@ -480,7 +483,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                         onClick={onBack}
                         className="px-8 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors bg-white"
                     >
-                        Cancel
+                        {t('common:cancel')}
                     </button>
                     <button
                         onClick={() => setCurrentStep(2)}
@@ -491,7 +494,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                 : 'bg-[#A7C0B8] cursor-not-allowed'
                         }`}
                     >
-                        Next
+                        {t('common:next')}
                     </button>
                 </div>
             </div>
@@ -500,18 +503,18 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                     {/* Bank Details */}
                     <div className="bg-white rounded-[12px] border border-[#E5E7EB] shadow-sm flex flex-col w-full">
                         <div className="px-6 py-5 border-b border-[#E5E7EB]">
-                            <h2 className="text-[18px] font-bold text-[#111827]">Bank Details</h2>
+                            <h2 className="text-[18px] font-bold text-[#111827]">{t('bank_details')}</h2>
                         </div>
                         <div className="p-6 md:p-8">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                                 {/* Account Holder */}
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-[13px] font-semibold text-[#4B5563]">
-                                        Account Holder <span className="text-red-500">*</span>
+                                        {t('account_holder')} <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="text"
-                                        placeholder="Enter account holder name"
+                                        placeholder={t('enter_account_holder_name')}
                                         className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
                                         value={formData.accountHolder}
                                         onChange={(e) => handleInputChange('accountHolder', e.target.value)}
@@ -520,11 +523,11 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                 {/* Bank Name */}
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-[13px] font-semibold text-[#4B5563]">
-                                        Bank Name <span className="text-red-500">*</span>
+                                        {t('bank_name')} <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="text"
-                                        placeholder="Enter bank name"
+                                        placeholder={t('enter_bank_name')}
                                         className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
                                         value={formData.bankName}
                                         onChange={(e) => handleInputChange('bankName', e.target.value)}
@@ -533,11 +536,11 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                 {/* Account Number */}
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-[13px] font-semibold text-[#4B5563]">
-                                        Account Number <span className="text-red-500">*</span>
+                                        {t('account_number')} <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="text"
-                                        placeholder="Enter account number"
+                                        placeholder={t('enter_account_number')}
                                         className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
                                         value={formData.accountNumber}
                                         onChange={(e) => handleInputChange('accountNumber', e.target.value)}
@@ -546,11 +549,11 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                 {/* IFSC Code */}
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-[13px] font-semibold text-[#4B5563]">
-                                        IFSC Code <span className="text-red-500">*</span>
+                                        {t('ifsc_code')} <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="text"
-                                        placeholder="Enter IFSC code"
+                                        placeholder={t('enter_ifsc_code')}
                                         className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
                                         value={formData.ifscCode}
                                         onChange={(e) => handleInputChange('ifscCode', e.target.value)}
@@ -563,14 +566,14 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                     {/* Contact Person Details */}
                     <div className="bg-white rounded-[12px] border border-[#E5E7EB] shadow-sm flex flex-col w-full">
                         <div className="px-6 py-5 border-b border-[#E5E7EB]">
-                            <h2 className="text-[18px] font-bold text-[#111827]">Contact Person Details</h2>
+                            <h2 className="text-[18px] font-bold text-[#111827]">{t('contact_person_details')}</h2>
                         </div>
                         <div className="p-6 md:p-8">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                                 {/* Prefix */}
                                 <CustomSelect
-                                    label="Prefix"
-                                    placeholder="Select prefix"
+                                    label={t('prefix')}
+                                    placeholder={t('select_prefix')}
                                     options={PREFIX_OPTIONS}
                                     value={formData.prefix}
                                     onChange={(val) => handleInputChange('prefix', val)}
@@ -579,11 +582,11 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                 {/* Contact Person Name */}
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-[13px] font-semibold text-[#4B5563]">
-                                        Contact Person Name <span className="text-red-500">*</span>
+                                        {t('contact_person_name')} <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="text"
-                                        placeholder="Enter person name"
+                                        placeholder={t('enter_person_name')}
                                         className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
                                         value={formData.contactPersonName}
                                         onChange={(e) => handleInputChange('contactPersonName', e.target.value)}
@@ -592,11 +595,11 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                 {/* Email ID */}
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-[13px] font-semibold text-[#4B5563]">
-                                        Email ID (Optional)
+                                        {t('email_id')} ({t('common:optional')})
                                     </label>
                                     <input
                                         type="text"
-                                        placeholder="Enter email id"
+                                        placeholder={t('enter_email_id')}
                                         className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
                                         value={formData.emailId}
                                         onChange={(e) => handleInputChange('emailId', e.target.value)}
@@ -605,11 +608,11 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                 {/* Mobile No */}
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-[13px] font-semibold text-[#4B5563]">
-                                        Mobile.No <span className="text-red-500">*</span>
+                                        {t('mobile_no')} <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="text"
-                                        placeholder="Enter mobile number"
+                                        placeholder={t('enter_mobile_number')}
                                         className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
                                         value={formData.mobileNo}
                                         onChange={(e) => handleInputChange('mobileNo', e.target.value)}
@@ -630,13 +633,13 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                     : 'bg-[#A7C0B8] cursor-not-allowed'
                             }`}
                         >
-                            {isEditMode ? 'Update Account' : 'Add Account'}
+                            {isEditMode ? t('update_account') : t('add_account')}
                         </button>
                         <button
                             onClick={onBack}
                             className="px-8 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors bg-white"
                         >
-                            Cancel
+                            {t('common:cancel')}
                         </button>
                     </div>
                 </div>

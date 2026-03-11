@@ -202,6 +202,14 @@ const SignUp = () => {
 
     const [step, setStep] = useState(0);
 
+    const handleBack = () => {
+        if (step === 0) {
+            navigate('/landing');
+        } else {
+            setSearchParams({ step: (step - 1).toString() });
+        }
+    };
+
     useEffect(() => {
         const stepParam = parseInt(searchParams.get('step') || '0', 10);
         if (stepParam >= 0 && stepParam <= 3) {

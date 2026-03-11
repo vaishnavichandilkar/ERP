@@ -47,5 +47,10 @@
     "off": "Off",
     "category_under": "Category Under",
     "select_category_under": "Select Category Under",
-    "enter_category_name": "Enter Category Name"
+    "enter_category_name": "Enter Category Name",
+    "main_category": "None (Main Category)",
+    "optional": "Optional",
+    "next": "Next",
+    "code": "Code",
+    "of": "of"
 }

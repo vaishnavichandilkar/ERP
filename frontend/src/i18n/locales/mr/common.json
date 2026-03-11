@@ -1,4 +1,4 @@
-﻿{
+{
     "search_anything": "सहज शोधा",
     "filter": "फिल्टर",
     "export": "एक्सपोर्ट",
@@ -44,5 +44,13 @@
     "disconnected": "संपर्क तुटलेला",
     "type": "प्रकार",
     "on": "चालू",
-    "off": "बंद"
+    "off": "बंद",
+    "category_under": "च्या खालील श्रेणी",
+    "select_category_under": "श्रेणी निवडा",
+    "enter_category_name": "श्रेणीचे नाव प्रविष्ट करा",
+    "main_category": "काहीही नाही (मुख्य श्रेणी)",
+    "optional": "पर्यायी",
+    "next": "पुढील",
+    "code": "कोड",
+    "of": "पैकी"
 }

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 const InfoTableRow = ({ label1, value1, label2, value2, noBorder }) => (
     <div className={`flex flex-col sm:flex-row border-[#E5E7EB] ${noBorder ? '' : 'border-b'}`}>
@@ -24,6 +25,7 @@ const SectionHeading = ({ title }) => (
 );
 
 const ViewAccount = ({ initialData, onBack }) => {
+    const { t } = useTranslation(['modules', 'common']);
     const data = initialData || {};
 
     // For OP Balance, prioritize showing raw value + type if available, to match "1000 Cr" style
@@ -40,7 +42,7 @@ const ViewAccount = ({ initialData, onBack }) => {
             <div className="bg-white rounded-[12px] border border-[#E5E7EB] shadow-sm flex flex-col w-full animate-in fade-in slide-in-from-left-2 duration-300">
                 {/* Header */}
                 <div className="px-6 py-5 border-b border-[#E5E7EB]">
-                    <h2 className="text-[18px] font-bold text-[#111827]">View Account</h2>
+                    <h2 className="text-[18px] font-bold text-[#111827]">{t('view_account')}</h2>
                 </div>
 
                 {/* Form Body */}
@@ -58,54 +60,54 @@ const ViewAccount = ({ initialData, onBack }) => {
                     <div className="border border-[#E5E7EB] rounded-[8px] overflow-hidden flex flex-col w-full">
                         {/* Account Information Section */}
                         <InfoTableRow 
-                            label1="GST.No:" value1={data.gstNo} 
-                            label2="PAN No:" value2={data.panNo} 
+                            label1={`${t('gst_no')}:`} value1={data.gstNo} 
+                            label2={`${t('pan_no')}:`} value2={data.panNo} 
                         />
                         <InfoTableRow 
-                            label1="Credit Days:" value1={data.creditDays} 
-                            label2="OP Balance:" value2={renderOpBalance()} 
+                            label1={`${t('credit_days')}:`} value1={data.creditDays} 
+                            label2={`${t('op_balance')}:`} value2={renderOpBalance()} 
                         />
                         <InfoTableRow 
-                            label1="Vendor Code:" value1={data.vendorCode} 
-                            label2="Reg.Type:" value2={data.regType} 
+                            label1={`${t('vendor_code')}:`} value1={data.vendorCode} 
+                            label2={`${t('reg_type')}:`} value2={data.regType} 
                         />
                         <InfoTableRow 
-                            label1="Address 1:" value1={data.address1 || data.address} 
-                            label2="Address 2:" value2={data.address2} 
+                            label1={`${t('address_1')}:`} value1={data.address1 || data.address} 
+                            label2={`${t('address_2')}:`} value2={data.address2} 
                         />
                         <InfoTableRow 
-                            label1="Area:" value1={data.area} 
-                            label2="Pin Code:" value2={data.pinCode} 
+                            label1={`${t('area')}:`} value1={data.area} 
+                            label2={`${t('pin_code')}:`} value2={data.pinCode} 
                         />
                         <InfoTableRow 
-                            label1="City:" value1={data.city} 
-                            label2="State:" value2={data.state} 
+                            label1={`${t('city')}:`} value1={data.city} 
+                            label2={`${t('state')}:`} value2={data.state} 
                         />
                         <InfoTableRow 
-                            label1="MSME:" value1={data.msmeId} 
-                            label2="Reg.Under:" value2={data.regUnder} 
+                            label1={`${t('msme')}:`} value1={data.msmeId} 
+                            label2={`${t('reg_under')}:`} value2={data.regUnder} 
                         />
 
                         {/* Bank Details Section */}
-                        <SectionHeading title="Bank Details" />
+                        <SectionHeading title={t('bank_details')} />
                         <InfoTableRow 
-                            label1="Account Holder:" value1={data.accountHolder} 
-                            label2="Bank Name:" value2={data.bankName} 
+                            label1={`${t('account_holder')}:`} value1={data.accountHolder} 
+                            label2={`${t('bank_name')}:`} value2={data.bankName} 
                         />
                         <InfoTableRow 
-                            label1="Account Number:" value1={data.bankAccountNo} 
-                            label2="IFSC Code:" value2={data.ifscCode} 
+                            label1={`${t('account_number')}:`} value1={data.bankAccountNo} 
+                            label2={`${t('ifsc_code')}:`} value2={data.ifscCode} 
                         />
 
                         {/* Contact Person Details Section */}
-                        <SectionHeading title="Contact Person Details" />
+                        <SectionHeading title={t('contact_person_details')} />
                         <InfoTableRow 
-                            label1="Prefix:" value1={data.prefix} 
-                            label2="Contact Person Name:" value2={data.contactPersonName} 
+                            label1={`${t('prefix')}:`} value1={data.prefix} 
+                            label2={`${t('contact_person_name')}:`} value2={data.contactPersonName} 
                         />
                         <InfoTableRow 
-                            label1="Email ID:" value1={data.emailId} 
-                            label2="Mobile.No:" value2={data.mobileNo} 
+                            label1={`${t('email_id')}:`} value1={data.emailId} 
+                            label2={`${t('mobile_no')}:`} value2={data.mobileNo} 
                             noBorder={true}
                         />
                     </div>
@@ -116,7 +118,7 @@ const ViewAccount = ({ initialData, onBack }) => {
                             onClick={onBack}
                             className="px-8 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors bg-white shadow-sm flex items-center justify-center"
                         >
-                            Back
+                            {t('common:back')}
                         </button>
                     </div>
 
