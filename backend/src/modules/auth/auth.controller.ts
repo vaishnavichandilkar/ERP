@@ -17,6 +17,12 @@ export class AuthController {
         return this.authService.sendLoginOtp(dto);
     }
 
+    @Post('resend-otp')
+    @ApiOperation({ summary: 'Resend OTP' })
+    resendOtp(@Body('phone') phone: string) {
+        return this.authService.resendOtp(phone);
+    }
+
     @Post('login')
     @ApiOperation({ summary: 'Login using Mobile and OTP' })
     @ApiResponse({ status: 201, description: 'Login successful. Returns access and refresh tokens.' })

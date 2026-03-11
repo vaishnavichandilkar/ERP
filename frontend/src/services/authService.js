@@ -20,3 +20,8 @@ export const updateLanguageApi = async (language) => {
     const response = await axiosInstance.post('/auth/language', { language });
     return response.data;
 };
+
+export const resendOtpApi = async (phone) => {
+    const response = await axiosInstance.post(AUTH_ENDPOINTS.RESEND_OTP, { phone });
+    return response.data;
+};

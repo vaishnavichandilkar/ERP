@@ -174,7 +174,24 @@ const VerifyOTP = () => {
     };
 
     const handleResend = async () => {
-        // Implement resend OTP if needed
+        setIsLoading(true);
+        setError('');
+        try {
+            if (mode === 'signup') {
+                const { resendOtpApi } = await import('../../services/onboardingService');
+                await resendOtpApi(phone);
+            } else {
+                const { resendOtpApi } = await import('../../services/authService');
+                await resendOtpApi(phone);
+            }
+            setTimer(60);
+            setOtp(new Array(6).fill(''));
+            inputRefs.current[0].focus();
+        } catch (err) {
+            setError(err.response?.data?.message || t('failed_to_send'));
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const maskedPhone = `+91 ${phone.replace(/.(?=.{4})/g, 'X')}`;

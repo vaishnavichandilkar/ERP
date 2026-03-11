@@ -310,7 +310,7 @@ export class OnboardingService {
             await this.saveFile(userId, 'OTHER', files.businessProof[0], 'BUSINESS_PROOF');
         }
 
-        await this.validateAndAdvanceStep(userId, 5, 5, dto);
+        await this.validateAndAdvanceStep(userId, 6, 6, dto);
 
         return { message: 'Business details saved successfully' };
     }
@@ -376,7 +376,7 @@ export class OnboardingService {
             data: { addressId: shopDetail.id }
         });
 
-        await this.validateAndAdvanceStep(userId, 6, 6, dto);
+        await this.validateAndAdvanceStep(userId, 5, 5, dto);
 
         return { message: 'Shop details saved successfully' };
     }
@@ -484,5 +484,9 @@ export class OnboardingService {
                 role: user.role,
             }
         };
+    }
+
+    async resendOtp(phone: string) {
+        return this.smsService.resendOtp(phone);
     }
 }

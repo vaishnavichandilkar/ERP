@@ -152,13 +152,13 @@ The onboarding follows a strict **7-step sequence**.
 **Endpoint**: `PUT /onboarding/step4-details` (Protected)
 **Database**: Updates `User` with `first_name`, `last_name`, `email`.
 
-### Step 5: Business Details & Documents
-**Endpoint**: `POST /onboarding/step5-business` (Protected, Multipart)
-**Database**: Creates entries in `SellerDocument` table for verification.
-
-### Step 6: Shop Details
-**Endpoint**: `POST /onboarding/step6-shop` (Protected, Multipart)
+### Step 5: Shop Details
+**Endpoint**: `POST /onboarding/step5-shop` (Protected, Multipart)
 **Database**: Verifies `pinCode` against `Pincode` table to auto-fetch `state` and `district`. Updates/Creates `ShopDetail` and stores license PDF.
+
+### Step 6: Business Details & Documents
+**Endpoint**: `POST /onboarding/step6-business` (Protected, Multipart)
+**Database**: Creates entries in `SellerDocument` table for verification.
 
 ### Step 7: Final Submission
 **Endpoint**: `POST /onboarding/step7-complete` (Protected)

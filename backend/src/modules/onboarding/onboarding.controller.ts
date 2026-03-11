@@ -35,6 +35,12 @@ export class OnboardingController {
         return this.onboardingService.verifyOtp(dto);
     }
 
+    @Post('resend-otp')
+    @ApiOperation({ summary: 'Resend OTP' })
+    resendOtp(@Body('phone') phone: string) {
+        return this.onboardingService.resendOtp(phone);
+    }
+
     @Put('step4-details')
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth()
@@ -43,11 +49,44 @@ export class OnboardingController {
         return this.onboardingService.updatePersonalDetails(req.user.userId, dto);
     }
 
-    @Post('step5-business')
+    @Post('step5-shop')
     @UseGuards(JwtAuthGuard)
     @ApiBearerAuth()
     @ApiConsumes('multipart/form-data')
-    @ApiOperation({ summary: 'Step 5: Business Verification (PDF Uploads)' })
+    @ApiOperation({ summary: 'Step 5: Shop Details (PDF Upload)' })
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                shopName: { type: 'string' },
+                address: { type: 'string' },
+                village: { type: 'string' },
+                pinCode: { type: 'string' },
+                state: { type: 'string' },
+                district: { type: 'string' },
+                shopActLicense: { type: 'string', format: 'binary', description: 'Shop Act License (PDF)' },
+            },
+            required: ['shopName', 'address', 'pinCode']
+        },
+    })
+    @UseInterceptors(FileFieldsInterceptor([
+        { name: 'shopActLicense', maxCount: 1 },
+    ], multerConfig))
+    saveShopDetails(
+        @Request() req,
+        @Body() dto: Step6ShopDto,
+        @UploadedFiles() files: {
+            shopActLicense?: Express.Multer.File[]
+        }
+    ) {
+        return this.onboardingService.saveShopDetails(req.user.userId, dto, files);
+    }
+
+    @Post('step6-business')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @ApiConsumes('multipart/form-data')
+    @ApiOperation({ summary: 'Step 6: Business Verification (PDF Uploads)' })
     @ApiBody({
         schema: {
             type: 'object',
@@ -76,39 +115,6 @@ export class OnboardingController {
         }
     ) {
         return this.onboardingService.saveBusinessDetails(req.user.userId, dto, files);
-    }
-
-    @Post('step6-shop')
-    @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth()
-    @ApiConsumes('multipart/form-data')
-    @ApiOperation({ summary: 'Step 6: Shop Details (PDF Upload)' })
-    @ApiBody({
-        schema: {
-            type: 'object',
-            properties: {
-                shopName: { type: 'string' },
-                address: { type: 'string' },
-                village: { type: 'string' },
-                pinCode: { type: 'string' },
-                state: { type: 'string' },
-                district: { type: 'string' },
-                shopActLicense: { type: 'string', format: 'binary', description: 'Shop Act License (PDF)' },
-            },
-            required: ['shopName', 'address', 'pinCode']
-        },
-    })
-    @UseInterceptors(FileFieldsInterceptor([
-        { name: 'shopActLicense', maxCount: 1 },
-    ], multerConfig))
-    saveShopDetails(
-        @Request() req,
-        @Body() dto: Step6ShopDto,
-        @UploadedFiles() files: {
-            shopActLicense?: Express.Multer.File[]
-        }
-    ) {
-        return this.onboardingService.saveShopDetails(req.user.userId, dto, files);
     }
 
 

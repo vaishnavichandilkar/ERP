@@ -65,11 +65,13 @@ model BankDetail {
 }
 
 model Otp {
-  id         Int      @id @default(autoincrement())
-  phone      String   @unique
-  otp        String
-  expiresAt  DateTime
-  isVerified Boolean  @default(false)
+  id          Int      @id @default(autoincrement())
+  phone       String   @unique
+  otp         String
+  expiresAt   DateTime
+  isVerified  Boolean  @default(false)
+  resendCount Int      @default(0)
+  lastSentAt  DateTime @default(now())
 
   @@map("Otp")
 }

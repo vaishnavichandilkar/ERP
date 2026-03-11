@@ -50,7 +50,7 @@ export const saveBusinessDetailsApi = async (data, files) => {
     if (files.gstFile) formData.append('gstCertificate', files.gstFile);
     if (files.otherDocFile) formData.append('businessProof', files.otherDocFile);
 
-    const response = await axiosInstance.post(ONBOARDING_ENDPOINTS.STEP5_BUSINESS, formData, {
+    const response = await axiosInstance.post(ONBOARDING_ENDPOINTS.STEP6_BUSINESS, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
     });
     return response.data;
@@ -65,7 +65,7 @@ export const saveShopDetailsApi = async (data) => {
     formData.append('state', data.state);
     formData.append('district', data.district);
 
-    const response = await axiosInstance.post(ONBOARDING_ENDPOINTS.STEP6_SHOP, formData, {
+    const response = await axiosInstance.post(ONBOARDING_ENDPOINTS.STEP5_SHOP, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
     });
     return response.data;
@@ -76,5 +76,10 @@ export const saveShopDetailsApi = async (data) => {
 
 export const completeOnboardingApi = async () => {
     const response = await axiosInstance.post(ONBOARDING_ENDPOINTS.STEP7_COMPLETE, {});
+    return response.data;
+};
+
+export const resendOtpApi = async (phone) => {
+    const response = await axiosInstance.post(ONBOARDING_ENDPOINTS.RESEND_OTP, { phone });
     return response.data;
 };

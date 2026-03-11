@@ -5,6 +5,7 @@ export const AUTH_ENDPOINTS = {
   LOGOUT: '/auth/logout',
   REFRESH_TOKEN: '/auth/refresh',
   PROFILE: '/auth/me',
+  RESEND_OTP: '/auth/resend-otp',
 };
 export const ONBOARDING_ENDPOINTS = {
   START: '/seller/onboarding/start',
@@ -15,9 +16,10 @@ export const ONBOARDING_ENDPOINTS = {
   STEP2_MOBILE: '/onboarding/step2-mobile',
   STEP3_VERIFY: '/onboarding/step3-verify',
   STEP4_DETAILS: '/onboarding/step4-details',
-  STEP5_BUSINESS: '/onboarding/step5-business',
-  STEP6_SHOP: '/onboarding/step6-shop',
+  STEP5_SHOP: '/onboarding/step5-shop',
+  STEP6_BUSINESS: '/onboarding/step6-business',
   STEP7_COMPLETE: '/onboarding/step7-complete',
+  RESEND_OTP: '/onboarding/resend-otp',
 };
 export const DASHBOARD_ENDPOINTS = {
   STATS: '/dashboard/stats',

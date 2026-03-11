@@ -174,4 +174,8 @@ export class AuthService {
         });
         return { message: 'Language updated successfully', language };
     }
+
+    async resendOtp(phone: string) {
+        return this.smsService.resendOtp(phone);
+    }
 }

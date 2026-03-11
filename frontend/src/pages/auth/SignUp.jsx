@@ -382,18 +382,7 @@ const SignUp = () => {
                 });
                 setSearchParams({ step: '2' });
             } else if (step === 2) {
-                const { saveBusinessDetailsApi } = await import('../../services/onboardingService');
-                await saveBusinessDetailsApi({
-                    udyogAadhar: formData.udyogAadhar,
-                    gstNumber: formData.gstNumber
-                }, {
-                    udyogAadharFile: formData.udyogAadharFile,
-                    gstFile: formData.gstFile,
-                    otherDocFile: formData.otherDocFile
-                });
-                setSearchParams({ step: '3' });
-            } else if (step === 3) {
-                const { saveShopDetailsApi, completeOnboardingApi } = await import('../../services/onboardingService');
+                const { saveShopDetailsApi } = await import('../../services/onboardingService');
                 await saveShopDetailsApi({
                     shopName: formData.shopName,
                     address: formData.address,
@@ -401,6 +390,17 @@ const SignUp = () => {
                     pinCode: formData.pinCode,
                     state: formData.state,
                     district: formData.district
+                });
+                setSearchParams({ step: '3' });
+            } else if (step === 3) {
+                const { saveBusinessDetailsApi, completeOnboardingApi } = await import('../../services/onboardingService');
+                await saveBusinessDetailsApi({
+                    udyogAadhar: formData.udyogAadhar,
+                    gstNumber: formData.gstNumber
+                }, {
+                    udyogAadharFile: formData.udyogAadharFile,
+                    gstFile: formData.gstFile,
+                    otherDocFile: formData.otherDocFile
                 });
                 await completeOnboardingApi();
                 navigate('/success', { state: { mode: 'signup' } });
@@ -429,19 +429,19 @@ const SignUp = () => {
                 const errors = msgStr.split(',').map(e => e.trim());
                 errors.forEach(err => {
                     const lowErr = err.toLowerCase();
-                    if (lowErr.includes('udyog') || lowErr.includes('aadhar')) newFieldErrors.udyogAadhar = err;
-                    else if (lowErr.includes('gst')) newFieldErrors.gstNumber = err;
-                });
-            } else if (step === 3) {
-                const errors = msgStr.split(',').map(e => e.trim());
-                errors.forEach(err => {
-                    const lowErr = err.toLowerCase();
                     if (lowErr.includes('shop')) newFieldErrors.shopName = err;
                     else if (lowErr.includes('address')) newFieldErrors.address = err;
                     else if (lowErr.includes('village')) newFieldErrors.village = err;
                     else if (lowErr.includes('pin')) newFieldErrors.pinCode = err;
                     else if (lowErr.includes('district')) newFieldErrors.district = err;
                     else if (lowErr.includes('state')) newFieldErrors.state = err;
+                });
+            } else if (step === 3) {
+                const errors = msgStr.split(',').map(e => e.trim());
+                errors.forEach(err => {
+                    const lowErr = err.toLowerCase();
+                    if (lowErr.includes('udyog') || lowErr.includes('aadhar')) newFieldErrors.udyogAadhar = err;
+                    else if (lowErr.includes('gst')) newFieldErrors.gstNumber = err;
                 });
             }
 
@@ -600,83 +600,6 @@ const SignUp = () => {
                 <div className="w-full min-h-[100dvh] md:min-h-0 h-full flex justify-center items-center bg-[#FFFFFF] py-8 md:py-0">
                     <div className="w-full max-w-[860px] sm:px-[40px] px-6 flex flex-col justify-center items-start">
                         {step === 2 && (
-                            <>
-                                <div className="flex justify-between items-center mb-8 w-full relative">
-                                    <img src={logo} alt="WeighPro Logo" className="h-18" onError={(e) => { e.target.style.display = 'none' }} />
-                                    <div className="bg-[#F3F4F6] text-[#374151] px-[12px] py-[6px] rounded-full text-[12px] font-medium">
-                                        {t('auth:step_label')} 0{step}/04
-                                    </div>
-                                </div>
-
-                                <h2 className="text-[30px] font-['Geist_Sans'] font-bold mb-1 leading-tight text-gray-900 w-full">
-                                    {t('auth:business_title')}
-                                </h2>
-                                <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium mb-[40px] text-gray-500 w-full">
-                                    {t('auth:business_subtitle')}
-                                </p>
-
-                                <form noValidate onSubmit={(e) => e.preventDefault()} className="w-full">
-                                    {error && <div className="mb-4 text-red-500 text-[13px] font-medium animate-in fade-in slide-in-from-top-1 duration-300">{error}</div>}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-[24px] w-full">
-                                        <CustomInput
-                                            label={t('auth:udyog_aadhar') + " " + t('auth:optional')}
-                                            placeholder={t('auth:placeholder_udyog')}
-                                            name="udyogAadhar"
-                                            value={formData.udyogAadhar}
-                                            onChange={handleChange}
-                                            onBlur={handleBlur}
-                                            error={fieldErrors.udyogAadhar}
-                                        />
-                                        <CustomInput
-                                            label={t('auth:placeholder_gst_opt')}
-                                            placeholder={t('auth:placeholder_gst')}
-                                            name="gstNumber"
-                                            value={formData.gstNumber}
-                                            onChange={handleChange}
-                                            onBlur={handleBlur}
-                                            error={fieldErrors.gstNumber}
-                                        />
-                                        <FileUploadBox
-                                            title={t('auth:upload_udyog') + " " + t('auth:optional')}
-                                            file={formData.udyogAadharFile}
-                                            onFileChange={(e) => handleFileChange('udyogAadharFile', e.target.files[0])}
-                                            onRemove={() => handleFileRemove('udyogAadharFile')}
-                                            onUploadStateChange={(isUploading) => handleUploadStateChange('udyogAadharFile', isUploading)}
-                                        />
-                                        <FileUploadBox
-                                            title={t('auth:upload_gst') + " " + t('auth:optional')}
-                                            file={formData.gstFile}
-                                            onFileChange={(e) => handleFileChange('gstFile', e.target.files[0])}
-                                            onRemove={() => handleFileRemove('gstFile')}
-                                            onUploadStateChange={(isUploading) => handleUploadStateChange('gstFile', isUploading)}
-                                        />
-                                        <div className="col-span-1 md:col-span-2 w-full flex justify-center mb-2">
-                                            <div className="w-full md:w-[calc(50%-12px)]">
-                                                <FileUploadBox
-                                                    title={t('auth:upload_other') + " " + t('auth:optional')}
-                                                    file={formData.otherDocFile}
-                                                    onFileChange={(e) => handleFileChange('otherDocFile', e.target.files[0])}
-                                                    onRemove={() => handleFileRemove('otherDocFile')}
-                                                    onUploadStateChange={(isUploading) => handleUploadStateChange('otherDocFile', isUploading)}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="col-span-1 md:col-span-2 w-full flex justify-center mt-[12px]">
-                                        <button
-                                            disabled={isLoading || !!fieldErrors.udyogAadhar || !!fieldErrors.gstNumber || isAnyUploading}
-                                            onClick={handleNext}
-                                            className="w-full mt-6 mb-6 md:w-[calc(50%-12px)] h-[56px] bg-[#0F3D2E] text-white text-[16px] font-['Plus_Jakarta_Sans'] font-medium rounded-[8px] hover:bg-[#0a291f] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-                                        >
-                                            {isLoading ? t('auth:saving') : t('auth:save_continue')}
-                                        </button>
-                                    </div>
-                                </form>
-                            </>
-                        )}
-
-                        {step === 3 && (
                             <div className="w-full sm:-mt-6">
                                 <div className="flex justify-between items-center mb-5 w-full">
                                     <img src={logo} alt="WeighPro Logo" className="h-18" onError={(e) => { e.target.style.display = 'none' }} />
@@ -767,96 +690,82 @@ const SignUp = () => {
                                 </form>
                             </div>
                         )}
-                        {step === 4 && (
-                            <div className="w-full sm:-mt-6">
-                                <div className="flex justify-between items-center mb-5 w-full">
+
+                        {step === 3 && (
+                            <>
+                                <div className="flex justify-between items-center mb-8 w-full relative">
                                     <img src={logo} alt="WeighPro Logo" className="h-18" onError={(e) => { e.target.style.display = 'none' }} />
                                     <div className="bg-[#F3F4F6] text-[#374151] px-[12px] py-[6px] rounded-full text-[12px] font-medium">
                                         {t('auth:step_label')} 0{step}/04
                                     </div>
                                 </div>
 
-                                <h2 className="text-[30px] font-['Geist_Sans'] font-bold mb-0.5 leading-tight text-gray-900 w-full">
-                                    {t('auth:bank_title')}
+                                <h2 className="text-[30px] font-['Geist_Sans'] font-bold mb-1 leading-tight text-gray-900 w-full">
+                                    {t('auth:business_title')}
                                 </h2>
-                                <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium mb-[24px] text-gray-500 w-full">
-                                    {t('auth:bank_subtitle')}
+                                <p className="text-[14px] font-['Plus_Jakarta_Sans'] font-medium mb-[40px] text-gray-500 w-full">
+                                    {t('auth:business_subtitle')}
                                 </p>
 
                                 <form noValidate onSubmit={(e) => e.preventDefault()} className="w-full">
                                     {error && <div className="mb-4 text-red-500 text-[13px] font-medium animate-in fade-in slide-in-from-top-1 duration-300">{error}</div>}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-[24px] gap-y-[16px] w-full">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-[24px] w-full">
                                         <CustomInput
-                                            label={t('auth:acc_holder_label')}
-                                            placeholder={t('auth:placeholder_acc_holder')}
-                                            name="accountHolderName"
-                                            value={formData.accountHolderName}
+                                            label={t('auth:udyog_aadhar') + " " + t('auth:optional')}
+                                            placeholder={t('auth:placeholder_udyog')}
+                                            name="udyogAadhar"
+                                            value={formData.udyogAadhar}
                                             onChange={handleChange}
                                             onBlur={handleBlur}
-                                            error={fieldErrors.accountHolderName}
+                                            error={fieldErrors.udyogAadhar}
                                         />
                                         <CustomInput
-                                            label={t('auth:acc_num_label')}
-                                            placeholder={t('auth:placeholder_acc_num')}
-                                            name="accountNumber"
-                                            value={formData.accountNumber}
+                                            label={t('auth:placeholder_gst_opt')}
+                                            placeholder={t('auth:placeholder_gst')}
+                                            name="gstNumber"
+                                            value={formData.gstNumber}
                                             onChange={handleChange}
                                             onBlur={handleBlur}
-                                            error={fieldErrors.accountNumber}
-                                        />
-                                        <CustomInput
-                                            label={t('auth:ifsc_label')}
-                                            placeholder={t('auth:placeholder_ifsc')}
-                                            name="ifscCode"
-                                            value={formData.ifscCode}
-                                            onChange={handleChange}
-                                            onBlur={handleBlur}
-                                            error={fieldErrors.ifscCode}
-                                        />
-                                        <CustomInput
-                                            select
-                                            label={t('auth:bank_label')}
-                                            name="bankName"
-                                            value={formData.bankName}
-                                            onChange={handleChange}
-                                            error={fieldErrors.bankName}
-                                        >
-                                            <option value="" disabled className="hidden">{t('auth:select_bank')}</option>
-                                            <option value="ICICI Bank">ICICI Bank</option>
-                                            <option value="Bank of India">Bank of India</option>
-                                            <option value="HDFC Bank">HDFC Bank</option>
-                                            <option value="State Bank of India">State Bank of India</option>
-                                            <option value="Axis Bank">Axis Bank</option>
-                                            <option value="Kotak Mahindra Bank">Kotak Mahindra Bank</option>
-                                        </CustomInput>
-
-                                        <FileUploadBox
-                                            title={t('auth:upload_cheque')}
-                                            file={formData.cancelledChequeFile}
-                                            onFileChange={(e) => handleFileChange('cancelledChequeFile', e.target.files[0])}
-                                            onRemove={() => handleFileRemove('cancelledChequeFile')}
-                                            onUploadStateChange={(isUploading) => handleUploadStateChange('cancelledChequeFile', isUploading)}
+                                            error={fieldErrors.gstNumber}
                                         />
                                         <FileUploadBox
-                                            title={t('auth:upload_pan') + " " + t('auth:optional')}
-                                            file={formData.panCardFile}
-                                            onFileChange={(e) => handleFileChange('panCardFile', e.target.files[0])}
-                                            onRemove={() => handleFileRemove('panCardFile')}
-                                            onUploadStateChange={(isUploading) => handleUploadStateChange('panCardFile', isUploading)}
+                                            title={t('auth:upload_udyog') + " " + t('auth:optional')}
+                                            file={formData.udyogAadharFile}
+                                            onFileChange={(e) => handleFileChange('udyogAadharFile', e.target.files[0])}
+                                            onRemove={() => handleFileRemove('udyogAadharFile')}
+                                            onUploadStateChange={(isUploading) => handleUploadStateChange('udyogAadharFile', isUploading)}
                                         />
+                                        <FileUploadBox
+                                            title={t('auth:upload_gst') + " " + t('auth:optional')}
+                                            file={formData.gstFile}
+                                            onFileChange={(e) => handleFileChange('gstFile', e.target.files[0])}
+                                            onRemove={() => handleFileRemove('gstFile')}
+                                            onUploadStateChange={(isUploading) => handleUploadStateChange('gstFile', isUploading)}
+                                        />
+                                        <div className="col-span-1 md:col-span-2 w-full flex justify-center mb-2">
+                                            <div className="w-full md:w-[calc(50%-12px)]">
+                                                <FileUploadBox
+                                                    title={t('auth:upload_other') + " " + t('auth:optional')}
+                                                    file={formData.otherDocFile}
+                                                    onFileChange={(e) => handleFileChange('otherDocFile', e.target.files[0])}
+                                                    onRemove={() => handleFileRemove('otherDocFile')}
+                                                    onUploadStateChange={(isUploading) => handleUploadStateChange('otherDocFile', isUploading)}
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    <div className="col-span-1 md:col-span-2 w-full flex justify-center mt-[36px]">
+                                    <div className="col-span-1 md:col-span-2 w-full flex justify-center mt-[12px]">
                                         <button
-                                            disabled={!formData.accountHolderName || !formData.accountNumber || !formData.ifscCode || !formData.bankName || !formData.cancelledChequeFile || isLoading || isAnyUploading || !!fieldErrors.accountHolderName || !!fieldErrors.accountNumber || !!fieldErrors.ifscCode}
+                                            disabled={isLoading || !!fieldErrors.udyogAadhar || !!fieldErrors.gstNumber || isAnyUploading}
                                             onClick={handleNext}
-                                            className="w-full md:w-[calc(50%-12px)] h-[56px] bg-[#0F3D2E] text-white text-[16px] font-['Plus_Jakarta_Sans'] font-medium rounded-[8px] hover:bg-[#0a291f] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                                            className="w-full mt-6 mb-6 md:w-[calc(50%-12px)] h-[56px] bg-[#0F3D2E] text-white text-[16px] font-['Plus_Jakarta_Sans'] font-medium rounded-[8px] hover:bg-[#0a291f] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                                         >
-                                            {isLoading ? t('auth:saving') : (!formData.accountHolderName || !formData.accountNumber || !formData.ifscCode || !formData.bankName || !formData.cancelledChequeFile) ? t('auth:save_continue') : t('auth:save_finish')}
+                                            {isLoading ? t('auth:saving') : t('auth:save_finish')}
                                         </button>
                                     </div>
                                 </form>
-                            </div>
+                            </>
                         )}
                     </div >
                 </div >

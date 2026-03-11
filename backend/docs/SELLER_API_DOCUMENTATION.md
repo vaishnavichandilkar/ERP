@@ -81,8 +81,8 @@ The primary login gateway.
 | **Step 2** | `/onboarding/step2-mobile` | `POST` | Register mobile and receive OTP |
 | **Step 3** | `/onboarding/step3-verify` | `POST` | Verify OTP and receive JWT |
 | **Step 4** | `/onboarding/step4-details` | `PUT` | Update personal profile |
-| **Step 5** | `/onboarding/step5-business` | `POST` | Upload business docs |
-| **Step 6** | `/onboarding/step6-shop` | `POST` | Shop detail config |
+| **Step 5** | `/onboarding/step5-shop` | `POST` | Shop detail config |
+| **Step 6** | `/onboarding/step6-business` | `POST` | Upload business docs |
 | **Step 7** | `/onboarding/step7-complete` | `POST` | Final submit for approval |
 
 ---
@@ -134,16 +134,6 @@ The primary login gateway.
     }
     ```
 
-### Step 4: Business Documents (Evidence Upload)
-*   **Endpoint**: `/onboarding/step4-business` | `POST`
-*   **Headers**: `Content-Type: multipart/form-data`
-*   **Form Fields**:
-    *   `udyogAadharNumber` (text): e.g. "MH-12-UDYOG789"
-    *   `gstNumber` (text): e.g. "27AAACR1234A1Z1"
-    *   `udyogAadharCertificate` (file): PDF/Image (Max 5MB)
-    *   `gstCertificate` (file): PDF/Image (Max 5MB)
-    *   `businessProof` (file): Optional PDF/Image
-
 ### Step 5: Shop & Physical Location
 *   **Endpoint**: `/onboarding/step5-shop` | `POST`
 *   **Headers**: `Content-Type: multipart/form-data`
@@ -155,6 +145,16 @@ The primary login gateway.
     *   `state`: "Karnataka"
     *   `district`: "Bengaluru"
     *   `shopActLicense` (file): Required PDF.
+
+### Step 6: Business Verification (Evidence Upload)
+*   **Endpoint**: `/onboarding/step6-business` | `POST`
+*   **Headers**: `Content-Type: multipart/form-data`
+*   **Form Fields**:
+    *   `udyogAadharNumber` (text): e.g. "MH-12-UDYOG789"
+    *   `gstNumber` (text): e.g. "27AAACR1234A1Z1"
+    *   `udyogAadharCertificate` (file): PDF/Image (Max 5MB)
+    *   `gstCertificate` (file): PDF/Image (Max 5MB)
+    *   `businessProof` (file): Optional PDF/Image
 
 ### Step 7: Final Submission
 *   **Endpoint**: `/onboarding/step7-complete` | `POST`
