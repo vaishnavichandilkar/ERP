@@ -100,6 +100,27 @@ async function main() {
     }
     console.log('GST UQC Codes seeded.');
 
+    // 6. Seed Account Groups
+    const accountGroups = [
+        "Direct Expense",
+        "Indirect Expense",
+        "Purchase",
+        "Opening Stock",
+        "Direct Sale",
+        "Indirect Sale",
+        "Sale",
+        "Closing Stock"
+    ];
+
+    for (const groupName of accountGroups) {
+        await prisma.accountGroup.upsert({
+            where: { group_name: groupName },
+            update: {},
+            create: { group_name: groupName }
+        });
+    }
+    console.log('Account Groups seeded.');
+
     console.log('Seeding completed.');
 }
 
