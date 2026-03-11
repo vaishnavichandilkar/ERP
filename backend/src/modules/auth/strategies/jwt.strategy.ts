@@ -36,10 +36,18 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             throw new UnauthorizedException('Account blocked or not found');
         }
 
+        const userProfile = await this.prisma.userProfile.findUnique({
+            where: { phone_number: user.phone }
+        });
+
         return {
             id: user.id,
             userId: user.id,
-            username: user.phone || user.email,
+            phone: user.phone,
+            name: userProfile?.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.phone,
+            email: userProfile?.email || user.email,
+            username: user.username || user.phone,
+            profileImage: userProfile?.profile_image,
             role: user.role.toUpperCase(),
             isApproved: user.isApproved,
             approvalStatus: user.approvalStatus || 'PENDING',

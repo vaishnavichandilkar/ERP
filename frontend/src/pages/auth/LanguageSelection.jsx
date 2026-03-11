@@ -62,7 +62,10 @@ const LanguageSelection = () => {
                                     name="language"
                                     value={lang.code}
                                     checked={selectedLang === lang.code}
-                                    onChange={() => setSelectedLang(lang.code)}
+                                    onChange={() => {
+                                        setSelectedLang(lang.code);
+                                        i18n.changeLanguage(lang.code);
+                                    }}
                                     className="sr-only"
                                 />
                                 <div className={`

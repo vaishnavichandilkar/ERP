@@ -44,5 +44,19 @@
     "new_user_tab": "नया उपयोगकर्ता",
     "products_tab": "उत्पाद",
     "complaints_tab": "शिकायतें",
-    "payments_tab": "भुगतान"
+    "payments_tab": "भुगतान",
+    "edit_profile": "प्रोफ़ाइल संपादित करें",
+    "click_camera_update": "फोटो अपडेट करने के लिए कैमरे पर क्लिक करें",
+    "display_name": "प्रदर्शित नाम",
+    "enter_name_placeholder": "अपना नाम दर्ज करें",
+    "email_label": "ईमेल",
+    "permanently_linked": "स्थायी रूप से लिंक किया गया",
+    "no_email_registered": "कोई ईमेल पंजीकृत नहीं है (अभी जोड़ें)",
+    "email_once_note": "* नोट: आप अपना ईमेल केवल एक बार सेट कर सकते हैं।",
+    "cancel_btn": "रद्द करें",
+    "save_changes_btn": "परिवर्तनों को सुरक्षित करें",
+    "saving_btn": "सुरक्षित किया जा रहा है...",
+    "valid_email_error": "कृपया एक मान्य ईमेल पता दर्ज करें",
+    "upload_image_error": "छवि अपलोड करने में विफल",
+    "update_profile_error": "प्रोफ़ाइल अपडेट करने में विफल"
 }

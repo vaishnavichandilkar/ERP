@@ -164,7 +164,11 @@ const VerifyOTP = () => {
                     }
                 }
 
-                navigate('/success', { state: { mode } });
+                if (mode === 'signup') {
+                    navigate('/signup?step=1', { replace: true });
+                } else {
+                    navigate('/success', { state: { mode } });
+                }
             }
         } catch (err) {
             setError(err.response?.data?.message || t('invalid_otp'));
@@ -198,30 +202,32 @@ const VerifyOTP = () => {
 
     return (
         <AuthLayout hideLeftPanel={true}>
-            <div className="text-left w-full max-w-[480px] mx-auto flex flex-col justify-center min-h-[100dvh] md:min-h-0 py-8 md:py-0 relative">
-                {/* Language Switcher */}
-                <div className="absolute top-8 right-0 md:top-0">
-                    <LanguageSwitcher />
-                </div>
+            <div className="text-left w-full mx-auto flex flex-col min-h-0 relative">
+                {!localStorage.getItem('languageConfirmed') && (
+                    <div className="absolute top-8 right-0 md:top-0">
+                        <LanguageSwitcher />
+                    </div>
+                )}
+
+                <button
+                    onClick={() => navigate(-1)}
+                    className="p-2 -ml-2 mb-2 text-gray-900 rounded-full hover:bg-gray-100 transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center self-start focus:outline-none"
+                >
+                    <ArrowLeft size={20} />
+                </button>
 
                 <div className="flex justify-between items-center mb-12 w-full">
                     <img
                         src={logo}
                         alt="WeighPro Logo"
-                        className="h-18 block"
+                        className="h-18 w-auto block object-contain self-start"
                         onError={(e) => { e.target.style.display = 'none' }}
                     />
                     <div className="bg-[#F3F4F6] text-[#374151] px-[12px] py-[6px] rounded-full text-[12px] font-medium">
-                        {t('step_label')} 00/04
+                        {t('step_label')} 00/03
                     </div>
                 </div>
                 <div className="text-left w-full mb-8">
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="p-2 -ml-2 mb-2 text-gray-900 rounded-full hover:bg-gray-100 transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center focus:outline-none"
-                    >
-                        <ArrowLeft size={20} />
-                    </button>
                     <h2 className="text-[30px] font-['Geist_Sans'] font-bold mb-1 leading-tight text-gray-900">
                         {t('otp_sent_title')}
                     </h2>

@@ -25,3 +25,8 @@ export const resendOtpApi = async (phone) => {
     const response = await axiosInstance.post(AUTH_ENDPOINTS.RESEND_OTP, { phone });
     return response.data;
 };
+
+export const updateProfileApi = async (profileData) => {
+    const response = await axiosInstance.post('/auth/update-profile', profileData);
+    return response.data;
+};

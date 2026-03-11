@@ -21,7 +21,7 @@ const Success = () => {
 
     return (
         <AuthLayout hideLeftPanel={true}>
-            <div className="text-center pt-8 md:pt-0 w-full max-w-sm mx-auto">
+            <div className="text-center md:pt-0 w-full max-w-sm mx-auto">
                 <img
                     src={logo}
                     alt="Verified Logo"

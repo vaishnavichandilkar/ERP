@@ -76,4 +76,13 @@ export class AuthController {
     updateLanguage(@Request() req, @Body('language') language: string) {
         return this.authService.updateLanguage(req.user.userId, language);
     }
+
+    @Post('update-profile')
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard)
+    @ApiOperation({ summary: 'Update user profile' })
+    @ApiResponse({ status: 200, description: 'Profile updated successfully.' })
+    updateProfile(@Request() req, @Body() dto: { name: string; email: string; profileImage: string }) {
+        return this.authService.updateProfile(req.user.userId, dto);
+    }
 }

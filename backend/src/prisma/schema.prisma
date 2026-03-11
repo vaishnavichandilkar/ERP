@@ -13,6 +13,7 @@ model User {
   last_name             String?
   email                 String?                @unique
   phone                 String?                @unique
+  username              String?                @unique
   selected_language     String?
   role                  Role                   @default(buyer)
   refresh_token         String?
@@ -30,6 +31,18 @@ model User {
   sellerDocuments       SellerDocument[]       @relation("UploadedByUser")
   shopDetail            ShopDetail?
   @@map("User")
+}
+
+model UserProfile {
+  id            Int      @id @default(autoincrement())
+  phone_number  String   @unique
+  name          String?
+  email         String?
+  profile_image String?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  @@map("user_profiles")
 }
 
 

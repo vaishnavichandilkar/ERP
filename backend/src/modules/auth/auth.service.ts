@@ -145,13 +145,21 @@ export class AuthService {
             data: { refresh_token: refreshToken }
         });
 
+        // 3. Fetch Profile from user_profiles table
+        const userProfile = await this.prisma.userProfile.findUnique({
+            where: { phone_number: user.phone }
+        });
+
         return {
             accessToken,
             refreshToken,
             user: {
                 id: user.id,
-                name: user.first_name || user.last_name || user.phone,
-                username: username,
+                phone: user.phone,
+                name: userProfile?.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.phone,
+                email: userProfile?.email || user.email,
+                username: user.username || username,
+                profileImage: userProfile?.profile_image,
                 role: roleType,
                 approvalStatus: user.approvalStatus,
                 isFirstApprovalLogin: user.isFirstApprovalLogin,
@@ -177,5 +185,55 @@ export class AuthService {
 
     async resendOtp(phone: string) {
         return this.smsService.resendOtp(phone);
+    }
+
+    async updateProfile(userId: number, data: { name?: string; email?: string; profileImage?: string }) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user) throw new NotFoundException('User not found');
+
+        const [firstName, ...lastNameParts] = (data.name || '').split(' ');
+        const lastName = lastNameParts.join(' ');
+
+        try {
+            // Update User table basics
+            await this.prisma.user.update({
+                where: { id: userId },
+                data: {
+                    first_name: firstName || undefined,
+                    last_name: lastName || undefined,
+                    email: data.email,
+                }
+            });
+
+            // Upsert UserProfile record based on phone_number
+            const userProfile = await this.prisma.userProfile.upsert({
+                where: { phone_number: user.phone },
+                update: {
+                    name: data.name,
+                    email: data.email,
+                    profile_image: data.profileImage,
+                },
+                create: {
+                    phone_number: user.phone,
+                    name: data.name,
+                    email: data.email,
+                    profile_image: data.profileImage,
+                }
+            });
+
+            return {
+                id: user.id,
+                phone: user.phone,
+                name: userProfile.name,
+                email: userProfile.email,
+                username: user.username || user.phone,
+                profileImage: userProfile.profile_image,
+            };
+        } catch (error) {
+            if (error.code === 'P2002') {
+                throw new BadRequestException('Email is already registered by another user');
+            }
+            throw error;
+        }
     }
 }

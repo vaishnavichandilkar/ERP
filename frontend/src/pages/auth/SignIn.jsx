@@ -5,7 +5,7 @@ import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
 import LanguageSwitcher from '../../components/common/LanguageSwitcher';
 import logo from '../../assets/images/ERP_Logo2.png';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ArrowLeft } from 'lucide-react';
 import { sendLoginOtpApi } from '../../services/authService';
 import { useTranslation } from 'react-i18next';
 
@@ -51,16 +51,25 @@ const SignIn = () => {
 
     return (
         <AuthLayout hideLeftPanel={true}>
-            <div className="relative text-left w-full box-border">
+            <div className="relative text-left w-full box-border flex flex-col pt-0">
+                <button
+                    onClick={() => navigate(-1)}
+                    className="p-2 -ml-2 mb-4 text-gray-900 rounded-full hover:bg-gray-100 transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center self-start focus:outline-none"
+                >
+                    <ArrowLeft size={20} />
+                </button>
+
                 {/* Language Switcher for Auth Screens */}
-                <div className="absolute -top-12 -right-4 lg:-top-16 lg:-right-8">
-                    <LanguageSwitcher />
-                </div>
+                {!localStorage.getItem('languageConfirmed') && (
+                    <div className="absolute top-2 right-0">
+                        <LanguageSwitcher />
+                    </div>
+                )}
 
                 <img
                     src={logo}
                     alt="WeighPro Logo"
-                    className="h-18 mb-6 md:mb-4 block"
+                    className="h-18 w-auto mb-2 md:mb-4 block object-contain self-start"
                     onError={(e) => { e.target.style.display = 'none' }}
                 />
                 <h2 className="text-[30px] font-['Geist_Sans'] font-bold mb-1 leading-tight text-gray-900">

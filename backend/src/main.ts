@@ -3,6 +3,8 @@ import { AppModule } from './app.module';
 import { setupSwagger } from './config/swagger.config';
 import { ValidationPipe } from '@nestjs/common';
 import { GlobalExceptionFilter } from './common/exceptions/global-exception.filter';
+import { join } from 'path';
+import * as express from 'express';
 
 (BigInt.prototype as any).toJSON = function () {
     return this.toString();
@@ -10,6 +12,9 @@ import { GlobalExceptionFilter } from './common/exceptions/global-exception.filt
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
+
+    // Static Assets
+    app.use('/uploads', express.static(join(process.cwd(), 'uploads')));
 
     // Global Config
     app.setGlobalPrefix('api/v1');

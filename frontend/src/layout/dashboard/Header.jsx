@@ -1,28 +1,39 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Menu, Printer, Wifi, Settings as SettingsIcon, HelpCircle, Search, Bell, User, Globe, ChevronDown, LayoutDashboard, FileBarChart, Database, ShoppingCart, TrendingUp, Activity, Box, Users, Layers, Wrench, DollarSign, FileText, ShieldCheck } from 'lucide-react';
+import { Menu, User, Globe, ChevronDown, LayoutDashboard, FileBarChart, Database, ShoppingCart, TrendingUp, Settings as SettingsIcon } from 'lucide-react';
 import logo from '../../assets/images/ERP_Logo2.png';
-import SearchPopup from '../../components/common/SearchPopup';
-import NotificationPopup from '../../components/common/NotificationPopup';
 import ProfilePopup from '../../components/common/ProfilePopup';
-import ChangePasswordModal from '../../components/common/ChangePasswordModal';
-import PasswordSuccessModal from '../../components/common/PasswordSuccessModal';
 import LogoutModal from '../../components/common/LogoutModal';
 import StatusPopup from '../../components/common/StatusPopup';
+import EditProfileModal from '../../components/common/EditProfileModal';
 import LanguageSwitcher from '../../components/common/LanguageSwitcher';
+import { getProfileApi } from '../../services/authService';
 import { useTranslation } from 'react-i18next';
 
 const Header = ({ setSidebarOpen }) => {
     const { t } = useTranslation(['dashboard', 'common', 'modules', 'terms']);
-    const isConnected = false;
     const location = useLocation();
     const navigate = useNavigate();
 
     // Popup states
     const [activePopupType, setActivePopupType] = useState(null);
-    const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
-    const [isPasswordSuccessOpen, setIsPasswordSuccessOpen] = useState(false);
     const [isLogoutOpen, setIsLogoutOpen] = useState(false);
+    const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+    const [userData, setUserData] = useState(JSON.parse(localStorage.getItem('user') || 'null'));
+
+    React.useEffect(() => {
+        const fetchUserProfile = async () => {
+            try {
+                const data = await getProfileApi();
+                setUserData(data);
+                localStorage.setItem('user', JSON.stringify(data));
+            } catch (err) {
+                console.error('Failed to fetch profile', err);
+            }
+        };
+
+        fetchUserProfile();
+    }, []);
 
     // Determine Breadcrumbs dynamically
     const renderBreadcrumbs = () => {
@@ -95,31 +106,6 @@ const Header = ({ setSidebarOpen }) => {
 
             {/* Right Box: Setup icons */}
             <div className="flex items-center gap-2 lg:gap-5">
-                {/* Indicator Group */}
-                {(location.pathname !== '/seller/dashboard/facility/add' && location.pathname !== '/seller/dashboard/facility/view' && location.pathname !== '/seller/dashboard/facility/update') && (
-                    <div className="hidden lg:flex items-center gap-4 lg:gap-5 border-r border-[#E5E7EB] pr-4 lg:pr-5">
-                        <div className="flex items-center gap-1.5">
-                            <Printer size={18} className={isConnected ? "text-[#22C55E]" : "text-[#EF4444] opacity-80"} />
-                            <span className={`text-[14px] font-medium ${isConnected ? "text-[#22C55E]" : "text-[#EF4444] opacity-80"}`}>
-                                {isConnected ? t('on') : t('off')}
-                            </span>
-                        </div>
-                        <div className="w-px h-4 bg-[#E5E7EB]"></div>
-                        <div className="flex items-center gap-1.5">
-                            <Wifi size={18} className={isConnected ? "text-[#22C55E]" : "text-[#EF4444] opacity-80"} />
-                            <span className={`text-[14px] font-medium ${isConnected ? "text-[#22C55E]" : "text-[#EF4444] opacity-80"}`}>
-                                {isConnected ? t('on') : t('off')}
-                            </span>
-                        </div>
-                        <div className="w-px h-4 bg-[#E5E7EB]"></div>
-                        <div className="flex items-center gap-1.5">
-                            <SettingsIcon size={18} className={isConnected ? "text-[#22C55E]" : "text-[#EF4444] opacity-80"} />
-                            <span className={`text-[14px] font-medium ${isConnected ? "text-[#22C55E]" : "text-[#EF4444] opacity-80"}`}>
-                                {isConnected ? t('on') : t('off')}
-                            </span>
-                        </div>
-                    </div>
-                )}
 
                 {/* Rightmost Action icons */}
                 <div className="flex items-center gap-3 lg:gap-4 relative">
@@ -141,31 +127,6 @@ const Header = ({ setSidebarOpen }) => {
                             <ChevronDown size={14} strokeWidth={1.5} className="ml-0.5 transition-transform duration-200" />
                         )}
                     </button>
-                    {(location.pathname !== '/seller/dashboard/facility/add' && location.pathname !== '/seller/dashboard/facility/view' && location.pathname !== '/seller/dashboard/facility/update') && (
-                        <button className="hidden lg:block text-[#4B5563] hover:text-[#111827] transition-colors">
-                            <HelpCircle size={20} strokeWidth={1.5} />
-                        </button>
-                    )}
-                    <button
-                        onClick={() => setActivePopupType('search')}
-                        className={`p-1.5 rounded-full transition-all duration-200 ease-in-out
-                            ${activePopupType === 'search'
-                                ? 'text-[#166534] scale-110 shadow-[0_0_15px_rgba(22,101,52,0.4)] bg-[#166534]/10 z-[60] relative'
-                                : 'text-[#4B5563] hover:text-[#166534] hover:scale-110 hover:shadow-[0_0_15px_rgba(22,101,52,0.4)] hover:bg-[#166534]/10 relative z-10'
-                            }`}
-                    >
-                        <Search size={18} className="lg:w-[20px] lg:h-[20px]" strokeWidth={1.5} />
-                    </button>
-                    <button
-                        onClick={() => setActivePopupType('notification')}
-                        className={`p-1.5 rounded-full transition-all duration-200 ease-in-out
-                            ${activePopupType === 'notification'
-                                ? 'text-[#166534] scale-110 shadow-[0_0_15px_rgba(22,101,52,0.4)] bg-[#166534]/10 z-[60] relative'
-                                : 'text-[#4B5563] hover:text-[#166534] hover:scale-110 hover:shadow-[0_0_15px_rgba(22,101,52,0.4)] hover:bg-[#166534]/10 relative z-10'
-                            }`}
-                    >
-                        <Bell size={18} className="lg:w-[20px] lg:h-[20px]" strokeWidth={1.5} />
-                    </button>
 
                     <button
                         onClick={() => setActivePopupType('profile')}
@@ -175,8 +136,14 @@ const Header = ({ setSidebarOpen }) => {
                                 : 'shadow-sm hover:bg-[#4D7C0F] hover:scale-110 hover:shadow-[0_0_15px_rgba(22,101,52,0.4)] relative z-10'
                             }`}
                     >
-                        <User size={18} className="mt-1 lg:hidden" strokeWidth={1.5} />
-                        <User size={22} className="mt-1 hidden lg:block" strokeWidth={1.5} />
+                        {userData?.profileImage ? (
+                            <img src={`http://localhost:3000/${userData.profileImage}`} alt="Avatar" className="w-full h-full object-cover" />
+                        ) : (
+                            <>
+                                <User size={18} className="mt-1 lg:hidden" strokeWidth={1.5} />
+                                <User size={22} className="mt-1 hidden lg:block" strokeWidth={1.5} />
+                            </>
+                        )}
                     </button>
                 </div>
             </div>
@@ -184,34 +151,15 @@ const Header = ({ setSidebarOpen }) => {
 
             {/* Popups */}
             <StatusPopup isOpen={activePopupType === 'status'} activeTrigger={activePopupType} onClose={() => setActivePopupType(null)} />
-            <SearchPopup isOpen={activePopupType === 'search'} activeTrigger={activePopupType} onClose={() => setActivePopupType(null)} />
-            <NotificationPopup isOpen={activePopupType === 'notification'} activeTrigger={activePopupType} onClose={() => setActivePopupType(null)} />
             <ProfilePopup
                 isOpen={activePopupType === 'profile'}
                 activeTrigger={activePopupType}
                 onClose={() => setActivePopupType(null)}
-                onChangePassword={() => setIsChangePasswordOpen(true)}
+                user={userData}
+                onMyProfile={() => setIsEditProfileOpen(true)}
                 onLogout={() => setIsLogoutOpen(true)}
             />
 
-            {/* Modals */}
-            <ChangePasswordModal
-                isOpen={isChangePasswordOpen}
-                onClose={() => setIsChangePasswordOpen(false)}
-                onSuccess={() => {
-                    setIsChangePasswordOpen(false);
-                    // Slight delay to allow first modal to fade before second pops
-                    setTimeout(() => setIsPasswordSuccessOpen(true), 300);
-                }}
-            />
-            <PasswordSuccessModal
-                isOpen={isPasswordSuccessOpen}
-                onClose={() => setIsPasswordSuccessOpen(false)}
-                onGoToSignIn={() => {
-                    setIsPasswordSuccessOpen(false);
-                    setTimeout(() => setIsLogoutOpen(true), 300);
-                }}
-            />
             <LogoutModal
                 isOpen={isLogoutOpen}
                 onClose={() => setIsLogoutOpen(false)}
@@ -224,6 +172,13 @@ const Header = ({ setSidebarOpen }) => {
                     // Redirect to landing page
                     navigate('/');
                 }}
+            />
+
+            <EditProfileModal
+                isOpen={isEditProfileOpen}
+                onClose={() => setIsEditProfileOpen(false)}
+                user={userData}
+                onUpdateSuccess={(updatedUser) => setUserData(updatedUser)}
             />
         </header>
     );

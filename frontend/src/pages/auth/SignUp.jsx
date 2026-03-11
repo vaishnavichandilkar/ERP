@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import AuthLayout from '../../layout/auth/AuthLayout';
-import { Upload, FileText, Trash2, ChevronDown, CloudUpload } from 'lucide-react';
+import { Upload, FileText, Trash2, ChevronDown, CloudUpload, ArrowLeft } from 'lucide-react';
 import logo from '../../assets/images/ERP_Logo2.png';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../../components/common/LanguageSwitcher';
+import RegistrationSuccessModal from '../../components/common/RegistrationSuccessModal';
 
-const FileUploadBox = ({ title, file, onFileChange, onRemove, onUploadStateChange }) => {
+const FileUploadBox = ({ title, file, onFileChange, onRemove, onUploadStateChange, optional }) => {
     const { t } = useTranslation(['auth', 'common']);
     const [progress, setProgress] = React.useState(0);
     const [error, setError] = React.useState('');
@@ -66,7 +67,7 @@ const FileUploadBox = ({ title, file, onFileChange, onRemove, onUploadStateChang
     return (
         <div className="flex flex-col w-full">
             <p className="text-[14px] text-[#374151] mb-2 font-['Plus_Jakarta_Sans'] font-medium">
-                {typeof title === 'string' && title.includes('(Optional)') ? title : <>{title} <span className="text-red-500">*</span></>}
+                {title}{' '}{optional ? <span className="text-[#9CA3AF] font-normal">{t('auth:optional')}</span> : <span className="text-red-500">*</span>}
             </p>
             {file ? (
                 <div className="h-[120px] border border-[#D1D5DB] rounded-[8px] bg-[#FFFFFF] px-5 flex items-center justify-between w-full relative overflow-hidden">
@@ -125,13 +126,15 @@ const FileUploadBox = ({ title, file, onFileChange, onRemove, onUploadStateChang
     );
 };
 
-const CustomInput = ({ label, type = 'text', value, onChange, onBlur, placeholder, name, select, children, className = '', prefix, error, info, ...rest }) => (
-    <div className={`flex flex-col w-full ${className}`}>
-        {label && (
-            <label className="text-[14px] text-[#374151] mb-2 font-['Plus_Jakarta_Sans'] font-medium block">
-                {typeof label === 'string' && label.includes('(Optional)') ? label : <>{label} <span className="text-red-500">*</span></>}
-            </label>
-        )}
+const CustomInput = ({ label, type = 'text', value, onChange, onBlur, placeholder, name, select, children, className = '', prefix, error, info, optional, ...rest }) => {
+    const { t } = useTranslation(['auth', 'common']);
+    return (
+        <div className={`flex flex-col w-full ${className}`}>
+            {label && (
+                <label className="text-[14px] text-[#374151] mb-2 font-['Plus_Jakarta_Sans'] font-medium block">
+                    {label}{' '}{optional ? <span className="text-[#9CA3AF] font-normal">{t('auth:optional')}</span> : <span className="text-red-500">*</span>}
+                </label>
+            )}
         <div className="relative w-full">
             {select ? (
                 <>
@@ -189,7 +192,8 @@ const CustomInput = ({ label, type = 'text', value, onChange, onBlur, placeholde
             </div>
         )}
     </div>
-);
+    );
+};
 
 const SignUp = () => {
     const { t } = useTranslation(['auth', 'common']);
@@ -228,6 +232,7 @@ const SignUp = () => {
         state: '',
     });
     const [isManualLocation, setIsManualLocation] = useState(false);
+    const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
     useEffect(() => {
         if (formData.pinCode.length === 6 && /^\d{6}$/.test(formData.pinCode)) {
@@ -403,7 +408,7 @@ const SignUp = () => {
                     otherDocFile: formData.otherDocFile
                 });
                 await completeOnboardingApi();
-                navigate('/success', { state: { mode: 'signup' } });
+                setIsSuccessModalOpen(true);
             }
         } catch (err) {
             const apiMsg = err.response?.data?.message || 'An error occurred while saving your data. Please try again.';
@@ -459,6 +464,12 @@ const SignUp = () => {
         <AuthLayout maxWidth={step >= 2 ? "100%" : "420px"} hideLeftPanel={true} disableRightScroll={step === 1}>
             {step < 2 ? (
                 <div className="text-left w-full max-w-[420px] mx-auto flex flex-col justify-center min-h-[100dvh] md:min-h-0 py-6 md:py-0 px-2 md:px-0 -mt-2 -mb-4 relative">
+                    <button
+                        onClick={handleBack}
+                        className="p-2 -ml-2 mb-4 text-gray-900 rounded-full hover:bg-gray-100 transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center self-start focus:outline-none"
+                    >
+                        <ArrowLeft size={20} />
+                    </button>
                     {/* Language Switcher */}
                     <div className="absolute -top-12 -right-4 lg:-top-16 lg:-right-8">
                         <LanguageSwitcher />
@@ -599,6 +610,12 @@ const SignUp = () => {
             ) : (
                 <div className="w-full min-h-[100dvh] md:min-h-0 h-full flex justify-center items-center bg-[#FFFFFF] py-8 md:py-0">
                     <div className="w-full max-w-[860px] sm:px-[40px] px-6 flex flex-col justify-center items-start">
+                        <button
+                            onClick={handleBack}
+                            className="p-2 -ml-2 mb-4 text-gray-900 rounded-full hover:bg-gray-100 transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center self-start focus:outline-none"
+                        >
+                            <ArrowLeft size={20} />
+                        </button>
                         {step === 2 && (
                             <div className="w-full sm:-mt-6">
                                 <div className="flex justify-between items-center mb-5 w-full">
@@ -711,7 +728,7 @@ const SignUp = () => {
                                     {error && <div className="mb-4 text-red-500 text-[13px] font-medium animate-in fade-in slide-in-from-top-1 duration-300">{error}</div>}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-[24px] w-full">
                                         <CustomInput
-                                            label={t('auth:udyog_aadhar') + " " + t('auth:optional')}
+                                            label={t('auth:udyog_aadhar')}
                                             placeholder={t('auth:placeholder_udyog')}
                                             name="udyogAadhar"
                                             value={formData.udyogAadhar}
@@ -720,7 +737,8 @@ const SignUp = () => {
                                             error={fieldErrors.udyogAadhar}
                                         />
                                         <CustomInput
-                                            label={t('auth:placeholder_gst_opt')}
+                                            label={t('auth:gst')}
+                                            optional={true}
                                             placeholder={t('auth:placeholder_gst')}
                                             name="gstNumber"
                                             value={formData.gstNumber}
@@ -729,14 +747,16 @@ const SignUp = () => {
                                             error={fieldErrors.gstNumber}
                                         />
                                         <FileUploadBox
-                                            title={t('auth:upload_udyog') + " " + t('auth:optional')}
+                                            title={t('auth:upload_udyog')}
+                                            optional={true}
                                             file={formData.udyogAadharFile}
                                             onFileChange={(e) => handleFileChange('udyogAadharFile', e.target.files[0])}
                                             onRemove={() => handleFileRemove('udyogAadharFile')}
                                             onUploadStateChange={(isUploading) => handleUploadStateChange('udyogAadharFile', isUploading)}
                                         />
                                         <FileUploadBox
-                                            title={t('auth:upload_gst') + " " + t('auth:optional')}
+                                            title={t('auth:upload_gst')}
+                                            optional={true}
                                             file={formData.gstFile}
                                             onFileChange={(e) => handleFileChange('gstFile', e.target.files[0])}
                                             onRemove={() => handleFileRemove('gstFile')}
@@ -745,7 +765,8 @@ const SignUp = () => {
                                         <div className="col-span-1 md:col-span-2 w-full flex justify-center mb-2">
                                             <div className="w-full md:w-[calc(50%-12px)]">
                                                 <FileUploadBox
-                                                    title={t('auth:upload_other') + " " + t('auth:optional')}
+                                                    title={t('auth:upload_other')}
+                                                    optional={true}
                                                     file={formData.otherDocFile}
                                                     onFileChange={(e) => handleFileChange('otherDocFile', e.target.files[0])}
                                                     onRemove={() => handleFileRemove('otherDocFile')}
@@ -771,6 +792,10 @@ const SignUp = () => {
                 </div >
             )
             }
+            <RegistrationSuccessModal
+                isOpen={isSuccessModalOpen}
+                onContinue={() => navigate('/application-status')}
+            />
         </AuthLayout >
     );
 };

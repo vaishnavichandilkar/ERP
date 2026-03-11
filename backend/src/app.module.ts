@@ -13,6 +13,7 @@ import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { SellerOnboardingModule } from './modules/seller-onboarding/seller-onboarding.module';
 import { SuperAdminModule } from './modules/superadmin/superadmin.module';
 import { MasterModule } from './modules/Master/master.module';
+import { ProfileModule } from './modules/profile/profile.module';
 import { AppController } from './app.controller';
 @Module({
     imports: [
@@ -28,6 +29,7 @@ import { AppController } from './app.controller';
         SellerOnboardingModule,
         SuperAdminModule,
         MasterModule,
+        ProfileModule,
     ],
     controllers: [AppController],
     providers: [],

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { User, Lock } from 'lucide-react';
+import { User } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-const ProfilePopup = ({ isOpen, activeTrigger, onClose, onChangePassword, onLogout }) => {
+const ProfilePopup = ({ isOpen, activeTrigger, onClose, user, onMyProfile, onLogout }) => {
     const { t } = useTranslation(['dashboard', 'common']);
     const [isVisible, setIsVisible] = useState(false);
     const popupRef = useRef(null);
@@ -80,30 +80,30 @@ const ProfilePopup = ({ isOpen, activeTrigger, onClose, onChangePassword, onLogo
                 >
                     {/* User Header Section */}
                     <div className="flex items-center p-5 border-b border-gray-100 bg-white">
-                        <div className="w-[46px] h-[46px] rounded-full bg-[#65A30D] text-white flex items-center justify-center font-semibold text-[18px] shrink-0">
-                            <span className="block mt-0.5">V</span>
+                        <div className="w-[46px] h-[46px] rounded-full bg-[#65A30D] text-white flex items-center justify-center font-semibold text-[18px] shrink-0 overflow-hidden">
+                            {user?.profileImage ? (
+                                <img src={`http://localhost:3000/${user.profileImage}`} alt="Profile" className="w-full h-full object-cover" />
+                            ) : (
+                                <span className="block mt-0.5">{user?.name?.charAt(0) || 'U'}</span>
+                            )}
                         </div>
-                        <div className="ml-3">
-                            <h3 className="text-[15px] font-semibold text-gray-800 leading-tight">Vallabh Ghatge</h3>
-                            <p className="text-[13px] text-gray-500 mt-0.5">vallabhg123@gmail.com</p>
+                        <div className="ml-3 overflow-hidden">
+                            <h3 className="text-[15px] font-semibold text-gray-800 leading-tight truncate">{user?.name || 'User'}</h3>
+                            <p className="text-[13px] text-gray-500 mt-0.5 truncate">{user?.email || 'user@example.com'}</p>
                         </div>
                     </div>
 
                     {/* Action List */}
                     <div className="flex flex-col py-2 bg-white">
-                        <button className="flex items-center px-5 py-3 hover:bg-gray-50 text-gray-700 hover:text-[#166534] transition-colors group">
-                            <User className="w-[18px] h-[18px] text-gray-400 group-hover:text-[#166534] transition-colors" />
-                            <span className="ml-3 text-[14px] font-medium">{t('my_profile')}</span>
-                        </button>
                         <button
                             onClick={() => {
                                 onClose();
-                                onChangePassword();
+                                onMyProfile();
                             }}
-                            className="flex items-center w-full px-5 py-3 hover:bg-gray-50 text-gray-700 hover:text-[#166534] transition-colors group"
+                            className="flex items-center px-5 py-3 hover:bg-gray-50 text-gray-700 hover:text-[#166534] transition-colors group"
                         >
-                            <Lock className="w-[18px] h-[18px] text-gray-400 group-hover:text-[#166534] transition-colors" />
-                            <span className="ml-3 text-[14px] font-medium">{t('change_password')}</span>
+                            <User className="w-[18px] h-[18px] text-gray-400 group-hover:text-[#166534] transition-colors" />
+                            <span className="ml-3 text-[14px] font-medium">{t('my_profile')}</span>
                         </button>
                     </div>
 

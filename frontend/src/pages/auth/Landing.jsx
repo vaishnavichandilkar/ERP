@@ -65,20 +65,20 @@ const Landing = () => {
                 </div>
             )}
 
-            <div className="text-left w-full box-border pt-4">
+            <div className="text-left w-full min-h-0 flex flex-col box-border pt-0">
                 {/* Back Button */}
                 <button
                     onClick={handleBackToLanguage}
-                    className="flex items-center text-gray-500 hover:text-gray-800 transition-colors mb-6 group"
+                    className="p-2 -ml-2 mb-2 text-gray-900 rounded-full hover:bg-gray-100 transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center self-start focus:outline-none"
                 >
-                    <ArrowLeft className="w-5 h-5 mr-2" />
+                    <ArrowLeft size={20} />
                 </button>
 
                 <div className="mb-6 md:mb-4">
                     <img
                         src={logo}
                         alt="ERP Logo"
-                        className="h-18 mb-3 block pl-0 ml-0"
+                        className="h-18 w-auto mb-3 block pl-0 ml-0 object-contain self-start"
                         style={{ paddingLeft: '0px', marginLeft: '0px' }}
                         onError={(e) => { e.target.style.display = 'none' }}
                     />

@@ -44,5 +44,19 @@
     "new_user_tab": "New User",
     "products_tab": "Products",
     "complaints_tab": "Complaints",
-    "payments_tab": "Payments"
+    "payments_tab": "Payments",
+    "edit_profile": "Edit Profile",
+    "click_camera_update": "Click the camera to update photo",
+    "display_name": "Display Name",
+    "enter_name_placeholder": "Enter your name",
+    "email_label": "Email",
+    "permanently_linked": "Permanently Linked",
+    "no_email_registered": "No email registered (Add now)",
+    "email_once_note": "* Note: You can only set your email once.",
+    "cancel_btn": "Cancel",
+    "save_changes_btn": "Save Changes",
+    "saving_btn": "Saving...",
+    "valid_email_error": "Please enter a valid email address",
+    "upload_image_error": "Failed to upload image",
+    "update_profile_error": "Failed to update profile"
 }

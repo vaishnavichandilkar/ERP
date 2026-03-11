@@ -44,5 +44,19 @@
     "new_user_tab": "नवीन वापरकर्ता",
     "products_tab": "उत्पादने",
     "complaints_tab": "तक्रारी",
-    "payments_tab": "पेमेंट"
+    "payments_tab": "पेमेंट",
+    "edit_profile": "प्रोफाइल संपादित करा",
+    "click_camera_update": "फोटो अपडेट करण्यासाठी कॅमेरावर क्लिक करा",
+    "display_name": "प्रदर्शित नाव",
+    "enter_name_placeholder": "तुमचे नाव प्रविष्ट करा",
+    "email_label": "ईमेल",
+    "permanently_linked": "कायमस्वरूपी लिंक केलेले",
+    "no_email_registered": "कोणताही ईमेल नोंदणीकृत नाही (आताच जोडा)",
+    "email_once_note": "* टीप: तुम्ही तुमचा ईमेल फक्त एकदाच सेट करू शकता.",
+    "cancel_btn": "रद्द करा",
+    "save_changes_btn": "बदल जतन करा",
+    "saving_btn": "जतन करत आहे...",
+    "valid_email_error": "कृपया वैध ईमेल पत्ता प्रविष्ट करा",
+    "upload_image_error": "प्रतिमा अपलोड करण्यात अयशस्वी",
+    "update_profile_error": "प्रोफाइल अपडेट करण्यात अयशस्वी"
 }

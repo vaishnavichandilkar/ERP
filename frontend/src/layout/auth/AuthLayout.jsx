@@ -2,7 +2,7 @@ import React from 'react';
 import illustration from '../../assets/images/ERP_Logo1.png';
 import { useTranslation } from 'react-i18next';
 
-const AuthLayout = ({ children, maxWidth = 'max-w-[480px]', hideLeftPanel = false, disableRightScroll = false }) => {
+const AuthLayout = ({ children, maxWidth = 'max-w-[480px]', hideLeftPanel = false, disableRightScroll = false, justify = 'center' }) => {
     const { t } = useTranslation('auth');
     return (
         <div className="flex w-full min-h-screen flex-col md:flex-row h-auto md:h-screen overflow-auto md:overflow-hidden bg-[#F8FAF0]">
@@ -43,7 +43,7 @@ const AuthLayout = ({ children, maxWidth = 'max-w-[480px]', hideLeftPanel = fals
 
             {/* Right Panel - Scrollable */}
             <div className={`flex-1 w-full md:w-[66.95%] basis-full md:basis-[66.95%] md:max-w-[66.95%] min-h-screen md:min-h-0 h-auto md:h-full overflow-visible ${disableRightScroll ? 'md:overflow-hidden' : 'md:overflow-y-auto'} bg-white flex flex-col items-center font-sans`}>
-                <div className={`w-full p-6 md:p-8 box-border grow flex flex-col justify-center min-h-min ${maxWidth}`}>
+                <div className={`w-full p-6 md:p-8 box-border grow flex flex-col ${justify === 'center' ? 'justify-center' : 'justify-start pt-12 md:pt-16'} min-h-min ${maxWidth}`}>
                     {children}
                 </div>
             </div>

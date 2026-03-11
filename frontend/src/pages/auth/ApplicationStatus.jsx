@@ -3,9 +3,14 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import axiosInstance from '../../services/axiosInstance';
 import AuthLayout from '../../layout/auth/AuthLayout';
 import Button from '../../components/common/Button';
-import { Clock, AlertCircle, X, Check } from 'lucide-react';
+import { Clock, AlertCircle, X, Check, ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../../components/common/LanguageSwitcher';
+
+// Status Images
+import approvalPending from "../../assets/images/Approval_pending.png";
+import approvalRejected from "../../assets/images/Approval_Rejected.png";
+import approvalAccepted from "../../assets/images/Approved_accepted.png";
 
 // For the scalloped badge icon on Approved state
 const SealCheckIcon = ({ className }) => {
@@ -91,15 +96,24 @@ const ApplicationStatus = () => {
     }
 
     const renderPendingState = () => (
-        <div className="flex flex-col items-center justify-center text-center w-full max-w-[420px] mx-auto animate-in fade-in zoom-in duration-500 md:mt-0 pt-8 pb-10 relative">
-            {/* Language Switcher */}
-            <div className="absolute top-0 right-0">
-                <LanguageSwitcher />
-            </div>
-
-            <div className="w-[110px] h-[110px] bg-[#0B3D2E] rounded-full flex items-center justify-center mb-6 shadow-sm">
-                <Clock className="w-12 h-12 text-white" strokeWidth={2} />
-            </div>
+        <div className="flex flex-col items-center justify-start text-center w-full max-w-[420px] mx-auto animate-in fade-in zoom-in duration-500 pt-2 pb-10 relative">
+            <button
+                onClick={() => navigate('/landing')}
+                className="self-start p-2 -ml-2 mb-2 text-gray-900 rounded-full hover:bg-gray-100 transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center focus:outline-none"
+            >
+                <ArrowLeft size={20} />
+            </button>
+            {!localStorage.getItem('languageConfirmed') && (
+                <div className="absolute top-0 right-0">
+                    <LanguageSwitcher />
+                </div>
+            )}
+            <img
+                src={approvalPending}
+                alt="Approval Pending"
+                className="w-[140px] h-auto mb-5 object-contain"
+                onError={(e) => { e.target.style.display = 'none' }}
+            />
 
             <h1 className="text-[24px] md:text-[28px] font-bold font-['Plus_Jakarta_Sans'] text-[#111827] mb-2 tracking-tight">
                 {t('app_submitted')}
@@ -162,14 +176,24 @@ const ApplicationStatus = () => {
     );
 
     const renderRejectedState = () => (
-        <div className="flex flex-col items-center justify-center text-center w-full max-w-[420px] mx-auto animate-in fade-in zoom-in duration-500 md:mt-0 pt-8 pb-10 relative">
-            <div className="absolute top-0 right-0">
-                <LanguageSwitcher />
-            </div>
-
-            <div className="w-[110px] h-[110px] bg-[#0B3D2E] rounded-full flex items-center justify-center mb-6 shadow-sm">
-                <X className="w-12 h-12 text-white" strokeWidth={3} />
-            </div>
+        <div className="flex flex-col items-center justify-start text-center w-full max-w-[420px] mx-auto animate-in fade-in zoom-in duration-500 pt-2 pb-10 relative">
+            <button
+                onClick={() => navigate('/landing')}
+                className="self-start p-2 -ml-2 mb-2 text-gray-900 rounded-full hover:bg-gray-100 transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center focus:outline-none"
+            >
+                <ArrowLeft size={20} />
+            </button>
+            {!localStorage.getItem('languageConfirmed') && (
+                <div className="absolute top-0 right-0">
+                    <LanguageSwitcher />
+                </div>
+            )}
+            <img
+                src={approvalRejected}
+                alt="Application Rejected"
+                className="w-[140px] h-auto mb-5 object-contain"
+                onError={(e) => { e.target.style.display = 'none' }}
+            />
 
             <h1 className="text-[24px] md:text-[28px] font-bold font-['Plus_Jakarta_Sans'] text-[#111827] mb-2 tracking-tight">
                 {t('app_rejected_title')}
@@ -194,14 +218,24 @@ const ApplicationStatus = () => {
     );
 
     const renderApprovedState = () => (
-        <div className="flex flex-col items-center justify-center text-center w-full max-w-[420px] mx-auto animate-in fade-in zoom-in duration-500 pt-16 relative">
-            <div className="absolute top-0 right-0">
-                <LanguageSwitcher />
-            </div>
-
-            <div className="w-[110px] h-[110px] text-[#0B3D2E] flex items-center justify-center mb-6">
-                <SealCheckIcon className="w-full h-full" />
-            </div>
+        <div className="flex flex-col items-center justify-start text-center w-full max-w-[420px] mx-auto animate-in fade-in zoom-in duration-500 pt-2 relative">
+            <button
+                onClick={() => navigate('/landing')}
+                className="self-start p-2 -ml-2 mb-2 text-gray-900 rounded-full hover:bg-gray-100 transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center focus:outline-none"
+            >
+                <ArrowLeft size={20} />
+            </button>
+            {!localStorage.getItem('languageConfirmed') && (
+                <div className="absolute top-0 right-0">
+                    <LanguageSwitcher />
+                </div>
+            )}
+            <img
+                src={approvalAccepted}
+                alt="Application Approved"
+                className="w-[140px] h-auto mb-5 object-contain"
+                onError={(e) => { e.target.style.display = 'none' }}
+            />
 
             <h1 className="text-[24px] md:text-[28px] font-bold font-['Plus_Jakarta_Sans'] text-[#111827] mb-3 leading-tight tracking-tight">
                 {t('all_set')}
@@ -226,7 +260,7 @@ const ApplicationStatus = () => {
 
     return (
         <AuthLayout hideLeftPanel={false}>
-            <div className="w-full h-full flex items-center justify-center px-0 sm:px-4 py-4 sm:py-10 font-['Plus_Jakarta_Sans'] overflow-y-auto">
+            <div className="w-full min-h-0 flex flex-col items-center justify-center px-0 sm:px-4 pb-4 sm:pb-10 font-['Plus_Jakarta_Sans'] overflow-y-auto">
                 {apiStatus === 'PENDING' && renderPendingState()}
                 {apiStatus === 'REJECTED' && renderRejectedState()}
                 {apiStatus === 'APPROVED' && renderApprovedState()}
