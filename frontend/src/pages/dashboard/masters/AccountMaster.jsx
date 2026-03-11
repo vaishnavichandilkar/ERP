@@ -582,7 +582,6 @@ const AccountMaster = () => {
 
             </div>
 
-            {/* Filter Drawer */}
             {isFilterOpen && (
                 <div
                     className="fixed inset-0 z-[100] flex justify-end"
@@ -594,17 +593,17 @@ const AccountMaster = () => {
                     />
 
                     {/* Drawer */}
-                    <div className="relative w-[400px] max-w-full bg-white h-full flex flex-col animate-in slide-in-from-right duration-300 shadow-2xl">
+                    <div className="relative w-[400px] max-w-full bg-white h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
                         {/* Drawer Header */}
-                        <div className="flex items-center justify-between p-6 border-b border-[#E5E7EB]">
-                            <h2 className="text-[18px] font-bold text-[#111827] font-['Plus_Jakarta_Sans']">{t('modules:apply_filters')}</h2>
-                            <button onClick={() => setIsFilterOpen(false)} className="text-[#6B7280] hover:text-[#111827] transition-colors p-1 rounded-full hover:bg-gray-100">
-                                <X size={20} />
+                        <div className="flex items-center justify-between p-6 pb-4">
+                            <h2 className="text-[16px] font-bold text-[#111827] font-['Plus_Jakarta_Sans']">Apply Filters</h2>
+                            <button onClick={() => setIsFilterOpen(false)} className="text-black hover:text-[#111827] transition-colors p-1 rounded-full hover:bg-gray-100">
+                                <X size={20} strokeWidth={1.5} />
                             </button>
                         </div>
 
                         {/* Drawer Body */}
-                        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+                        <div className="flex-1 overflow-y-auto px-6 py-2 space-y-6">
                             <div>
                                 <label className="block text-[13px] font-medium text-[#374151] mb-2">{t('modules:gst_no')}</label>
                                 <input
@@ -612,71 +611,74 @@ const AccountMaster = () => {
                                     name="gstNo"
                                     value={filterInputs.gstNo}
                                     onChange={handleFilterChange}
-                                    className="w-full h-[46px] px-3 border border-[#D1D5DB] rounded-[8px] text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/20 transition-all placeholder:text-gray-400"
+                                    className="w-full h-[46px] px-3 border border-[#D1D5DB] rounded-[6px] text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/20 transition-all placeholder:text-gray-400"
                                 />
                             </div>
                             <div>
-                                <label className="block text-[13px] font-medium text-[#374151] mb-2">{t('modules:pan_no')}</label>
+                                <label className="block text-[13px] font-medium text-[#374151] mb-2">PAN.No</label>
                                 <input
                                     type="text"
                                     name="panNo"
                                     value={filterInputs.panNo}
                                     onChange={handleFilterChange}
-                                    className="w-full h-[46px] px-3 border border-[#D1D5DB] rounded-[8px] text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/20 transition-all placeholder:text-gray-400"
+                                    className="w-full h-[46px] px-3 border border-[#D1D5DB] rounded-[6px] text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/20 transition-all placeholder:text-gray-400"
                                 />
                             </div>
-                            <div>
-                                <label className="block text-[13px] font-medium text-[#374151] mb-2">{t('common:group')}</label>
-                                <input
-                                    type="text"
+                            <div className="relative">
+                                <label className="block text-[13px] font-medium text-[#374151] mb-2">Group Name</label>
+                                <select
                                     name="groupName"
                                     value={filterInputs.groupName}
                                     onChange={handleFilterChange}
-                                    className="w-full h-[46px] px-3 border border-[#D1D5DB] rounded-[8px] text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/20 transition-all placeholder:text-gray-400"
-                                />
+                                    className="w-full h-[46px] px-3 pr-10 border border-[#D1D5DB] rounded-[6px] text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/20 transition-all appearance-none bg-white font-['Plus_Jakarta_Sans']"
+                                >
+                                    <option value="" disabled className="hidden"></option>
+                                    <option value="Sundry Creditors">Sundry Creditors</option>
+                                    <option value="Sundry Debtors">Sundry Debtors</option>
+                                </select>
+                                <ChevronDown size={18} className="absolute right-3 top-1/2 translate-y-[20%] pointer-events-none text-[#6B7280]" />
                             </div>
                             <div>
-                                <label className="block text-[13px] font-medium text-[#374151] mb-2">{t('modules:credit_days')}</label>
+                                <label className="block text-[13px] font-medium text-[#374151] mb-2">Credit Days</label>
                                 <input
-                                    type="number"
+                                    type="text"
                                     name="creditDays"
                                     value={filterInputs.creditDays}
                                     onChange={handleFilterChange}
-                                    className="w-full h-[46px] px-3 border border-[#D1D5DB] rounded-[8px] text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/20 transition-all placeholder:text-gray-400"
+                                    className="w-full h-[46px] px-3 border border-[#D1D5DB] rounded-[6px] text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/20 transition-all placeholder:text-gray-400"
                                 />
                             </div>
-                            <div>
-                                <label className="block text-[13px] font-medium text-[#374151] mb-2">{t('common:status')}</label>
+                            <div className="relative">
+                                <label className="block text-[13px] font-medium text-[#374151] mb-2">Status</label>
                                 <select
                                     name="status"
                                     value={filterInputs.status}
                                     onChange={handleFilterChange}
-                                    className="w-full h-[46px] px-3 pr-10 border border-[#D1D5DB] rounded-[8px] text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/20 transition-all appearance-none bg-white font-['Plus_Jakarta_Sans']"
+                                    className="w-full h-[46px] px-3 pr-10 border border-[#D1D5DB] rounded-[6px] text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/20 transition-all appearance-none bg-white font-['Plus_Jakarta_Sans']"
                                 >
                                     <option value="" disabled className="hidden"></option>
-                                    <option value="">{t('common:all')}</option>
-                                    <option value="Active">{t('common:active')}</option>
-                                    <option value="Inactive">{t('common:inactive')}</option>
+                                    <option value="Active">Active</option>
+                                    <option value="InActive">InActive</option>
                                 </select>
                                 <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#6B7280]" />
                             </div>
                         </div>
-                    </div>
 
-                    {/* Drawer Footer */}
-                    <div className="p-6 border-t border-[#E5E7EB] flex items-center justify-between gap-4 bg-white">
-                        <button
-                            onClick={clearFilters}
-                            className="flex-1 h-[48px] bg-white border border-[#D1D5DB] text-[#374151] text-[15px] font-semibold rounded-[8px] hover:bg-gray-50 transition-colors"
-                        >
-                            {t('common:clear_filter')}
-                        </button>
-                        <button
-                            onClick={applyFilters}
-                            className="flex-1 h-[48px] bg-[#014A36] text-white text-[15px] font-semibold rounded-[8px] hover:bg-[#013b2b] transition-colors"
-                        >
-                            {t('common:apply_filter')}
-                        </button>
+                        {/* Drawer Footer */}
+                        <div className="p-6 border-t border-[#E5E7EB] flex items-center justify-between gap-4 bg-white mt-auto">
+                            <button
+                                onClick={clearFilters}
+                                className="flex-1 h-[48px] bg-white border border-[#D1D5DB] text-[#374151] text-[14px] font-semibold rounded-[6px] hover:bg-gray-50 transition-colors"
+                            >
+                                Clear
+                            </button>
+                            <button
+                                onClick={applyFilters}
+                                className="flex-1 h-[48px] bg-[#014A36] text-white text-[14px] font-semibold rounded-[6px] hover:bg-[#013b2b] transition-colors"
+                            >
+                                Apply Filter
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
