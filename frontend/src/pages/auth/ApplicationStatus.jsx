@@ -5,7 +5,6 @@ import AuthLayout from '../../layout/auth/AuthLayout';
 import Button from '../../components/common/Button';
 import { Clock, AlertCircle, X, Check, ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import LanguageSwitcher from '../../components/common/LanguageSwitcher';
 
 // Status Images
 import approvalPending from "../../assets/images/Approval_pending.png";
@@ -103,11 +102,7 @@ const ApplicationStatus = () => {
             >
                 <ArrowLeft size={20} />
             </button>
-            {!localStorage.getItem('languageConfirmed') && (
-                <div className="absolute top-0 right-0">
-                    <LanguageSwitcher />
-                </div>
-            )}
+
             <img
                 src={approvalPending}
                 alt="Approval Pending"
@@ -183,11 +178,7 @@ const ApplicationStatus = () => {
             >
                 <ArrowLeft size={20} />
             </button>
-            {!localStorage.getItem('languageConfirmed') && (
-                <div className="absolute top-0 right-0">
-                    <LanguageSwitcher />
-                </div>
-            )}
+
             <img
                 src={approvalRejected}
                 alt="Application Rejected"
@@ -225,11 +216,7 @@ const ApplicationStatus = () => {
             >
                 <ArrowLeft size={20} />
             </button>
-            {!localStorage.getItem('languageConfirmed') && (
-                <div className="absolute top-0 right-0">
-                    <LanguageSwitcher />
-                </div>
-            )}
+
             <img
                 src={approvalAccepted}
                 alt="Application Approved"

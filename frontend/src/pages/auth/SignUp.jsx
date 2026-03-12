@@ -4,7 +4,6 @@ import AuthLayout from '../../layout/auth/AuthLayout';
 import { Upload, FileText, Trash2, ChevronDown, CloudUpload, ArrowLeft } from 'lucide-react';
 import logo from '../../assets/images/ERP_Logo2.png';
 import { useTranslation } from 'react-i18next';
-import LanguageSwitcher from '../../components/common/LanguageSwitcher';
 import RegistrationSuccessModal from '../../components/common/RegistrationSuccessModal';
 
 const FileUploadBox = ({ title, file, onFileChange, onRemove, onUploadStateChange, optional }) => {
@@ -478,10 +477,7 @@ const SignUp = () => {
                     >
                         <ArrowLeft size={20} />
                     </button>
-                    {/* Language Switcher */}
-                    <div className="absolute -top-12 -right-4 lg:-top-16 lg:-right-8">
-                        <LanguageSwitcher />
-                    </div>
+
                     {/* Header: Logo and Step Pill */}
                     <div className="flex justify-between items-center mb-6 w-full -mt-2">
                         <img
@@ -738,6 +734,7 @@ const SignUp = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-[24px] w-full">
                                         <CustomInput
                                             label={t('auth:udyog_aadhar')}
+                                            optional={true}
                                             placeholder={t('auth:placeholder_udyog')}
                                             name="udyogAadhar"
                                             value={formData.udyogAadhar}
