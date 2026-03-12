@@ -4,23 +4,12 @@ import { useTranslation } from 'react-i18next';
 import UnitForm from './components/UnitForm';
 import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
 
-const UOM_MASTER_LIST = [
-    ['BAGS', 'Measure', 'BAG'], ['BALE', 'Measure', 'BAL'], ['BUNDLES', 'Measure', 'BDL'],
-    ['BUCKLES', 'Measure', 'BKL'], ['BILLIONS OF UNITS', 'Measure', 'BOU'], ['BOX', 'Measure', 'BOX'],
-    ['BOTTLES', 'Measure', 'BTL'], ['BUNCHES', 'Measure', 'BUN'], ['CANS', 'Measure', 'CAN'],
-    ['CUBIC METER', 'Volume', 'CBM'], ['CUBIC CENTIMETER', 'Volume', 'CCM'], ['CENTIMETER', 'Length', 'CMS'],
-    ['CARTONS', 'Measure', 'CTN'], ['DOZEN', 'Measure', 'DOZ'], ['DRUM', 'Measure', 'DRM'],
-    ['GREAT GROSS', 'Measure', 'GGR'], ['GRAMS', 'Weight', 'GMS'], ['GROSS', 'Measure', 'GRS'],
-    ['GROSS YARDS', 'Length', 'GYD'], ['KILOGRAMS', 'Weight', 'KGS'], ['KILOLITER', 'Volume', 'KLR'],
-    ['KILOMETRE', 'Length', 'KME'], ['MILLILITRE', 'Volume', 'MLT'], ['METERS', 'Length', 'MTR'],
-    ['METRIC TONS', 'Weight', 'MTS'], ['NUMBERS', 'Measure', 'NOS'], ['PACKS', 'Measure', 'PAC'],
-    ['PIECES', 'Measure', 'PCS'], ['PAIRS', 'Measure', 'PRS'], ['QUINTAL', 'Weight', 'QTL'],
-    ['ROLLS', 'Measure', 'ROL'], ['SETS', 'Measure', 'SET'], ['SQUARE FEET', 'Area', 'SQF'],
-    ['SQUARE METERS', 'Area', 'SQM'], ['SQUARE YARDS', 'Area', 'SQY'], ['TABLETS', 'Measure', 'TBS'],
-    ['TEN GROSS', 'Measure', 'TGM'], ['THOUSANDS', 'Measure', 'THD'], ['TONNES', 'Weight', 'TON'],
-    ['TUBES', 'Measure', 'TUB'], ['US GALLONS', 'Volume', 'UGS'], ['UNITS', 'Measure', 'UNT'],
-    ['YARDS', 'Length', 'YDS'], ['OTHERS', 'Misc', 'OTH']
-];
+import masterService from '../../../services/masterService';
+// import { toast } from 'react-hot-toast';
+const toast = {
+    success: (msg) => console.log('SUCCESS:', msg),
+    error: (msg) => console.log('ERROR:', msg)
+};
 
 const UnitMaster = () => {
     const { t } = useTranslation(['modules', 'common']);
@@ -35,21 +24,51 @@ const UnitMaster = () => {
     const exportRef = useRef(null);
     const dropdownRef = useRef(null);
 
-    // Generate 44 items based on the provided Master List
-    const generateInitialData = () => {
-        return UOM_MASTER_LIST.map((item, index) => ({
-            id: index + 1,
-            name: item[0],
-            gstUom: item[2],
-            description: item[1] !== 'Misc' ? `${item[1]} measurement unit` : '',
-            status: index % 5 === 0 ? 'Inactive' : 'Active'
-        }));
-    };
-    const [tableData, setTableData] = useState(generateInitialData());
-
-    // Pagination State
+    const [tableData, setTableData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [totalItems, setTotalItems] = useState(0);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(5);
+    const [gstUomOptions, setGstUomOptions] = useState([]);
+
+    const fetchUnits = async () => {
+        try {
+            setLoading(true);
+            const params = {
+                page: currentPage.toString(),
+                limit: itemsPerPage.toString(),
+                search: searchQuery,
+                status: appliedFilters.status || undefined,
+                gstUom: appliedFilters.gstUom || undefined,
+                unitName: appliedFilters.unitName || undefined
+            };
+            const response = await masterService.getUnits(params);
+            setTableData(response.data);
+            setTotalItems(response.meta.total);
+        } catch (error) {
+            console.error('Error fetching units:', error);
+            toast.error(t('common:error_fetching_data'));
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchGstUomList = async () => {
+        try {
+            const response = await masterService.getGstUomList();
+            setGstUomOptions(response.data.map(u => u.uqcCode));
+        } catch (error) {
+            console.error('Error fetching GST UOM:', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchUnits();
+    }, [currentPage, itemsPerPage, searchQuery, appliedFilters]);
+
+    useEffect(() => {
+        fetchGstUomList();
+    }, []);
 
     // Handle click outside for export and action dropdowns
     useEffect(() => {
@@ -70,13 +89,29 @@ const UnitMaster = () => {
         setActiveDropdown(activeDropdown === id ? null : id);
     };
 
-    const handleToggleStatus = (id) => {
-        setTableData(prev => prev.map(item => {
-            if (item.id === id) {
-                return { ...item, status: item.status === 'Active' ? 'Inactive' : 'Active' };
-            }
-            return item;
-        }));
+    const handleToggleStatus = async (id, currentStatus) => {
+        try {
+            const newStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+            await masterService.updateUnitStatus(id, newStatus);
+            toast.success(t('common:status_updated'));
+            fetchUnits();
+        } catch (error) {
+            console.error('Error updating status:', error);
+            toast.error(t('common:error_updating_status'));
+        }
+        setActiveDropdown(null);
+    };
+
+    const handleDeleteUnit = async (id) => {
+        if (!window.confirm(t('common:confirm_delete'))) return;
+        try {
+            await masterService.deleteUnit(id);
+            toast.success(t('common:deleted_successfully'));
+            fetchUnits();
+        } catch (error) {
+            console.error('Error deleting unit:', error);
+            toast.error(t('common:error_deleting_unit'));
+        }
         setActiveDropdown(null);
     };
 
@@ -93,23 +128,10 @@ const UnitMaster = () => {
         setCurrentPage(1); // Reset to first page
     };
 
-    const filteredData = tableData.filter(row => {
-        const searchString = `${row.name} ${row.gstUom} ${row.description} ${row.status}`.toLowerCase();
-        const matchesSearch = searchString.includes(searchQuery.toLowerCase());
-
-        const matchesUOM = appliedFilters.gstUom ? row.gstUom.toLowerCase() === appliedFilters.gstUom.toLowerCase() : true;
-        const matchesStatus = appliedFilters.status ? row.status.toLowerCase() === appliedFilters.status.toLowerCase() : true;
-        const matchesName = appliedFilters.unitName ? row.name.toLowerCase().includes(appliedFilters.unitName.toLowerCase()) : true;
-
-        return matchesSearch && matchesUOM && matchesStatus && matchesName;
-    });
-
-    // Pagination Calculations
-    const totalItems = filteredData.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
-    const currentData = filteredData.slice(startIndex, endIndex);
+    const currentData = tableData;
 
     const handlePageChange = (page) => {
         if (page >= 1 && page <= totalPages) {
@@ -138,9 +160,9 @@ const UnitMaster = () => {
     };
 
     const handleExportPDF = () => {
-        const tableRows = filteredData.map((row, index) => [
-            index + 1,
-            row.name,
+        const tableRows = tableData.map((row, index) => [
+            startIndex + index + 1,
+            row.unitName,
             row.gstUom,
             row.description,
             row.status
@@ -156,9 +178,9 @@ const UnitMaster = () => {
     };
 
     const handleExportExcel = () => {
-        const excelData = filteredData.map((row, index) => ({
-            'Sr.No': index + 1,
-            'Unit Name': row.name,
+        const excelData = tableData.map((row, index) => ({
+            'Sr.No': startIndex + index + 1,
+            'Unit Name': row.unitName,
             'GST UOM': row.gstUom,
             'Description': row.description,
             'Status': row.status
@@ -174,6 +196,10 @@ const UnitMaster = () => {
                 mode={currentView.type}
                 initialData={currentView.data}
                 onBack={() => setCurrentView({ type: 'list', data: null })}
+                onSuccess={() => {
+                    setCurrentView({ type: 'list', data: null });
+                    fetchUnits();
+                }}
             />
         );
     }
@@ -265,13 +291,26 @@ const UnitMaster = () => {
                             </tr>
                         </thead>
                         <tbody className="text-[14px] text-[#111827]">
-                            {currentData.length > 0 ? currentData.map((row, index) => (
+                            {loading ? (
+                                <tr>
+                                    <td colSpan="6" className="px-6 py-12 text-center text-gray-400">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div className="w-8 h-8 border-4 border-[#014A36]/20 border-t-[#014A36] rounded-full animate-spin"></div>
+                                            <span>{t('common:loading')}</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : currentData.length > 0 ? currentData.map((row, index) => (
                                 <tr key={row.id} className="border-b border-[#E5E7EB] last:border-b-0 hover:bg-gray-50/50 transition-colors">
                                     <td className="px-6 py-4 text-gray-500">{startIndex + index + 1}.</td>
-                                    <td className="px-6 py-4 font-medium">{row.name}</td>
+                                    <td className="px-6 py-4 font-medium">{row.unitName}</td>
                                     <td className="px-6 py-4">{row.gstUom}</td>
                                     <td className="px-6 py-4">{row.description}</td>
-                                    <td className="px-6 py-4">{row.status}</td>
+                                    <td className="px-6 py-4">
+                                        <span className={`px-2 py-1 rounded-full text-[12px] font-medium ${row.status === 'ACTIVE' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                                            {row.status}
+                                        </span>
+                                    </td>
                                     <td className={`px-6 py-4 text-center relative ${activeDropdown === row.id ? 'z-50' : ''}`}>
                                         <button
                                             onClick={(e) => toggleDropdown(row.id, e)}
@@ -304,10 +343,10 @@ const UnitMaster = () => {
                                                     {t('update_unit')}
                                                 </button>
                                                 <button
-                                                    onClick={() => handleToggleStatus(row.id)}
+                                                    onClick={() => handleToggleStatus(row.id, row.status)}
                                                     className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors whitespace-nowrap font-medium border-t border-gray-100"
                                                 >
-                                                    {row.status === 'Active' ? (
+                                                    {row.status === 'ACTIVE' ? (
                                                         <>
                                                             <CheckCircle2 size={16} className="text-gray-500" />
                                                             {t('common:inactive')}
@@ -318,6 +357,13 @@ const UnitMaster = () => {
                                                             {t('common:active')}
                                                         </>
                                                     )}
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteUnit(row.id)}
+                                                    className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-red-600 hover:bg-red-50 transition-colors whitespace-nowrap font-medium border-t border-gray-100"
+                                                >
+                                                    <X size={16} />
+                                                    {t('common:delete')}
                                                 </button>
                                             </div>
                                         )}
@@ -429,8 +475,8 @@ const UnitMaster = () => {
                                 className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] pl-4 pr-10 text-[14px] text-[#111827] outline-none focus:border-[#014A36] appearance-none bg-white"
                             >
                                 <option value="">{t('common:all')}</option>
-                                {UOM_MASTER_LIST.map(uom => (
-                                    <option key={uom[2]} value={uom[2]}>{uom[2]}</option>
+                                {gstUomOptions.map(u => (
+                                    <option key={u} value={u}>{u}</option>
                                 ))}
                             </select>
                             <div className="absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none text-gray-400">
@@ -449,8 +495,8 @@ const UnitMaster = () => {
                                 className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] pl-4 pr-10 text-[14px] text-[#111827] outline-none focus:border-[#014A36] appearance-none bg-white"
                             >
                                 <option value="">{t('common:all')}</option>
-                                <option value="Active">{t('common:active')}</option>
-                                <option value="Inactive">{t('common:inactive')}</option>
+                                <option value="ACTIVE">{t('common:active')}</option>
+                                <option value="INACTIVE">{t('common:inactive')}</option>
                             </select>
                             <div className="absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none text-gray-400">
                                 <ChevronsUpDown size={14} />

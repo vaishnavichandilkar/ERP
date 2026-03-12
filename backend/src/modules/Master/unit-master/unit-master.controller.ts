@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Put, Patch, Param, Query, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Put, Patch, Delete, Param, Query, ParseIntPipe, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { UnitMasterService } from './unit-master.service';
 import { CreateUnitDto, UpdateUnitDto, UpdateUnitStatusDto, UnitQueryDto } from './dto/unit-master.dto';
@@ -45,5 +45,11 @@ export class UnitMasterController {
     @ApiOperation({ summary: 'Change unit status' })
     changeStatus(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUnitStatusDto) {
         return this.service.changeStatus(id, dto);
+    }
+
+    @Delete('unit/:id')
+    @ApiOperation({ summary: 'Delete unit' })
+    deleteUnit(@Param('id', ParseIntPipe) id: number) {
+        return this.service.deleteUnit(id);
     }
 }

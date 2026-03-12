@@ -123,4 +123,11 @@ export class UnitMasterService {
             data: { status: dto.status }
         });
     }
+
+    async deleteUnit(id: number) {
+        await this.getUnitById(id);
+        return this.prisma.unitMaster.delete({
+            where: { id }
+        });
+    }
 }

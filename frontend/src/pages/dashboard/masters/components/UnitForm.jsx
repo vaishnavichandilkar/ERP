@@ -1,6 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import masterService from '../../../../services/masterService';
+// import { toast } from 'react-hot-toast';
+const toast = {
+    success: (msg) => console.log('SUCCESS:', msg),
+    error: (msg) => console.log('ERROR:', msg)
+};
 
 const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchable = false, disabled = false, showAsterisk = false }) => {
     const { t } = useTranslation(['common']);
@@ -76,24 +82,56 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
     );
 };
 
-const UnitForm = ({ mode = 'add', initialData = null, onBack }) => {
+const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) => {
     const { t } = useTranslation(['modules', 'common']);
+    const [loading, setLoading] = useState(false);
+    const [uomOptions, setUomOptions] = useState([]);
+
     const [formData, setFormData] = useState({
-        unitName: initialData?.name || '',
+        unitName: initialData?.unitName || '',
         gstUom: initialData?.gstUom || '',
         description: initialData?.description || ''
     });
 
-    const UOM_LIST = [
-        'BAG', 'BAL', 'BDL', 'BKL', 'BOU', 'BOX', 'BTL', 'BUN', 'CAN', 'CBM',
-        'CCM', 'CMS', 'CTN', 'DOZ', 'DRM', 'GGR', 'GMS', 'GRS', 'GYD', 'KG', 'KGS',
-        'KLR', 'KME', 'MLT', 'MTR', 'MTS', 'NOS', 'PAC', 'PCS', 'PRS', 'QTL',
-        'ROL', 'SET', 'SQF', 'SQM', 'SQY', 'TBS', 'TGM', 'THD', 'TON', 'TUB',
-        'UGC', 'UNT', 'YDS', 'OTHER'
-    ];
+    useEffect(() => {
+        const fetchUomList = async () => {
+            try {
+                const response = await masterService.getGstUomList();
+                setUomOptions(response.data.map(u => u.uqcCode));
+            } catch (error) {
+                console.error('Error fetching UOM list:', error);
+            }
+        };
+        fetchUomList();
+    }, []);
 
     const handleInputChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleSubmit = async () => {
+        if (!formData.unitName || !formData.gstUom) {
+            toast.error(t('common:please_fill_required_fields'));
+            return;
+        }
+
+        try {
+            setLoading(true);
+            if (mode === 'add') {
+                await masterService.createUnit(formData);
+                toast.success(t('common:added_successfully'));
+            } else {
+                await masterService.updateUnit(initialData.id, formData);
+                toast.success(t('common:updated_successfully'));
+            }
+            onSuccess();
+        } catch (error) {
+            console.error('Error saving unit:', error);
+            const message = error.response?.data?.message || t('common:error_saving_data');
+            toast.error(message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const isView = mode === 'view';
@@ -139,7 +177,7 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack }) => {
                     <CustomSelect
                         label={t('gst_uom')}
                         placeholder={t('select_gst_uom')}
-                        options={UOM_LIST}
+                        options={uomOptions}
                         value={formData.gstUom}
                         onChange={(val) => handleInputChange('gstUom', val)}
                         isSearchable={true}
@@ -161,14 +199,17 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack }) => {
                         ) : (
                             <>
                                 <button
-                                    onClick={onBack}
-                                    className="px-8 h-[44px] bg-[#014A36] text-white rounded-[8px] text-[14px] font-bold hover:bg-[#013b2b] transition-colors shadow-sm opacity-90 hover:opacity-100"
+                                    onClick={handleSubmit}
+                                    disabled={loading}
+                                    className="px-8 h-[44px] bg-[#014A36] text-white rounded-[8px] text-[14px] font-bold hover:bg-[#013b2b] transition-colors shadow-sm opacity-90 hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                                 >
+                                    {loading && <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>}
                                     {mode === 'add' ? t('add_unit') : t('update_unit')}
                                 </button>
                                 <button
                                     onClick={onBack}
-                                    className="px-8 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors bg-white"
+                                    disabled={loading}
+                                    className="px-8 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors bg-white disabled:opacity-50"
                                 >
                                     {t('common:exit')}
                                 </button>
