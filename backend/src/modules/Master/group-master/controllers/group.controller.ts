@@ -1,10 +1,13 @@
-import { Body, Controller, Get, Param, Patch, Post, Put, ParseIntPipe } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Patch, Post, Put, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { GroupMasterService } from '../services/group.service';
 import { CreateSubGroupDto, UpdateSubGroupDto, UpdateSubGroupStatusDto } from '../dto/group-master.dto';
+import { JwtAuthGuard } from '../../../../common/guards/jwt-auth.guard';
 
 @ApiTags('Group Master')
 @Controller('group-master')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 export class GroupMasterController {
     constructor(private readonly groupService: GroupMasterService) { }
 

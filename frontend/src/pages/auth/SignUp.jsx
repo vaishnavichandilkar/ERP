@@ -135,27 +135,39 @@ const CustomInput = ({ label, type = 'text', value, onChange, onBlur, placeholde
                     {label}{' '}{optional ? <span className="text-[#9CA3AF] font-normal">{t('auth:optional')}</span> : <span className="text-red-500">*</span>}
                 </label>
             )}
-        <div className="relative w-full">
-            {select ? (
-                <>
-                    <select
-                        name={name}
-                        value={value}
-                        onChange={onChange}
-                        onBlur={onBlur}
-                        className={`w-full h-[56px] px-[16px] text-[15px] border ${error ? 'border-red-500 hover:border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-[#D1D5DB] focus:border-[#0F3D2E] focus:ring-[#0F3D2E]'} rounded-[8px] outline-none bg-[#FFFFFF] font-['Plus_Jakarta_Sans'] appearance-none transition-all duration-300 focus:ring-1 ${!value ? 'text-[#6B7280]' : 'text-[#111827]'}`}
-                    >
-                        {children}
-                    </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#6B7280]">
-                        <ChevronDown size={20} />
+            <div className="relative w-full">
+                {select ? (
+                    <>
+                        <select
+                            name={name}
+                            value={value}
+                            onChange={onChange}
+                            onBlur={onBlur}
+                            className={`w-full h-[56px] px-[16px] text-[15px] border ${error ? 'border-red-500 hover:border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-[#D1D5DB] focus:border-[#0F3D2E] focus:ring-[#0F3D2E]'} rounded-[8px] outline-none bg-[#FFFFFF] font-['Plus_Jakarta_Sans'] appearance-none transition-all duration-300 focus:ring-1 ${!value ? 'text-[#6B7280]' : 'text-[#111827]'}`}
+                        >
+                            {children}
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#6B7280]">
+                            <ChevronDown size={20} />
+                        </div>
+                    </>
+                ) : prefix ? (
+                    <div className={`relative flex items-center w-full h-[56px] border ${error ? 'border-red-500 hover:border-red-500 focus-within:border-red-500 focus-within:ring-red-500/20' : 'border-[#D1D5DB] focus-within:border-[#0F3D2E] focus-within:ring-[#0F3D2E]'} rounded-[8px] bg-[#FFFFFF] transition-all duration-300 focus-within:ring-1 overflow-hidden`}>
+                        <div className="pl-4 pr-3 flex items-center h-full text-[#111827]">
+                            {prefix}
+                        </div>
+                        <input
+                            type={type}
+                            name={name}
+                            value={value}
+                            onChange={onChange}
+                            onBlur={onBlur}
+                            placeholder={placeholder}
+                            className="flex-1 w-full h-full font-['Plus_Jakarta_Sans'] placeholder:text-[#9CA3AF] text-[#111827] outline-none bg-transparent px-[2px] text-[15px]"
+                            {...rest}
+                        />
                     </div>
-                </>
-            ) : prefix ? (
-                <div className={`relative flex items-center w-full h-[56px] border ${error ? 'border-red-500 hover:border-red-500 focus-within:border-red-500 focus-within:ring-red-500/20' : 'border-[#D1D5DB] focus-within:border-[#0F3D2E] focus-within:ring-[#0F3D2E]'} rounded-[8px] bg-[#FFFFFF] transition-all duration-300 focus-within:ring-1 overflow-hidden`}>
-                    <div className="pl-4 pr-3 flex items-center h-full text-[#111827]">
-                        {prefix}
-                    </div>
+                ) : (
                     <input
                         type={type}
                         name={name}
@@ -163,35 +175,23 @@ const CustomInput = ({ label, type = 'text', value, onChange, onBlur, placeholde
                         onChange={onChange}
                         onBlur={onBlur}
                         placeholder={placeholder}
-                        className="flex-1 w-full h-full font-['Plus_Jakarta_Sans'] placeholder:text-[#9CA3AF] text-[#111827] outline-none bg-transparent px-[2px] text-[15px]"
+                        className={`w-full h-[56px] px-[16px] text-[15px] border ${error ? 'border-red-500 hover:border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-[#D1D5DB] focus:border-[#0F3D2E] focus:ring-[#0F3D2E]'} rounded-[8px] outline-none bg-[#FFFFFF] font-['Plus_Jakarta_Sans'] transition-all duration-300 focus:ring-1 placeholder:text-[#9CA3AF] text-[#111827] ${rest.readOnly ? 'bg-gray-100 cursor-not-allowed opacity-80' : ''}`}
                         {...rest}
                     />
+                )}
+            </div>
+            {error && (
+                <div className="mt-1.5 text-red-500 text-[13px] font-medium animate-in fade-in slide-in-from-top-1 duration-300">
+                    {error}
                 </div>
-            ) : (
-                <input
-                    type={type}
-                    name={name}
-                    value={value}
-                    onChange={onChange}
-                    onBlur={onBlur}
-                    placeholder={placeholder}
-                    className={`w-full h-[56px] px-[16px] text-[15px] border ${error ? 'border-red-500 hover:border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-[#D1D5DB] focus:border-[#0F3D2E] focus:ring-[#0F3D2E]'} rounded-[8px] outline-none bg-[#FFFFFF] font-['Plus_Jakarta_Sans'] transition-all duration-300 focus:ring-1 placeholder:text-[#9CA3AF] text-[#111827] ${rest.readOnly ? 'bg-gray-100 cursor-not-allowed opacity-80' : ''}`}
-                    {...rest}
-                />
+            )}
+            {info && !error && (
+                <div className="mt-1.5 text-blue-600 text-[13px] font-medium flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1 duration-300">
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></div>
+                    {info}
+                </div>
             )}
         </div>
-        {error && (
-            <div className="mt-1.5 text-red-500 text-[13px] font-medium animate-in fade-in slide-in-from-top-1 duration-300">
-                {error}
-            </div>
-        )}
-        {info && !error && (
-            <div className="mt-1.5 text-blue-600 text-[13px] font-medium flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1 duration-300">
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></div>
-                {info}
-            </div>
-        )}
-    </div>
     );
 };
 
@@ -592,6 +592,7 @@ const SignUp = () => {
                                 <div className="mb-6">
                                     <CustomInput
                                         label={t('auth:email')}
+                                        optional={true}
                                         placeholder={t('auth:placeholder_email')}
                                         name="email"
                                         type="email"
