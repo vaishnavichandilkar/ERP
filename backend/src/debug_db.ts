@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  const uqcs = await prisma.gstUqcMaster.findMany();
+  const uqcs = await prisma.systemUomLibrary.findMany();
   console.log('GST UQCs in DB:', JSON.stringify(uqcs, null, 2));
   
   const units = await prisma.unitMaster.findMany();

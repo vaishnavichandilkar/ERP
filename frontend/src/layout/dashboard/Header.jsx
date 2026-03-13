@@ -81,7 +81,6 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
 
         return (
             <div className="flex items-center text-[#4B5563] text-[13px] lg:text-[15px] font-medium uppercase tracking-wide">
-                <IconComponent size={18} strokeWidth={2.5} className="mr-[10px] text-[#111827]" />
                 {breadcrumbElements}
             </div>
         );

@@ -1,6 +1,0 @@
-﻿frontend/src/layout/dashboard/Header.jsx
-frontend/src/layout/dashboard/Sidebar.jsx
-frontend/src/pages/auth/SignUp.jsx
-frontend/src/pages/auth/VerifyOTP.jsx
-frontend/src/pages/dashboard/home/Home.jsx
-frontend/src/pages/dashboard/masters/MastersLayout.jsx

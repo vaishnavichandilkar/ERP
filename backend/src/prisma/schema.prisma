@@ -30,6 +30,8 @@ model User {
   bankDetail            BankDetail?
   sellerDocuments       SellerDocument[]       @relation("UploadedByUser")
   shopDetail            ShopDetail?
+  subGroups             AccountSubGroup[]
+  units                 UnitMaster[]
   @@map("User")
 }
 
@@ -284,26 +286,34 @@ enum UnitStatus {
   INACTIVE
 }
 
-model GstUqcMaster {
-  id           Int          @id @default(autoincrement())
-  quantity     String?
-  quantityType String?
-  uqcCode      String       @unique
-  units        UnitMaster[]
+enum UnitSource {
+  SYSTEM
+  USER
+}
 
-  @@map("gst_uqc_master")
+model SystemUomLibrary {
+  id                       Int      @id @default(autoincrement())
+  full_name_of_measurement String
+  unit_name                String
+  uom_code                 String
+  created_at               DateTime @default(now())
+
+  @@map("system_uom_library")
 }
 
 model UnitMaster {
-  id          Int          @id @default(autoincrement())
-  unitName    String       @unique
-  gstUom      String
-  gstUqc      GstUqcMaster @relation(fields: [gstUom], references: [uqcCode])
-  description String?
-  status      UnitStatus   @default(ACTIVE)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id                       Int        @id @default(autoincrement())
+  user_id                  Int
+  unit_name                String
+  gst_uom                  String
+  full_name_of_measurement String
+  source                   UnitSource @default(SYSTEM)
+  status                   UnitStatus @default(ACTIVE)
+  created_at               DateTime   @default(now())
+  updated_at               DateTime   @updatedAt
+  user                     User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
+  @@unique([user_id, gst_uom])
   @@map("unit_master")
 }
 
@@ -322,11 +332,13 @@ model AccountSubGroup {
   id             Int          @id @default(autoincrement())
   sub_group_name String
   group_id       Int
+  userId         Int
   status         Boolean      @default(true)
   created_at     DateTime     @default(now())
   updated_at     DateTime     @updatedAt
   group          AccountGroup @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([group_id, sub_group_name])
+  @@unique([userId, group_id, sub_group_name])
   @@map("account_sub_groups")
 }

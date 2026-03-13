@@ -8,17 +8,23 @@ async function testCreate() {
     console.log('Trying to create unit:', testName);
     
     // Ensure KGS exists
-    await prisma.gstUqcMaster.upsert({
-      where: { uqcCode: 'KGS' },
+    // Ensure KGS exists in library
+    await prisma.systemUomLibrary.upsert({
+      where: { id: 1 }, 
       update: {},
-      create: { uqcCode: 'KGS', quantity: 'KILOGRAMS' }
+      create: { 
+        uom_code: 'KGS', 
+        full_name_of_measurement: 'KILOGRAMS',
+        unit_name: 'KILOGRAM'
+      }
     });
 
     const result = await prisma.unitMaster.create({
       data: {
-        unitName: testName,
-        gstUom: 'KGS',
-        description: 'Test description'
+        unit_name: testName,
+        gst_uom: 'KGS',
+        full_name_of_measurement: 'KILOGRAMS',
+        user_id: 1 // Placeholder: Ensure this user exists
       }
     });
     console.log('Successfully created unit:', result);

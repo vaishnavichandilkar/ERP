@@ -71,11 +71,25 @@ export class AuthService {
 
     async refresh(dto: RefreshTokenDto) {
         try {
+            // 1. Verify the refresh token
             const payload = this.jwtService.verify(dto.refreshToken, {
                 secret: this.configService.get('jwt.refreshSecret'),
             });
 
-            // 1. Check Session table for validity
+            // 2. Find User and check if refresh token matches in DB
+            const user = await this.prisma.user.findUnique({ 
+                where: { id: payload.sub } 
+            });
+
+            if (!user) throw new UnauthorizedException('User not found');
+
+            // Requirement 3: Database Check
+            // Verify that the refresh token sent from the frontend matches the refresh token stored in the database
+            if (user.refresh_token !== dto.refreshToken) {
+                throw new UnauthorizedException('Invalid or expired refresh token');
+            }
+
+            // Optional: Also check Session table for added security (revocation check)
             const session = await this.prisma.session.findUnique({
                 where: { jti: payload.jti }
             });
@@ -84,13 +98,8 @@ export class AuthService {
                 throw new UnauthorizedException('Session expired or revoked');
             }
 
-            // 2. Find User
-            let user: any = await this.prisma.user.findUnique({ where: { id: payload.sub } });
-            let roleType = user?.role.toUpperCase();
-
-            if (!user) throw new UnauthorizedException('User not found');
-
-            // 3. Generate new tokens (this will revoke the current session)
+            // 3. Generate new tokens
+            const roleType = user.role.toUpperCase();
             return this.generateTokens(user, roleType);
         } catch (e) {
             if (e instanceof UnauthorizedException) throw e;
@@ -102,6 +111,10 @@ export class AuthService {
         await this.prisma.session.updateMany({
             where: { userId, isRevoked: false },
             data: { isRevoked: true },
+        });
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: { refresh_token: null }
         });
         return { message: 'Logged out successfully' };
     }

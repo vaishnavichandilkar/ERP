@@ -4,70 +4,17 @@ import { useTranslation } from 'react-i18next';
 import unitService from '../../../../services/masters/unitService';
 import { toast } from '../../../../utils/toast-mock';
 
-// GST UOM Library Data
-const UOM_LIBRARY = [
-    { fullName: "BAGS", unitName: "Quantity", uom: "BAG" },
-    { fullName: "BALE", unitName: "Quantity", uom: "BAL" },
-    { fullName: "BUNDLES", unitName: "Quantity", uom: "BDL" },
-    { fullName: "BUCKLES", unitName: "Quantity", uom: "BKL" },
-    { fullName: "BILLIONS OF UNITS", unitName: "Quantity", uom: "BOU" },
-    { fullName: "BOX", unitName: "Quantity", uom: "BOX" },
-    { fullName: "BOTTLES", unitName: "Quantity", uom: "BTL" },
-    { fullName: "BUNCHES", unitName: "Quantity", uom: "BUN" },
-    { fullName: "CANS", unitName: "Quantity", uom: "CAN" },
-    { fullName: "CUBIC METER", unitName: "Volume", uom: "CBM" },
-    { fullName: "CUBIC CENTIMETER", unitName: "Volume", uom: "CCM" },
-    { fullName: "CENTIMETER", unitName: "Length", uom: "CMS" },
-    { fullName: "CARTONS", unitName: "Quantity", uom: "CTN" },
-    { fullName: "DOZEN", unitName: "Quantity", uom: "DOZ" },
-    { fullName: "DRUM", unitName: "Quantity", uom: "DRM" },
-    { fullName: "GREAT GROSS", unitName: "Quantity", uom: "GGR" },
-    { fullName: "GRAMS", unitName: "Weight", uom: "GMS" },
-    { fullName: "GROSS", unitName: "Quantity", uom: "GRS" },
-    { fullName: "GROSS YARDS", unitName: "Length", uom: "GYD" },
-    { fullName: "KILOGRAMS", unitName: "Weight", uom: "KGS" },
-    { fullName: "KILOLITER", unitName: "Volume", uom: "KLR" },
-    { fullName: "KILOMETER", unitName: "Length", uom: "KME" },
-    { fullName: "MILLILITER", unitName: "Volume", uom: "MLT" },
-    { fullName: "METERS", unitName: "Length", uom: "MTR" },
-    { fullName: "METRIC TONS", unitName: "Weight", uom: "MTS" },
-    { fullName: "NUMBERS", unitName: "Quantity", uom: "NOS" },
-    { fullName: "PACKS", unitName: "Quantity", uom: "PAC" },
-    { fullName: "PIECES", unitName: "Quantity", uom: "PCS" },
-    { fullName: "PAIRS", unitName: "Quantity", uom: "PRS" },
-    { fullName: "QUINTAL", unitName: "Weight", uom: "QTL" },
-    { fullName: "ROLLS", unitName: "Quantity", uom: "ROL" },
-    { fullName: "SETS", unitName: "Quantity", uom: "SET" },
-    { fullName: "TABLETS", unitName: "Quantity", uom: "TBS" },
-    { fullName: "TEN GROSS", unitName: "Quantity", uom: "TGM" },
-    { fullName: "THOUSANDS", unitName: "Quantity", uom: "THD" },
-    { fullName: "TONNES", unitName: "Weight", uom: "TON" },
-    { fullName: "TUBES", unitName: "Quantity", uom: "TUB" },
-    { fullName: "US GALLONS", unitName: "Volume", uom: "UGS" },
-    { fullName: "UNITS", unitName: "Quantity", uom: "UNT" },
-    { fullName: "YARDS", unitName: "Length", uom: "YDS" },
-    { fullName: "OTHERS", unitName: "Quantity", uom: "OTH" },
-    { fullName: "MILLIMETER", unitName: "Length", uom: "MMT" },
-    { fullName: "INCH", unitName: "Length", uom: "INH" },
-    { fullName: "FOOT", unitName: "Length", uom: "FT" },
-    { fullName: "MILE", unitName: "Length", uom: "MIL" },
-    { fullName: "MILLIGRAM", unitName: "Weight", uom: "MGM" },
-    { fullName: "POUND", unitName: "Weight", uom: "LBS" },
-    { fullName: "LITER", unitName: "Volume", uom: "LTR" }
-];
-
-const INITIAL_UNIT_NAME_OPTIONS = ["Length", "Quantity", "Volume", "Weight"];
-
-const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchable = false, disabled = false, showAsterisk = false, actionLabel = '', onAction = null }) => {
+const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchable = false, disabled = false, showAsterisk = false, actionLabel = '', onAction = null, error = '' }) => {
     const { t } = useTranslation(['common']);
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [isAddingNew, setIsAddingNew] = useState(false);
     const [newValue, setNewValue] = useState('');
+    const [subError, setSubError] = useState(false);
     const dropdownRef = useRef(null);
 
     const filteredOptions = isSearchable && searchTerm
-        ? options.filter(opt => opt.toLowerCase().includes(searchTerm.toLowerCase()))
+        ? options.filter(opt => opt?.toLowerCase().includes(searchTerm.toLowerCase()))
         : options;
 
     useEffect(() => {
@@ -77,6 +24,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                 setSearchTerm('');
                 setIsAddingNew(false);
                 setNewValue('');
+                setSubError(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -89,7 +37,10 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
             onAction && onAction(newValue.trim().toUpperCase());
             setIsAddingNew(false);
             setNewValue('');
+            setSubError(false);
             setIsOpen(false);
+        } else {
+            setSubError(true);
         }
     };
 
@@ -119,11 +70,12 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                 )}
                 {!disabled && (isOpen ? <ChevronUp size={16} className="text-gray-400 shrink-0" /> : <ChevronDown size={16} className="text-gray-400 shrink-0" />)}
             </div>
+            {error && <span className="text-red-500 text-[12px] mt-0.5 ml-1 animate-in fade-in slide-in-from-top-1 duration-200">{error}</span>}
 
             {isOpen && !disabled && (
                 <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-white border border-gray-100 rounded-[8px] shadow-lg z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="max-h-[240px] overflow-y-auto w-full py-1 custom-scrollbar">
-                        {filteredOptions.length > 0 ? (
+                        {filteredOptions?.length > 0 ? (
                             filteredOptions.map((opt, idx) => (
                                 <div
                                     key={idx}
@@ -145,32 +97,39 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                     {actionLabel && onAction && (
                         <div className="border-t border-gray-200 p-1 bg-gray-50/50">
                             {isAddingNew ? (
-                                <div className="flex items-center gap-2 p-1" onClick={(e) => e.stopPropagation()}>
-                                    <input
-                                        type="text"
-                                        autoFocus
-                                        value={newValue}
-                                        onChange={(e) => setNewValue(e.target.value)}
-                                        placeholder={t('common:enter_value')}
-                                        className="flex-1 h-[32px] px-3 bg-white border border-gray-200 rounded-[4px] text-[13px] outline-none focus:border-[#014A36]"
-                                        onKeyDown={(e) => e.key === 'Enter' && handleAddNew(e)}
-                                    />
-                                    <button
-                                        onClick={handleAddNew}
-                                        className="h-[32px] px-3 bg-[#014A36] text-white text-[12px] font-semibold rounded-[4px] hover:bg-[#013b2b]"
-                                    >
-                                        {t('common:add')}
-                                    </button>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setIsAddingNew(false);
-                                            setNewValue('');
-                                        }}
-                                        className="h-[32px] px-3 text-[#4B5563] text-[12px] font-medium hover:bg-gray-100 rounded-[4px]"
-                                    >
-                                        {t('common:cancel')}
-                                    </button>
+                                <div className="flex flex-col gap-1 p-1">
+                                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                        <input
+                                            type="text"
+                                            autoFocus
+                                            value={newValue}
+                                            onChange={(e) => {
+                                                setNewValue(e.target.value);
+                                                if (e.target.value.trim()) setSubError(false);
+                                            }}
+                                            placeholder={t('common:enter_value')}
+                                            className={`flex-1 h-[32px] px-3 bg-white border rounded-[4px] text-[13px] outline-none transition-colors ${subError ? 'border-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.1)]' : 'border-gray-200 focus:border-[#014A36]'}`}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleAddNew(e)}
+                                        />
+                                        <button
+                                            onClick={handleAddNew}
+                                            className="h-[32px] px-3 bg-[#014A36] text-white text-[12px] font-semibold rounded-[4px] hover:bg-[#013b2b]"
+                                        >
+                                            {t('common:add')}
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setIsAddingNew(false);
+                                                setNewValue('');
+                                                setSubError(false);
+                                            }}
+                                            className="h-[32px] px-3 text-[#4B5563] text-[12px] font-medium hover:bg-gray-100 rounded-[4px]"
+                                        >
+                                            {t('common:cancel')}
+                                        </button>
+                                    </div>
+                                    {subError && <span className="text-red-500 text-[11px] font-medium ml-1 animate-in fade-in slide-in-from-top-1 duration-200">Value is required</span>}
                                 </div>
                             ) : (
                                 <button
@@ -194,79 +153,162 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
 const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) => {
     const { t } = useTranslation(['modules', 'common']);
     const [loading, setLoading] = useState(false);
-    const [unitNameOptions, setUnitNameOptions] = useState(INITIAL_UNIT_NAME_OPTIONS);
-    const [fullNameOptions, setFullNameOptions] = useState([...new Set(UOM_LIBRARY.map(u => u.fullName))]);
-    const [uomLibrary, setUomLibrary] = useState(UOM_LIBRARY);
-
+    const [unitNameOptions, setUnitNameOptions] = useState([]);
+    const [gstUomOptions, setGstUomOptions] = useState([]);
+    const [fullNameOptions, setFullNameOptions] = useState([]);
+    
     const [formData, setFormData] = useState({
-        unitName: initialData?.unitName || '',
-        gstUom: initialData?.gstUom || '',
-        fullName: initialData?.gstUqc?.quantity || '',
-        description: initialData?.description || ''
+        unit_name: '',
+        gst_uom: '',
+        full_name_of_measurement: '',
     });
+    const [errors, setErrors] = useState({});
 
-    const filteredUomOptions = formData.unitName 
-        ? uomLibrary.filter(u => u.unitName === formData.unitName).map(u => u.uom)
-        : uomLibrary.map(u => u.uom);
+    // Reset form when initialData changes or mode changes
+    useEffect(() => {
+        if ((mode === 'edit' || mode === 'view') && initialData) {
+            setFormData({
+                unit_name: initialData.unit_name || '',
+                gst_uom: initialData.gst_uom || '',
+                full_name_of_measurement: initialData.full_name_of_measurement || '',
+            });
+        } else if (mode === 'add') {
+            setFormData({
+                unit_name: '',
+                gst_uom: '',
+                full_name_of_measurement: '',
+            });
+        }
+    }, [initialData, mode]);
 
-    const handleInputChange = (field, value) => {
-        if (field === 'unitName') {
-            setFormData(prev => ({
-                ...prev,
-                unitName: value,
-                gstUom: '',
-                fullName: ''
-            }));
-        } else if (field === 'gstUom') {
-            const selectedUom = uomLibrary.find(u => u.uom === value);
-            setFormData(prev => ({
-                ...prev,
-                gstUom: value,
-                fullName: selectedUom ? selectedUom.fullName : prev.fullName
-            }));
+    // Initial Load - Fetch Unit Names
+    useEffect(() => {
+        const loadInitialData = async () => {
+            try {
+                const response = await unitService.getUnitNames();
+                setUnitNameOptions(response.data || []);
+                
+                // If editing, load dependent options safely
+                if (mode === 'edit' && initialData) {
+                    if (initialData.unit_name) {
+                        try {
+                            const uomRes = await unitService.getUomByUnitName(initialData.unit_name);
+                            setGstUomOptions(uomRes.data || []);
+                        } catch (err) { console.error("Error loading UOMs:", err); }
+                    }
+                    if (initialData.gst_uom) {
+                        try {
+                            const measurementRes = await unitService.getMeasurementByUom(initialData.gst_uom);
+                            if (measurementRes.data) {
+                                setFullNameOptions([measurementRes.data]);
+                            }
+                        } catch (err) { console.error("Error loading Measurement:", err); }
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading initial data:', error);
+            }
+        };
+        loadInitialData();
+    }, [mode, initialData]);
+
+    const handleUnitNameChange = async (value) => {
+        setFormData(prev => ({
+            ...prev,
+            unit_name: value,
+            gst_uom: '',
+            full_name_of_measurement: ''
+        }));
+        setErrors(prev => ({ ...prev, unit_name: '' }));
+        
+        if (value) {
+            try {
+                const response = await unitService.getUomByUnitName(value);
+                setGstUomOptions(response.data || []);
+            } catch (error) {
+                console.error('Error loading UOMs:', error);
+            }
         } else {
-            setFormData(prev => ({ ...prev, [field]: value }));
+            setGstUomOptions([]);
         }
     };
 
-    const handleAddUnitName = (newValue) => {
+    const handleGstUomChange = async (value) => {
+        setFormData(prev => ({
+            ...prev,
+            gst_uom: value,
+            full_name_of_measurement: ''
+        }));
+        setErrors(prev => ({ ...prev, gst_uom: '' }));
+
+        if (value) {
+            try {
+                const response = await unitService.getMeasurementByUom(value);
+                const measurementName = response.data || '';
+                setFormData(prev => ({
+                    ...prev,
+                    full_name_of_measurement: measurementName
+                }));
+                
+                if (measurementName && !fullNameOptions.includes(measurementName)) {
+                    setFullNameOptions(prev => [...prev, measurementName]);
+                }
+            } catch (error) {
+                console.error('Error loading measurement name:', error);
+            }
+        }
+    };
+
+    const handleAddCustomUnitName = (newValue) => {
         if (!unitNameOptions.includes(newValue)) {
             setUnitNameOptions(prev => [...prev, newValue]);
         }
-        handleInputChange('unitName', newValue);
+        handleUnitNameChange(newValue);
     };
 
-    const handleAddGstUom = (newValue) => {
-        // Just select it, user will fill full name
-        setFormData(prev => ({ ...prev, gstUom: newValue }));
+    const handleAddCustomGstUom = (newValue) => {
+        if (!gstUomOptions.includes(newValue)) {
+            setGstUomOptions(prev => [...prev, newValue]);
+        }
+        setFormData(prev => ({ ...prev, gst_uom: newValue }));
     };
 
-    const handleAddFullName = (newValue) => {
+    const handleAddCustomFullName = (newValue) => {
         if (!fullNameOptions.includes(newValue)) {
             setFullNameOptions(prev => [...prev, newValue]);
         }
-        setFormData(prev => ({ ...prev, fullName: newValue }));
+        setFormData(prev => ({ ...prev, full_name_of_measurement: newValue }));
     };
 
     const handleSubmit = async () => {
-        if (!formData.unitName || !formData.gstUom || !formData.fullName) {
+        const newErrors = {};
+        if (!formData.unit_name) newErrors.unit_name = 'Unit Name is required';
+        if (!formData.gst_uom) newErrors.gst_uom = 'GST UOM is required';
+        if (!formData.full_name_of_measurement) newErrors.full_name_of_measurement = 'Measurement Name is required';
+
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors);
             toast.error(t('common:please_fill_required_fields'));
             return;
         }
 
         try {
             setLoading(true);
-            const submitData = {
-                unitName: formData.unitName,
-                gstUom: formData.gstUom,
-                description: formData.description,
-                fullName: formData.fullName
+            const payload = {
+                unit_name: formData.unit_name,
+                gst_uom: formData.gst_uom,
+                full_name_of_measurement: formData.full_name_of_measurement
             };
 
             if (mode === 'add') {
-                await unitService.createUnit(submitData);
+                await unitService.createUnit(payload);
             } else {
-                await unitService.updateUnit(initialData.id, submitData);
+                // Ensure ID is a number and present
+                const updateId = initialData?.id;
+                if (!updateId) {
+                    throw new Error('Update ID not found');
+                }
+                await unitService.updateUnit(updateId, payload);
             }
             onSuccess();
         } catch (error) {
@@ -288,9 +330,9 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) => {
 
             <div className="flex flex-col">
                 {[
-                    { label: t('modules:unit_name'), value: formData.unitName },
-                    { label: t('modules:gst_uom'), value: formData.gstUom },
-                    { label: 'Full Name of Measurement', value: formData.fullName || '-' }
+                    { label: t('modules:unit_name'), value: formData.unit_name },
+                    { label: t('modules:gst_uom'), value: formData.gst_uom },
+                    { label: 'Full Name of Measurement', value: formData.full_name_of_measurement || '-' }
                 ].map((item, idx) => (
                     <div key={idx} className="flex border-b border-[#E5E7EB] min-h-[52px]">
                         <div className="w-[200px] bg-[#F9FAFB] px-6 py-4 flex items-center border-r border-[#E5E7EB]">
@@ -324,7 +366,6 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) => {
 
     return (
         <div className="flex flex-col w-full h-full animate-in fade-in duration-300">
-            {/* Top Action Bar */}
             <div className="flex justify-end mb-6">
                 <button
                     onClick={onBack}
@@ -334,61 +375,64 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) => {
                 </button>
             </div>
 
-            {/* Form Container */}
             <div className="bg-white rounded-[12px] border border-[#E5E7EB] shadow-sm flex flex-col w-full">
-                {/* Header */}
                 <div className="px-6 py-5 border-b border-[#E5E7EB]">
                     <h2 className="text-[18px] font-bold text-[#111827]">
                         {mode === 'add' ? t('modules:add_unit') : t('modules:update_unit')}
                     </h2>
                 </div>
 
-                {/* Form Body */}
                 <div className="p-6 md:p-8 flex flex-col gap-6">
                     <div className="flex flex-col gap-6 w-full">
                         <CustomSelect
                             label={t('modules:unit_name')}
                             placeholder="Select Unit Category"
                             options={unitNameOptions}
-                            value={formData.unitName}
-                            onChange={(val) => handleInputChange('unitName', val)}
+                            value={formData.unit_name}
+                            onChange={handleUnitNameChange}
                             showAsterisk={true}
                             disabled={isView}
                             actionLabel="Add Unit Name"
-                            onAction={handleAddUnitName}
+                            onAction={handleAddCustomUnitName}
+                            error={errors.unit_name}
                         />
 
                         <CustomSelect
                             label={t('modules:gst_uom')}
                             placeholder="Select GST UOM"
-                            options={filteredUomOptions}
-                            value={formData.gstUom}
-                            onChange={(val) => handleInputChange('gstUom', val)}
+                            options={gstUomOptions}
+                            value={formData.gst_uom}
+                            onChange={handleGstUomChange}
                             isSearchable={true}
-                            disabled={isView}
+                            disabled={isView || !formData.unit_name}
                             showAsterisk={true}
                             actionLabel="Add GST UOM"
-                            onAction={handleAddGstUom}
+                            onAction={handleAddCustomGstUom}
+                            error={errors.gst_uom}
                         />
 
                         <CustomSelect
                             label="Full Name of Measurement"
                             placeholder="Select or Enter Full Name"
                             options={fullNameOptions}
-                            value={formData.fullName}
-                            onChange={(val) => handleInputChange('fullName', val)}
+                            value={formData.full_name_of_measurement}
+                            onChange={(val) => {
+                                setFormData(prev => ({ ...prev, full_name_of_measurement: val }));
+                                setErrors(prev => ({ ...prev, full_name_of_measurement: '' }));
+                            }}
                             isSearchable={true}
-                            disabled={isView}
+                            disabled={isView || !formData.gst_uom}
                             showAsterisk={true}
                             actionLabel="Add Full Name of Measurement"
-                            onAction={handleAddFullName}
+                            onAction={handleAddCustomFullName}
+                            error={errors.full_name_of_measurement}
                         />
                     </div>
                 </div>
 
-                {/* Footer Buttons */}
                 <div className="px-6 py-5 border-t border-[#E5E7EB] flex items-center justify-end gap-4 bg-white/50 rounded-b-[12px]">
                     <button
+                        type="button"
                         onClick={onBack}
                         disabled={loading}
                         className="px-8 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors bg-white"
@@ -396,6 +440,7 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) => {
                         {t('common:cancel')}
                     </button>
                     <button
+                        type="button"
                         onClick={handleSubmit}
                         disabled={loading}
                         className="px-8 h-[44px] bg-[#014A36] text-white rounded-[8px] text-[14px] font-bold hover:bg-[#013b2b] transition-all shadow-sm flex items-center justify-center min-w-[140px]"

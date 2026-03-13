@@ -28,6 +28,11 @@ export class UpdateSubGroupDto {
 export class UpdateSubGroupStatusDto {
     @ApiProperty({ example: true })
     @IsBoolean()
-    @IsNotEmpty()
+    status: boolean;
+}
+
+export class UpdateGroupStatusDto {
+    @ApiProperty({ example: true })
+    @IsBoolean()
     status: boolean;
 }

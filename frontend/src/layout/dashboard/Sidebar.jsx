@@ -37,19 +37,24 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             )}
 
              {/* Sidebar Container */}
-            <aside className={`fixed lg:relative inset-y-0 left-0 z-50 bg-white border-r border-[#E5E7EB] transform transition-all duration-300 ease-in-out flex flex-col shrink-0 ${isOpen ? 'w-[260px] translate-x-0 opacity-100' : 'w-0 -translate-x-full lg:translate-x-0 lg:w-0 opacity-0 lg:opacity-0 pointer-events-none'}`}>
+            <aside className={`fixed lg:relative inset-y-0 left-0 z-50 bg-white border-r border-[#E5E7EB] transform transition-all duration-300 ease-in-out flex flex-col shrink-0 ${isOpen ? 'w-[260px] translate-x-0' : 'w-0 -translate-x-full lg:translate-x-0 lg:w-[80px]'}`}>
                 {/* Fixed width container to prevent squashing during transition */}
-                <div className="w-[260px] flex flex-col h-full">
+                <div className={`${isOpen ? 'w-[260px]' : 'lg:w-[80px] w-[260px]'} flex flex-col h-full overflow-hidden transition-all duration-300`}>
                 {/* Logo Area */}
-                <div className="h-[72px] px-6 flex items-center justify-between border-b border-[#E5E7EB] shrink-0">
-                    <img src={logo} alt="WeighPro Logo" className="h-[70px]" onError={(e) => { e.target.style.display = 'none' }} />
+                <div className={`h-[72px] flex items-center border-b border-[#E5E7EB] shrink-0 transition-all duration-300 ${isOpen ? 'px-6 justify-between' : 'lg:px-0 lg:justify-center px-6 justify-between'}`}>
+                    <img 
+                        src={logo} 
+                        alt="WeighPro Logo" 
+                        className={`transition-all duration-300 ${isOpen ? 'h-[70px]' : 'lg:h-[40px] lg:scale-125 h-[70px]'}`} 
+                        onError={(e) => { e.target.style.display = 'none' }} 
+                    />
                     <button onClick={() => setIsOpen(false)} className="lg:hidden text-gray-500 hover:text-gray-700">
                         <X size={20} />
                     </button>
                 </div>
 
                 {/* Nav Links */}
-                <div className="flex-1 overflow-y-auto py-5 px-3 flex flex-col gap-1.5 custom-scrollbar">
+                <div className={`flex-1 overflow-y-auto py-5 flex flex-col gap-1.5 custom-scrollbar transition-all duration-300 ${isOpen ? 'px-3' : 'lg:px-2 px-3'}`}>
                     {menuItems.map((item, index) => {
                         const Icon = item.icon;
                         const isDashboard = item.path === '/seller/dashboard';
@@ -61,14 +66,19 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                             <NavLink
                                 key={index}
                                 to={item.path}
-                                onClick={() => setIsOpen(false)}
-                                className={`flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-[14px] font-medium transition-colors ${isActive
+                                onClick={() => {
+                                    if (window.innerWidth < 1024) setIsOpen(false);
+                                }}
+                                className={`flex items-center rounded-[10px] text-[14px] font-medium transition-all duration-300 whitespace-nowrap overflow-hidden ${isOpen ? 'gap-3 px-3 py-2.5' : 'lg:gap-0 lg:px-0 lg:justify-center lg:h-[48px] gap-3 px-3 py-2.5'} ${isActive
                                     ? 'bg-[#F3F4F6] text-[#111827]'
                                     : 'text-[#4B5563] hover:bg-[#F9FAFB] hover:text-[#111827]'
                                     }`}
+                                title={!isOpen ? item.label : ''}
                             >
-                                <Icon size={18} strokeWidth={isActive ? 2.5 : 2} className={isActive ? "text-[#111827]" : "text-[#9CA3AF]"} />
-                                {item.label}
+                                <Icon size={20} strokeWidth={isActive ? 2.5 : 2} className={`${isActive ? "text-[#111827]" : "text-[#9CA3AF]"} shrink-0`} />
+                                <span className={`transition-opacity duration-300 ${isOpen ? 'opacity-100 flex-1' : 'lg:hidden opacity-0 w-0'}`}>
+                                    {item.label}
+                                </span>
                             </NavLink>
                         );
                     })}
