@@ -30,29 +30,45 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                 </label>
             )}
             <div
-                className={`w-full h-[44px] flex items-center justify-between px-4 border rounded-[8px] bg-white cursor-pointer transition-colors ${isOpen ? 'border-[#014A36] ring-1 ring-[#014A36]/10' : 'border-[#E5E7EB] hover:border-gray-300'}`}
-                onClick={() => setIsOpen(!isOpen)}
+                className={`w-full h-[44px] flex items-center justify-between px-4 border rounded-[8px] bg-white transition-colors ${isOpen ? 'border-[#014A36] ring-1 ring-[#014A36]/10' : 'border-[#E5E7EB] hover:border-gray-300'} ${!isSearchable ? 'cursor-pointer' : ''}`}
+                onClick={() => !isSearchable && setIsOpen(!isOpen)}
             >
-                <span className={`text-[14px] truncate ${value ? 'text-[#111827]' : 'text-gray-500'}`}>
-                    {value || placeholder}
-                </span>
-                {isOpen ? <ChevronUp size={16} className="text-gray-500" /> : <ChevronDown size={16} className="text-gray-500" />}
+                {isSearchable ? (
+                    <input
+                        type="text"
+                        className="w-full h-full text-[14px] text-[#111827] outline-none bg-transparent placeholder:text-gray-500"
+                        placeholder={placeholder}
+                        value={isOpen ? searchTerm : (value || '')}
+                        onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            if (!isOpen) setIsOpen(true);
+                        }}
+                        onFocus={() => {
+                            setIsOpen(true);
+                            setSearchTerm(value || '');
+                        }}
+                    />
+                ) : (
+                    <span className={`text-[14px] truncate ${value ? 'text-[#111827]' : 'text-gray-500'}`}>
+                        {value || placeholder}
+                    </span>
+                )}
+                <div 
+                    className="cursor-pointer"
+                    onClick={(e) => {
+                        if (isSearchable) {
+                            e.stopPropagation();
+                            setIsOpen(!isOpen);
+                            if (!isOpen) setSearchTerm(value || '');
+                        }
+                    }}
+                >
+                    {isOpen ? <ChevronUp size={16} className="text-gray-500" /> : <ChevronDown size={16} className="text-gray-500" />}
+                </div>
             </div>
 
             {isOpen && (
                 <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-white border border-gray-100 rounded-[8px] shadow-lg z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                    {isSearchable && (
-                        <div className="p-2 border-b border-gray-100">
-                            <input
-                                type="text"
-                                placeholder={t('common:search')}
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full h-[36px] px-3 text-[14px] border border-gray-200 rounded-[6px] outline-none focus:border-[#014A36]"
-                                onClick={(e) => e.stopPropagation()}
-                            />
-                        </div>
-                    )}
                     <div className="max-h-[240px] overflow-y-auto w-full py-1 custom-scrollbar">
                         {filteredOptions.length > 0 ? (
                             filteredOptions.map((opt, idx) => (
@@ -144,6 +160,17 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
     const REG_UNDER = ['Micro', 'Medium', 'Small'];
     const REG_TYPES = ['Trading', 'Service', 'Manufacturing'];
     const PREFIX_OPTIONS = ['Mr.', 'Mrs.', 'Miss.', 'Ms.'];
+    const AREA_OPTIONS = [
+        'Panchavati',
+        'Shivaji Nagar',
+        'Industrial Area',
+        'Market Area',
+        'College Road',
+        'Main Bazaar',
+        'Station Road',
+        'MG Road',
+        'APMC Market'
+    ];
 
     const handleInputChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -364,20 +391,6 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                             />
                         </div>
 
-                        {/* Area */}
-                        <div className="flex flex-col gap-1.5">
-                            <label className="text-[13px] font-semibold text-[#4B5563]">
-                                {t('area')}({t('common:optional')})
-                            </label>
-                            <input
-                                type="text"
-                                placeholder={t('enter_area')}
-                                className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
-                                value={formData.area}
-                                onChange={(e) => handleInputChange('area', e.target.value)}
-                            />
-                        </div>
-
                         {/* Pin Code */}
                         <div className="flex flex-col gap-1.5">
                             <label className="text-[13px] font-semibold text-[#4B5563]">
@@ -391,6 +404,16 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                 onChange={(e) => handleInputChange('pinCode', e.target.value)}
                             />
                         </div>
+
+                        {/* Area */}
+                        <CustomSelect
+                            label={`${t('area')}(${t('common:optional')})`}
+                            placeholder={t('enter_area')}
+                            options={AREA_OPTIONS}
+                            value={formData.area}
+                            onChange={(val) => handleInputChange('area', val)}
+                            isSearchable={true}
+                        />
 
                         {/* City */}
                         <div className="flex flex-col gap-1.5">
