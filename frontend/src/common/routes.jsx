@@ -143,11 +143,15 @@ export const router = createBrowserRouter([
                 element: <ProtectedRoute allowedRoles={['SELLER']} />,
                 children: [
                     {
-                        path: ROUTES.SELLER_DASHBOARD || '/seller/dashboard',
+                        path: '/seller',
                         element: <DashboardLayout />,
                         children: [
                             {
                                 index: true,
+                                element: <Navigate to="dashboard" replace />
+                            },
+                            {
+                                path: 'dashboard',
                                 element: <Home />,
                             },
                             {
@@ -197,7 +201,7 @@ export const router = createBrowserRouter([
                                 element: <SystemSettings />
                             }
                         ]
-                    },
+                    }
                 ]
             }
         ]

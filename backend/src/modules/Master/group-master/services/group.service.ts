@@ -1,13 +1,13 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { GroupMasterRepository } from '../repositories/group.repository';
-import { CreateSubGroupDto, UpdateSubGroupDto, UpdateSubGroupStatusDto } from '../dto/group-master.dto';
+import { CreateSubGroupDto, UpdateSubGroupDto, UpdateSubGroupStatusDto, UpdateGroupStatusDto } from '../dto/group-master.dto';
 
 @Injectable()
 export class GroupMasterService {
     constructor(private readonly groupRepository: GroupMasterRepository) { }
 
-    async getAllGroupsWithSubGroups() {
-        const data = await this.groupRepository.findAllWithSubGroups();
+    async getAllGroupsWithSubGroups(userId: number) {
+        const data = await this.groupRepository.findAllWithSubGroups(userId);
         return {
             success: true,
             message: 'Groups retrieved successfully',
@@ -24,7 +24,7 @@ export class GroupMasterService {
         };
     }
 
-    async createSubGroup(dto: CreateSubGroupDto) {
+    async createSubGroup(dto: CreateSubGroupDto, userId: number) {
         const group_id = dto.group_id;
         const sub_group_name = dto.sub_group_name.trim();
 
@@ -34,8 +34,8 @@ export class GroupMasterService {
             throw new NotFoundException(`Header group with ID ${group_id} not found`);
         }
 
-        // Check for duplicate sub-group name under the same group
-        const existing = await this.groupRepository.findSubGroupByNameAndGroup(sub_group_name, group_id);
+        // Check for duplicate sub-group name under the same group for this specific user
+        const existing = await this.groupRepository.findSubGroupByNameAndGroup(sub_group_name, group_id, userId);
         if (existing) {
             throw new ConflictException(`Sub-group "${sub_group_name}" already exists under this group`);
         }
@@ -43,6 +43,7 @@ export class GroupMasterService {
         const data = await this.groupRepository.createSubGroup({
             sub_group_name,
             group_id,
+            userId,
         });
 
         return {
@@ -52,14 +53,14 @@ export class GroupMasterService {
         };
     }
 
-    async updateSubGroup(id: number, dto: UpdateSubGroupDto) {
+    async updateSubGroup(id: number, dto: UpdateSubGroupDto, userId: number) {
         const group_id = dto.group_id;
         const sub_group_name = dto.sub_group_name.trim();
 
-        // Check if sub-group exists
-        const subGroup = await this.groupRepository.findSubGroupById(id);
+        // Check if sub-group exists and belongs to the user
+        const subGroup = await this.groupRepository.findSubGroupById(id, userId);
         if (!subGroup) {
-            throw new NotFoundException(`Sub-group with ID ${id} not found`);
+            throw new NotFoundException(`Sub-group with ID ${id} not found or access denied`);
         }
 
         // Check if header group exists
@@ -69,7 +70,7 @@ export class GroupMasterService {
         }
 
         // Check for duplicate sub-group name under the same group (excluding current id)
-        const existing = await this.groupRepository.findSubGroupByNameAndGroup(sub_group_name, group_id);
+        const existing = await this.groupRepository.findSubGroupByNameAndGroup(sub_group_name, group_id, userId);
         if (existing && existing.id !== id) {
             throw new ConflictException(`Sub-group "${sub_group_name}" already exists under this group`);
         }
@@ -86,10 +87,25 @@ export class GroupMasterService {
         };
     }
 
-    async updateSubGroupStatus(id: number, dto: UpdateSubGroupStatusDto) {
-        const subGroup = await this.groupRepository.findSubGroupById(id);
+    async updateGroupStatus(id: number, dto: UpdateGroupStatusDto) {
+        const group = await this.groupRepository.findGroupById(id);
+        if (!group) {
+            throw new NotFoundException(`Header group with ID ${id} not found`);
+        }
+
+        const data = await this.groupRepository.updateGroupStatus(id, dto.status);
+
+        return {
+            success: true,
+            message: `Group status changed to ${dto.status ? 'Active' : 'Inactive'}`,
+            data,
+        };
+    }
+
+    async updateSubGroupStatus(id: number, dto: UpdateSubGroupStatusDto, userId: number) {
+        const subGroup = await this.groupRepository.findSubGroupById(id, userId);
         if (!subGroup) {
-            throw new NotFoundException(`Sub-group with ID ${id} not found`);
+            throw new NotFoundException(`Sub-group with ID ${id} not found or access denied`);
         }
 
         const data = await this.groupRepository.updateSubGroupStatus(id, dto.status);

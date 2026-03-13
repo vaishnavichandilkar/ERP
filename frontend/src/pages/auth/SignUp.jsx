@@ -4,6 +4,7 @@ import AuthLayout from '../../layout/auth/AuthLayout';
 import { Upload, FileText, Trash2, ChevronDown, CloudUpload, ArrowLeft } from 'lucide-react';
 import logo from '../../assets/images/ERP_Logo2.png';
 import { useTranslation } from 'react-i18next';
+
 import RegistrationSuccessModal from '../../components/common/RegistrationSuccessModal';
 
 const FileUploadBox = ({ title, file, onFileChange, onRemove, onUploadStateChange, optional }) => {
@@ -477,7 +478,10 @@ const SignUp = () => {
                     >
                         <ArrowLeft size={20} />
                     </button>
+                    {/* Language Switcher */}
+                    <div className="absolute -top-12 -right-4 lg:-top-16 lg:-right-8">
 
+                    </div>
                     {/* Header: Logo and Step Pill */}
                     <div className="flex justify-between items-center mb-6 w-full -mt-2">
                         <img

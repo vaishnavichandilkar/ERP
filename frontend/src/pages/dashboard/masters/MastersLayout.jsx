@@ -13,16 +13,16 @@ const MastersLayout = () => {
     // 4. Category
     // 5. Product Master
     const tabs = [
-        { name: t('group_master'), path: '/seller/dashboard/masters/group-master' },
-        { name: t('account_master'), path: '/seller/dashboard/masters/account-master' },
-        { name: t('unit_master'), path: '/seller/dashboard/masters/unit-master' },
-        { name: t('category_master'), path: '/seller/dashboard/masters/category' },
-        { name: t('product_master'), path: '/seller/dashboard/masters/product-master' },
+        { name: t('group_master'), path: '/seller/masters/group-master' },
+        { name: t('account_master'), path: '/seller/masters/account-master' },
+        { name: t('unit_master'), path: '/seller/masters/unit-master' },
+        { name: t('category_master'), path: '/seller/masters/category' },
+        { name: t('product_master'), path: '/seller/masters/product-master' },
     ];
 
-    // If we are on the base /seller/dashboard/masters route, redirect to the first tab (Group Master)
-    if (location.pathname === '/seller/dashboard/masters' || location.pathname === '/seller/dashboard/masters/') {
-        return <Navigate to="/seller/dashboard/masters/group-master" replace />;
+    // If we are on the base /seller/masters route, redirect to the first tab (Group Master)
+    if (location.pathname === '/seller/masters' || location.pathname === '/seller/masters/') {
+        return <Navigate to="/seller/masters/group-master" replace />;
     }
 
     return (

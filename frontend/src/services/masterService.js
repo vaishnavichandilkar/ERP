@@ -36,6 +36,37 @@ const masterService = {
         const response = await axiosInstance.get('/masters/gst-uom');
         return response.data;
     },
+
+    // Group Master APIs
+    getAllGroups: async () => {
+        const response = await axiosInstance.get('/group-master');
+        return response.data;
+    },
+
+    getGroupDropdown: async () => {
+        const response = await axiosInstance.get('/group-master/dropdown');
+        return response.data;
+    },
+
+    createSubGroup: async (data) => {
+        const response = await axiosInstance.post('/group-master/sub-group', data);
+        return response.data;
+    },
+
+    updateSubGroup: async (id, data) => {
+        const response = await axiosInstance.put(`/group-master/sub-group/${id}`, data);
+        return response.data;
+    },
+
+    updateSubGroupStatus: async (id, status) => {
+        const response = await axiosInstance.patch(`/group-master/sub-group/${id}/status`, { status });
+        return response.data;
+    },
+
+    updateGroupStatus: async (id, status) => {
+        const response = await axiosInstance.patch(`/group-master/${id}/status`, { status });
+        return response.data;
+    },
 };
 
 export default masterService;

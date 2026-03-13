@@ -18,11 +18,11 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
     const menuItems = [
         { path: '/seller/dashboard', label: t('terms:dashboard'), icon: LayoutDashboard },
-        { path: '/seller/dashboard/reports', label: t('reports'), icon: FileBarChart },
-        { path: '/seller/dashboard/masters', label: t('masters'), icon: Database },
-        { path: '/seller/dashboard/purchase', label: t('purchase'), icon: ShoppingCart },
-        { path: '/seller/dashboard/sales', label: t('sales'), icon: TrendingUp },
-        { path: '/seller/dashboard/settings', label: t('settings'), icon: Settings },
+        { path: '/seller/reports', label: t('reports'), icon: FileBarChart },
+        { path: '/seller/masters', label: t('masters'), icon: Database },
+        { path: '/seller/purchase', label: t('purchase'), icon: ShoppingCart },
+        { path: '/seller/sales', label: t('sales'), icon: TrendingUp },
+        { path: '/seller/settings', label: t('settings'), icon: Settings },
     ];
 
 

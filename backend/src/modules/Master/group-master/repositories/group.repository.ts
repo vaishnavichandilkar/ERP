@@ -5,10 +5,11 @@ import { PrismaService } from '../../../../infrastructure/prisma/prisma.service'
 export class GroupMasterRepository {
     constructor(private readonly prisma: PrismaService) { }
 
-    async findAllWithSubGroups() {
+    async findAllWithSubGroups(userId: number) {
         return this.prisma.accountGroup.findMany({
             include: {
                 sub_groups: {
+                    where: { userId },
                     orderBy: {
                         sub_group_name: 'asc',
                     },
@@ -41,13 +42,13 @@ export class GroupMasterRepository {
         });
     }
 
-    async findSubGroupById(id: number) {
-        return this.prisma.accountSubGroup.findUnique({
-            where: { id },
+    async findSubGroupById(id: number, userId: number) {
+        return this.prisma.accountSubGroup.findFirst({
+            where: { id, userId },
         });
     }
 
-    async createSubGroup(data: { sub_group_name: string; group_id: number }) {
+    async createSubGroup(data: { sub_group_name: string; group_id: number; userId: number }) {
         return this.prisma.accountSubGroup.create({
             data,
         });
@@ -60,6 +61,13 @@ export class GroupMasterRepository {
         });
     }
 
+    async updateGroupStatus(id: number, status: boolean) {
+        return this.prisma.accountGroup.update({
+            where: { id },
+            data: { status },
+        });
+    }
+
     async updateSubGroupStatus(id: number, status: boolean) {
         return this.prisma.accountSubGroup.update({
             where: { id },
@@ -67,11 +75,12 @@ export class GroupMasterRepository {
         });
     }
 
-    async findSubGroupByNameAndGroup(name: string, group_id: number) {
+    async findSubGroupByNameAndGroup(name: string, group_id: number, userId: number) {
         return this.prisma.accountSubGroup.findFirst({
             where: {
                 sub_group_name: name,
                 group_id,
+                userId,
             },
         });
     }

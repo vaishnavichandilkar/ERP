@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+
 import AuthLayout from '../../layout/auth/AuthLayout';
 import Button from '../../components/common/Button';
 import { ArrowLeft } from 'lucide-react';
