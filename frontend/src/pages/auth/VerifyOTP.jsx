@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import LanguageSwitcher from '../../components/common/LanguageSwitcher';
+
 import AuthLayout from '../../layout/auth/AuthLayout';
 import Button from '../../components/common/Button';
 import { ArrowLeft } from 'lucide-react';
@@ -203,11 +203,7 @@ const VerifyOTP = () => {
     return (
         <AuthLayout hideLeftPanel={true}>
             <div className="text-left w-full mx-auto flex flex-col min-h-0 relative">
-                {!localStorage.getItem('languageConfirmed') && (
-                    <div className="absolute top-8 right-0 md:top-0">
-                        <LanguageSwitcher />
-                    </div>
-                )}
+
 
                 <button
                     onClick={() => navigate(-1)}
