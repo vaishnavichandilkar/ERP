@@ -68,7 +68,7 @@ const ViewAccount = ({ initialData, onBack }) => {
                             label2={`${t('op_balance')}:`} value2={renderOpBalance()} 
                         />
                         <InfoTableRow 
-                            label1={`${t('vendor_code')}:`} value1={data.vendorCode} 
+                            label1={`${t('vendor_code')}:`} value1={data.code} 
                             label2={`${t('reg_type')}:`} value2={data.regType} 
                         />
                         <InfoTableRow 

@@ -98,14 +98,14 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
     const { t } = useTranslation(['modules', 'common']);
     const isEditMode = !!initialData;
     const [formData, setFormData] = useState(initialData ? {
-        accountName: initialData.account || '',
+        accountName: initialData.accountName || '',
         groupName: initialData.groupName || '',
         gstNo: initialData.gstNo || '',
         panNo: initialData.panNo || '',
         creditDays: initialData.creditDays ? initialData.creditDays.toString() : '',
         opBalance: initialData.opBalanceRaw || (initialData.opBalance ? initialData.opBalance.replace(/[^0-9.]/g, '') : ''),
         opBalanceType: initialData.opBalanceType || (initialData.opBalance && initialData.opBalance.startsWith('-') ? 'Dr' : 'Cr'),
-        vendorCode: initialData.vendorCode || '',
+        code: initialData.code || '',
         address1: initialData.address1 || initialData.address || '',
         address2: initialData.address2 || '',
         area: initialData.area || '',
@@ -131,7 +131,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
         creditDays: '',
         opBalance: '',
         opBalanceType: 'Cr',
-        vendorCode: '',
+        code: '',
         address1: '',
         address2: '',
         area: '',
@@ -180,7 +180,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                          formData.groupName.trim() !== '' &&
                          formData.creditDays.trim() !== '' &&
                          formData.panNo.trim() !== '' &&
-                         formData.vendorCode.trim() !== '' &&
+                         formData.code.trim() !== '' &&
                          formData.address1.trim() !== '' &&
                          formData.pinCode.trim() !== '';
 
@@ -200,8 +200,8 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
 
         const newAccount = {
             ...(initialData || {}),
-            vendorCode: formData.vendorCode,
-            account: formData.accountName,
+            code: formData.code,
+            accountName: formData.accountName,
             groupName: formData.groupName,
             creditDays: parseInt(formData.creditDays, 10) || formData.creditDays,
             gstNo: formData.gstNo || '-',
@@ -358,8 +358,8 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                 type="text"
                                 placeholder={t('vendor_code')}
                                 className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
-                                value={formData.vendorCode}
-                                onChange={(e) => handleInputChange('vendorCode', e.target.value)}
+                                value={formData.code}
+                                onChange={(e) => handleInputChange('code', e.target.value)}
                             />
                         </div>
 

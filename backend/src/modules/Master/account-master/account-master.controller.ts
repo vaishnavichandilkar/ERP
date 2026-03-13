@@ -5,23 +5,25 @@ import {
   Body, 
   Patch, 
   Param, 
-  Delete, 
   Query, 
   Put, 
   Res, 
   DefaultValuePipe, 
-  ParseBoolPipe, 
   ParseIntPipe,
   HttpCode, 
-  HttpStatus
+  HttpStatus,
+  UseGuards
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
 import { AccountMasterService } from './account-master.service';
 import { CreateAccountMasterDto, UpdateAccountMasterDto, UpdateAccountStatusDto } from './dto/account-master.dto';
 import { Response } from 'express';
+import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 
 @ApiTags('Account Master')
 @Controller('account-master')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 export class AccountMasterController {
   constructor(private readonly accountMasterService: AccountMasterService) {}
 
@@ -34,24 +36,66 @@ export class AccountMasterController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all accounts with optional filtering' })
-  @ApiQuery({ name: 'accountGroup', required: false, type: String })
-  @ApiQuery({ name: 'vendorCode', required: false, type: String })
+  @ApiOperation({ summary: 'Get all accounts with optional filtering and pagination' })
+  @ApiQuery({ name: 'groupName', required: false, type: String })
+  @ApiQuery({ name: 'gstNo', required: false, type: String })
+  @ApiQuery({ name: 'panNo', required: false, type: String })
+  @ApiQuery({ name: 'creditDays', required: false, type: Number })
+  @ApiQuery({ name: 'isActive', required: false, type: Boolean })
+  @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number' })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page' })
   findAll(
-    @Query('accountGroup') accountGroup?: string,
-    @Query('vendorCode') vendorCode?: string,
+    @Query('groupName') groupName?: string,
+    @Query('gstNo') gstNo?: string,
+    @Query('panNo') panNo?: string,
+    @Query('creditDays') creditDays?: number,
+    @Query('isActive') isActive?: string,
+    @Query('search') search?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
-    return this.accountMasterService.findAll({ accountGroup, vendorCode });
+    return this.accountMasterService.findAll({ 
+      groupName, 
+      gstNo, 
+      panNo, 
+      creditDays: creditDays ? Number(creditDays) : undefined, 
+      isActive: isActive !== undefined ? isActive === 'true' : undefined, 
+      search,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined
+    });
   }
 
   @Get('export')
-  @ApiOperation({ summary: 'Export accounts list to CSV format (acting as XLSX alternative without external deps)' })
-  @ApiQuery({ name: 'format', required: false, enum: ['csv', 'pdf'], description: 'Export format' })
+  @ApiOperation({ summary: 'Export accounts list to XLSX or PDF format' })
+  @ApiQuery({ name: 'format', required: true, enum: ['xlsx', 'pdf'], description: 'Export format' })
+  @ApiQuery({ name: 'groupName', required: false, type: String })
+  @ApiQuery({ name: 'gstNo', required: false, type: String })
+  @ApiQuery({ name: 'panNo', required: false, type: String })
+  @ApiQuery({ name: 'creditDays', required: false, type: Number })
+  @ApiQuery({ name: 'isActive', required: false, type: Boolean })
+  @ApiQuery({ name: 'search', required: false, type: String })
   async exportAccounts(
     @Res() res: Response,
-    @Query('format', new DefaultValuePipe('csv')) format: string,
+    @Query('format') format: string,
+    @Query('groupName') groupName?: string,
+    @Query('gstNo') gstNo?: string,
+    @Query('panNo') panNo?: string,
+    @Query('creditDays') creditDays?: number,
+    @Query('isActive') isActive?: string,
+    @Query('search') search?: string,
   ) {
-    const file = await this.accountMasterService.exportAccounts(format.toLowerCase());
+    const filters = {
+      groupName, 
+      gstNo, 
+      panNo, 
+      creditDays: creditDays ? Number(creditDays) : undefined, 
+      isActive: isActive !== undefined ? isActive === 'true' : undefined, 
+      search 
+    };
+
+    const file = await this.accountMasterService.exportAccounts(format.toLowerCase(), filters);
 
     res.set({
       'Content-Type': file.mimetype,

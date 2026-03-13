@@ -7,10 +7,33 @@ import {
   IsEmail,
   Matches,
   IsEnum,
+  ValidateIf,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { ContactPrefix } from '@prisma/client';
+
+export enum GroupNameEnum {
+  CREDITORS = 'Sundry Creditors (Vendor)',
+  DEBTORS = 'Sundry Debtors (Customer)',
+}
+
+export enum BalanceTypeEnum {
+  CR = 'Cr',
+  DR = 'Dr',
+}
+
+export enum RegTypeEnum {
+  TRADING = 'Trading',
+  SERVICE = 'Service',
+  MANUFACTURING = 'Manufacturing',
+}
+
+export enum RegUnderEnum {
+  MICRO = 'Micro',
+  SMALL = 'Small',
+  MEDIUM = 'Medium',
+}
 
 export class CreateAccountMasterDto {
   @ApiProperty()
@@ -18,20 +41,14 @@ export class CreateAccountMasterDto {
   @IsNotEmpty()
   accountName: string;
 
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  group: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  vendorCode: string;
+  @ApiProperty({ enum: GroupNameEnum })
+  @IsEnum(GroupNameEnum)
+  groupName: GroupNameEnum;
 
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
-  msme?: string;
+  gstNo?: string;
 
   @ApiProperty({ description: 'Indian PAN Format validation' })
   @IsString()
@@ -39,24 +56,21 @@ export class CreateAccountMasterDto {
   @Matches(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, {
     message: 'PAN must be a valid Indian PAN format (e.g., ABCDE1234F)',
   })
-  pan: string;
+  panNo: string;
 
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
-  gstNo?: string;
-
-  @ApiPropertyOptional()
+  @ApiProperty()
   @IsNumber()
-  @IsOptional()
   @Type(() => Number)
-  openingBalance?: number;
+  creditDays: number;
 
-  @ApiPropertyOptional()
+  @ApiProperty()
   @IsNumber()
-  @IsOptional()
   @Type(() => Number)
-  creditDays?: number;
+  openingBalance: number;
+
+  @ApiProperty({ enum: BalanceTypeEnum })
+  @IsEnum(BalanceTypeEnum)
+  balanceType: BalanceTypeEnum;
 
   @ApiProperty()
   @IsString()
@@ -68,72 +82,90 @@ export class CreateAccountMasterDto {
   @IsOptional()
   addressLine2?: string;
 
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
-  area?: string;
-
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
   pincode: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsString()
-  @IsNotEmpty()
-  city: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  state: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  country: string;
-
-  @ApiPropertyOptional({ enum: ContactPrefix })
-  @IsEnum(ContactPrefix)
   @IsOptional()
-  prefix?: ContactPrefix;
+  area?: string;
 
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
-  contactPersonName?: string;
+  city?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  state?: string;
+
+  @ApiPropertyOptional()
+  @IsBoolean()
+  @IsOptional()
+  msmeStatus?: boolean;
+
+  @ApiPropertyOptional()
+  @ValidateIf(o => o.msmeStatus === true)
+  @IsString()
+  @IsNotEmpty()
+  msmeRegNo?: string;
+
+  @ApiPropertyOptional({ enum: RegTypeEnum })
+  @ValidateIf(o => o.msmeStatus === true)
+  @IsEnum(RegTypeEnum)
+  @IsNotEmpty()
+  regType?: RegTypeEnum;
+
+  @ApiPropertyOptional({ enum: RegUnderEnum })
+  @ValidateIf(o => o.msmeStatus === true)
+  @IsEnum(RegUnderEnum)
+  @IsNotEmpty()
+  regUnder?: RegUnderEnum;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  accountHolderName: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  bankName: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  accountNumber: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^[A-Z]{4}0[A-Z0-9]{6}$/, { message: 'Invalid IFSC Code format' })
+  ifscCode: string;
+
+  @ApiProperty({ enum: ContactPrefix })
+  @IsEnum(ContactPrefix)
+  @IsNotEmpty()
+  prefix: ContactPrefix;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  contactPersonName: string;
 
   @ApiPropertyOptional()
   @IsEmail()
   @IsOptional()
   emailId?: string;
 
-  @ApiPropertyOptional()
+  @ApiProperty()
   @IsString()
-  @IsOptional()
+  @IsNotEmpty()
   @Matches(/^[0-9]{10}$/, { message: 'Mobile number must be a 10-digit number' })
-  mobileNo?: string;
-
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
-  accountHolderName?: string;
-
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
-  bankName?: string;
-
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
-  accountNumber?: string;
-
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
-  @Matches(/^[A-Z]{4}0[A-Z0-9]{6}$/, { message: 'Invalid IFSC Code format' })
-  ifscCode?: string;
+  mobileNo: string;
 
   @ApiPropertyOptional()
   @IsBoolean()
@@ -141,7 +173,12 @@ export class CreateAccountMasterDto {
   isActive?: boolean;
 }
 
-export class UpdateAccountMasterDto extends PartialType(CreateAccountMasterDto) {}
+export class UpdateAccountMasterDto extends PartialType(CreateAccountMasterDto) {
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  code?: string;
+}
 
 export class UpdateAccountStatusDto {
   @ApiProperty()

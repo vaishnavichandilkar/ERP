@@ -245,38 +245,39 @@ enum MasterStatus {
 model AccountMaster {
   id Int @id @default(autoincrement())
 
-  // Primary Identity
-  accountName String
-  group       String
-  vendorCode  String @unique
-
-  // Tax & Finance
-  msme           String?
-  pan            String
+  // Data Schema & Sequence matches UI
+  accountName    String
+  groupName      String
   gstNo          String?
-  openingBalance Decimal? @default(0)
-  creditDays     Int?
+  panNo          String
+  creditDays     Int
+  openingBalance Decimal
+  balanceType    String
+  code           String @unique
 
-  // Address Details
-  addressLine1 String
-  addressLine2 String?
-  area         String?
-  pincode      String
-  city         String
-  state        String
-  country      String
+  addressLine1   String
+  addressLine2   String?
+  pincode        String
+  area           String?
+  city           String
+  state          String
 
-  // Contact Person Details
-  prefix            ContactPrefix?
-  contactPersonName String?
-  emailId           String?
-  mobileNo          String?
+  msmeStatus     Boolean @default(false)
+  msmeRegNo      String?
+  regType        String?
+  regUnder       String?
 
   // Bank Details
-  accountHolderName String?
-  bankName          String?
-  accountNumber     String?
-  ifscCode          String?
+  accountHolderName String
+  bankName          String
+  accountNumber     String
+  ifscCode          String
+
+  // Contact Persons
+  prefix            ContactPrefix
+  contactPersonName String
+  emailId           String?
+  mobileNo          String
 
   // Metadata
   isActive  Boolean  @default(true)
