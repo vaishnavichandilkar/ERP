@@ -52,5 +52,11 @@
     "optional": "Optional",
     "next": "Next",
     "code": "Code",
-    "of": "of"
+    "of": "of",
+    "added_successfully": "Added successfully!",
+    "updated_successfully": "Updated successfully!",
+    "error_saving_data": "Error saving data. Please try again.",
+    "please_fill_required_fields": "Please fill all required fields.",
+    "status_updated": "Status updated successfully!",
+    "error_fetching_data": "Error fetching data."
 }

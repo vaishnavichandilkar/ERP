@@ -36,8 +36,10 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                 />
             )}
 
-            {/* Sidebar Container */}
-            <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-[260px] bg-white border-r border-[#E5E7EB] transform transition-transform duration-300 ease-in-out lg:translate-x-0 flex flex-col shrink-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+             {/* Sidebar Container */}
+            <aside className={`fixed lg:relative inset-y-0 left-0 z-50 bg-white border-r border-[#E5E7EB] transform transition-all duration-300 ease-in-out flex flex-col shrink-0 ${isOpen ? 'w-[260px] translate-x-0 opacity-100' : 'w-0 -translate-x-full lg:translate-x-0 lg:w-0 opacity-0 lg:opacity-0 pointer-events-none'}`}>
+                {/* Fixed width container to prevent squashing during transition */}
+                <div className="w-[260px] flex flex-col h-full">
                 {/* Logo Area */}
                 <div className="h-[72px] px-6 flex items-center justify-between border-b border-[#E5E7EB] shrink-0">
                     <img src={logo} alt="WeighPro Logo" className="h-[70px]" onError={(e) => { e.target.style.display = 'none' }} />
@@ -70,6 +72,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                             </NavLink>
                         );
                     })}
+                </div>
                 </div>
             </aside>
         </>

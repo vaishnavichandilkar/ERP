@@ -3,24 +3,25 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchable = false, disabled = false, showAsterisk = false }) => {
-    const { t } = useTranslation('common');
+    const { t } = useTranslation(['common']);
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const dropdownRef = useRef(null);
+
+    const filteredOptions = isSearchable && searchTerm
+        ? options.filter(opt => opt.toLowerCase().includes(searchTerm.toLowerCase()))
+        : options;
 
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setIsOpen(false);
+                setSearchTerm('');
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
-
-    const filteredOptions = isSearchable && searchTerm
-        ? options.filter(opt => opt.toLowerCase().includes(searchTerm.toLowerCase()))
-        : options;
 
     return (
         <div className="flex flex-col gap-1.5 relative w-full" ref={dropdownRef}>
@@ -31,26 +32,26 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                 className={`w-full h-[44px] flex items-center justify-between px-4 border rounded-[8px] bg-white transition-colors ${disabled ? 'cursor-default border-[#E5E7EB]' : isOpen ? 'border-[#014A36] ring-1 ring-[#014A36]/10 cursor-pointer' : 'border-[#E5E7EB] hover:border-gray-300 cursor-pointer'}`}
                 onClick={() => !disabled && setIsOpen(!isOpen)}
             >
-                <span className={`text-[14px] truncate ${value ? 'text-[#111827]' : 'text-gray-500'}`}>
-                    {value || placeholder}
-                </span>
-                {!disabled && (isOpen ? <ChevronUp size={16} className="text-gray-500" /> : <ChevronDown size={16} className="text-gray-500" />)}
+                {isSearchable && isOpen ? (
+                    <input
+                        type="text"
+                        autoFocus
+                        placeholder={value || placeholder}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full h-full bg-transparent outline-none text-[14px] text-[#111827] placeholder:text-gray-400"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                ) : (
+                    <span className={`text-[14px] truncate ${value ? 'text-[#111827]' : 'text-gray-500'}`}>
+                        {value || placeholder}
+                    </span>
+                )}
+                {!disabled && (isOpen ? <ChevronUp size={16} className="text-gray-500 shrink-0" /> : <ChevronDown size={16} className="text-gray-500 shrink-0" />)}
             </div>
 
             {isOpen && !disabled && (
                 <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-white border border-gray-100 rounded-[8px] shadow-lg z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                    {isSearchable && (
-                        <div className="p-2 border-b border-gray-100">
-                            <input
-                                type="text"
-                                placeholder={t('search')}
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full h-[36px] px-3 text-[14px] border border-gray-200 rounded-[6px] outline-none focus:border-[#014A36]"
-                                onClick={(e) => e.stopPropagation()}
-                            />
-                        </div>
-                    )}
                     <div className="max-h-[240px] overflow-y-auto w-full py-1 custom-scrollbar">
                         {filteredOptions.length > 0 ? (
                             filteredOptions.map((opt, idx) => (
@@ -151,19 +152,76 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
         </div>
     );
 
+    const renderViewMode = () => (
+        <div className="flex flex-col w-full bg-white border border-[#E5E7EB] rounded-[12px] overflow-hidden shadow-sm animate-in fade-in duration-300 min-h-[500px]">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-[#E5E7EB] bg-white">
+                <h3 className="text-[16px] font-bold text-[#111827]">{t('modules:view_product')}</h3>
+            </div>
+
+            {/* Product Identity Section */}
+            <div className="px-8 py-8 flex flex-col gap-4">
+                <h1 className="text-[32px] font-semibold text-[#111827] leading-tight">
+                    {formData.productName}
+                </h1>
+                <div className="inline-flex items-center px-4 py-1.5 bg-[#012E22] text-[#FFFFFF] rounded-[8px] text-[14px] font-bold w-fit tracking-wider">
+                    {formData.productCode}
+                </div>
+            </div>
+
+            {/* Detailed Info Table */}
+            <div className="flex flex-col mx-8 mb-8 border border-[#E5E7EB] rounded-[8px] overflow-hidden">
+                {[
+                    { label: t('modules:uom'), value: formData.uom },
+                    { label: t('modules:product_type'), value: formData.productType },
+                    { label: t('modules:category'), value: formData.category },
+                    { label: t('modules:sub_category'), value: formData.subcategory },
+                    { label: t('modules:hsn_code'), value: formData.hsnCode },
+                    { label: t('modules:tax_percent'), value: formData.tax },
+                    { label: t('modules:product_desc'), value: formData.description || '-' }
+                ].map((item, idx) => (
+                    <div key={idx} className="flex border-b border-[#E5E7EB] min-h-[48px]">
+                        <div className="w-[200px] bg-[#F9FAFB] px-6 py-3 flex items-center border-r border-[#E5E7EB]">
+                            <span className="text-[13px] font-semibold text-[#6B7280]">{item.label}:</span>
+                        </div>
+                        <div className="flex-1 px-6 py-3 flex items-center bg-white">
+                            <span className="text-[14px] text-[#111827] font-medium">{item.value}</span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="px-8 py-6 flex justify-end mt-auto border-t border-[#E5E7EB]">
+                <button
+                    onClick={onBack}
+                    className="px-8 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors bg-white shadow-sm"
+                >
+                    {t('common:back')}
+                </button>
+            </div>
+        </div>
+    );
+
+    if (isView) {
+        return (
+            <div className="flex flex-col w-full h-full p-2">
+                {renderViewMode()}
+            </div>
+        );
+    }
+
     return (
         <div className="flex flex-col w-full h-full animate-in fade-in duration-300">
             {/* Top Action Bar */}
-            {mode !== 'view' && (
-                <div className="flex justify-end mb-6">
-                    <button
-                        onClick={onBack}
-                        className="px-6 h-[44px] bg-white border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors shadow-sm"
-                    >
-                        {t('common:back')}
-                    </button>
-                </div>
-            )}
+            <div className="flex justify-end mb-6">
+                <button
+                    onClick={onBack}
+                    className="px-6 h-[44px] bg-white border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors shadow-sm"
+                >
+                    {t('common:back')}
+                </button>
+            </div>
 
             {/* Form Container */}
             <div className="bg-white rounded-[12px] border border-[#E5E7EB] shadow-sm flex flex-col w-full">
@@ -229,30 +287,19 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
                 </div>
 
                 {/* Footer Buttons */}
-                <div className={`px-6 py-5 border-t border-[#E5E7EB] flex items-center bg-white/50 rounded-b-[12px] ${mode === 'view' ? 'justify-end' : 'justify-end gap-4'}`}>
-                    {mode === 'view' ? (
-                        <button
-                            onClick={onBack}
-                            className="px-8 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors bg-white"
-                        >
-                            {t('common:back')}
-                        </button>
-                    ) : (
-                        <>
-                            <button
-                                onClick={onBack}
-                                className="px-8 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors bg-white"
-                            >
-                                {t('common:cancel')}
-                            </button>
-                            <button
-                                onClick={onBack}
-                                className="px-8 h-[44px] bg-[#014A36] text-white rounded-[8px] text-[14px] font-bold hover:bg-[#013b2b] transition-colors shadow-sm opacity-90 hover:opacity-100"
-                            >
-                                {mode === 'add' ? t('modules:add_product') : t('modules:update_product')}
-                            </button>
-                        </>
-                    )}
+                <div className="px-6 py-5 border-t border-[#E5E7EB] flex items-center justify-end gap-4 bg-white/50 rounded-b-[12px]">
+                    <button
+                        onClick={onBack}
+                        className="px-8 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors bg-white"
+                    >
+                        {t('common:cancel')}
+                    </button>
+                    <button
+                        onClick={onBack}
+                        className="px-8 h-[44px] bg-[#014A36] text-white rounded-[8px] text-[14px] font-bold hover:bg-[#013b2b] transition-colors shadow-sm opacity-90 hover:opacity-100"
+                    >
+                        {mode === 'add' ? t('modules:add_product') : t('modules:update_product')}
+                    </button>
                 </div>
             </div>
 

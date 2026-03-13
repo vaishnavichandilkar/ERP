@@ -52,5 +52,11 @@
     "optional": "वैकल्पिक",
     "next": "अगला",
     "code": "कोड",
-    "of": "में से"
+    "of": "में से",
+    "added_successfully": "सफलतापूर्वक जोड़ा गया!",
+    "updated_successfully": "सफलतापूर्वक अपडेट किया गया!",
+    "error_saving_data": "डेटा सहेजने में त्रुटि। कृपया पुनः प्रयास करें।",
+    "please_fill_required_fields": "कृपया सभी आवश्यक फ़ील्ड भरें।",
+    "status_updated": "स्थिति सफलतापूर्वक अपडेट की गई!",
+    "error_fetching_data": "डेटा प्राप्त करने में त्रुटि।"
 }

@@ -85,17 +85,58 @@ async function main() {
         });
     }
     // 5. Seed GST UQC Codes
-    const uqcCodes = [
-        "BAG", "BAL", "BDL", "BKL", "BOU", "BOX", "BTL", "BUN", "CAN", "CBM", "CCM", "CMS", "CTN", "DOZ", "DRM",
-        "GGR", "GMS", "GRS", "GYD", "KGS", "KLR", "KME", "MLT", "MTR", "MTS", "NOS", "PAC", "PCS", "PRS",
-        "QTL", "ROL", "SET", "SQF", "SQM", "SQY", "TBS", "TGM", "THD", "TON", "TUB", "UGS", "UNT", "YDS", "OTH"
+    const uqcMappings = [
+        { code: "BAG", name: "BAGS" },
+        { code: "BAL", name: "BALE" },
+        { code: "BDL", name: "BUNDLES" },
+        { code: "BKL", name: "BUCKELS" },
+        { code: "BOU", name: "BILLION OF UNITS" },
+        { code: "BOX", name: "BOX" },
+        { code: "BTL", name: "BOTTLES" },
+        { code: "BUN", name: "BUNCHES" },
+        { code: "CAN", name: "CANS" },
+        { code: "CBM", name: "CUBIC METERS" },
+        { code: "CCM", name: "CUBIC CENTIMETERS" },
+        { code: "CMS", name: "CENTIMETERS" },
+        { code: "CTN", name: "CARTONS" },
+        { code: "DOZ", name: "DOZENS" },
+        { code: "DRM", name: "DRUMS" },
+        { code: "GGR", name: "GREAT GROSS" },
+        { code: "GMS", name: "GRAMMES" },
+        { code: "GRS", name: "GROSS" },
+        { code: "GYD", name: "GROSS YARDS" },
+        { code: "KGS", name: "KILOGRAMS" },
+        { code: "KLR", name: "KILOLITRE" },
+        { code: "KME", name: "KILOMETRE" },
+        { code: "MLT", name: "MILLILITRE" },
+        { code: "MTR", name: "METERS" },
+        { code: "MTS", name: "METRIC TON" },
+        { code: "NOS", name: "NUMBERS" },
+        { code: "PAC", name: "PACKS" },
+        { code: "PCS", name: "PIECES" },
+        { code: "PRS", name: "PAIRS" },
+        { code: "QTL", name: "QUINTAL" },
+        { code: "ROL", name: "ROLLS" },
+        { code: "SET", name: "SETS" },
+        { code: "SQF", name: "SQUARE FEET" },
+        { code: "SQM", name: "SQUARE METERS" },
+        { code: "SQY", name: "SQUARE YARDS" },
+        { code: "TBS", name: "TABLETS" },
+        { code: "TGM", name: "TEN GROSS" },
+        { code: "THD", name: "THOUSANDS" },
+        { code: "TON", name: "TONNES" },
+        { code: "TUB", name: "TUBES" },
+        { code: "UGS", name: "US GALLONS" },
+        { code: "UNT", name: "UNITS" },
+        { code: "YDS", name: "YARDS" },
+        { code: "OTH", name: "OTHERS" }
     ];
 
-    for (const code of uqcCodes) {
+    for (const item of uqcMappings) {
         await prisma.gstUqcMaster.upsert({
-            where: { uqcCode: code },
-            update: {},
-            create: { uqcCode: code }
+            where: { uqcCode: item.code },
+            update: { quantity: item.name },
+            create: { uqcCode: item.code, quantity: item.name }
         });
     }
     console.log('GST UQC Codes seeded.');

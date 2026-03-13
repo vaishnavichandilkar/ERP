@@ -17,6 +17,11 @@ export class CreateUnitDto {
     @IsString()
     @IsOptional()
     description?: string;
+
+    @ApiProperty({ example: 'KILOGRAMS', required: false })
+    @IsString()
+    @IsOptional()
+    fullName?: string;
 }
 
 export class UpdateUnitDto {
@@ -34,6 +39,11 @@ export class UpdateUnitDto {
     @IsString()
     @IsOptional()
     description?: string;
+
+    @ApiProperty({ example: 'KILOGRAMS', required: false })
+    @IsString()
+    @IsOptional()
+    fullName?: string;
 
     @ApiProperty({ enum: UnitStatus, example: UnitStatus.ACTIVE, required: false })
     @IsEnum(UnitStatus)

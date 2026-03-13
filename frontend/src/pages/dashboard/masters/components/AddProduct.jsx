@@ -1,55 +1,56 @@
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchable = false }) => {
-    const { t } = useTranslation('common');
+const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchable = false, disabled = false, showAsterisk = false }) => {
+    const { t } = useTranslation(['common']);
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const dropdownRef = useRef(null);
+
+    const filteredOptions = isSearchable && searchTerm
+        ? options.filter(opt => opt.toLowerCase().includes(searchTerm.toLowerCase()))
+        : options;
 
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setIsOpen(false);
+                setSearchTerm('');
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const filteredOptions = isSearchable && searchTerm
-        ? options.filter(opt => opt.toLowerCase().includes(searchTerm.toLowerCase()))
-        : options;
-
     return (
         <div className="flex flex-col gap-1.5 relative w-full" ref={dropdownRef}>
             <label className="text-[13px] font-semibold text-[#4B5563]">
-                {label} <span className="text-red-500">*</span>
+                {label} {showAsterisk && <span className="text-red-500">*</span>}
             </label>
             <div
-                className={`w-full h-[44px] flex items-center justify-between px-4 border rounded-[8px] bg-white cursor-pointer transition-colors ${isOpen ? 'border-[#014A36] ring-1 ring-[#014A36]/10' : 'border-[#E5E7EB] hover:border-gray-300'}`}
-                onClick={() => setIsOpen(!isOpen)}
+                className={`w-full h-[44px] flex items-center justify-between px-4 border rounded-[8px] bg-white transition-colors ${disabled ? 'cursor-default border-[#E5E7EB]' : isOpen ? 'border-[#014A36] ring-1 ring-[#014A36]/10 cursor-pointer' : 'border-[#E5E7EB] hover:border-gray-300 cursor-pointer'}`}
+                onClick={() => !disabled && setIsOpen(!isOpen)}
             >
-                <span className={`text-[14px] truncate ${value ? 'text-[#111827]' : 'text-gray-500'}`}>
-                    {value || placeholder}
-                </span>
-                {isOpen ? <ChevronUp size={16} className="text-gray-500" /> : <ChevronDown size={16} className="text-gray-500" />}
+                {isSearchable && isOpen ? (
+                    <input
+                        type="text"
+                        autoFocus
+                        placeholder={value || placeholder}
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full h-full bg-transparent outline-none text-[14px] text-[#111827] placeholder:text-gray-400"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                ) : (
+                    <span className={`text-[14px] truncate ${value ? 'text-[#111827]' : 'text-gray-500'}`}>
+                        {value || placeholder}
+                    </span>
+                )}
+                {!disabled && (isOpen ? <ChevronUp size={16} className="text-gray-500 shrink-0" /> : <ChevronDown size={16} className="text-gray-500 shrink-0" />)}
             </div>
 
-            {isOpen && (
+            {isOpen && !disabled && (
                 <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-white border border-gray-100 rounded-[8px] shadow-lg z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                    {isSearchable && (
-                        <div className="p-2 border-b border-gray-100">
-                            <input
-                                type="text"
-                                placeholder={t('search')}
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full h-[36px] px-3 text-[14px] border border-gray-200 rounded-[6px] outline-none focus:border-[#014A36]"
-                                onClick={(e) => e.stopPropagation()}
-                            />
-                        </div>
-                    )}
                     <div className="max-h-[240px] overflow-y-auto w-full py-1 custom-scrollbar">
                         {filteredOptions.length > 0 ? (
                             filteredOptions.map((opt, idx) => (
@@ -66,7 +67,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                                 </div>
                             ))
                         ) : (
-                            <div className="px-4 py-3 text-[14px] text-gray-500 text-center">{t('no_options_found')}</div>
+                            <div className="px-4 py-3 text-[14px] text-gray-500 text-center">{t('common:no_options_found')}</div>
                         )}
                     </div>
                 </div>

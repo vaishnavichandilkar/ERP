@@ -8,7 +8,7 @@ export class UnitMasterService {
 
     async getGstUomList() {
         const list = await this.prisma.gstUqcMaster.findMany({
-            select: { uqcCode: true }
+            select: { uqcCode: true, quantity: true }
         });
         return { data: list };
     }
@@ -22,13 +22,18 @@ export class UnitMasterService {
             throw new ConflictException('Unit name must be unique');
         }
 
-        // Check if gstUom exists
-        const uqc = await this.prisma.gstUqcMaster.findUnique({
-            where: { uqcCode: dto.gstUom }
+        // Check if gstUom exists, if not create others/custom entry
+        await this.prisma.gstUqcMaster.upsert({
+            where: { uqcCode: dto.gstUom },
+            update: {
+                quantity: dto.fullName || dto.gstUom
+            },
+            create: {
+                uqcCode: dto.gstUom,
+                quantity: dto.fullName || dto.gstUom,
+                quantityType: (dto.unitName || 'OTHERS').toUpperCase()
+            }
         });
-        if (!uqc) {
-            throw new BadRequestException('Invalid GST UOM code');
-        }
 
         return this.prisma.unitMaster.create({
             data: {
@@ -102,17 +107,23 @@ export class UnitMasterService {
         }
 
         if (dto.gstUom) {
-            const uqc = await this.prisma.gstUqcMaster.findUnique({
-                where: { uqcCode: dto.gstUom }
+            await this.prisma.gstUqcMaster.upsert({
+                where: { uqcCode: dto.gstUom },
+                update: {
+                    quantity: dto.fullName || dto.gstUom
+                },
+                create: {
+                    uqcCode: dto.gstUom,
+                    quantity: dto.fullName || dto.gstUom,
+                    quantityType: (dto.unitName || 'OTHERS').toUpperCase()
+                }
             });
-            if (!uqc) {
-                throw new BadRequestException('Invalid GST UOM code');
-            }
         }
 
+        const { fullName, ...updateData } = dto;
         return this.prisma.unitMaster.update({
             where: { id },
-            data: dto
+            data: updateData
         });
     }
 

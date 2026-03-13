@@ -4,7 +4,7 @@ import Header from './Header';
 import Sidebar from './Sidebar';
 
 const DashboardLayout = () => {
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 1024);
     const user = JSON.parse(localStorage.getItem('user') || '{}');
 
     // Security Gate: Ensure Sellers can only access Dashboard if they are APPROVED.
@@ -18,7 +18,7 @@ const DashboardLayout = () => {
             <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
             <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-                <Header setSidebarOpen={setSidebarOpen} />
+                <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
                 <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
                     <Outlet />
                 </main>

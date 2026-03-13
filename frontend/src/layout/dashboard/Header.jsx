@@ -10,7 +10,7 @@ import LanguageSwitcher from '../../components/common/LanguageSwitcher';
 import { getProfileApi } from '../../services/authService';
 import { useTranslation } from 'react-i18next';
 
-const Header = ({ setSidebarOpen }) => {
+const Header = ({ sidebarOpen, setSidebarOpen }) => {
     const { t } = useTranslation(['dashboard', 'common', 'modules', 'terms']);
     const location = useLocation();
     const navigate = useNavigate();
@@ -80,7 +80,7 @@ const Header = ({ setSidebarOpen }) => {
         }
 
         return (
-            <div className="flex items-center text-[#4B5563] text-[14px] lg:text-[15px] font-medium uppercase tracking-wide">
+            <div className="flex items-center text-[#4B5563] text-[13px] lg:text-[15px] font-medium uppercase tracking-wide">
                 <IconComponent size={18} strokeWidth={2.5} className="mr-[10px] text-[#111827]" />
                 {breadcrumbElements}
             </div>
@@ -92,16 +92,14 @@ const Header = ({ setSidebarOpen }) => {
             {/* Left Box: Menu button + Title/Logo */}
             <div className="flex items-center gap-2 lg:gap-4">
                 <button
-                    onClick={() => setSidebarOpen(true)}
-                    className="p-1 lg:hidden text-[#4B5563] hover:text-[#111827] focus:outline-none"
+                    onClick={() => setSidebarOpen(prev => !prev)}
+                    className="p-1 px-2 text-[#4B5563] hover:text-[#111827] focus:outline-none hover:bg-gray-100/50 rounded-md transition-all active:scale-95"
                 >
-                    <Menu size={20} />
+                    <Menu size={22} strokeWidth={2.5} />
                 </button>
-                <div className="hidden lg:flex items-center gap-2 text-[14px] lg:text-[15px] font-medium">
+                <div className="flex items-center gap-2">
                     {renderBreadcrumbs()}
                 </div>
-                {/* Mobile Logo */}
-                <img src={logo} alt="WeighPro Logo" className="h-[14px] ml-1 lg:hidden block" onError={(e) => { e.target.style.display = 'none' }} />
             </div>
 
             {/* Right Box: Setup icons */}

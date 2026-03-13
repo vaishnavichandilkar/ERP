@@ -38,7 +38,7 @@
     "no_options_found": "कोणतेही पर्याय सापडले नाहीत",
     "search": "शोधा...",
     "machine": "मशीन",
-    "wifi": "वायफाय",
+    "wifi": "वाईफाय",
     "printer": "प्रिंटर",
     "connected": "जोडलेले",
     "disconnected": "संपर्क तुटलेला",
@@ -52,5 +52,11 @@
     "optional": "पर्यायी",
     "next": "पुढील",
     "code": "कोड",
-    "of": "पैकी"
+    "of": "पैकी",
+    "added_successfully": "सफलतापूर्वक जोडले गेले!",
+    "updated_successfully": "सफलतापूर्वक अपडेट केले गेले!",
+    "error_saving_data": "डेटा जतन करण्यात त्रुटी. कृपया पुन्हा प्रयत्न करा.",
+    "please_fill_required_fields": "कृपया सर्व आवश्यक फील्ड भरा.",
+    "status_updated": "स्थिती यशस्वीरित्या अपडेट केली गेली!",
+    "error_fetching_data": "डेटा मिळवण्यात त्रुटी आली."
 }
