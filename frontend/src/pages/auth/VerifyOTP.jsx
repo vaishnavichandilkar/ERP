@@ -68,6 +68,10 @@ const VerifyOTP = () => {
                 if (response.accessToken) {
                     localStorage.setItem('token', response.accessToken);
                 }
+                
+                if (response.refreshToken) {
+                    localStorage.setItem('refreshToken', response.refreshToken);
+                }
 
                 if (response.sessionId) {
                     localStorage.setItem('sessionId', response.sessionId);
@@ -89,6 +93,10 @@ const VerifyOTP = () => {
                 const response = await loginApi(phone, enteredOtp);
                 if (response.accessToken) {
                     localStorage.setItem('token', response.accessToken);
+                }
+                
+                if (response.refreshToken) {
+                    localStorage.setItem('refreshToken', response.refreshToken);
                 }
 
                 let userRole = response.user?.role;

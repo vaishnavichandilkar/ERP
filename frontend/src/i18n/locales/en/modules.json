@@ -29,6 +29,7 @@
     "view_account": "View Account",
     "update_account": "Update Account",
     "category": "Category",
+    "category_master": "Category Master",
     "category_desc": "Categorize products and services for better organization and reporting.",
     "product_master": "Product Master",
     "product_code": "Product Code",

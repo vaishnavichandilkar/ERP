@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Search, Download, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, CheckCircle2, XCircle, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Search, Download, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, ShieldCheck, ShieldX, ArrowLeftRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import AddGroupModal from './components/AddGroupModal';
 import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
@@ -26,9 +26,7 @@ const GroupMaster = () => {
     const [itemStatuses, setItemStatuses] = useState({});
     const [activeRowDropdown, setActiveRowDropdown] = useState(null);
 
-    // Pagination State
-    const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(5);
+
 
     // Handle click outside for export dropdown
     useEffect(() => {
@@ -119,37 +117,7 @@ const GroupMaster = () => {
 
     const processedData = filteredData();
 
-    // Pagination Calculations
-    const totalItems = processedData.length;
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
-    const paginatedData = processedData.slice(startIndex, endIndex);
 
-    const handlePageChange = (page) => {
-        if (page >= 1 && page <= totalPages) {
-            setCurrentPage(page);
-        }
-    };
-
-    const getVisiblePages = () => {
-        const maxVisible = 4;
-        let startPage = Math.max(1, currentPage - 1);
-        let endPage = startPage + maxVisible - 1;
-
-        if (endPage > totalPages) {
-            endPage = totalPages;
-            startPage = Math.max(1, endPage - maxVisible + 1);
-        }
-
-        const pages = [];
-        for (let i = startPage; i <= endPage; i++) {
-            if (i >= 1 && i <= totalPages) {
-                pages.push(i);
-            }
-        }
-        return pages;
-    };
 
     return (
         <div className="flex flex-col animate-in fade-in duration-500">
@@ -175,7 +143,6 @@ const GroupMaster = () => {
                             value={searchQuery}
                             onChange={(e) => {
                                 setSearchQuery(e.target.value);
-                                setCurrentPage(1); // Reset page on search
                             }}
                             className="w-full h-[40px] bg-[#F9FAFB] border border-[#E5E7EB] rounded-[8px] pl-10 pr-4 text-[14px] outline-none focus:border-[#014A36] transition-all"
                         />
@@ -222,8 +189,8 @@ const GroupMaster = () => {
                         </div>
                     </div>
                 </div>
-                {paginatedData.length > 0 ? (
-                    paginatedData.map((section) => {
+                {processedData.length > 0 ? (
+                    processedData.map((section) => {
                         // If searching and items match, auto-expand
                         const isSearchExpanding = searchQuery && section.items.some(item =>
                             item.toLowerCase().includes(searchQuery.toLowerCase())
@@ -233,7 +200,7 @@ const GroupMaster = () => {
                         return (
                             <div key={section.id} className="flex flex-col border-b border-[#E5E7EB] last:border-b-0">
                                 <div
-                                    className="flex items-center justify-between p-4 bg-white hover:bg-gray-50/50 transition-colors group"
+                                    className="flex items-center justify-between p-4 bg-[#F9FAFB] hover:bg-[#F3F4F6] transition-colors group"
                                 >
                                     <div
                                         className="flex items-center gap-3 cursor-pointer select-none"
@@ -241,7 +208,7 @@ const GroupMaster = () => {
                                     >
                                         <div className="flex items-center justify-center w-5 h-5">
                                             {isExpanded ? (
-                                                <Minus size={14} className="text-[#111827] stroke-[3px]" />
+                                                <span className="text-[#111827] font-bold text-[18px] leading-none">—</span>
                                             ) : (
                                                 <Plus size={14} className="text-[#111827] stroke-[3px]" />
                                             )}
@@ -263,19 +230,19 @@ const GroupMaster = () => {
 
                                         {/* Group Action Dropdown */}
                                         {activeRowDropdown === `group-${section.id}` && (
-                                            <div className="absolute right-full mr-2 top-1/2 -translate-y-1/2 w-[110px] bg-white border border-gray-100 rounded-[8px] shadow-[0_4px_20px_rgba(0,0,0,0.08)] z-[100] py-1.5 animate-in zoom-in-95 duration-200">
+                                            <div className="absolute right-0 mt-2 w-[130px] bg-white border border-[#E5E7EB] rounded-[10px] shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_8px_10px_-6px_rgba(0,0,0,0.1)] z-[100] py-1.5 animate-in zoom-in-95 duration-200">
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); handleToggleStatus(`group-${section.id}`, 'Active'); }}
-                                                    className="w-full px-4 py-2 flex items-center gap-2.5 text-[13px] text-[#4B5563] hover:bg-gray-50 transition-colors"
+                                                    className="w-full px-4 py-2 flex items-center gap-3 text-[14px] font-medium text-[#4B5563] hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
                                                 >
-                                                    <CheckCircle2 size={15} className="text-gray-400" />
+                                                    <ShieldCheck size={16} className="text-gray-400" />
                                                     {t('common:active')}
                                                 </button>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); handleToggleStatus(`group-${section.id}`, 'Inactive'); }}
-                                                    className="w-full px-4 py-2 flex items-center gap-2.5 text-[13px] text-[#4B5563] hover:bg-gray-50 transition-colors"
+                                                    className="w-full px-4 py-2 flex items-center gap-3 text-[14px] font-medium text-[#4B5563] hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
                                                 >
-                                                    <XCircle size={15} className="text-gray-400" />
+                                                    <ShieldX size={16} className="text-gray-400" />
                                                     {t('common:inactive')}
                                                 </button>
                                             </div>
@@ -284,8 +251,8 @@ const GroupMaster = () => {
                                 </div>
 
                                 {/* Sub-items with smooth transition */}
-                                <div className={`transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'} ${activeRowDropdown?.startsWith(`${section.id}-item-`) ? '!overflow-visible' : 'overflow-hidden'}`}>
-                                    <div className="flex flex-col bg-gray-50/30 border-t border-[#E5E7EB]/50">
+                                <div className={`transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'} ${activeRowDropdown?.startsWith(`${section.id}-item-`) ? '!overflow-visible' : 'overflow-hidden'}`}>
+                                    <div className="flex flex-col bg-white">
                                         {section.items.map((item, itemIdx) => {
                                             const isHighlighted = searchQuery && item.toLowerCase().includes(searchQuery.toLowerCase());
                                             const dropdownId = `${section.id}-item-${itemIdx}`;
@@ -294,10 +261,10 @@ const GroupMaster = () => {
                                             return (
                                                 <div
                                                     key={itemIdx}
-                                                    className={`relative flex items-center justify-between p-3.5 pl-[52px] text-[13px] border-b border-[#E5E7EB]/50 last:border-b-0 transition-colors
+                                                    className={`relative flex items-center justify-between p-3.5 pl-[64px] border-b border-[#E5E7EB]/50 last:border-b-0 transition-colors bg-white
                                                         ${isHighlighted ? 'bg-yellow-50 text-[#014A36]' : 'text-[#6B7280]'}`}
                                                 >
-                                                    <span className="font-medium text-[#4B5563]">
+                                                    <span className="text-[13px] font-medium text-[#6B7280]">
                                                         {itemIdx + 1}. {item}
                                                     </span>
 
@@ -314,19 +281,19 @@ const GroupMaster = () => {
 
                                                         {/* Row Action Dropdown */}
                                                         {activeRowDropdown === dropdownId && (
-                                                            <div className="absolute right-full mr-2 top-1/2 -translate-y-1/2 w-[110px] bg-white border border-gray-100 rounded-[8px] shadow-[0_4px_20px_rgba(0,0,0,0.08)] z-[100] py-1.5 animate-in zoom-in-95 duration-200">
+                                                            <div className="absolute right-0 mt-2 w-[130px] bg-white border border-[#E5E7EB] rounded-[10px] shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_8px_10px_-6px_rgba(0,0,0,0.1)] z-[100] py-1.5 animate-in zoom-in-95 duration-200">
                                                                 <button
                                                                     onClick={(e) => { e.stopPropagation(); handleToggleStatus(dropdownId, 'Active'); }}
-                                                                    className="w-full px-4 py-2 flex items-center gap-2.5 text-[13px] text-[#4B5563] hover:bg-gray-50 transition-colors"
+                                                                    className="w-full px-4 py-2 flex items-center gap-3 text-[14px] font-medium text-[#4B5563] hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
                                                                 >
-                                                                    <CheckCircle2 size={15} className="text-gray-400" />
+                                                                    <ShieldCheck size={16} className="text-gray-400" />
                                                                     {t('common:active')}
                                                                 </button>
                                                                 <button
                                                                     onClick={(e) => { e.stopPropagation(); handleToggleStatus(dropdownId, 'Inactive'); }}
-                                                                    className="w-full px-4 py-2 flex items-center gap-2.5 text-[13px] text-[#4B5563] hover:bg-gray-50 transition-colors"
+                                                                    className="w-full px-4 py-2 flex items-center gap-3 text-[14px] font-medium text-[#4B5563] hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
                                                                 >
-                                                                    <XCircle size={15} className="text-gray-400" />
+                                                                    <ShieldX size={16} className="text-gray-400" />
                                                                     {t('common:inactive')}
                                                                 </button>
                                                             </div>
@@ -345,67 +312,6 @@ const GroupMaster = () => {
                         {t('no_matching_groups')}
                     </div>
                 )}
-
-                {/* Pagination Footer */}
-                <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-[#E5E7EB] bg-white gap-4">
-                    <div className="flex items-center gap-3 text-[14px] text-[#4B5563]">
-                        <span>{t('common:show')}</span>
-                        <select
-                            value={itemsPerPage}
-                            onChange={(e) => {
-                                setItemsPerPage(Number(e.target.value));
-                                setCurrentPage(1); // Reset to first page when changing page size
-                            }}
-                            className="border border-[#E5E7EB] rounded-[6px] px-2 py-1 outline-none focus:border-[#014A36] text-[#111827] bg-white cursor-pointer"
-                        >
-                            <option value={5}>5</option>
-                            <option value={10}>10</option>
-                            <option value={20}>20</option>
-                            <option value={50}>50</option>
-                        </select>
-                        <span>{t('common:per_page')}</span>
-                    </div>
-
-                    <div className="flex items-center gap-4 text-[14px]">
-                        <span className="text-[#6B7280]">
-                            {totalItems > 0 ? `${startIndex + 1}-${endIndex} ${t('common:of')} ${totalItems}` : `0-0 ${t('common:of')} 0`}
-                        </span>
-                        <div className="flex items-center gap-1">
-                            <button
-                                onClick={() => handlePageChange(currentPage - 1)}
-                                disabled={currentPage === 1}
-                                className="p-1.5 text-[#6B7280] hover:text-[#111827] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                                <ArrowLeft size={18} />
-                            </button>
-                            <div className="flex items-center gap-1 px-2">
-                                {getVisiblePages().map((page, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => typeof page === 'number' ? handlePageChange(page) : null}
-                                        disabled={typeof page !== 'number'}
-                                        className={`w-8 h-8 rounded-[8px] flex items-center justify-center transition-colors text-[14px]
-                                            ${page === '...'
-                                                ? 'text-[#6B7280] cursor-default bg-transparent'
-                                                : currentPage === page
-                                                    ? 'bg-[#F3F4F6] text-[#111827] font-semibold'
-                                                    : 'text-[#6B7280] font-medium hover:bg-gray-50'
-                                            }`}
-                                    >
-                                        {page}
-                                    </button>
-                                ))}
-                            </div>
-                            <button
-                                onClick={() => handlePageChange(currentPage + 1)}
-                                disabled={currentPage === totalPages || totalPages === 0}
-                                className="p-1.5 text-[#6B7280] hover:text-[#111827] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                                <ArrowRight size={18} />
-                            </button>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             {/* Add Group Modal */}

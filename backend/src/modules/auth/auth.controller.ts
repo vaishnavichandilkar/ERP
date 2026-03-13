@@ -31,7 +31,7 @@ export class AuthController {
         return this.authService.login(dto);
     }
 
-    @Post('refresh')
+    @Post('refresh-token')
     @ApiOperation({ summary: 'Refresh access token' })
     @ApiResponse({ status: 201, description: 'Token refresh successful.' })
     @ApiResponse({ status: 401, description: 'Invalid refresh token.' })

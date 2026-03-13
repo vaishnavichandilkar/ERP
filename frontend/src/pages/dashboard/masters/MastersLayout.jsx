@@ -16,7 +16,7 @@ const MastersLayout = () => {
         { name: t('group_master'), path: '/seller/dashboard/masters/group-master' },
         { name: t('account_master'), path: '/seller/dashboard/masters/account-master' },
         { name: t('unit_master'), path: '/seller/dashboard/masters/unit-master' },
-        { name: t('category'), path: '/seller/dashboard/masters/category' },
+        { name: t('category_master'), path: '/seller/dashboard/masters/category' },
         { name: t('product_master'), path: '/seller/dashboard/masters/product-master' },
     ];
 
