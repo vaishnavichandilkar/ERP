@@ -93,11 +93,15 @@ export const router = createBrowserRouter([
                 element: <Navigate to="/seller/dashboard" replace />
             },
             {
-                path: ROUTES.SELLER_DASHBOARD || '/seller/dashboard',
+                path: '/seller',
                 element: <DashboardLayout />,
                 children: [
                     {
                         index: true,
+                        element: <Navigate to="dashboard" replace />
+                    },
+                    {
+                        path: 'dashboard',
                         element: <Home />,
                     },
                     {

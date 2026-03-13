@@ -30,6 +30,7 @@ model User {
   bankDetail            BankDetail?
   sellerDocuments       SellerDocument[]       @relation("UploadedByUser")
   shopDetail            ShopDetail?
+  subGroups             AccountSubGroup[]
   @@map("User")
 }
 
@@ -322,11 +323,13 @@ model AccountSubGroup {
   id             Int          @id @default(autoincrement())
   sub_group_name String
   group_id       Int
+  userId         Int
   status         Boolean      @default(true)
   created_at     DateTime     @default(now())
   updated_at     DateTime     @updatedAt
   group          AccountGroup @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([group_id, sub_group_name])
+  @@unique([userId, group_id, sub_group_name])
   @@map("account_sub_groups")
 }
