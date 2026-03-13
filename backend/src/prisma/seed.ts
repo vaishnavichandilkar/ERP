@@ -84,21 +84,76 @@ async function main() {
             create: lang,
         });
     }
-    // 5. Seed GST UQC Codes
-    const uqcCodes = [
-        "BAG", "BAL", "BDL", "BKL", "BOU", "BOX", "BTL", "BUN", "CAN", "CBM", "CCM", "CMS", "CTN", "DOZ", "DRM",
-        "GGR", "GMS", "GRS", "GYD", "KGS", "KLR", "KME", "MLT", "MTR", "MTS", "NOS", "PAC", "PCS", "PRS",
-        "QTL", "ROL", "SET", "SQF", "SQM", "SQY", "TBS", "TGM", "THD", "TON", "TUB", "UGS", "UNT", "YDS", "OTH"
+    // 5. Seed System UOM Library
+    const uomData = [
+        { full_name_of_measurement: 'BAGS', unit_name: 'Quantity', uom_code: 'BAG' },
+        { full_name_of_measurement: 'BALE', unit_name: 'Quantity', uom_code: 'BAL' },
+        { full_name_of_measurement: 'BUNDLES', unit_name: 'Quantity', uom_code: 'BDL' },
+        { full_name_of_measurement: 'BUCKLES', unit_name: 'Quantity', uom_code: 'BKL' },
+        { full_name_of_measurement: 'BILLIONS OF UNITS', unit_name: 'Quantity', uom_code: 'BOU' },
+        { full_name_of_measurement: 'BOX', unit_name: 'Quantity', uom_code: 'BOX' },
+        { full_name_of_measurement: 'BOTTLES', unit_name: 'Quantity', uom_code: 'BTL' },
+        { full_name_of_measurement: 'BUNCHES', unit_name: 'Quantity', uom_code: 'BUN' },
+        { full_name_of_measurement: 'CANS', unit_name: 'Quantity', uom_code: 'CAN' },
+        { full_name_of_measurement: 'CUBIC METER', unit_name: 'Volume', uom_code: 'CBM' },
+        { full_name_of_measurement: 'CUBIC CENTIMETER', unit_name: 'Volume', uom_code: 'CCM' },
+        { full_name_of_measurement: 'CENTIMETER', unit_name: 'Length', uom_code: 'CMS' },
+        { full_name_of_measurement: 'CARTONS', unit_name: 'Quantity', uom_code: 'CTN' },
+        { full_name_of_measurement: 'DOZEN', unit_name: 'Quantity', uom_code: 'DOZ' },
+        { full_name_of_measurement: 'DRUM', unit_name: 'Quantity', uom_code: 'DRM' },
+        { full_name_of_measurement: 'GREAT GROSS', unit_name: 'Quantity', uom_code: 'GGR' },
+        { full_name_of_measurement: 'GRAMS', unit_name: 'Weight', uom_code: 'GMS' },
+        { full_name_of_measurement: 'GROSS', unit_name: 'Quantity', uom_code: 'GRS' },
+        { full_name_of_measurement: 'GROSS YARDS', unit_name: 'Length', uom_code: 'GYD' },
+        { full_name_of_measurement: 'KILOGRAMS', unit_name: 'Weight', uom_code: 'KGS' },
+        { full_name_of_measurement: 'KILOLITER', unit_name: 'Volume', uom_code: 'KLR' },
+        { full_name_of_measurement: 'KILOMETER', unit_name: 'Length', uom_code: 'KME' },
+        { full_name_of_measurement: 'MILLILITER', unit_name: 'Volume', uom_code: 'MLT' },
+        { full_name_of_measurement: 'METERS', unit_name: 'Length', uom_code: 'MTR' },
+        { full_name_of_measurement: 'METRIC TONS', unit_name: 'Weight', uom_code: 'MTS' },
+        { full_name_of_measurement: 'NUMBERS', unit_name: 'Quantity', uom_code: 'NOS' },
+        { full_name_of_measurement: 'PACKS', unit_name: 'Quantity', uom_code: 'PAC' },
+        { full_name_of_measurement: 'PIECES', unit_name: 'Quantity', uom_code: 'PCS' },
+        { full_name_of_measurement: 'PAIRS', unit_name: 'Quantity', uom_code: 'PRS' },
+        { full_name_of_measurement: 'QUINTAL', unit_name: 'Weight', uom_code: 'QTL' },
+        { full_name_of_measurement: 'ROLLS', unit_name: 'Quantity', uom_code: 'ROL' },
+        { full_name_of_measurement: 'SETS', unit_name: 'Quantity', uom_code: 'SET' },
+        { full_name_of_measurement: 'TABLETS', unit_name: 'Quantity', uom_code: 'TBS' },
+        { full_name_of_measurement: 'TEN GROSS', unit_name: 'Quantity', uom_code: 'TGM' },
+        { full_name_of_measurement: 'THOUSANDS', unit_name: 'Quantity', uom_code: 'THD' },
+        { full_name_of_measurement: 'TONNES', unit_name: 'Weight', uom_code: 'TON' },
+        { full_name_of_measurement: 'TUBES', unit_name: 'Quantity', uom_code: 'TUB' },
+        { full_name_of_measurement: 'US GALLONS', unit_name: 'Volume', uom_code: 'UGS' },
+        { full_name_of_measurement: 'UNITS', unit_name: 'Quantity', uom_code: 'UNT' },
+        { full_name_of_measurement: 'YARDS', unit_name: 'Length', uom_code: 'YDS' },
+        { full_name_of_measurement: 'MILLIMETER', unit_name: 'Length', uom_code: 'MMT' },
+        { full_name_of_measurement: 'Inch', unit_name: 'Length', uom_code: 'INH' },
+        { full_name_of_measurement: 'Foot', unit_name: 'Length', uom_code: 'FT' },
+        { full_name_of_measurement: 'MILE', unit_name: 'Length', uom_code: 'MIL' },
+        { full_name_of_measurement: 'MILLIGRAM', unit_name: 'Weight', uom_code: 'MGM' },
+        { full_name_of_measurement: 'POUND', unit_name: 'Weight', uom_code: 'LBS' },
+        { full_name_of_measurement: 'LITER', unit_name: 'Volume', uom_code: 'LTR' },
+        { full_name_of_measurement: 'SQUARE MILLIMETER', unit_name: 'Area', uom_code: 'SQMM' },
+        { full_name_of_measurement: 'SQUARE CENTIMETER', unit_name: 'Area', uom_code: 'SQCM' },
+        { full_name_of_measurement: 'ACRE', unit_name: 'Area', uom_code: 'ACR' },
+        { full_name_of_measurement: 'HECTARE', unit_name: 'Area', uom_code: 'HTR' },
+        { full_name_of_measurement: 'OTHERS', unit_name: '-', uom_code: 'OTH' },
     ];
 
-    for (const code of uqcCodes) {
-        await prisma.gstUqcMaster.upsert({
-            where: { uqcCode: code },
-            update: {},
-            create: { uqcCode: code }
+    console.log('Seeding System UOM Library...');
+    for (const uom of uomData) {
+        await prisma.systemUomLibrary.upsert({
+            where: { id: 0 }, // This is a trick for upsert if we don't have a unique field besides ID, but better to use a unique constraint
+            // Actually, I should probably add a unique constraint on uom_code + full_name_of_measurement in schema
+            update: uom,
+            create: uom,
         });
     }
-    console.log('GST UQC Codes seeded.');
+    // Correct way: use createMany if we want to reset or just find unique.
+    // Given the previous deleteMany in seed_uom.ts, I'll do similar here but safely.
+    await prisma.systemUomLibrary.deleteMany();
+    await prisma.systemUomLibrary.createMany({ data: uomData });
+    console.log('System UOM Library seeded.');
 
     // 6. Seed Account Groups
     const accountGroups = [

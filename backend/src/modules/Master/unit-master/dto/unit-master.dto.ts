@@ -1,48 +1,43 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsEnum, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsEnum } from 'class-validator';
 import { UnitStatus } from '@prisma/client';
 
 export class CreateUnitDto {
-    @ApiProperty({ example: 'Kilogram' })
+    @ApiProperty({ example: 'Quantity' })
     @IsString()
     @IsNotEmpty()
-    unitName: string;
+    unit_name: string;
 
-    @ApiProperty({ example: 'KGS' })
+    @ApiProperty({ example: 'BAG' })
     @IsString()
     @IsNotEmpty()
-    gstUom: string;
+    gst_uom: string;
 
-    @ApiProperty({ example: 'Weight measurement', required: false })
+    @ApiProperty({ example: 'BAGS' })
     @IsString()
-    @IsOptional()
-    description?: string;
+    @IsNotEmpty()
+    full_name_of_measurement: string;
 }
 
 export class UpdateUnitDto {
-    @ApiProperty({ example: 'Kilogram', required: false })
+    @ApiProperty({ example: 'Quantity', required: false })
     @IsString()
     @IsOptional()
-    unitName?: string;
+    unit_name?: string;
 
-    @ApiProperty({ example: 'KGS', required: false })
+    @ApiProperty({ example: 'BAG', required: false })
     @IsString()
     @IsOptional()
-    gstUom?: string;
+    gst_uom?: string;
 
-    @ApiProperty({ example: 'Weight measurement', required: false })
+    @ApiProperty({ example: 'BAGS', required: false })
     @IsString()
     @IsOptional()
-    description?: string;
-
-    @ApiProperty({ enum: UnitStatus, example: UnitStatus.ACTIVE, required: false })
-    @IsEnum(UnitStatus)
-    @IsOptional()
-    status?: UnitStatus;
+    full_name_of_measurement?: string;
 }
 
 export class UpdateUnitStatusDto {
-    @ApiProperty({ enum: UnitStatus, example: UnitStatus.INACTIVE })
+    @ApiProperty({ enum: UnitStatus, example: UnitStatus.ACTIVE })
     @IsEnum(UnitStatus)
     @IsNotEmpty()
     status: UnitStatus;
@@ -54,15 +49,15 @@ export class UnitQueryDto {
     @IsString()
     search?: string;
 
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    gst_uom?: string;
+
     @ApiProperty({ enum: UnitStatus, required: false })
     @IsOptional()
     @IsEnum(UnitStatus)
     status?: UnitStatus;
-
-    @ApiProperty({ required: false })
-    @IsOptional()
-    @IsString()
-    gstUom?: string;
 
     @ApiProperty({ required: false, default: '1' })
     @IsOptional()
@@ -74,7 +69,7 @@ export class UnitQueryDto {
     @IsString()
     limit?: string;
 
-    @ApiProperty({ required: false, default: 'createdAt' })
+    @ApiProperty({ required: false, default: 'created_at' })
     @IsOptional()
     @IsString()
     sortBy?: string;

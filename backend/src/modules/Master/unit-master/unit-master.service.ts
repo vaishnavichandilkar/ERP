@@ -1,59 +1,127 @@
-import { Injectable, ConflictException, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, ConflictException, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
-import { CreateUnitDto, UpdateUnitDto, UpdateUnitStatusDto, UnitQueryDto } from './dto/unit-master.dto';
+import { CreateUnitDto, UpdateUnitDto, UnitQueryDto, UpdateUnitStatusDto } from './dto/unit-master.dto';
+import { UnitSource, UnitStatus } from '@prisma/client';
 
 @Injectable()
 export class UnitMasterService {
     constructor(private prisma: PrismaService) { }
 
-    async getGstUomList() {
-        const list = await this.prisma.gstUqcMaster.findMany({
-            select: { uqcCode: true }
-        });
-        return { data: list };
-    }
-
-    async createUnit(dto: CreateUnitDto) {
-        // Check if unitName unique
-        const existing = await this.prisma.unitMaster.findUnique({
-            where: { unitName: dto.unitName }
-        });
-        if (existing) {
-            throw new ConflictException('Unit name must be unique');
+    async getUnitLibrary(query?: { search?: string; gst_uom?: string }) {
+        const where: any = {};
+        if (query?.search) {
+            where.OR = [
+                { full_name_of_measurement: { contains: query.search, mode: 'insensitive' } },
+                { unit_name: { contains: query.search, mode: 'insensitive' } },
+                { uom_code: { contains: query.search, mode: 'insensitive' } },
+            ];
+        }
+        if (query?.gst_uom) {
+            where.uom_code = query.gst_uom;
         }
 
-        // Check if gstUom exists
-        const uqc = await this.prisma.gstUqcMaster.findUnique({
-            where: { uqcCode: dto.gstUom }
+        const list = await this.prisma.systemUomLibrary.findMany({
+            where,
+            orderBy: { full_name_of_measurement: 'asc' }
         });
-        if (!uqc) {
-            throw new BadRequestException('Invalid GST UOM code');
+
+        return {
+            data: list.map(item => ({
+                full_name_of_measurement: item.full_name_of_measurement,
+                unit_name: item.unit_name,
+                gst_uom: item.uom_code
+            }))
+        };
+    }
+
+    async getDistinctUnitNames() {
+        const result = await this.prisma.systemUomLibrary.findMany({
+            distinct: ['unit_name'],
+            select: { unit_name: true },
+            orderBy: { unit_name: 'asc' }
+        });
+        return { data: result.map(r => r.unit_name) };
+    }
+
+    async getUomByUnitName(unitName: string) {
+        const result = await this.prisma.systemUomLibrary.findMany({
+            where: { unit_name: unitName },
+            select: { uom_code: true },
+            distinct: ['uom_code'],
+            orderBy: { uom_code: 'asc' }
+        });
+        return { data: result.map(r => r.uom_code) };
+    }
+
+    async getMeasurementByUom(uomCode: string) {
+        const result = await this.prisma.systemUomLibrary.findFirst({
+            where: { uom_code: uomCode },
+            select: { full_name_of_measurement: true }
+        });
+        if (!result) {
+            throw new NotFoundException(`Measurement for UOM code ${uomCode} not found`);
+        }
+        return { data: result.full_name_of_measurement };
+    }
+
+    async addUnit(userId: number, dto: CreateUnitDto) {
+        // 1. Check if same unit already exists for user (Check by user_id + gst_uom)
+        const existingForUser = await this.prisma.unitMaster.findFirst({
+            where: {
+                user_id: userId,
+                gst_uom: dto.gst_uom
+            }
+        });
+        if (existingForUser) {
+            throw new ConflictException('Unit already added');
+        }
+
+        // 2. Check if it exists in system library
+        const libraryMatch = await this.prisma.systemUomLibrary.findFirst({
+            where: { uom_code: dto.gst_uom }
+        });
+
+        let source: UnitSource = UnitSource.USER;
+        if (libraryMatch) {
+            // If it exists in system library, we force its source as SYSTEM
+            // The user requested: "If the selected unit exists in the system library, save it in unit_master with source = SYSTEM"
+            source = UnitSource.SYSTEM;
         }
 
         return this.prisma.unitMaster.create({
             data: {
-                unitName: dto.unitName,
-                gstUom: dto.gstUom,
-                description: dto.description
+                user_id: userId,
+                unit_name: dto.unit_name,
+                gst_uom: dto.gst_uom,
+                full_name_of_measurement: dto.full_name_of_measurement,
+                source: source,
+                status: UnitStatus.ACTIVE
             }
         });
     }
 
-    async getUnitsList(query: UnitQueryDto) {
-        const { search, status, gstUom, page = '1', limit = '10', sortBy = 'createdAt', sortOrder = 'desc' } = query;
+    async createUnit(userId: number, dto: CreateUnitDto) {
+        return this.addUnit(userId, dto);
+    }
+
+    async getUnitsList(userId: number, query: UnitQueryDto) {
+        const { search, gst_uom, status, page = '1', limit = '10', sortBy = 'created_at', sortOrder = 'desc' } = query;
 
         const skip = (parseInt(page) - 1) * parseInt(limit);
         const take = parseInt(limit);
 
-        const where: any = {};
+        const where: any = { user_id: userId };
         if (search) {
-            where.unitName = { contains: search, mode: 'insensitive' };
+            where.OR = [
+                { unit_name: { contains: search, mode: 'insensitive' } },
+                { full_name_of_measurement: { contains: search, mode: 'insensitive' } }
+            ];
+        }
+        if (gst_uom) {
+            where.gst_uom = gst_uom;
         }
         if (status) {
             where.status = status;
-        }
-        if (gstUom) {
-            where.gstUom = gstUom;
         }
 
         const [items, total] = await Promise.all([
@@ -61,8 +129,7 @@ export class UnitMasterService {
                 where,
                 skip,
                 take,
-                orderBy: { [sortBy]: sortOrder },
-                include: { gstUqc: true }
+                orderBy: { [sortBy]: sortOrder }
             }),
             this.prisma.unitMaster.count({ where })
         ]);
@@ -78,10 +145,9 @@ export class UnitMasterService {
         };
     }
 
-    async getUnitById(id: number) {
-        const unit = await this.prisma.unitMaster.findUnique({
-            where: { id },
-            include: { gstUqc: true }
+    async getUnitById(userId: number, id: number) {
+        const unit = await this.prisma.unitMaster.findFirst({
+            where: { id, user_id: userId }
         });
         if (!unit) {
             throw new NotFoundException(`Unit with ID ${id} not found`);
@@ -89,45 +155,59 @@ export class UnitMasterService {
         return unit;
     }
 
-    async updateUnit(id: number, dto: UpdateUnitDto) {
-        const unit = await this.getUnitById(id);
+    async updateUnit(userId: number, id: number, dto: UpdateUnitDto) {
+        const unit = await this.getUnitById(userId, id);
 
-        if (dto.unitName && dto.unitName !== unit.unitName) {
-            const existing = await this.prisma.unitMaster.findUnique({
-                where: { unitName: dto.unitName }
+        // Ensure system units cannot be edited
+        if (unit.source === UnitSource.SYSTEM) {
+            throw new ForbiddenException('System library units cannot be edited');
+        }
+
+        if (dto.gst_uom && dto.gst_uom !== unit.gst_uom) {
+            const existing = await this.prisma.unitMaster.findFirst({
+                where: {
+                    user_id: userId,
+                    gst_uom: dto.gst_uom,
+                    id: { not: id }
+                }
             });
             if (existing) {
-                throw new ConflictException('Unit name must be unique');
+                throw new ConflictException('Unit already added');
             }
         }
 
-        if (dto.gstUom) {
-            const uqc = await this.prisma.gstUqcMaster.findUnique({
-                where: { uqcCode: dto.gstUom }
-            });
-            if (!uqc) {
-                throw new BadRequestException('Invalid GST UOM code');
+        // Re-evaluate source if fields are updated
+        const newUnitName = dto.unit_name ?? unit.unit_name;
+        const newGstUom = dto.gst_uom ?? unit.gst_uom;
+        const newFullName = dto.full_name_of_measurement ?? unit.full_name_of_measurement;
+
+        const libraryMatch = await this.prisma.systemUomLibrary.findFirst({
+            where: {
+                full_name_of_measurement: newFullName,
+                unit_name: newUnitName,
+                uom_code: newGstUom
             }
-        }
+        });
+
+        const source = libraryMatch ? UnitSource.SYSTEM : UnitSource.USER;
 
         return this.prisma.unitMaster.update({
             where: { id },
-            data: dto
+            data: {
+                ...dto,
+                source: source
+            }
         });
     }
 
-    async changeStatus(id: number, dto: UpdateUnitStatusDto) {
-        await this.getUnitById(id);
+    async toggleStatus(userId: number, id: number, dto: UpdateUnitStatusDto) {
+        await this.getUnitById(userId, id);
+
         return this.prisma.unitMaster.update({
             where: { id },
             data: { status: dto.status }
         });
     }
 
-    async deleteUnit(id: number) {
-        await this.getUnitById(id);
-        return this.prisma.unitMaster.delete({
-            where: { id }
-        });
-    }
+    // deleteUnit removed as per request
 }
