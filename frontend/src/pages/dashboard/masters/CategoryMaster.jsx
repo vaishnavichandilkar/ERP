@@ -105,7 +105,7 @@ const CategoryMaster = () => {
 
         prepareRows(masterData);
 
-        exportToPDF('Category Master Report', ['#', 'Category Name'], tableRows, 'category-master.pdf');
+        exportToPDF(t('modules:category_master_report', 'Category Master Report'), ['#', t('modules:category_name')], tableRows, 'category-master.pdf');
         setIsExportOpen(false);
     };
 
@@ -113,9 +113,9 @@ const CategoryMaster = () => {
         const data = [];
         const handlePrepareData = (sections) => {
             sections.forEach(sec => {
-                data.push({ 'Type': '', 'Category': sec.name, 'Sub-category': '' });
+                data.push({ [t('common:type')]: '', [t('modules:category_name')]: sec.name, [t('modules:sub_category')]: '' });
                 sec.items.forEach(item => {
-                    data.push({ 'Type': '', 'Category': '', 'Sub-category': item });
+                    data.push({ [t('common:type')]: '', [t('modules:category_name')]: '', [t('modules:sub_category')]: item });
                 });
             });
             data.push({}); // Empty row

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import AddGroupModal from './components/AddGroupModal';
 import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
 import masterService from '../../../services/masterService';
+import { translateDynamic } from '../../../utils/i18nUtils';
 
 const GroupMaster = () => {
     const { t } = useTranslation(['modules', 'common']);
@@ -15,6 +16,12 @@ const GroupMaster = () => {
     const [isLoading, setIsLoading] = useState(true);
     const exportRef = useRef(null);
     const [activeRowDropdown, setActiveRowDropdown] = useState(null);
+    const [toast, setToast] = useState(null);
+
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
 
     const fetchGroups = async () => {
         setIsLoading(true);
@@ -37,10 +44,15 @@ const GroupMaster = () => {
     // Handle click outside for export dropdown
     useEffect(() => {
         const handleClickOutside = (event) => {
+            // Close export dropdown if clicking outside
             if (exportRef.current && !exportRef.current.contains(event.target)) {
                 setIsExportOpen(false);
             }
-            setActiveRowDropdown(null);
+
+            // Close row dropdown only if clicking outside any row dropdown trigger or menu
+            if (!event.target.closest('.dropdown-trigger') && !event.target.closest('.dropdown-menu')) {
+                setActiveRowDropdown(null);
+            }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -77,19 +89,32 @@ const GroupMaster = () => {
         }
     };
 
-    const handleToggleStatus = async (id, currentStatus, type = 'sub') => {
+    const handleToggleStatus = async (subGroupId, currentStatusText, type = 'sub') => {
+        const nextStatus = currentStatusText === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+        console.log(`[Toggle] SubGroupID: ${subGroupId}, Current: ${currentStatusText}, Next: ${nextStatus}`);
+        
+        setActiveRowDropdown(null);
+        
         try {
-            const response = type === 'group'
-                ? await masterService.updateGroupStatus(id, !currentStatus)
-                : await masterService.updateSubGroupStatus(id, !currentStatus);
+            const response = await masterService.updateSubGroupStatus(subGroupId, nextStatus);
 
+            console.log('[Toggle] Server Response:', response);
+            
             if (response.success) {
-                fetchGroups(); // Refresh data
+                const toastMsg = nextStatus === 'ACTIVE' 
+                    ? 'Group activated successfully' 
+                    : 'Group inactivated successfully';
+                showToast(toastMsg);
+                // Refresh data to sync with DB
+                fetchGroups();
+            } else {
+                showToast(response.message || 'Failed to update status', 'error');
             }
         } catch (err) {
-            console.error(`Failed to update ${type} status`, err);
+            console.error('[Toggle] Error:', err);
+            const errMsg = err.response?.data?.message || err.message || 'Server error';
+            showToast(errMsg, 'error');
         }
-        setActiveRowDropdown(null);
     };
 
     // Export Logic
@@ -97,9 +122,9 @@ const GroupMaster = () => {
         const tableRows = [];
         const prepareRows = (sections) => {
             sections.forEach(sec => {
-                tableRows.push([{ content: sec.group_name, colSpan: 2, styles: { fontStyle: 'bold' } }]);
+                tableRows.push([{ content: translateDynamic(sec.group_name, t), colSpan: 2, styles: { fontStyle: 'bold' } }]);
                 (sec.sub_groups || []).forEach((item, idx) => {
-                    tableRows.push([`${idx + 1}.`, item.sub_group_name]);
+                    tableRows.push([`${idx + 1}.`, translateDynamic(item.sub_group_name, t)]);
                 });
             });
         };
@@ -114,9 +139,9 @@ const GroupMaster = () => {
         const data = [];
         const handlePrepareData = (sections) => {
             sections.forEach(sec => {
-                data.push({ 'Type': '', 'Group': sec.group_name, 'Sub-Group': '' });
+                data.push({ 'Type': '', [t('common:group')]: translateDynamic(sec.group_name, t), [t('common:sub_group')]: '' });
                 (sec.sub_groups || []).forEach(item => {
-                    data.push({ 'Type': '', 'Group': '', 'Sub-Group': item.sub_group_name });
+                    data.push({ 'Type': '', [t('common:group')]: '', [t('common:sub_group')]: translateDynamic(item.sub_group_name, t) });
                 });
             });
             data.push({}); // Empty row
@@ -129,7 +154,16 @@ const GroupMaster = () => {
     };
 
     return (
-        <div className="flex flex-col animate-in fade-in duration-500">
+        <div className="flex flex-col animate-in fade-in duration-500 relative">
+            {/* Toast Notification */}
+            {toast && (
+                <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded-[12px] shadow-[0_10px_30px_rgba(0,0,0,0.15)] flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300
+                    ${toast.type === 'error' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-[#014A36] text-white'}`}>
+                    {toast.type === 'error' ? <XCircle size={18} /> : <CheckCircle2 size={18} />}
+                    <span className="text-[14px] font-medium">{toast.message}</span>
+                </div>
+            )}
+
             {/* Add Type Button (Top Right) */}
             <div className="flex justify-end mb-6">
                 <button
@@ -227,33 +261,9 @@ const GroupMaster = () => {
                                                 <Plus size={14} className="text-[#111827] stroke-[3px]" />
                                             )}
                                         </div>
-                                        <span className={`text-[14px] font-bold ${section.status ? 'text-[#111827]' : 'text-gray-400 italic'}`}>
-                                            {section.group_name} {!section.status && `(${t('common:inactive')})`}
+                                        <span className={`text-[14px] font-bold ${section.status === 'ACTIVE' ? 'text-[#111827]' : 'text-gray-400 italic'}`}>
+                                            {translateDynamic(section.group_name, t)} {section.status === 'INACTIVE' && `(${t('common:inactive')})`}
                                         </span>
-                                    </div>
-                                    <div className="relative flex items-center">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setActiveRowDropdown(activeRowDropdown === `group-${section.id}` ? null : `group-${section.id}`);
-                                            }}
-                                            className="p-1 px-2 text-gray-400 hover:text-gray-600 transition-colors rounded-md"
-                                        >
-                                            <MoreVertical size={16} />
-                                        </button>
-
-                                        {/* Group Action Dropdown */}
-                                        {activeRowDropdown === `group-${section.id}` && (
-                                            <div className="absolute right-0 mt-2 w-[130px] bg-white border border-[#E5E7EB] rounded-[10px] shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_8px_10px_-6px_rgba(0,0,0,0.1)] z-[100] py-1.5 animate-in zoom-in-95 duration-200">
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleToggleStatus(section.id, section.status, 'group'); }}
-                                                    className="w-full px-4 py-2 flex items-center gap-2.5 text-[13px] text-[#4B5563] hover:bg-gray-50 transition-colors"
-                                                >
-                                                    {section.status ? <XCircle size={15} className="text-gray-400" /> : <CheckCircle2 size={15} className="text-gray-400" />}
-                                                    {section.status ? t('common:deactivate') : t('common:activate')}
-                                                </button>
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
 
@@ -273,10 +283,10 @@ const GroupMaster = () => {
                                                 >
                                                     <div className="flex items-center gap-3">
                                                         <span className="font-medium text-[#4B5563]">
-                                                            {itemIdx + 1}. {item.sub_group_name}
+                                                            {itemIdx + 1}. {translateDynamic(item.sub_group_name, t)}
                                                         </span>
-                                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${currentStatus ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                                            {currentStatus ? t('common:active') : t('common:inactive')}
+                                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${currentStatus === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                            {currentStatus === 'ACTIVE' ? t('common:active') : t('common:inactive')}
                                                         </span>
                                                     </div>
 
@@ -286,21 +296,38 @@ const GroupMaster = () => {
                                                                 e.stopPropagation();
                                                                 setActiveRowDropdown(activeRowDropdown === dropdownId ? null : dropdownId);
                                                             }}
-                                                            className="p-1 px-2 text-gray-400 hover:text-gray-600 transition-colors rounded-md"
+                                                            className={`p-1.5 rounded-md transition-all duration-200 dropdown-trigger
+                                                                ${activeRowDropdown === dropdownId ? 'bg-gray-100 text-[#014A36]' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`}
                                                         >
-                                                            <MoreVertical size={16} />
+                                                            <MoreVertical size={18} />
                                                         </button>
 
                                                         {/* Row Action Dropdown */}
                                                         {activeRowDropdown === dropdownId && (
-                                                            <div className="absolute right-0 mt-2 w-[130px] bg-white border border-[#E5E7EB] rounded-[10px] shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_8px_10px_-6px_rgba(0,0,0,0.1)] z-[100] py-1.5 animate-in zoom-in-95 duration-200">
-                                                                <button
-                                                                    onClick={(e) => { e.stopPropagation(); handleToggleStatus(item.id, currentStatus, 'sub'); }}
-                                                                    className="w-full px-4 py-2 flex items-center gap-2.5 text-[13px] text-[#4B5563] hover:bg-gray-50 transition-colors"
-                                                                >
-                                                                    {currentStatus ? <XCircle size={15} className="text-gray-400" /> : <CheckCircle2 size={15} className="text-gray-400" />}
-                                                                    {currentStatus ? t('common:deactivate') : t('common:activate')}
-                                                                </button>
+                                                            <div className="absolute right-0 top-full mt-1 w-[130px] bg-white border border-[#E5E7EB] rounded-[10px] shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_8px_10px_-6px_rgba(0,0,0,0.1)] z-[100] py-1.5 animate-in zoom-in-95 duration-200 dropdown-menu">
+                                                                {currentStatus === 'ACTIVE' ? (
+                                                                    <button
+                                                                        onClick={(e) => { 
+                                                                            e.stopPropagation(); 
+                                                                            handleToggleStatus(item.id, item.status); 
+                                                                        }}
+                                                                        className="w-full px-4 py-2 flex items-center gap-3 text-[14px] font-medium text-[#4B5563] hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
+                                                                    >
+                                                                        <ShieldX size={16} className="text-gray-400" />
+                                                                        {t('common:inactive')}
+                                                                    </button>
+                                                                ) : (
+                                                                    <button
+                                                                        onClick={(e) => { 
+                                                                            e.stopPropagation(); 
+                                                                            handleToggleStatus(item.id, item.status); 
+                                                                        }}
+                                                                        className="w-full px-4 py-2 flex items-center gap-3 text-[14px] font-medium text-[#4B5563] hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
+                                                                    >
+                                                                        <ShieldCheck size={16} className="text-gray-400" />
+                                                                        {t('common:active')}
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                         )}
                                                     </div>
@@ -323,7 +350,10 @@ const GroupMaster = () => {
             <AddGroupModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                onSuccess={fetchGroups}
+                onSuccess={() => {
+                    fetchGroups();
+                    showToast('Group added successfully');
+                }}
             />
         </div>
     );

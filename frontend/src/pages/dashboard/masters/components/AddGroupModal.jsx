@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import masterService from '../../../../services/masterService';
+import { translateDynamic } from '../../../../utils/i18nUtils';
 
 const AddGroupModal = ({ isOpen, onClose, onSuccess }) => {
     const { t } = useTranslation(['common', 'modules']);
@@ -130,7 +131,7 @@ const AddGroupModal = ({ isOpen, onClose, onSuccess }) => {
                                 className={`w-full h-[44px] border ${isDropdownOpen ? 'border-[#014A36] ring-1 ring-[#014A36]/10' : 'border-[#E5E7EB] hover:border-gray-300'} rounded-[8px] px-3.5 flex items-center justify-between cursor-pointer transition-all bg-white`}
                             >
                                 <span className={`text-[14px] ${selectedGroup ? 'text-[#111827]' : 'text-[#9CA3AF]'}`}>
-                                    {selectedGroup ? selectedGroup.group_name : t('common:select_group_under')}
+                                    {selectedGroup ? translateDynamic(selectedGroup.group_name, t) : t('common:select_group_under')}
                                 </span>
                                 <ChevronDown size={18} className={`text-[#6B7280] transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : 'rotate-0'}`} />
                             </div>
@@ -147,7 +148,7 @@ const AddGroupModal = ({ isOpen, onClose, onSuccess }) => {
                                             className={`px-3.5 py-2.5 mx-1.5 rounded-[6px] hover:bg-[#F3F4F6] cursor-pointer text-[14px] transition-colors
                                                 ${selectedGroup?.id === group.id ? 'bg-[#F3F4F6] text-[#014A36] font-medium' : 'text-[#4B5563]'}`}
                                         >
-                                            {group.group_name}
+                                            {translateDynamic(group.group_name, t)}
                                         </div>
                                     ))}
                                 </div>

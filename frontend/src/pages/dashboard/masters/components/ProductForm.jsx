@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { translateDynamic } from '../../../../utils/i18nUtils';
 
 const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchable = false, disabled = false, showAsterisk = false }) => {
     const { t } = useTranslation('common');
@@ -32,7 +33,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                 onClick={() => !disabled && setIsOpen(!isOpen)}
             >
                 <span className={`text-[14px] truncate ${value ? 'text-[#111827]' : 'text-gray-500'}`}>
-                    {value || placeholder}
+                    {value ? translateDynamic(value, t) : placeholder}
                 </span>
                 {!disabled && (isOpen ? <ChevronUp size={16} className="text-gray-500" /> : <ChevronDown size={16} className="text-gray-500" />)}
             </div>
@@ -63,7 +64,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                                         setSearchTerm('');
                                     }}
                                 >
-                                    {opt}
+                                    {translateDynamic(opt, t)}
                                 </div>
                             ))
                         ) : (

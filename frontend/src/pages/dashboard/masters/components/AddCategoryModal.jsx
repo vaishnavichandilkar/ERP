@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { translateDynamic } from '../../../../utils/i18nUtils';
 
 const AddCategoryModal = ({ isOpen, onClose }) => {
     const { t } = useTranslation(['common', 'modules']);
@@ -84,7 +85,7 @@ const AddCategoryModal = ({ isOpen, onClose }) => {
                                 className={`w-full h-[44px] border ${isDropdownOpen ? 'border-[#014A36] ring-1 ring-[#014A36]/10' : 'border-[#E5E7EB] hover:border-gray-300'} rounded-[8px] px-3.5 flex items-center justify-between cursor-pointer transition-all bg-white`}
                             >
                                 <span className={`text-[14px] ${selectedCategory ? 'text-[#111827]' : 'text-[#9CA3AF]'}`}>
-                                    {selectedCategory || t('common:select_category_under', 'Select category under')}
+                                    {selectedCategory ? translateDynamic(selectedCategory, t) : t('common:select_category_under', 'Select category under')}
                                 </span>
                                 <ChevronDown size={18} className={`text-[#6B7280] transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : 'rotate-0'}`} />
                             </div>
@@ -110,7 +111,7 @@ const AddCategoryModal = ({ isOpen, onClose }) => {
                                             className={`px-3.5 py-2.5 mx-1.5 rounded-[6px] hover:bg-[#F3F4F6] cursor-pointer text-[14px] transition-colors
                                                 ${selectedCategory === category ? 'bg-[#F3F4F6] text-[#014A36] font-medium' : 'text-[#4B5563]'}`}
                                         >
-                                            {category}
+                                            {translateDynamic(category, t)}
                                         </div>
                                     ))}
                                 </div>

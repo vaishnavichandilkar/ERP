@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Search, Download, Filter, MoreVertical, Eye, Edit3, CheckCircle2, ChevronDown, ArrowLeft, ArrowRight, ChevronsUpDown, X, FileText, FileSpreadsheet } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
+import { translateDynamic } from '../../../utils/i18nUtils';
 import AddAccount from './components/AddAccount';
 import ViewAccount from './components/ViewAccount';
 
@@ -289,7 +290,7 @@ const AccountMaster = () => {
             idx + 1,
             row.vendorCode,
             row.account,
-            row.groupName,
+            translateDynamic(row.groupName, t),
             row.creditDays,
             row.gstNo,
             row.panNo,
@@ -297,7 +298,7 @@ const AccountMaster = () => {
             row.address,
             row.bankAccountNo,
             row.ifscCode,
-            row.status
+            row.status.toUpperCase() === 'ACTIVE' ? t('common:active') : t('common:inactive')
         ]);
 
         exportToPDF(
@@ -313,16 +314,17 @@ const AccountMaster = () => {
         const data = filteredData.map((row, idx) => ({
             'S.No': idx + 1,
             'Vendor Code': row.vendorCode,
-            'Account': row.account,
-            'Group Name': row.groupName,
-            'Credit Days': row.creditDays,
+            [t('modules:account')]: row.account,
+            [t('common:group')]: translateDynamic(row.groupName, t),
+            [t('modules:credit_days')]: row.creditDays,
             'GST.No': row.gstNo,
             'PAN.No': row.panNo,
             'OP.Balance': row.opBalance,
             'Address': row.address,
             'Bank Account.No': row.bankAccountNo,
-            'IFSC Code': row.ifscCode,
-            'Status': row.status
+            [t('modules:bank_account_no')]: row.bankAccountNo,
+            [t('modules:ifsc_code')]: row.ifscCode,
+            [t('common:status')]: row.status.toUpperCase() === 'ACTIVE' ? t('common:active') : t('common:inactive')
         }));
 
         exportToExcel(data, 'Account Master', 'account-master.xlsx');
@@ -486,7 +488,7 @@ const AccountMaster = () => {
                                 <tr key={index} className="border-b border-[#E5E7EB] hover:bg-gray-50/50 transition-colors">
                                     <td className="px-6 py-4 font-medium">{row.vendorCode}</td>
                                     <td className="px-6 py-4">{row.account}</td>
-                                    <td className="px-6 py-4">{row.groupName}</td>
+                                    <td className="px-6 py-4">{translateDynamic(row.groupName, t)}</td>
                                     <td className="px-6 py-4">{row.creditDays}</td>
                                     <td className="px-6 py-4">{row.gstNo}</td>
                                     <td className="px-6 py-4">{row.panNo}</td>
@@ -495,8 +497,8 @@ const AccountMaster = () => {
                                     <td className="px-6 py-4">{row.bankAccountNo}</td>
                                     <td className="px-6 py-4">{row.ifscCode}</td>
                                     <td className="px-6 py-4">
-                                        <span className={row.status === 'Active' ? 'text-[#014A36] font-medium' : 'text-gray-500'}>
-                                            {row.status === 'Active' ? t('common:active') : t('common:inactive')}
+                                        <span className={row.status.toUpperCase() === 'ACTIVE' ? 'text-[#014A36] font-medium' : 'text-gray-500'}>
+                                            {row.status.toUpperCase() === 'ACTIVE' ? t('common:active') : t('common:inactive')}
                                         </span>
                                     </td>
                                     <td className={`px-6 py-4 text-center relative ${dropdownIndex === index ? 'z-50' : ''}`}>
@@ -531,8 +533,8 @@ const AccountMaster = () => {
                                                     onClick={(e) => toggleStatus(row.vendorCode, row.status, e)} 
                                                     className="flex items-center gap-3 w-full px-4 py-2.5 text-[14px] font-medium text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors whitespace-nowrap border-t border-gray-100"
                                                 >
-                                                    <CheckCircle2 size={16} className={row.status === 'Active' ? 'text-gray-500' : 'text-[#014A36]'} />
-                                                    {row.status === 'Active' ? t('common:inactive') : t('common:active')}
+                                                    <CheckCircle2 size={16} className={row.status.toUpperCase() === 'ACTIVE' ? 'text-gray-500' : 'text-[#014A36]'} />
+                                                    {row.status.toUpperCase() === 'ACTIVE' ? t('common:inactive') : t('common:active')}
                                                 </button>
                                             </div>
                                         )}
@@ -612,7 +614,7 @@ const AccountMaster = () => {
                     <div className="relative w-[400px] max-w-full bg-white h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
                         {/* Drawer Header */}
                         <div className="flex items-center justify-between p-6 pb-4">
-                            <h2 className="text-[16px] font-bold text-[#111827] font-['Plus_Jakarta_Sans']">Apply Filters</h2>
+                            <h2 className="text-[16px] font-bold text-[#111827] font-['Plus_Jakarta_Sans']">{t('common:apply_filters')}</h2>
                             <button onClick={() => setIsFilterOpen(false)} className="text-black hover:text-[#111827] transition-colors p-1 rounded-full hover:bg-gray-100">
                                 <X size={20} strokeWidth={1.5} />
                             </button>
@@ -631,7 +633,7 @@ const AccountMaster = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-[13px] font-medium text-[#374151] mb-2">PAN.No</label>
+                                <label className="block text-[13px] font-medium text-[#374151] mb-2">{t('modules:pan_no')}</label>
                                 <input
                                     type="text"
                                     name="panNo"
@@ -641,7 +643,7 @@ const AccountMaster = () => {
                                 />
                             </div>
                             <div className="relative">
-                                <label className="block text-[13px] font-medium text-[#374151] mb-2">Group Name</label>
+                                <label className="block text-[13px] font-medium text-[#374151] mb-2">{t('modules:group_name')}</label>
                                 <select
                                     name="groupName"
                                     value={filterInputs.groupName}
@@ -649,13 +651,13 @@ const AccountMaster = () => {
                                     className="w-full h-[46px] px-3 pr-10 border border-[#D1D5DB] rounded-[6px] text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/20 transition-all appearance-none bg-white font-['Plus_Jakarta_Sans']"
                                 >
                                     <option value="" disabled className="hidden"></option>
-                                    <option value="Sundry Creditors">Sundry Creditors</option>
-                                    <option value="Sundry Debtors">Sundry Debtors</option>
+                                    <option value="Sundry Creditors">{t('modules:sundry_creditors')}</option>
+                                    <option value="Sundry Debtors">{t('modules:sundry_debtors')}</option>
                                 </select>
                                 <ChevronDown size={18} className="absolute right-3 top-1/2 translate-y-[20%] pointer-events-none text-[#6B7280]" />
                             </div>
                             <div>
-                                <label className="block text-[13px] font-medium text-[#374151] mb-2">Credit Days</label>
+                                <label className="block text-[13px] font-medium text-[#374151] mb-2">{t('modules:credit_days')}</label>
                                 <input
                                     type="text"
                                     name="creditDays"
@@ -665,7 +667,7 @@ const AccountMaster = () => {
                                 />
                             </div>
                             <div className="relative">
-                                <label className="block text-[13px] font-medium text-[#374151] mb-2">Status</label>
+                                <label className="block text-[13px] font-medium text-[#374151] mb-2">{t('common:status')}</label>
                                 <select
                                     name="status"
                                     value={filterInputs.status}
@@ -673,8 +675,8 @@ const AccountMaster = () => {
                                     className="w-full h-[46px] px-3 pr-10 border border-[#D1D5DB] rounded-[6px] text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/20 transition-all appearance-none bg-white font-['Plus_Jakarta_Sans']"
                                 >
                                     <option value="" disabled className="hidden"></option>
-                                    <option value="Active">Active</option>
-                                    <option value="InActive">InActive</option>
+                                    <option value="Active">{t('common:active')}</option>
+                                    <option value="InActive">{t('common:inactive')}</option>
                                 </select>
                                 <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#6B7280]" />
                             </div>
@@ -686,13 +688,13 @@ const AccountMaster = () => {
                                 onClick={clearFilters}
                                 className="flex-1 h-[48px] bg-white border border-[#D1D5DB] text-[#374151] text-[14px] font-semibold rounded-[6px] hover:bg-gray-50 transition-colors"
                             >
-                                Clear
+                                {t('common:clear')}
                             </button>
                             <button
                                 onClick={applyFilters}
                                 className="flex-1 h-[48px] bg-[#014A36] text-white text-[14px] font-semibold rounded-[6px] hover:bg-[#013b2b] transition-colors"
                             >
-                                Apply Filter
+                                {t('common:apply_filters')}
                             </button>
                         </div>
                     </div>

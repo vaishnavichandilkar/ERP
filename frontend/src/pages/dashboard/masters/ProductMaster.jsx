@@ -3,6 +3,7 @@ import { Search, Download, Plus, Filter, MoreVertical, X, FileText, FileSpreadsh
 import { useTranslation } from 'react-i18next';
 import ProductForm from './components/ProductForm';
 import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
+import { translateDynamic } from '../../../utils/i18nUtils';
 
 const ProductMaster = () => {
     const { t } = useTranslation(['modules', 'common']);
@@ -132,13 +133,13 @@ const ProductMaster = () => {
         const tableRows = filteredData.map((row, index) => [
             index + 1,
             row.code,
-            row.name,
-            row.uom,
-            row.type,
-            row.category,
+            translateDynamic(row.name, t),
+            translateDynamic(row.uom, t),
+            translateDynamic(row.type, t),
+            translateDynamic(row.category, t),
             row.hsn,
             row.tax,
-            row.status
+            row.status.toUpperCase() === 'ACTIVE' ? t('common:active') : t('common:inactive')
         ]);
 
         exportToPDF(
@@ -152,15 +153,15 @@ const ProductMaster = () => {
 
     const handleExportExcel = () => {
         const excelData = filteredData.map(row => ({
-            'Product Code': row.code,
-            'Product Name': row.name,
-            'UOM': row.uom,
-            'Product Type': row.type,
-            'Category': row.category,
-            'Sub Category': row.subcategory,
-            'HSN Code': row.hsn,
-            'Tax %': row.tax,
-            'Status': row.status
+            [t('product_code')]: row.code,
+            [t('product_name')]: translateDynamic(row.name, t),
+            [t('uom')]: translateDynamic(row.uom, t),
+            [t('product_type')]: translateDynamic(row.type, t),
+            [t('category')]: translateDynamic(row.category, t),
+            [t('sub_category')]: translateDynamic(row.subcategory, t),
+            [t('hsn_code')]: row.hsn,
+            [t('tax_percent')]: row.tax,
+            [t('common:status')]: row.status.toUpperCase() === 'ACTIVE' ? t('common:active') : t('common:inactive')
         }));
 
         exportToExcel(excelData, 'Product Master', 'product-master.xlsx');
@@ -279,14 +280,14 @@ const ProductMaster = () => {
                             {currentData.length > 0 ? currentData.map((row, index) => (
                                 <tr key={row.id} className="border-b border-[#E5E7EB] last:border-b-0 hover:bg-gray-50/50 transition-colors">
                                     <td className="px-6 py-4">{row.code}</td>
-                                    <td className="px-6 py-4 font-medium">{row.name}</td>
-                                    <td className="px-6 py-4">{row.uom}</td>
-                                    <td className="px-6 py-4">{row.type}</td>
-                                    <td className="px-6 py-4">{row.category}</td>
-                                    <td className="px-6 py-4">{row.subcategory}</td>
+                                    <td className="px-6 py-4 font-medium">{translateDynamic(row.name, t)}</td>
+                                    <td className="px-6 py-4">{translateDynamic(row.uom, t)}</td>
+                                    <td className="px-6 py-4">{translateDynamic(row.type, t)}</td>
+                                    <td className="px-6 py-4">{translateDynamic(row.category, t)}</td>
+                                    <td className="px-6 py-4">{translateDynamic(row.subcategory, t)}</td>
                                     <td className="px-6 py-4">{row.hsn}</td>
                                     <td className="px-6 py-4">{row.tax}</td>
-                                    <td className="px-6 py-4">{row.status}</td>
+                                    <td className="px-6 py-4">{row.status.toUpperCase() === 'ACTIVE' ? t('common:active') : t('common:inactive')}</td>
                                     <td className={`px-6 py-4 text-center relative ${activeDropdown === row.id ? 'z-50' : ''}`}>
                                         <button
                                             onClick={(e) => toggleDropdown(row.id, e)}

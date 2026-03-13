@@ -5,6 +5,7 @@ import UnitForm from './components/UnitForm';
 import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
 
 import masterService from '../../../services/masterService';
+import { translateDynamic } from '../../../utils/i18nUtils';
 // import { toast } from 'react-hot-toast';
 const toast = {
     success: (msg) => console.log('SUCCESS:', msg),
@@ -162,10 +163,10 @@ const UnitMaster = () => {
     const handleExportPDF = () => {
         const tableRows = tableData.map((row, index) => [
             startIndex + index + 1,
-            row.unitName,
-            row.gstUom,
+            translateDynamic(row.unitName, t),
+            translateDynamic(row.gstUom, t),
             row.description,
-            row.status
+            row.status === 'ACTIVE' ? t('common:active') : t('common:inactive')
         ]);
 
         exportToPDF(
@@ -180,10 +181,10 @@ const UnitMaster = () => {
     const handleExportExcel = () => {
         const excelData = tableData.map((row, index) => ({
             'Sr.No': startIndex + index + 1,
-            'Unit Name': row.unitName,
-            'GST UOM': row.gstUom,
-            'Description': row.description,
-            'Status': row.status
+            [t('unit_name')]: translateDynamic(row.unitName, t),
+            [t('gst_uom')]: translateDynamic(row.gstUom, t),
+            [t('common:description')]: row.description,
+            [t('common:status')]: row.status === 'ACTIVE' ? t('common:active') : t('common:inactive')
         }));
 
         exportToExcel(excelData, 'Unit Master', 'unit-master.xlsx');
@@ -303,12 +304,12 @@ const UnitMaster = () => {
                             ) : currentData.length > 0 ? currentData.map((row, index) => (
                                 <tr key={row.id} className="border-b border-[#E5E7EB] last:border-b-0 hover:bg-gray-50/50 transition-colors">
                                     <td className="px-6 py-4 text-gray-500">{startIndex + index + 1}.</td>
-                                    <td className="px-6 py-4 font-medium">{row.unitName}</td>
-                                    <td className="px-6 py-4">{row.gstUom}</td>
+                                    <td className="px-6 py-4 font-medium">{translateDynamic(row.unitName, t)}</td>
+                                    <td className="px-6 py-4">{translateDynamic(row.gstUom, t)}</td>
                                     <td className="px-6 py-4">{row.description}</td>
                                     <td className="px-6 py-4">
                                         <span className={`px-2 py-1 rounded-full text-[12px] font-medium ${row.status === 'ACTIVE' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                                            {row.status}
+                                            {row.status === 'ACTIVE' ? t('common:active') : t('common:inactive')}
                                         </span>
                                     </td>
                                     <td className={`px-6 py-4 text-center relative ${activeDropdown === row.id ? 'z-50' : ''}`}>

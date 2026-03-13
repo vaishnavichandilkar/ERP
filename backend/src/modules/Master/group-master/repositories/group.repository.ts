@@ -28,7 +28,7 @@ export class GroupMasterRepository {
                 group_name: true,
             },
             where: {
-                status: true,
+                status: 'ACTIVE',
             },
             orderBy: {
                 group_name: 'asc',
@@ -50,7 +50,10 @@ export class GroupMasterRepository {
 
     async createSubGroup(data: { sub_group_name: string; group_id: number; userId: number }) {
         return this.prisma.accountSubGroup.create({
-            data,
+            data: {
+                ...data,
+                status: 'ACTIVE',
+            },
         });
     }
 
@@ -61,14 +64,14 @@ export class GroupMasterRepository {
         });
     }
 
-    async updateGroupStatus(id: number, status: boolean) {
+    async updateGroupStatus(id: number, status: 'ACTIVE' | 'INACTIVE') {
         return this.prisma.accountGroup.update({
             where: { id },
             data: { status },
         });
     }
 
-    async updateSubGroupStatus(id: number, status: boolean) {
+    async updateSubGroupStatus(id: number, status: 'ACTIVE' | 'INACTIVE') {
         return this.prisma.accountSubGroup.update({
             where: { id },
             data: { status },
