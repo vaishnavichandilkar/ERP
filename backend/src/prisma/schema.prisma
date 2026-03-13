@@ -237,6 +237,11 @@ enum ContactPrefix {
   Ms
 }
 
+enum MasterStatus {
+  ACTIVE
+  INACTIVE
+}
+
 model AccountMaster {
   id Int @id @default(autoincrement())
 
@@ -320,7 +325,7 @@ model UnitMaster {
 model AccountGroup {
   id         Int               @id @default(autoincrement())
   group_name String            @unique
-  status     Boolean           @default(true)
+  status     MasterStatus      @default(ACTIVE)
   created_at DateTime          @default(now())
   updated_at DateTime          @updatedAt
   sub_groups AccountSubGroup[]
@@ -333,7 +338,7 @@ model AccountSubGroup {
   sub_group_name String
   group_id       Int
   userId         Int
-  status         Boolean      @default(true)
+  status         MasterStatus @default(ACTIVE)
   created_at     DateTime     @default(now())
   updated_at     DateTime     @updatedAt
   group          AccountGroup @relation(fields: [group_id], references: [id], onDelete: Cascade)

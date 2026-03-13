@@ -23,7 +23,9 @@ const SuperAdminLayout = () => {
 
     const handleLogout = () => {
         localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
+        localStorage.removeItem('languageConfirmed');
         navigate('/login', { replace: true });
     };
 

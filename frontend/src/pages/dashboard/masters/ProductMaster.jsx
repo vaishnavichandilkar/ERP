@@ -3,6 +3,7 @@ import { Search, Download, Plus, Filter, MoreVertical, X, FileText, FileSpreadsh
 import { useTranslation } from 'react-i18next';
 import ProductForm from './components/ProductForm';
 import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
+import { translateDynamic } from '../../../utils/i18nUtils';
 
 const ProductMaster = () => {
     const { t } = useTranslation(['modules', 'common']);
@@ -132,13 +133,13 @@ const ProductMaster = () => {
         const tableRows = filteredData.map((row, index) => [
             index + 1,
             row.code,
-            row.name,
-            row.uom,
-            row.type,
-            row.category,
+            translateDynamic(row.name, t),
+            translateDynamic(row.uom, t),
+            translateDynamic(row.type, t),
+            translateDynamic(row.category, t),
             row.hsn,
             row.tax,
-            row.status
+            row.status.toUpperCase() === 'ACTIVE' ? t('common:active') : t('common:inactive')
         ]);
 
         exportToPDF(
@@ -152,15 +153,15 @@ const ProductMaster = () => {
 
     const handleExportExcel = () => {
         const excelData = filteredData.map(row => ({
-            'Product Code': row.code,
-            'Product Name': row.name,
-            'UOM': row.uom,
-            'Product Type': row.type,
-            'Category': row.category,
-            'Sub Category': row.subcategory,
-            'HSN Code': row.hsn,
-            'Tax %': row.tax,
-            'Status': row.status
+            [t('product_code')]: row.code,
+            [t('product_name')]: translateDynamic(row.name, t),
+            [t('uom')]: translateDynamic(row.uom, t),
+            [t('product_type')]: translateDynamic(row.type, t),
+            [t('category')]: translateDynamic(row.category, t),
+            [t('sub_category')]: translateDynamic(row.subcategory, t),
+            [t('hsn_code')]: row.hsn,
+            [t('tax_percent')]: row.tax,
+            [t('common:status')]: row.status.toUpperCase() === 'ACTIVE' ? t('common:active') : t('common:inactive')
         }));
 
         exportToExcel(excelData, 'Product Master', 'product-master.xlsx');
@@ -220,7 +221,6 @@ const ProductMaster = () => {
                                     {t('common:export')}
                                 </button>
 
-                                {/* Export Dropdown */}
                                 {isExportOpen && (
                                     <div className="absolute top-full right-0 mt-2 w-[160px] bg-white border border-gray-100 rounded-[12px] shadow-[0_10px_30px_rgba(0,0,0,0.1)] z-[50] py-2 animate-in fade-in slide-in-from-top-2 duration-200">
                                         <button onClick={handleExportPDF} className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors">
@@ -235,6 +235,7 @@ const ProductMaster = () => {
                                 )}
                             </div>
                         </div>
+
                         <div className="overflow-x-auto w-full min-h-[260px]">
                             <table className="w-full min-w-[1200px] text-left border-collapse">
                                 <thead>
@@ -273,14 +274,14 @@ const ProductMaster = () => {
                                     {currentData.length > 0 ? currentData.map((row, index) => (
                                         <tr key={row.id} className="border-b border-[#E5E7EB] last:border-b-0 hover:bg-gray-50/50 transition-colors">
                                             <td className="px-6 py-4">{row.code}</td>
-                                            <td className="px-6 py-4 font-medium">{row.name}</td>
-                                            <td className="px-6 py-4">{row.uom}</td>
-                                            <td className="px-6 py-4">{row.type}</td>
-                                            <td className="px-6 py-4">{row.category}</td>
-                                            <td className="px-6 py-4">{row.subcategory}</td>
+                                            <td className="px-6 py-4 font-medium">{translateDynamic(row.name, t)}</td>
+                                            <td className="px-6 py-4">{translateDynamic(row.uom, t)}</td>
+                                            <td className="px-6 py-4">{translateDynamic(row.type, t)}</td>
+                                            <td className="px-6 py-4">{translateDynamic(row.category, t)}</td>
+                                            <td className="px-6 py-4">{translateDynamic(row.subcategory, t)}</td>
                                             <td className="px-6 py-4">{row.hsn}</td>
                                             <td className="px-6 py-4">{row.tax}</td>
-                                            <td className="px-6 py-4">{row.status}</td>
+                                            <td className="px-6 py-4">{row.status.toUpperCase() === 'ACTIVE' ? t('common:active') : t('common:inactive')}</td>
                                             <td className={`px-6 py-4 text-center relative ${activeDropdown === row.id ? 'z-50' : ''}`}>
                                                 <button
                                                     onClick={(e) => toggleDropdown(row.id, e)}
@@ -289,7 +290,6 @@ const ProductMaster = () => {
                                                     <MoreVertical size={18} />
                                                 </button>
 
-                                                {/* Action Dropdown Menu */}
                                                 {activeDropdown === row.id && (
                                                     <div
                                                         ref={dropdownRef}
@@ -316,7 +316,7 @@ const ProductMaster = () => {
                                                             onClick={() => handleToggleStatus(row.id)}
                                                             className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors whitespace-nowrap font-medium border-t border-gray-100"
                                                         >
-                                                            {row.status === 'Active' ? (
+                                                            {row.status.toUpperCase() === 'ACTIVE' ? (
                                                                 <>
                                                                     <CheckCircle2 size={16} className="text-gray-500" />
                                                                     {t('common:inactive')}

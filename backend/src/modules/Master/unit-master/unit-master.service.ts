@@ -171,7 +171,10 @@ export class UnitMasterService {
     async updateUnit(userId: number, id: number, dto: UpdateUnitDto) {
         const unit = await this.getUnitById(userId, id);
 
-        // Re-evaluate source if fields are updated
+        // Ensure system units cannot be edited
+        if (unit.source === UnitSource.SYSTEM) {
+            throw new ForbiddenException('System library units cannot be edited');
+        }
 
         if (dto.gst_uom && dto.gst_uom !== unit.gst_uom) {
             const existing = await this.prisma.unitMaster.findFirst({

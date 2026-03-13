@@ -7,6 +7,141 @@
     <title>weighting-scale-app</title>
   </head>
   <body>
+    <!-- Global Loader -->
+    <div id="global-loader">
+      <style>
+        #global-loader {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background: #ffffff;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 10000;
+          font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+          transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s;
+        }
+        .loader-wrapper {
+          position: relative;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          width: 280px;
+          height: 280px;
+        }
+        .erp-text-container {
+          position: relative;
+          z-index: 2;
+          text-align: center;
+        }
+        .erp-text {
+          font-size: 42px;
+          font-weight: 800;
+          color: #014A36;
+          letter-spacing: 6px;
+          margin: 0;
+          text-transform: uppercase;
+          animation: erpBreath 3s infinite ease-in-out;
+          text-shadow: 0 0 20px rgba(1, 74, 54, 0.1);
+        }
+        .erp-subtitle {
+          font-size: 10px;
+          color: #6B7280;
+          letter-spacing: 4px;
+          margin-top: 4px;
+          opacity: 0.6;
+          text-transform: uppercase;
+          font-weight: 600;
+        }
+        /* Modern Circular Loader Rings */
+        .ring {
+          position: absolute;
+          border-radius: 50%;
+          border: 2px solid transparent;
+          border-top-color: #B2D534;
+          animation: rotate 2s linear infinite;
+        }
+        .ring-1 {
+          width: 140px;
+          height: 140px;
+          border-top-color: #B2D534;
+          animation-duration: 1.5s;
+          opacity: 0.9;
+        }
+        .ring-2 {
+          width: 170px;
+          height: 170px;
+          border-right-color: #B2D534;
+          animation-duration: 2s;
+          animation-direction: reverse;
+          opacity: 0.6;
+        }
+        .ring-3 {
+          width: 200px;
+          height: 200px;
+          border-bottom-color: #B2D534;
+          animation-duration: 2.5s;
+          opacity: 0.3;
+        }
+        /* Soft Pulse Effect Behind */
+        .pulse-bg {
+          position: absolute;
+          width: 120px;
+          height: 120px;
+          background: rgb(121, 245, 5);
+          border-radius: 50%;
+          animation: erpPulseBg 2s infinite ease-out;
+          z-index: 1;
+        }
+        @keyframes rotate {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes erpBreath {
+          0%, 100% { transform: scale(1); opacity: 0.8; filter: blur(0px); }
+          50% { transform: scale(1.04); opacity: 1; filter: drop-shadow(0 0 15px rgb(155, 235, 7)); }
+        }
+        @keyframes erpPulseBg {
+          0% { transform: scale(0.8); opacity: 0.8; }
+          100% { transform: scale(2.2); opacity: 0; }
+        }
+        .loader-hidden {
+          opacity: 0;
+          visibility: hidden;
+        }
+      </style>
+      <div class="loader-wrapper">
+        <div class="pulse-bg"></div>
+        <div class="ring ring-1"></div>
+        <div class="ring ring-2"></div>
+        <div class="ring ring-3"></div>
+        <div class="erp-text-container">
+          <h1 class="erp-text">ERP</h1>
+          <div class="erp-subtitle">MANAGEMENT</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      window.addEventListener('load', function() {
+        const loader = document.getElementById('global-loader');
+        if (loader) {
+          // Add a fixed delay (1.2s) before starting the fade-out 
+          // to ensure the premium animation is appreciated
+          setTimeout(() => {
+            loader.classList.add('loader-hidden');
+            // Remove from DOM after the 0.8s transition completes
+            setTimeout(() => {
+              loader.remove();
+            }, 800);
+          }, 1200);
+        }
+      });
+    </script>
+
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

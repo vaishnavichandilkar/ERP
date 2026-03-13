@@ -164,8 +164,9 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
                     setIsLogoutOpen(false);
                     // Clear tokens and user data
                     localStorage.removeItem('token');
-                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('refreshToken');
                     localStorage.removeItem('user');
+                    localStorage.removeItem('languageConfirmed');
                     // Redirect to landing page
                     navigate('/');
                 }}

@@ -10,7 +10,7 @@ i18n
     ))
     .use(initReactI18next)
     .init({
-        fallbackLng: 'en',
+        fallbackLng: 'hi',
         supportedLngs: ['en', 'hi', 'mr'],
         debug: false,
         ns: ['common', 'auth', 'dashboard', 'modules', 'terms'],
@@ -20,7 +20,7 @@ i18n
             escapeValue: false,
         },
         detection: {
-            order: ['querystring', 'cookie', 'localStorage', 'sessionStorage', 'navigator', 'htmlTag'],
+            order: ['localStorage', 'querystring', 'cookie', 'sessionStorage', 'navigator', 'htmlTag'],
             lookupLocalStorage: 'i18nextLng',
             caches: ['localStorage', 'cookie'],
         },

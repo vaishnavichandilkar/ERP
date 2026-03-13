@@ -63,7 +63,6 @@ export class UnitQueryDto {
     @IsOptional()
     @IsEnum(UnitStatus)
     status?: UnitStatus;
-
     @ApiProperty({ required: false, default: '1' })
     @IsOptional()
     @IsString()

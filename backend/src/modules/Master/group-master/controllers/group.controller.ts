@@ -43,16 +43,6 @@ export class GroupMasterController {
         return this.groupService.updateSubGroup(id, dto, req.user.userId);
     }
 
-    @Patch(':id/status')
-    @ApiOperation({ summary: 'Toggle header group status' })
-    @ApiResponse({ status: 200, description: 'Status updated' })
-    async updateGroupStatus(
-        @Param('id', ParseIntPipe) id: number,
-        @Body() dto: UpdateGroupStatusDto,
-    ) {
-        return this.groupService.updateGroupStatus(id, dto);
-    }
-
     @Patch('sub-group/:id/status')
     @ApiOperation({ summary: 'Toggle sub-group status' })
     @ApiResponse({ status: 200, description: 'Status updated' })
@@ -62,5 +52,15 @@ export class GroupMasterController {
         @Body() dto: UpdateSubGroupStatusDto,
     ) {
         return this.groupService.updateSubGroupStatus(id, dto, req.user.userId);
+    }
+
+    @Patch(':id/status')
+    @ApiOperation({ summary: 'Toggle header group status' })
+    @ApiResponse({ status: 200, description: 'Status updated' })
+    async updateGroupStatus(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() dto: UpdateGroupStatusDto,
+    ) {
+        return this.groupService.updateGroupStatus(id, dto);
     }
 }

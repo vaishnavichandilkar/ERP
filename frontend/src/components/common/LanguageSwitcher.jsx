@@ -14,7 +14,10 @@ const LanguageSwitcher = () => {
     const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
 
     const changeLanguage = (lng) => {
-        i18n.changeLanguage(lng);
+        i18n.changeLanguage(lng).then(() => {
+            // Force a reload to ensure all data and components refresh with the new language
+            window.location.reload();
+        });
     };
 
     return (

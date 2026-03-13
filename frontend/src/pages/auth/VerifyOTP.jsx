@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import LanguageSwitcher from '../../components/common/LanguageSwitcher';
+
 import AuthLayout from '../../layout/auth/AuthLayout';
 import Button from '../../components/common/Button';
 import { ArrowLeft } from 'lucide-react';
@@ -26,24 +26,52 @@ const VerifyOTP = () => {
     }, []);
 
     const handleChange = (element, index) => {
-        if (isNaN(element.value)) return;
+        const value = element.value;
+        if (!/^\d*$/.test(value)) return;
 
         const newOtp = [...otp];
-        newOtp[index] = element.value;
+        newOtp[index] = value;
         setOtp(newOtp);
 
         // Focus next input
-        if (element.nextSibling && element.value) {
-            if (index < 5 && element.value) {
-                inputRefs.current[index + 1].focus();
-            }
+        if (value && index < 5) {
+            inputRefs.current[index + 1].focus();
         }
     };
 
     const handleKeyDown = (e, index) => {
         if (e.key === 'Backspace' && !otp[index] && index > 0) {
             inputRefs.current[index - 1].focus();
+        } else if (e.key === 'ArrowLeft' && index > 0) {
+            inputRefs.current[index - 1].focus();
+        } else if (e.key === 'ArrowRight' && index < 5) {
+            inputRefs.current[index + 1].focus();
         }
+    };
+
+    const handlePaste = (e) => {
+        e.preventDefault();
+        const pasteData = e.clipboardData.getData('text').trim();
+        const numericData = pasteData.replace(/\D/g, '').slice(0, 6);
+
+        if (!numericData) return;
+
+        const newOtp = [...otp];
+        const digits = numericData.split('');
+
+        digits.forEach((digit, i) => {
+            if (i < 6) {
+                newOtp[i] = digit;
+            }
+        });
+
+        setOtp(newOtp);
+
+        // Move focus to the last filled box or the next empty one
+        const focusIndex = numericData.length < 6 ? numericData.length : 5;
+        inputRefs.current[focusIndex]?.focus();
+
+        if (error) setError('');
     };
 
     const [isLoading, setIsLoading] = useState(false);
@@ -70,6 +98,10 @@ const VerifyOTP = () => {
                     localStorage.setItem('token', response.accessToken);
                 }
 
+                if (response.refreshToken) {
+                    localStorage.setItem('refreshToken', response.refreshToken);
+                }
+
                 if (response.sessionId) {
                     localStorage.setItem('sessionId', response.sessionId);
                 } else if (userId) {
@@ -90,6 +122,10 @@ const VerifyOTP = () => {
                 const response = await loginApi(phone, enteredOtp);
                 if (response.accessToken) {
                     localStorage.setItem('token', response.accessToken);
+                }
+
+                if (response.refreshToken) {
+                    localStorage.setItem('refreshToken', response.refreshToken);
                 }
 
                 let userRole = response.user?.role;
@@ -203,11 +239,7 @@ const VerifyOTP = () => {
     return (
         <AuthLayout hideLeftPanel={true}>
             <div className="text-left w-full mx-auto flex flex-col min-h-0 relative">
-                {!localStorage.getItem('languageConfirmed') && (
-                    <div className="absolute top-8 right-0 md:top-0">
-                        <LanguageSwitcher />
-                    </div>
-                )}
+
 
                 <button
                     onClick={() => navigate(-1)}
@@ -256,6 +288,7 @@ const VerifyOTP = () => {
                                         if (error) setError('');
                                     }}
                                     onKeyDown={(e) => handleKeyDown(e, index)}
+                                    onPaste={handlePaste}
                                     onFocus={(e) => e.target.select()}
                                     maxLength={1}
                                     className={`w-10 h-10 sm:w-[64px] sm:h-[56px] text-center text-[20px] border rounded-[8px] transition-colors bg-white font-medium text-gray-900 outline-none

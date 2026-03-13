@@ -1,5 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
-import { Navigate } from 'react-router-dom';
+import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom';
 
 // Auth Pages
 import Landing from '../pages/auth/Landing';
@@ -39,10 +38,53 @@ const Placeholder = ({ title }) => (
 // Redirect logic
 const InitialRedirect = () => {
     const isLanguageSelected = localStorage.getItem('languageConfirmed') === 'true';
+    const token = localStorage.getItem('token');
+    const refreshToken = localStorage.getItem('refreshToken');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    // If already logged in (have access or refresh token), go straight to their dashboard
+    if ((token || refreshToken) && user.role) {
+        const role = user.role.toUpperCase();
+        if (role === 'SUPERADMIN') return <Navigate to="/superadmin/dashboard" replace />;
+        return <Navigate to="/seller/dashboard" replace />;
+    }
+
     if (isLanguageSelected) {
         return <Navigate to="/landing" replace />;
     }
     return <Navigate to="/language-selection" replace />;
+};
+
+// Guard for pages that should ONLY be accessed if NOT logged in (Landing, Login, Signup)
+const AuthGuard = () => {
+    const token = localStorage.getItem('token');
+    const refreshToken = localStorage.getItem('refreshToken');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    // If already have a session, go to their dashboard
+    if ((token || refreshToken) && user.role) {
+        const role = user.role.toUpperCase();
+        if (role === 'SUPERADMIN') return <Navigate to="/superadmin/dashboard" replace />;
+        return <Navigate to="/seller/dashboard" replace />;
+    }
+    return <Outlet />;
+};
+
+// Guard for pages that require a valid session
+const ProtectedRoute = ({ allowedRoles }) => {
+    const token = localStorage.getItem('token');
+    const refreshToken = localStorage.getItem('refreshToken');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    // Redirect to landing if no session at all
+    if (!token && !refreshToken) return <Navigate to="/landing" replace />;
+
+    const role = (user.role || '').toUpperCase();
+    if (allowedRoles && !allowedRoles.includes(role)) {
+        return <Navigate to="/" replace />;
+    }
+
+    return <Outlet />;
 };
 
 // Super Admin Imports
@@ -65,24 +107,29 @@ export const router = createBrowserRouter([
         element: <LanguageGuard />,
         children: [
             {
-                path: ROUTES.LANDING,
-                element: <Landing />,
-            },
-            {
-                path: ROUTES.LOGIN,
-                element: <SignIn />,
-            },
-            {
-                path: ROUTES.SIGNUP,
-                element: <SignUp />,
-            },
-            {
-                path: ROUTES.VERIFY_OTP,
-                element: <VerifyOTP />,
-            },
-            {
-                path: ROUTES.SUCCESS,
-                element: <Success />,
+                element: <AuthGuard />,
+                children: [
+                    {
+                        path: ROUTES.LANDING,
+                        element: <Landing />,
+                    },
+                    {
+                        path: ROUTES.LOGIN,
+                        element: <SignIn />,
+                    },
+                    {
+                        path: ROUTES.SIGNUP,
+                        element: <SignUp />,
+                    },
+                    {
+                        path: ROUTES.VERIFY_OTP,
+                        element: <VerifyOTP />,
+                    },
+                    {
+                        path: ROUTES.SUCCESS,
+                        element: <Success />,
+                    },
+                ]
             },
             {
                 path: ROUTES.APPLICATION_STATUS,
@@ -93,86 +140,100 @@ export const router = createBrowserRouter([
                 element: <Navigate to="/seller/dashboard" replace />
             },
             {
-                path: ROUTES.SELLER_DASHBOARD || '/seller/dashboard',
-                element: <DashboardLayout />,
+                element: <ProtectedRoute allowedRoles={['SELLER']} />,
                 children: [
                     {
-                        index: true,
-                        element: <Home />,
-                    },
-                    {
-                        path: 'reports',
-                        element: <Placeholder title="Reports" />
-                    },
-                    {
-                        path: 'masters',
-                        element: <MastersLayout />,
+                        path: '/seller',
+                        element: <DashboardLayout />,
                         children: [
                             {
                                 index: true,
-                                element: <GroupMaster />
+                                element: <Navigate to="dashboard" replace />
                             },
                             {
-                                path: 'group-master',
-                                element: <GroupMaster />
+                                path: 'dashboard',
+                                element: <Home />,
                             },
                             {
-                                path: 'account-master',
-                                element: <AccountMaster />
+                                path: 'reports',
+                                element: <Placeholder title="Reports" />
                             },
                             {
-                                path: 'unit-master',
-                                element: <UnitMaster />
+                                path: 'masters',
+                                element: <MastersLayout />,
+                                children: [
+                                    {
+                                        index: true,
+                                        element: <GroupMaster />
+                                    },
+                                    {
+                                        path: 'group-master',
+                                        element: <GroupMaster />
+                                    },
+                                    {
+                                        path: 'account-master',
+                                        element: <AccountMaster />
+                                    },
+                                    {
+                                        path: 'unit-master',
+                                        element: <UnitMaster />
+                                    },
+                                    {
+                                        path: 'category',
+                                        element: <CategoryMaster />
+                                    },
+                                    {
+                                        path: 'product-master',
+                                        element: <ProductMaster />
+                                    }
+                                ]
                             },
                             {
-                                path: 'category',
-                                element: <CategoryMaster />
+                                path: 'purchase',
+                                element: <Placeholder title="Purchase" />
                             },
                             {
-                                path: 'product-master',
-                                element: <ProductMaster />
+                                path: 'sales',
+                                element: <Placeholder title="Sales" />
+                            },
+                            {
+                                path: 'settings',
+                                element: <SystemSettings />
                             }
                         ]
-                    },
-                    {
-                        path: 'purchase',
-                        element: <Placeholder title="Purchase" />
-                    },
-                    {
-                        path: 'sales',
-                        element: <Placeholder title="Sales" />
-                    },
-                    {
-                        path: 'settings',
-                        element: <SystemSettings />
                     }
                 ]
-            },
+            }
         ]
     },
     {
         path: '/superadmin',
-        element: <SuperAdminLayout />,
+        element: <ProtectedRoute allowedRoles={['SUPERADMIN']} />,
         children: [
             {
-                index: true,
-                element: <Navigate to="dashboard" replace />
-            },
-            {
-                path: 'dashboard',
-                element: <SuperAdminDashboard />
-            },
-            {
-                path: 'pending-sellers',
-                element: <PendingSellers />
-            },
-            {
-                path: 'approved-sellers',
-                element: <ApprovedSellers />
-            },
-            {
-                path: 'rejected-sellers',
-                element: <RejectedSellers />
+                element: <SuperAdminLayout />,
+                children: [
+                    {
+                        index: true,
+                        element: <Navigate to="dashboard" replace />
+                    },
+                    {
+                        path: 'dashboard',
+                        element: <SuperAdminDashboard />
+                    },
+                    {
+                        path: 'pending-sellers',
+                        element: <PendingSellers />
+                    },
+                    {
+                        path: 'approved-sellers',
+                        element: <ApprovedSellers />
+                    },
+                    {
+                        path: 'rejected-sellers',
+                        element: <RejectedSellers />
+                    }
+                ]
             }
         ]
     },

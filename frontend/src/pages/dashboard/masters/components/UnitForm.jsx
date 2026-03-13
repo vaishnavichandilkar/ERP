@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import unitService from '../../../../services/masters/unitService';
 import { toast } from '../../../../utils/toast-mock';
+import { translateDynamic } from '../../../../utils/i18nUtils';
 
 const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchable = false, disabled = false, showAsterisk = false, actionLabel = '', onAction = null, error = '' }) => {
     const { t } = useTranslation(['common']);
@@ -65,7 +66,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                     />
                 ) : (
                     <span className={`text-[14px] truncate font-medium ${value ? 'text-[#111827]' : 'text-gray-400'}`}>
-                        {value || placeholder}
+                        {value ? translateDynamic(value, t) : placeholder}
                     </span>
                 )}
                 {!disabled && (isOpen ? <ChevronUp size={16} className="text-gray-400 shrink-0" /> : <ChevronDown size={16} className="text-gray-400 shrink-0" />)}
@@ -86,7 +87,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                                         setSearchTerm('');
                                     }}
                                 >
-                                    {opt}
+                                    {translateDynamic(opt, t)}
                                 </div>
                             ))
                         ) : (
@@ -156,7 +157,7 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) => {
     const [unitNameOptions, setUnitNameOptions] = useState([]);
     const [gstUomOptions, setGstUomOptions] = useState([]);
     const [fullNameOptions, setFullNameOptions] = useState([]);
-    
+
     const [formData, setFormData] = useState({
         unit_name: '',
         gst_uom: '',
@@ -187,7 +188,7 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) => {
             try {
                 const response = await unitService.getUnitNames();
                 setUnitNameOptions(response.data || []);
-                
+
                 // If editing, load dependent options safely
                 if (mode === 'edit' && initialData) {
                     if (initialData.unit_name) {
@@ -220,7 +221,7 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) => {
             full_name_of_measurement: ''
         }));
         setErrors(prev => ({ ...prev, unit_name: '' }));
-        
+
         if (value) {
             try {
                 const response = await unitService.getUomByUnitName(value);
@@ -249,7 +250,7 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) => {
                     ...prev,
                     full_name_of_measurement: measurementName
                 }));
-                
+
                 if (measurementName && !fullNameOptions.includes(measurementName)) {
                     setFullNameOptions(prev => [...prev, measurementName]);
                 }
@@ -332,7 +333,7 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) => {
                 {[
                     { label: t('modules:unit_name'), value: formData.unit_name },
                     { label: t('modules:gst_uom'), value: formData.gst_uom },
-                    { label: 'Full Name of Measurement', value: formData.full_name_of_measurement || '-' }
+                    { label: t('modules:full_name_of_measurement'), value: formData.full_name_of_measurement || '-' }
                 ].map((item, idx) => (
                     <div key={idx} className="flex border-b border-[#E5E7EB] min-h-[52px]">
                         <div className="w-[200px] bg-[#F9FAFB] px-6 py-4 flex items-center border-r border-[#E5E7EB]">
@@ -386,34 +387,34 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) => {
                     <div className="flex flex-col gap-6 w-full">
                         <CustomSelect
                             label={t('modules:unit_name')}
-                            placeholder="Select Unit Category"
+                            placeholder={t('modules:select_unit_category')}
                             options={unitNameOptions}
                             value={formData.unit_name}
                             onChange={handleUnitNameChange}
                             showAsterisk={true}
                             disabled={isView}
-                            actionLabel="Add Unit Name"
+                            actionLabel={t('modules:add_unit_name')}
                             onAction={handleAddCustomUnitName}
                             error={errors.unit_name}
                         />
 
                         <CustomSelect
                             label={t('modules:gst_uom')}
-                            placeholder="Select GST UOM"
+                            placeholder={t('modules:select_gst_uom')}
                             options={gstUomOptions}
                             value={formData.gst_uom}
                             onChange={handleGstUomChange}
                             isSearchable={true}
                             disabled={isView || !formData.unit_name}
                             showAsterisk={true}
-                            actionLabel="Add GST UOM"
+                            actionLabel={t('modules:add_gst_uom')}
                             onAction={handleAddCustomGstUom}
                             error={errors.gst_uom}
                         />
 
                         <CustomSelect
-                            label="Full Name of Measurement"
-                            placeholder="Select or Enter Full Name"
+                            label={t('modules:full_name_of_measurement')}
+                            placeholder={t('modules:select_or_enter_full_name')}
                             options={fullNameOptions}
                             value={formData.full_name_of_measurement}
                             onChange={(val) => {
@@ -423,7 +424,7 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) => {
                             isSearchable={true}
                             disabled={isView || !formData.gst_uom}
                             showAsterisk={true}
-                            actionLabel="Add Full Name of Measurement"
+                            actionLabel={t('modules:add_full_name_of_measurement')}
                             onAction={handleAddCustomFullName}
                             error={errors.full_name_of_measurement}
                         />

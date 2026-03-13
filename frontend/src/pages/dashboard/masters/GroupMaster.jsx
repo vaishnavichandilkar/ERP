@@ -1,8 +1,10 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Search, Download, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, CheckCircle2, XCircle, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Search, Download, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, ShieldCheck, ShieldX, CheckCircle2, XCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import AddGroupModal from './components/AddGroupModal';
 import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
+import masterService from '../../../services/masterService';
+import { translateDynamic } from '../../../utils/i18nUtils';
 
 const GroupMaster = () => {
     const { t } = useTranslation(['modules', 'common']);
@@ -10,33 +12,47 @@ const GroupMaster = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedGroups, setExpandedGroups] = useState({});
     const [isExportOpen, setIsExportOpen] = useState(false);
+    const [groups, setGroups] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
     const exportRef = useRef(null);
-
-    const masterData = useMemo(() => ([
-        { id: 'exp-direct', name: t('direct_expense'), items: [t('light_bill'), t('labour_charges')] },
-        { id: 'exp-indirect', name: t('indirect_expense'), items: [t('bank_charges'), t('company_promotions')] },
-        { id: 'exp-purchase', name: t('purchase'), items: [t('light_bill'), t('labour_charges')] },
-        { id: 'exp-opening', name: t('opening_stock'), items: [t('product_opening_stock'), t('store_opening_stock')] },
-        { id: 'rev-direct', name: t('direct_sale'), items: [t('light_bill'), t('labour_charges')] },
-        { id: 'rev-indirect', name: t('indirect_sale'), items: [t('light_bill'), t('labour_charges')] },
-        { id: 'rev-sale', name: t('sale'), items: [t('light_bill'), t('labour_charges')] },
-        { id: 'rev-closing', name: t('closing_stock'), items: [t('product_closing_stock'), t('store_closing_stock')] }
-    ]), [t]);
-
-    const [itemStatuses, setItemStatuses] = useState({});
     const [activeRowDropdown, setActiveRowDropdown] = useState(null);
+    const [toast, setToast] = useState(null);
 
-    // Pagination State
-    const [currentPage, setCurrentPage] = useState(1);
-    const [itemsPerPage, setItemsPerPage] = useState(5);
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3000);
+    };
+
+    const fetchGroups = async () => {
+        setIsLoading(true);
+        try {
+            const response = await masterService.getAllGroups();
+            if (response.success) {
+                setGroups(response.data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch groups', err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchGroups();
+    }, []);
 
     // Handle click outside for export dropdown
     useEffect(() => {
         const handleClickOutside = (event) => {
+            // Close export dropdown if clicking outside
             if (exportRef.current && !exportRef.current.contains(event.target)) {
                 setIsExportOpen(false);
             }
-            setActiveRowDropdown(null);
+
+            // Close row dropdown only if clicking outside any row dropdown trigger or menu
+            if (!event.target.closest('.dropdown-trigger') && !event.target.closest('.dropdown-menu')) {
+                setActiveRowDropdown(null);
+            }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -50,35 +66,55 @@ const GroupMaster = () => {
         }));
     };
 
-    const filteredData = () => {
-        if (!searchQuery) return masterData;
+    const filteredData = useMemo(() => {
+        if (!searchQuery) return groups;
 
         const q = searchQuery.toLowerCase();
-        return masterData.filter(section => {
-            const nameMatch = section.name.toLowerCase().includes(q);
-            const itemsMatch = section.items.some(item => item.toLowerCase().includes(q));
+        return groups.filter(section => {
+            const nameMatch = section.group_name.toLowerCase().includes(q);
+            const itemsMatch = (section.sub_groups || []).some(item => item.sub_group_name.toLowerCase().includes(q));
             return nameMatch || itemsMatch;
         });
-    };
+    }, [groups, searchQuery]);
 
-    const isAllExpanded = Object.keys(expandedGroups).length === masterData.length && Object.values(expandedGroups).every(Boolean);
+    const isAllExpanded = Object.keys(expandedGroups).length === groups.length && Object.values(expandedGroups).every(Boolean);
 
     const toggleExpandAll = () => {
         if (isAllExpanded) {
             setExpandedGroups({});
         } else {
             const newExpanded = {};
-            masterData.forEach(section => newExpanded[section.id] = true);
+            groups.forEach(section => newExpanded[section.id] = true);
             setExpandedGroups(newExpanded);
         }
     };
 
-    const handleToggleStatus = (dropdownId, currentStatus) => {
-        setItemStatuses(prev => ({
-            ...prev,
-            [dropdownId]: currentStatus === 'Active' ? 'Inactive' : 'Active'
-        }));
+    const handleToggleStatus = async (subGroupId, currentStatusText, type = 'sub') => {
+        const nextStatus = currentStatusText === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+        console.log(`[Toggle] SubGroupID: ${subGroupId}, Current: ${currentStatusText}, Next: ${nextStatus}`);
+        
         setActiveRowDropdown(null);
+        
+        try {
+            const response = await masterService.updateSubGroupStatus(subGroupId, nextStatus);
+
+            console.log('[Toggle] Server Response:', response);
+            
+            if (response.success) {
+                const toastMsg = nextStatus === 'ACTIVE' 
+                    ? 'Group activated successfully' 
+                    : 'Group inactivated successfully';
+                showToast(toastMsg);
+                // Refresh data to sync with DB
+                fetchGroups();
+            } else {
+                showToast(response.message || 'Failed to update status', 'error');
+            }
+        } catch (err) {
+            console.error('[Toggle] Error:', err);
+            const errMsg = err.response?.data?.message || err.message || 'Server error';
+            showToast(errMsg, 'error');
+        }
     };
 
     // Export Logic
@@ -86,14 +122,14 @@ const GroupMaster = () => {
         const tableRows = [];
         const prepareRows = (sections) => {
             sections.forEach(sec => {
-                tableRows.push([{ content: sec.name, colSpan: 2, styles: { fontStyle: 'bold' } }]);
-                sec.items.forEach((item, idx) => {
-                    tableRows.push([`${idx + 1}.`, item]);
+                tableRows.push([{ content: translateDynamic(sec.group_name, t), colSpan: 2, styles: { fontStyle: 'bold' } }]);
+                (sec.sub_groups || []).forEach((item, idx) => {
+                    tableRows.push([`${idx + 1}.`, translateDynamic(item.sub_group_name, t)]);
                 });
             });
         };
 
-        prepareRows(masterData);
+        prepareRows(groups);
 
         exportToPDF('Group Master Report', ['#', 'Group Name'], tableRows, 'group-master.pdf');
         setIsExportOpen(false);
@@ -103,62 +139,38 @@ const GroupMaster = () => {
         const data = [];
         const handlePrepareData = (sections) => {
             sections.forEach(sec => {
-                data.push({ 'Type': '', 'Group': sec.name, 'Sub-Group': '' });
-                sec.items.forEach(item => {
-                    data.push({ 'Type': '', 'Group': '', 'Sub-Group': item });
+                data.push({ 'Type': '', [t('common:group')]: translateDynamic(sec.group_name, t), [t('common:sub_group')]: '' });
+                (sec.sub_groups || []).forEach(item => {
+                    data.push({ 'Type': '', [t('common:group')]: '', [t('common:sub_group')]: translateDynamic(item.sub_group_name, t) });
                 });
             });
             data.push({}); // Empty row
         };
 
-        handlePrepareData(masterData);
+        handlePrepareData(groups);
 
         exportToExcel(data, 'Group Master', 'group-master.xlsx');
         setIsExportOpen(false);
     };
 
-    const processedData = filteredData();
-
-    // Pagination Calculations
-    const totalItems = processedData.length;
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
-    const paginatedData = processedData.slice(startIndex, endIndex);
-
-    const handlePageChange = (page) => {
-        if (page >= 1 && page <= totalPages) {
-            setCurrentPage(page);
-        }
-    };
-
-    const getVisiblePages = () => {
-        const maxVisible = 4;
-        let startPage = Math.max(1, currentPage - 1);
-        let endPage = startPage + maxVisible - 1;
-
-        if (endPage > totalPages) {
-            endPage = totalPages;
-            startPage = Math.max(1, endPage - maxVisible + 1);
-        }
-
-        const pages = [];
-        for (let i = startPage; i <= endPage; i++) {
-            if (i >= 1 && i <= totalPages) {
-                pages.push(i);
-            }
-        }
-        return pages;
-    };
-
     return (
-        <div className="flex flex-col animate-in fade-in duration-500">
+        <div className="flex flex-col animate-in fade-in duration-500 relative">
+            {/* Toast Notification */}
+            {toast && (
+                <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded-[12px] shadow-[0_10px_30px_rgba(0,0,0,0.15)] flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300
+                    ${toast.type === 'error' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-[#014A36] text-white'}`}>
+                    {toast.type === 'error' ? <XCircle size={18} /> : <CheckCircle2 size={18} />}
+                    <span className="text-[14px] font-medium">{toast.message}</span>
+                </div>
+            )}
+
             {/* Add Type Button (Top Right) */}
             <div className="flex justify-end mb-6">
                 <button
                     onClick={() => setIsModalOpen(true)}
                     className="w-full sm:w-auto px-6 h-[44px] bg-[#014A36] text-white rounded-[8px] text-[14px] font-bold hover:bg-[#013b2b] transition-all shadow-sm flex items-center justify-center gap-2"
                 >
+                    <Plus size={18} />
                     {t('add_group')}
                 </button>
             </div>
@@ -173,10 +185,7 @@ const GroupMaster = () => {
                             type="text"
                             placeholder={t('common:search_anything')}
                             value={searchQuery}
-                            onChange={(e) => {
-                                setSearchQuery(e.target.value);
-                                setCurrentPage(1); // Reset page on search
-                            }}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full h-[40px] bg-[#F9FAFB] border border-[#E5E7EB] rounded-[8px] pl-10 pr-4 text-[14px] outline-none focus:border-[#014A36] transition-all"
                         />
                     </div>
@@ -222,18 +231,24 @@ const GroupMaster = () => {
                         </div>
                     </div>
                 </div>
-                {paginatedData.length > 0 ? (
-                    paginatedData.map((section) => {
+
+                {isLoading ? (
+                    <div className="p-12 text-center">
+                        <div className="inline-block w-6 h-6 border-2 border-[#014A36] border-t-transparent rounded-full animate-spin mb-2" />
+                        <p className="text-gray-400 text-[14px]">{t('common:loading')}</p>
+                    </div>
+                ) : filteredData.length > 0 ? (
+                    filteredData.map((section) => {
                         // If searching and items match, auto-expand
-                        const isSearchExpanding = searchQuery && section.items.some(item =>
-                            item.toLowerCase().includes(searchQuery.toLowerCase())
+                        const isSearchExpanding = searchQuery && (section.sub_groups || []).some(item =>
+                            item.sub_group_name.toLowerCase().includes(searchQuery.toLowerCase())
                         );
                         const isExpanded = expandedGroups[section.id] || isSearchExpanding;
 
                         return (
                             <div key={section.id} className="flex flex-col border-b border-[#E5E7EB] last:border-b-0">
                                 <div
-                                    className="flex items-center justify-between p-4 bg-white hover:bg-gray-50/50 transition-colors group"
+                                    className="flex items-center justify-between p-4 bg-[#F9FAFB] hover:bg-[#F3F4F6] transition-colors group"
                                 >
                                     <div
                                         className="flex items-center gap-3 cursor-pointer select-none"
@@ -241,65 +256,39 @@ const GroupMaster = () => {
                                     >
                                         <div className="flex items-center justify-center w-5 h-5">
                                             {isExpanded ? (
-                                                <Minus size={14} className="text-[#111827] stroke-[3px]" />
+                                                <span className="text-[#111827] font-bold text-[18px] leading-none">—</span>
                                             ) : (
                                                 <Plus size={14} className="text-[#111827] stroke-[3px]" />
                                             )}
                                         </div>
-                                        <span className="text-[14px] font-bold text-[#111827]">
-                                            {section.name}
+                                        <span className={`text-[14px] font-bold ${section.status === 'ACTIVE' ? 'text-[#111827]' : 'text-gray-400 italic'}`}>
+                                            {translateDynamic(section.group_name, t)} {section.status === 'INACTIVE' && `(${t('common:inactive')})`}
                                         </span>
-                                    </div>
-                                    <div className="relative flex items-center">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setActiveRowDropdown(activeRowDropdown === `group-${section.id}` ? null : `group-${section.id}`);
-                                            }}
-                                            className="p-1 px-2 text-gray-400 hover:text-gray-600 transition-colors rounded-md"
-                                        >
-                                            <MoreVertical size={16} />
-                                        </button>
-
-                                        {/* Group Action Dropdown */}
-                                        {activeRowDropdown === `group-${section.id}` && (
-                                            <div className="absolute right-full mr-2 top-1/2 -translate-y-1/2 w-[110px] bg-white border border-gray-100 rounded-[8px] shadow-[0_4px_20px_rgba(0,0,0,0.08)] z-[100] py-1.5 animate-in zoom-in-95 duration-200">
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleToggleStatus(`group-${section.id}`, 'Active'); }}
-                                                    className="w-full px-4 py-2 flex items-center gap-2.5 text-[13px] text-[#4B5563] hover:bg-gray-50 transition-colors"
-                                                >
-                                                    <CheckCircle2 size={15} className="text-gray-400" />
-                                                    {t('common:active')}
-                                                </button>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleToggleStatus(`group-${section.id}`, 'Inactive'); }}
-                                                    className="w-full px-4 py-2 flex items-center gap-2.5 text-[13px] text-[#4B5563] hover:bg-gray-50 transition-colors"
-                                                >
-                                                    <XCircle size={15} className="text-gray-400" />
-                                                    {t('common:inactive')}
-                                                </button>
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
 
                                 {/* Sub-items with smooth transition */}
-                                <div className={`transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'} ${activeRowDropdown?.startsWith(`${section.id}-item-`) ? '!overflow-visible' : 'overflow-hidden'}`}>
+                                <div className={`transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'} ${activeRowDropdown?.includes('-item-') ? '!overflow-visible' : 'overflow-hidden'}`}>
                                     <div className="flex flex-col bg-gray-50/30 border-t border-[#E5E7EB]/50">
-                                        {section.items.map((item, itemIdx) => {
-                                            const isHighlighted = searchQuery && item.toLowerCase().includes(searchQuery.toLowerCase());
-                                            const dropdownId = `${section.id}-item-${itemIdx}`;
-                                            const currentStatus = itemStatuses[dropdownId] || 'Active';
+                                        {(section.sub_groups || []).map((item, itemIdx) => {
+                                            const isHighlighted = searchQuery && item.sub_group_name.toLowerCase().includes(searchQuery.toLowerCase());
+                                            const dropdownId = `${section.id}-item-${item.id}`;
+                                            const currentStatus = item.status;
 
                                             return (
                                                 <div
-                                                    key={itemIdx}
+                                                    key={item.id}
                                                     className={`relative flex items-center justify-between p-3.5 pl-[52px] text-[13px] border-b border-[#E5E7EB]/50 last:border-b-0 transition-colors
                                                         ${isHighlighted ? 'bg-yellow-50 text-[#014A36]' : 'text-[#6B7280]'}`}
                                                 >
-                                                    <span className="font-medium text-[#4B5563]">
-                                                        {itemIdx + 1}. {item}
-                                                    </span>
+                                                    <div className="flex items-center gap-3">
+                                                        <span className="font-medium text-[#4B5563]">
+                                                            {itemIdx + 1}. {translateDynamic(item.sub_group_name, t)}
+                                                        </span>
+                                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${currentStatus === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                            {currentStatus === 'ACTIVE' ? t('common:active') : t('common:inactive')}
+                                                        </span>
+                                                    </div>
 
                                                     <div className="relative flex items-center">
                                                         <button
@@ -307,28 +296,38 @@ const GroupMaster = () => {
                                                                 e.stopPropagation();
                                                                 setActiveRowDropdown(activeRowDropdown === dropdownId ? null : dropdownId);
                                                             }}
-                                                            className="p-1 px-2 text-gray-400 hover:text-gray-600 transition-colors rounded-md"
+                                                            className={`p-1.5 rounded-md transition-all duration-200 dropdown-trigger
+                                                                ${activeRowDropdown === dropdownId ? 'bg-gray-100 text-[#014A36]' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`}
                                                         >
-                                                            <MoreVertical size={16} />
+                                                            <MoreVertical size={18} />
                                                         </button>
 
                                                         {/* Row Action Dropdown */}
                                                         {activeRowDropdown === dropdownId && (
-                                                            <div className="absolute right-full mr-2 top-1/2 -translate-y-1/2 w-[110px] bg-white border border-gray-100 rounded-[8px] shadow-[0_4px_20px_rgba(0,0,0,0.08)] z-[100] py-1.5 animate-in zoom-in-95 duration-200">
-                                                                <button
-                                                                    onClick={(e) => { e.stopPropagation(); handleToggleStatus(dropdownId, 'Active'); }}
-                                                                    className="w-full px-4 py-2 flex items-center gap-2.5 text-[13px] text-[#4B5563] hover:bg-gray-50 transition-colors"
-                                                                >
-                                                                    <CheckCircle2 size={15} className="text-gray-400" />
-                                                                    {t('common:active')}
-                                                                </button>
-                                                                <button
-                                                                    onClick={(e) => { e.stopPropagation(); handleToggleStatus(dropdownId, 'Inactive'); }}
-                                                                    className="w-full px-4 py-2 flex items-center gap-2.5 text-[13px] text-[#4B5563] hover:bg-gray-50 transition-colors"
-                                                                >
-                                                                    <XCircle size={15} className="text-gray-400" />
-                                                                    {t('common:inactive')}
-                                                                </button>
+                                                            <div className="absolute right-0 top-full mt-1 w-[130px] bg-white border border-[#E5E7EB] rounded-[10px] shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_8px_10px_-6px_rgba(0,0,0,0.1)] z-[100] py-1.5 animate-in zoom-in-95 duration-200 dropdown-menu">
+                                                                {currentStatus === 'ACTIVE' ? (
+                                                                    <button
+                                                                        onClick={(e) => { 
+                                                                            e.stopPropagation(); 
+                                                                            handleToggleStatus(item.id, item.status); 
+                                                                        }}
+                                                                        className="w-full px-4 py-2 flex items-center gap-3 text-[14px] font-medium text-[#4B5563] hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
+                                                                    >
+                                                                        <ShieldX size={16} className="text-gray-400" />
+                                                                        {t('common:inactive')}
+                                                                    </button>
+                                                                ) : (
+                                                                    <button
+                                                                        onClick={(e) => { 
+                                                                            e.stopPropagation(); 
+                                                                            handleToggleStatus(item.id, item.status); 
+                                                                        }}
+                                                                        className="w-full px-4 py-2 flex items-center gap-3 text-[14px] font-medium text-[#4B5563] hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
+                                                                    >
+                                                                        <ShieldCheck size={16} className="text-gray-400" />
+                                                                        {t('common:active')}
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                         )}
                                                     </div>
@@ -345,75 +344,18 @@ const GroupMaster = () => {
                         {t('no_matching_groups')}
                     </div>
                 )}
-
-                {/* Pagination Footer */}
-                <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-[#E5E7EB] bg-white gap-4">
-                    <div className="flex items-center gap-3 text-[14px] text-[#4B5563]">
-                        <span>{t('common:show')}</span>
-                        <select
-                            value={itemsPerPage}
-                            onChange={(e) => {
-                                setItemsPerPage(Number(e.target.value));
-                                setCurrentPage(1); // Reset to first page when changing page size
-                            }}
-                            className="border border-[#E5E7EB] rounded-[6px] px-2 py-1 outline-none focus:border-[#014A36] text-[#111827] bg-white cursor-pointer"
-                        >
-                            <option value={5}>5</option>
-                            <option value={10}>10</option>
-                            <option value={20}>20</option>
-                            <option value={50}>50</option>
-                        </select>
-                        <span>{t('common:per_page')}</span>
-                    </div>
-
-                    <div className="flex items-center gap-4 text-[14px]">
-                        <span className="text-[#6B7280]">
-                            {totalItems > 0 ? `${startIndex + 1}-${endIndex} ${t('common:of')} ${totalItems}` : `0-0 ${t('common:of')} 0`}
-                        </span>
-                        <div className="flex items-center gap-1">
-                            <button
-                                onClick={() => handlePageChange(currentPage - 1)}
-                                disabled={currentPage === 1}
-                                className="p-1.5 text-[#6B7280] hover:text-[#111827] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                                <ArrowLeft size={18} />
-                            </button>
-                            <div className="flex items-center gap-1 px-2">
-                                {getVisiblePages().map((page, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => typeof page === 'number' ? handlePageChange(page) : null}
-                                        disabled={typeof page !== 'number'}
-                                        className={`w-8 h-8 rounded-[8px] flex items-center justify-center transition-colors text-[14px]
-                                            ${page === '...'
-                                                ? 'text-[#6B7280] cursor-default bg-transparent'
-                                                : currentPage === page
-                                                    ? 'bg-[#F3F4F6] text-[#111827] font-semibold'
-                                                    : 'text-[#6B7280] font-medium hover:bg-gray-50'
-                                            }`}
-                                    >
-                                        {page}
-                                    </button>
-                                ))}
-                            </div>
-                            <button
-                                onClick={() => handlePageChange(currentPage + 1)}
-                                disabled={currentPage === totalPages || totalPages === 0}
-                                className="p-1.5 text-[#6B7280] hover:text-[#111827] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                                <ArrowRight size={18} />
-                            </button>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             {/* Add Group Modal */}
             <AddGroupModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
+                onSuccess={() => {
+                    fetchGroups();
+                    showToast('Group added successfully');
+                }}
             />
-        </div >
+        </div>
     );
 };
 

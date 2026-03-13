@@ -97,22 +97,27 @@ export class GroupMasterService {
 
         return {
             success: true,
-            message: `Group status changed to ${dto.status ? 'Active' : 'Inactive'}`,
+            message: `Group status changed to ${dto.status}`,
             data,
         };
     }
 
     async updateSubGroupStatus(id: number, dto: UpdateSubGroupStatusDto, userId: number) {
+        console.log(`Updating sub-group status: ID=${id}, Status=${dto.status}, UserID=${userId}`);
         const subGroup = await this.groupRepository.findSubGroupById(id, userId);
+
         if (!subGroup) {
+            console.warn(`Sub-group not found or access denied for ID=${id}, UserID=${userId}`);
             throw new NotFoundException(`Sub-group with ID ${id} not found or access denied`);
         }
 
+        console.log(`Found sub-group: ${JSON.stringify(subGroup)}`);
         const data = await this.groupRepository.updateSubGroupStatus(id, dto.status);
+        console.log(`Update successful, new data: ${JSON.stringify(data)}`);
 
         return {
             success: true,
-            message: `Sub-group status changed to ${dto.status ? 'Active' : 'Inactive'}`,
+            message: `Sub-group status changed to ${dto.status}`,
             data,
         };
     }

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../infrastructure/prisma/prisma.service';
+import { MasterStatus } from '@prisma/client';
 
 @Injectable()
 export class GroupMasterRepository {
@@ -28,7 +29,7 @@ export class GroupMasterRepository {
                 group_name: true,
             },
             where: {
-                status: true,
+                status: MasterStatus.ACTIVE,
             },
             orderBy: {
                 group_name: 'asc',
@@ -50,7 +51,10 @@ export class GroupMasterRepository {
 
     async createSubGroup(data: { sub_group_name: string; group_id: number; userId: number }) {
         return this.prisma.accountSubGroup.create({
-            data,
+            data: {
+                ...data,
+                status: MasterStatus.ACTIVE,
+            },
         });
     }
 
@@ -61,14 +65,14 @@ export class GroupMasterRepository {
         });
     }
 
-    async updateGroupStatus(id: number, status: boolean) {
+    async updateGroupStatus(id: number, status: MasterStatus) {
         return this.prisma.accountGroup.update({
             where: { id },
             data: { status },
         });
     }
 
-    async updateSubGroupStatus(id: number, status: boolean) {
+    async updateSubGroupStatus(id: number, status: MasterStatus) {
         return this.prisma.accountSubGroup.update({
             where: { id },
             data: { status },

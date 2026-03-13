@@ -3,7 +3,7 @@ export const AUTH_ENDPOINTS = {
   SEND_LOGIN_OTP: '/auth/send-login-otp',
   LOGIN: '/auth/login',
   LOGOUT: '/auth/logout',
-  REFRESH_TOKEN: '/auth/refresh',
+  REFRESH_TOKEN: '/auth/refresh-token',
   PROFILE: '/auth/me',
   RESEND_OTP: '/auth/resend-otp',
 };

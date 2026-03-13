@@ -29,6 +29,7 @@
     "view_account": "View Account",
     "update_account": "Update Account",
     "category": "Category",
+    "category_master": "Category Master",
     "category_desc": "Categorize products and services for better organization and reporting.",
     "product_master": "Product Master",
     "product_code": "Product Code",
@@ -174,5 +175,11 @@
     "agricultural_inputs": "Agricultural Inputs",
     "wheat_seeds": "Wheat Seeds",
     "digital_indicator": "Digital Indicator",
-    "crop_nutrients": "Crop Nutrients"
+    "crop_nutrients": "Crop Nutrients",
+    "select_unit_category": "Select Unit Category",
+    "add_unit_name": "Add Unit Name",
+    "add_gst_uom": "Add GST UOM",
+    "full_name_of_measurement": "Full Name of Measurement",
+    "select_or_enter_full_name": "Select or Enter Full Name",
+    "add_full_name_of_measurement": "Add Full Name of Measurement"
 }

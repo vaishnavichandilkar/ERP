@@ -6,6 +6,8 @@ import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
 import unitService from '../../../services/masters/unitService';
 import { toast } from '../../../utils/toast-mock';
 
+import { translateDynamic } from '../../../utils/i18nUtils';
+
 const SuccessToast = ({ message, onClose }) => {
     useEffect(() => {
         const timer = setTimeout(onClose, 3000);
@@ -111,8 +113,7 @@ const UnitMaster = () => {
         try {
             const newStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
             await unitService.updateUnitStatus(id, newStatus);
-            const actionMsg = newStatus === 'ACTIVE' ? 'activated' : 'deactivated';
-            triggerSuccess(`Unit ${actionMsg} successfully`);
+            triggerSuccess(t('common:status_updated'));
             fetchUnits();
         } catch (error) {
             console.error('Error updating status:', error);
@@ -202,11 +203,12 @@ const UnitMaster = () => {
     return (
         <div className="flex flex-col relative w-full h-full">
             {showSuccessToast.show && (
-                <SuccessToast 
-                    message={showSuccessToast.message} 
-                    onClose={() => setShowSuccessToast({ show: false, message: '' })} 
+                <SuccessToast
+                    message={showSuccessToast.message}
+                    onClose={() => setShowSuccessToast({ show: false, message: '' })}
                 />
             )}
+
             {currentView.type === 'list' ? (
                 <>
                     <div className="flex justify-end mb-6">
@@ -237,14 +239,14 @@ const UnitMaster = () => {
                                 <button
                                     onClick={() => isFilterApplied || searchQuery ? handleClearFilter() : setIsFilterOpen(true)}
                                     className={`flex items-center gap-2 px-6 h-[40px] border rounded-[8px] text-[14px] font-medium transition-all shadow-sm
-                                        ${isFilterApplied || searchQuery 
-                                            ? 'bg-[#014A36] border-[#014A36] text-white hover:bg-[#013b2b]' 
+                                                        ${isFilterApplied || searchQuery
+                                            ? 'bg-[#014A36] border-[#014A36] text-white hover:bg-[#013b2b]'
                                             : 'bg-white border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
                                 >
                                     {isFilterApplied || searchQuery ? (
                                         <>
                                             <X size={18} className="text-white" />
-                                            Clear Filter
+                                            {t('common:clear_filter')}
                                         </>
                                     ) : (
                                         <>
@@ -259,7 +261,7 @@ const UnitMaster = () => {
                                 <button
                                     onClick={() => setIsExportOpen(!isExportOpen)}
                                     className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 h-[40px] border rounded-[8px] text-[14px] font-medium transition-all duration-200 bg-white
-                                        ${isExportOpen ? 'border-[#014A36] text-[#014A36]' : 'border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
+                                                        ${isExportOpen ? 'border-[#014A36] text-[#014A36]' : 'border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
                                 >
                                     <Download size={18} className={isExportOpen ? 'text-[#014A36]' : 'text-gray-400'} />
                                     {t('common:export')}
@@ -419,7 +421,7 @@ const UnitMaster = () => {
                                                 key={index}
                                                 onClick={() => handlePageChange(page)}
                                                 className={`w-8 h-8 rounded-[8px] flex items-center justify-center transition-colors text-[14px]
-                                                    ${currentPage === page
+                                                                    ${currentPage === page
                                                         ? 'bg-[#F3F4F6] text-[#111827] font-semibold'
                                                         : 'text-[#6B7280] font-medium hover:bg-gray-50'
                                                     }`}
