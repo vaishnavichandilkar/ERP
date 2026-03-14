@@ -56,8 +56,8 @@ const AccountMaster = () => {
             search: searchQuery,
             ...appliedFilters
         };
-        if (params.status === 'Active') params.isActive = true;
-        else if (params.status === 'InActive') params.isActive = false;
+        if (params.status === 'Active') params.status = 'ACTIVE';
+        else if (params.status === 'InActive') params.status = 'INACTIVE';
         
         Object.keys(params).forEach(k => {
             if (params[k] === '' || params[k] === undefined) {
@@ -140,8 +140,8 @@ const AccountMaster = () => {
         setIsExportOpen(false);
         try {
             const params = { format: 'pdf', search: searchQuery, ...appliedFilters };
-            if (params.status === 'Active') params.isActive = true;
-            else if (params.status === 'InActive') params.isActive = false;
+            if (params.status === 'Active') params.status = 'ACTIVE';
+            else if (params.status === 'InActive') params.status = 'INACTIVE';
             
             const response = await accountService.exportAccounts(params);
             const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -159,8 +159,8 @@ const AccountMaster = () => {
         setIsExportOpen(false);
         try {
             const params = { format: 'xlsx', search: searchQuery, ...appliedFilters };
-            if (params.status === 'Active') params.isActive = true;
-            else if (params.status === 'InActive') params.isActive = false;
+            if (params.status === 'Active') params.status = 'ACTIVE';
+            else if (params.status === 'InActive') params.status = 'INACTIVE';
             
             const response = await accountService.exportAccounts(params);
             const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -187,7 +187,8 @@ const AccountMaster = () => {
 
         const toggleStatus = async (account, event) => {
         event.stopPropagation();
-        await dispatch(toggleAccountStatus({ id: account.id, isActive: !account.isActive }));
+        const newStatus = account.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+        await dispatch(toggleAccountStatus({ id: account.id, status: newStatus }));
         dispatch(fetchAllAccounts({ page: currentPage, limit: rowsPerPage, search: searchQuery, ...appliedFilters }));
         setDropdownIndex(null);
     };
@@ -339,8 +340,8 @@ const AccountMaster = () => {
                                     <td className="px-6 py-4">{row.accountNumber}</td>
                                     <td className="px-6 py-4">{row.ifscCode}</td>
                                     <td className="px-6 py-4">
-                                        <span className={row.isActive ? 'text-[#014A36] font-medium' : 'text-gray-500'}>
-                                            {row.isActive ? t('common:active') : t('common:inactive')}
+                                        <span className={row.status === 'ACTIVE' ? 'text-[#014A36] font-medium' : 'text-gray-500'}>
+                                            {row.status === 'ACTIVE' ? t('common:active') : t('common:inactive')}
                                         </span>
                                     </td>
                                     <td className={`px-6 py-4 text-center relative ${dropdownIndex === index ? 'z-50' : ''}`}>
@@ -375,8 +376,8 @@ const AccountMaster = () => {
                                                     onClick={(e) => toggleStatus(row, e)} 
                                                     className="flex items-center gap-3 w-full px-4 py-2.5 text-[14px] font-medium text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors whitespace-nowrap border-t border-gray-100"
                                                 >
-                                                    <CheckCircle2 size={16} className={row.isActive ? 'text-gray-500' : 'text-[#014A36]'} />
-                                                    {row.isActive ? t('common:inactive') : t('common:active')}
+                                                    <CheckCircle2 size={16} className={row.status === 'ACTIVE' ? 'text-gray-500' : 'text-[#014A36]'} />
+                                                    {row.status === 'ACTIVE' ? t('common:inactive') : t('common:active')}
                                                 </button>
                                             </div>
                                         )}

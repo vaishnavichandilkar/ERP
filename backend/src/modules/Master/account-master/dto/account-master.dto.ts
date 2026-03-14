@@ -11,7 +11,7 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ContactPrefix } from '@prisma/client';
+import { ContactPrefix, MasterStatus } from '@prisma/client';
 
 export enum GroupNameEnum {
   CREDITORS = 'Sundry Creditors (Vendor)',
@@ -172,17 +172,17 @@ export class CreateAccountMasterDto {
   @IsOptional()
   code?: string;
 
-  @ApiPropertyOptional()
-  @IsBoolean()
+  @ApiPropertyOptional({ enum: MasterStatus })
+  @IsEnum(MasterStatus)
   @IsOptional()
-  isActive?: boolean;
+  status?: MasterStatus;
 }
 
 export class UpdateAccountMasterDto extends PartialType(CreateAccountMasterDto) {}
 
 export class UpdateAccountStatusDto {
-  @ApiProperty()
-  @IsBoolean()
+  @ApiProperty({ enum: MasterStatus })
+  @IsEnum(MasterStatus)
   @IsNotEmpty()
-  isActive: boolean;
+  status: MasterStatus;
 }

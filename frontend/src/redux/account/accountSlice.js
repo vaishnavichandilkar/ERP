@@ -48,9 +48,9 @@ export const updateAccount = createAsyncThunk(
 
 export const toggleAccountStatus = createAsyncThunk(
     'account/toggleStatus',
-    async ({ id, isActive }, { rejectWithValue }) => {
+    async ({ id, status }, { rejectWithValue }) => {
         try {
-            return await accountService.toggleStatus(id, isActive);
+            return await accountService.toggleStatus(id, status);
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to toggle status');
         }

@@ -72,30 +72,30 @@ const ViewAccount = ({ initialData, onBack }) => {
                             label2={`${t('reg_type')}:`} value2={data.regType} 
                         />
                         <InfoTableRow 
-                            label1={`${t('address_1')}:`} value1={data.address1 || data.address} 
-                            label2={`${t('address_2')}:`} value2={data.address2} 
+                            label1={`${t('address_1')}:`} value1={data.addressLine1} 
+                            label2={`${t('address_2')}:`} value2={data.addressLine2} 
                         />
                         <InfoTableRow 
                             label1={`${t('area')}:`} value1={data.area} 
-                            label2={`${t('pin_code')}:`} value2={data.pinCode} 
+                            label2={`${t('pin_code')}:`} value2={data.pincode} 
                         />
                         <InfoTableRow 
                             label1={`${t('city')}:`} value1={data.city} 
                             label2={`${t('state')}:`} value2={data.state} 
                         />
                         <InfoTableRow 
-                            label1={`${t('msme')}:`} value1={data.msmeId} 
+                            label1={`${t('msme')}:`} value1={data.msmeRegNo} 
                             label2={`${t('reg_under')}:`} value2={data.regUnder} 
                         />
 
                         {/* Bank Details Section */}
                         <SectionHeading title={t('bank_details')} />
                         <InfoTableRow 
-                            label1={`${t('account_holder')}:`} value1={data.accountHolder} 
+                            label1={`${t('account_holder')}:`} value1={data.accountHolderName} 
                             label2={`${t('bank_name')}:`} value2={data.bankName} 
                         />
                         <InfoTableRow 
-                            label1={`${t('account_number')}:`} value1={data.bankAccountNo} 
+                            label1={`${t('account_number')}:`} value1={data.accountNumber} 
                             label2={`${t('ifsc_code')}:`} value2={data.ifscCode} 
                         />
 

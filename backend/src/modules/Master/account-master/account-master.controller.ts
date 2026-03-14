@@ -19,6 +19,7 @@ import { AccountMasterService } from './account-master.service';
 import { CreateAccountMasterDto, UpdateAccountMasterDto, UpdateAccountStatusDto } from './dto/account-master.dto';
 import { Response } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { MasterStatus } from '@prisma/client';
 
 @ApiTags('Account Master')
 @Controller('account-master')
@@ -41,7 +42,7 @@ export class AccountMasterController {
   @ApiQuery({ name: 'gstNo', required: false, type: String })
   @ApiQuery({ name: 'panNo', required: false, type: String })
   @ApiQuery({ name: 'creditDays', required: false, type: Number })
-  @ApiQuery({ name: 'isActive', required: false, type: Boolean })
+  @ApiQuery({ name: 'status', required: false, enum: MasterStatus })
   @ApiQuery({ name: 'search', required: false, type: String })
   @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number' })
   @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page' })
@@ -50,7 +51,7 @@ export class AccountMasterController {
     @Query('gstNo') gstNo?: string,
     @Query('panNo') panNo?: string,
     @Query('creditDays') creditDays?: number,
-    @Query('isActive') isActive?: string,
+    @Query('status') status?: MasterStatus,
     @Query('search') search?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
@@ -60,7 +61,7 @@ export class AccountMasterController {
       gstNo, 
       panNo, 
       creditDays: creditDays ? Number(creditDays) : undefined, 
-      isActive: isActive !== undefined ? isActive === 'true' : undefined, 
+      status, 
       search,
       page: page ? parseInt(page, 10) : undefined,
       limit: limit ? parseInt(limit, 10) : undefined
@@ -74,7 +75,7 @@ export class AccountMasterController {
   @ApiQuery({ name: 'gstNo', required: false, type: String })
   @ApiQuery({ name: 'panNo', required: false, type: String })
   @ApiQuery({ name: 'creditDays', required: false, type: Number })
-  @ApiQuery({ name: 'isActive', required: false, type: Boolean })
+  @ApiQuery({ name: 'status', required: false, enum: MasterStatus })
   @ApiQuery({ name: 'search', required: false, type: String })
   async exportAccounts(
     @Res() res: Response,
@@ -83,7 +84,7 @@ export class AccountMasterController {
     @Query('gstNo') gstNo?: string,
     @Query('panNo') panNo?: string,
     @Query('creditDays') creditDays?: number,
-    @Query('isActive') isActive?: string,
+    @Query('status') status?: MasterStatus,
     @Query('search') search?: string,
   ) {
     const filters = {
@@ -91,7 +92,7 @@ export class AccountMasterController {
       gstNo, 
       panNo, 
       creditDays: creditDays ? Number(creditDays) : undefined, 
-      isActive: isActive !== undefined ? isActive === 'true' : undefined, 
+      status, 
       search 
     };
 

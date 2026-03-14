@@ -55,7 +55,7 @@ export class AccountMasterService {
     gstNo?: string; 
     panNo?: string; 
     creditDays?: number; 
-    isActive?: boolean; 
+    status?: MasterStatus; 
     search?: string; 
     page?: number;
     limit?: number;
@@ -79,8 +79,8 @@ export class AccountMasterService {
       where.creditDays = filter.creditDays;
     }
 
-    if (filter.isActive !== undefined) {
-      where.isActive = filter.isActive;
+    if (filter.status) {
+      where.status = filter.status;
     }
 
     if (filter.search) {
@@ -195,7 +195,7 @@ export class AccountMasterService {
     await this.findOne(id);
     return this.prisma.accountMaster.update({
       where: { id },
-      data: { isActive: updateStatusDto.isActive },
+      data: { status: updateStatusDto.status },
     });
   }
 
@@ -273,7 +273,7 @@ export class AccountMasterService {
         { header: 'Address', key: 'address', width: 40 },
         { header: 'Bank Account No', key: 'accountNumber', width: 20 },
         { header: 'IFSC Code', key: 'ifscCode', width: 15 },
-        { header: 'Status', key: 'isActive', width: 12 },
+        { header: 'Status', key: 'status', width: 12 },
       ];
 
       accounts.forEach(acc => {
@@ -291,7 +291,7 @@ export class AccountMasterService {
           address: fullAddress,
           accountNumber: acc.accountNumber,
           ifscCode: acc.ifscCode,
-          isActive: acc.isActive ? 'Active' : 'Inactive',
+          status: acc.status === MasterStatus.ACTIVE ? 'Active' : 'Inactive',
         });
       });
 
@@ -397,7 +397,7 @@ export class AccountMasterService {
           doc.text(fullAddress.substring(0, 45), colX[7], y, { width: 120, lineBreak: true });
           doc.text(acc.accountNumber, colX[8], y, { width: 80, lineBreak: true });
           doc.text(acc.ifscCode, colX[9], y, { width: 65, lineBreak: true });
-          doc.text(acc.isActive ? 'Active' : 'Inactive', colX[10], y, { width: 50, lineBreak: false });
+          doc.text(acc.status === MasterStatus.ACTIVE ? 'Active' : 'Inactive', colX[10], y, { width: 50, lineBreak: false });
           
           y += 18;
         });
