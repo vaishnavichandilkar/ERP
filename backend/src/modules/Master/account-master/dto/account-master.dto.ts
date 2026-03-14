@@ -168,17 +168,17 @@ export class CreateAccountMasterDto {
   mobileNo: string;
 
   @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  code?: string;
+
+  @ApiPropertyOptional()
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;
 }
 
-export class UpdateAccountMasterDto extends PartialType(CreateAccountMasterDto) {
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
-  code?: string;
-}
+export class UpdateAccountMasterDto extends PartialType(CreateAccountMasterDto) {}
 
 export class UpdateAccountStatusDto {
   @ApiProperty()
