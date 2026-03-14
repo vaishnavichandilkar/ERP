@@ -9,7 +9,7 @@ import * as PDFDocument from 'pdfkit';
 export class AccountMasterService {
   constructor(private prisma: PrismaService) {}
 
-  private async generateCode(groupName: string): Promise<string> {
+  async generateCode(groupName: string): Promise<string> {
     const isVendor = groupName === GroupNameEnum.CREDITORS;
     const prefix = isVendor ? 'VN' : 'CT';
 

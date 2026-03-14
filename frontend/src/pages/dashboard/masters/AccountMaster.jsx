@@ -1,8 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchAllAccounts, toggleAccountStatus } from '../../../redux/account/accountSlice';
 import { Search, Download, Filter, MoreVertical, Eye, Edit3, CheckCircle2, ChevronDown, ArrowLeft, ArrowRight, ChevronsUpDown, X, FileText, FileSpreadsheet } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
 import { translateDynamic } from '../../../utils/i18nUtils';
+import accountService from '../../../services/accountService';
 import AddAccount from './components/AddAccount';
 import ViewAccount from './components/ViewAccount';
 
@@ -36,189 +39,37 @@ const AccountMaster = () => {
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [currentPage, setCurrentPage] = useState(1);
 
-    const [tableData, setTableData] = useState([
-        { code: 'VEN001', accountName: 'Rajesh Agro Traders', groupName: 'Sundry Creditors (Vendor)', creditDays: 30, gstNo: '27AABCR2456M1ZP', panNo: 'AABCR2456M', opBalance: '₹25,000', opBalanceRaw: '1000', opBalanceType: 'Cr', address: 'Green Market Road, Nashik', address1: 'Green Market Road', address2: 'Near APMC Yard', area: 'Panchavati', pinCode: '422003', city: 'Nashik', state: 'Maharashtra', msmeId: 'UDYAM-MH-26-0067891', regUnder: 'Micro', regType: 'Trading', bankAccountNo: '458796321457', ifscCode: 'SBIN0000456', status: 'Active', accountHolder: 'Rajesh Patil', bankName: 'State Bank of India', prefix: 'Mr.', contactPersonName: 'Rajesh Patil', emailId: 'rajesh.patil@rajeshagro.in', mobileNo: '9823456789' },
-        { code: 'VEN002', accountName: 'Meera Farm Supplies', groupName: 'Sundry Debtors', creditDays: 45, gstNo: '27AACFM7845K1ZS', panNo: 'AACFM7845K', opBalance: '₹12,500', address: 'Shanti Nagar Colony, Kolhapur', bankAccountNo: '3214578001234', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN003', accountName: 'Shree Ganesh Enterprises', groupName: 'Sundry Debtors', creditDays: 60, gstNo: '27AAHSG3698P1ZX', panNo: 'AAHSG3698P', opBalance: '₹40,750', address: 'Industrial Area Phase 2, Pune', bankAccountNo: '789654125698', ifscCode: 'ICIC0005678', status: 'Inactive' },
-        { code: 'VEN002', accountName: 'Meera Farm Supplies 1', groupName: 'Sundry Debtors', creditDays: 45, gstNo: '27AACFM7845K1ZS', panNo: 'AACFM7845K', opBalance: '₹12,500', address: 'Shanti Nagar Colony, Kolhapur', bankAccountNo: '3214578001234', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN003', accountName: 'Meera Farm Supplies 2', groupName: 'Sundry Creditors', creditDays: 30, gstNo: '27AACFM7846K1ZS', panNo: 'AACFM7846K', opBalance: '₹13,000', address: 'Market Road, Nashik', bankAccountNo: '3214578001235', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN004', accountName: 'Meera Farm Supplies 3', groupName: 'Sundry Debtors', creditDays: 60, gstNo: '27AACFM7847K1ZS', panNo: 'AACFM7847K', opBalance: '₹14,200', address: 'Station Road, Pune', bankAccountNo: '3214578001236', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN005', accountName: 'Meera Farm Supplies 4', groupName: 'Sundry Creditors', creditDays: 45, gstNo: '27AACFM7848K1ZS', panNo: 'AACFM7848K', opBalance: '₹15,100', address: 'Main Bazaar, Satara', bankAccountNo: '3214578001237', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN006', accountName: 'Meera Farm Supplies 5', groupName: 'Sundry Debtors', creditDays: 30, gstNo: '27AACFM7849K1ZS', panNo: 'AACFM7849K', opBalance: '₹16,300', address: 'MG Road, Sangli', bankAccountNo: '3214578001238', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN007', accountName: 'Meera Farm Supplies 6', groupName: 'Sundry Creditors', creditDays: 60, gstNo: '27AACFM7850K1ZS', panNo: 'AACFM7850K', opBalance: '₹17,000', address: 'Industrial Area, Kolhapur', bankAccountNo: '3214578001239', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN008', accountName: 'Meera Farm Supplies 7', groupName: 'Sundry Debtors', creditDays: 45, gstNo: '27AACFM7851K1ZS', panNo: 'AACFM7851K', opBalance: '₹18,200', address: 'Tilak Road, Pune', bankAccountNo: '3214578001240', ifscCode: 'ICIC001234', status: 'Inactive' },
-        { code: 'VEN009', accountName: 'Meera Farm Supplies 8', groupName: 'Sundry Creditors', creditDays: 30, gstNo: '27AACFM7852K1ZS', panNo: 'AACFM7852K', opBalance: '₹19,500', address: 'College Road, Nashik', bankAccountNo: '3214578001241', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN010', accountName: 'Meera Farm Supplies 9', groupName: 'Sundry Debtors', creditDays: 60, gstNo: '27AACFM7853K1ZS', panNo: 'AACFM7853K', opBalance: '₹20,000', address: 'Ring Road, Solapur', bankAccountNo: '3214578001242', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN011', accountName: 'Meera Farm Supplies 10', groupName: 'Sundry Creditors', creditDays: 45, gstNo: '27AACFM7854K1ZS', panNo: 'AACFM7854K', opBalance: '₹21,400', address: 'Market Yard, Ahmednagar', bankAccountNo: '3214578001243', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN012', accountName: 'Meera Farm Supplies 11', groupName: 'Sundry Debtors', creditDays: 30, gstNo: '27AACFM7855K1ZS', panNo: 'AACFM7855K', opBalance: '₹22,300', address: 'APMC Market, Karad', bankAccountNo: '3214578001244', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN013', accountName: 'Meera Farm Supplies 12', groupName: 'Sundry Creditors', creditDays: 60, gstNo: '27AACFM7856K1ZS', panNo: 'AACFM7856K', opBalance: '₹23,000', address: 'Bus Stand Road, Miraj', bankAccountNo: '3214578001245', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN014', accountName: 'Meera Farm Supplies 13', groupName: 'Sundry Debtors', creditDays: 45, gstNo: '27AACFM7857K1ZS', panNo: 'AACFM7857K', opBalance: '₹24,600', address: 'Main Road, Ichalkaranji', bankAccountNo: '3214578001246', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN015', accountName: 'Meera Farm Supplies 14', groupName: 'Sundry Creditors', creditDays: 30, gstNo: '27AACFM7858K1ZS', panNo: 'AACFM7858K', opBalance: '₹25,000', address: 'Laxmi Road, Pune', bankAccountNo: '3214578001247', ifscCode: 'SBIN0000456', status: 'Inactive' },
-        { code: 'VEN016', accountName: 'Meera Farm Supplies 15', groupName: 'Sundry Debtors', creditDays: 60, gstNo: '27AACFM7859K1ZS', panNo: 'AACFM7859K', opBalance: '₹26,700', address: 'Market Area, Kolhapur', bankAccountNo: '3214578001248', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN017', accountName: 'Meera Farm Supplies 16', groupName: 'Sundry Creditors', creditDays: 45, gstNo: '27AACFM7860K1ZS', panNo: 'AACFM7860K', opBalance: '₹27,200', address: 'Station Chowk, Sangli', bankAccountNo: '3214578001249', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN018', accountName: 'Meera Farm Supplies 17', groupName: 'Sundry Debtors', creditDays: 30, gstNo: '27AACFM7861K1ZS', panNo: 'AACFM7861K', opBalance: '₹28,100', address: 'Shivaji Road, Satara', bankAccountNo: '3214578001250', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN019', accountName: 'Meera Farm Supplies 18', groupName: 'Sundry Creditors', creditDays: 60, gstNo: '27AACFM7862K1ZS', panNo: 'AACFM7862K', opBalance: '₹29,500', address: 'Old Market, Kolhapur', bankAccountNo: '3214578001251', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN020', accountName: 'Meera Farm Supplies 19', groupName: 'Sundry Debtors', creditDays: 45, gstNo: '27AACFM7863K1ZS', panNo: 'AACFM7863K', opBalance: '₹30,000', address: 'College Chowk, Pune', bankAccountNo: '3214578001252', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN021', accountName: 'Meera Farm Supplies 20', groupName: 'Sundry Creditors', creditDays: 30, gstNo: '27AACFM7864K1ZS', panNo: 'AACFM7864K', opBalance: '₹31,400', address: 'Market Lane, Nashik', bankAccountNo: '3214578001253', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN022', accountName: 'Meera Farm Supplies 21', groupName: 'Sundry Debtors', creditDays: 60, gstNo: '27AACFM7865K1ZS', panNo: 'AACFM7865K', opBalance: '₹32,100', address: 'APMC Yard, Sangli', bankAccountNo: '3214578001254', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN023', accountName: 'Meera Farm Supplies 22', groupName: 'Sundry Creditors', creditDays: 45, gstNo: '27AACFM7866K1ZS', panNo: 'AACFM7866K', opBalance: '₹33,000', address: 'Market Street, Kolhapur', bankAccountNo: '3214578001255', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN024', accountName: 'Meera Farm Supplies 23', groupName: 'Sundry Debtors', creditDays: 30, gstNo: '27AACFM7867K1ZS', panNo: 'AACFM7867K', opBalance: '₹34,800', address: 'Station Area, Pune', bankAccountNo: '3214578001256', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN025', accountName: 'Meera Farm Supplies 24', groupName: 'Sundry Creditors', creditDays: 60, gstNo: '27AACFM7868K1ZS', panNo: 'AACFM7868K', opBalance: '₹35,600', address: 'Main Chowk, Satara', bankAccountNo: '3214578001257', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN026', accountName: 'Meera Farm Supplies 25', groupName: 'Sundry Debtors', creditDays: 45, gstNo: '27AACFM7845K1ZS', panNo: 'AACFM7845K', opBalance: '₹12,500', address: 'Shanti Nagar Colony, Kolhapur', bankAccountNo: '3214578001234', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN027', accountName: 'Meera Farm Supplies 26', groupName: 'Sundry Creditors', creditDays: 30, gstNo: '27AACFM7846K1ZS', panNo: 'AACFM7846K', opBalance: '₹13,000', address: 'Market Road, Nashik', bankAccountNo: '3214578001235', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN028', accountName: 'Meera Farm Supplies 27', groupName: 'Sundry Debtors', creditDays: 60, gstNo: '27AACFM7847K1ZS', panNo: 'AACFM7847K', opBalance: '₹14,200', address: 'Station Road, Pune', bankAccountNo: '3214578001236', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN029', accountName: 'Meera Farm Supplies 28', groupName: 'Sundry Creditors', creditDays: 45, gstNo: '27AACFM7848K1ZS', panNo: 'AACFM7848K', opBalance: '₹15,100', address: 'Main Bazaar, Satara', bankAccountNo: '3214578001237', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN030', accountName: 'Meera Farm Supplies 29', groupName: 'Sundry Debtors', creditDays: 30, gstNo: '27AACFM7849K1ZS', panNo: 'AACFM7849K', opBalance: '₹16,300', address: 'MG Road, Sangli', bankAccountNo: '3214578001238', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN031', accountName: 'Meera Farm Supplies 30', groupName: 'Sundry Creditors', creditDays: 60, gstNo: '27AACFM7850K1ZS', panNo: 'AACFM7850K', opBalance: '₹17,000', address: 'Industrial Area, Kolhapur', bankAccountNo: '3214578001239', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN032', accountName: 'Meera Farm Supplies 31', groupName: 'Sundry Debtors', creditDays: 45, gstNo: '27AACFM7851K1ZS', panNo: 'AACFM7851K', opBalance: '₹18,200', address: 'Tilak Road, Pune', bankAccountNo: '3214578001240', ifscCode: 'ICIC001234', status: 'Inactive' },
-        { code: 'VEN033', accountName: 'Meera Farm Supplies 32', groupName: 'Sundry Creditors', creditDays: 30, gstNo: '27AACFM7852K1ZS', panNo: 'AACFM7852K', opBalance: '₹19,500', address: 'College Road, Nashik', bankAccountNo: '3214578001241', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN034', accountName: 'Meera Farm Supplies 33', groupName: 'Sundry Debtors', creditDays: 60, gstNo: '27AACFM7853K1ZS', panNo: 'AACFM7853K', opBalance: '₹20,000', address: 'Ring Road, Solapur', bankAccountNo: '3214578001242', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN035', accountName: 'Meera Farm Supplies 34', groupName: 'Sundry Creditors', creditDays: 45, gstNo: '27AACFM7854K1ZS', panNo: 'AACFM7854K', opBalance: '₹21,400', address: 'Market Yard, Ahmednagar', bankAccountNo: '3214578001243', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN036', accountName: 'Meera Farm Supplies 35', groupName: 'Sundry Debtors', creditDays: 30, gstNo: '27AACFM7855K1ZS', panNo: 'AACFM7855K', opBalance: '₹22,300', address: 'APMC Market, Karad', bankAccountNo: '3214578001244', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN037', accountName: 'Meera Farm Supplies 36', groupName: 'Sundry Creditors', creditDays: 60, gstNo: '27AACFM7856K1ZS', panNo: 'AACFM7856K', opBalance: '₹23,000', address: 'Bus Stand Road, Miraj', bankAccountNo: '3214578001245', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN038', accountName: 'Meera Farm Supplies 37', groupName: 'Sundry Debtors', creditDays: 45, gstNo: '27AACFM7857K1ZS', panNo: 'AACFM7857K', opBalance: '₹24,600', address: 'Main Road, Ichalkaranji', bankAccountNo: '3214578001246', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN039', accountName: 'Meera Farm Supplies 38', groupName: 'Sundry Creditors', creditDays: 30, gstNo: '27AACFM7858K1ZS', panNo: 'AACFM7858K', opBalance: '₹25,000', address: 'Laxmi Road, Pune', bankAccountNo: '3214578001247', ifscCode: 'SBIN0000456', status: 'Inactive' },
-        { code: 'VEN040', accountName: 'Meera Farm Supplies 39', groupName: 'Sundry Debtors', creditDays: 60, gstNo: '27AACFM7859K1ZS', panNo: 'AACFM7859K', opBalance: '₹26,700', address: 'Market Area, Kolhapur', bankAccountNo: '3214578001248', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN041', accountName: 'Meera Farm Supplies 40', groupName: 'Sundry Creditors', creditDays: 45, gstNo: '27AACFM7860K1ZS', panNo: 'AACFM7860K', opBalance: '₹27,200', address: 'Station Chowk, Sangli', bankAccountNo: '3214578001249', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN042', accountName: 'Meera Farm Supplies 41', groupName: 'Sundry Debtors', creditDays: 30, gstNo: '27AACFM7861K1ZS', panNo: 'AACFM7861K', opBalance: '₹28,100', address: 'Shivaji Road, Satara', bankAccountNo: '3214578001250', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN043', accountName: 'Meera Farm Supplies 42', groupName: 'Sundry Creditors', creditDays: 60, gstNo: '27AACFM7862K1ZS', panNo: 'AACFM7862K', opBalance: '₹29,500', address: 'Old Market, Kolhapur', bankAccountNo: '3214578001251', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN044', accountName: 'Meera Farm Supplies 43', groupName: 'Sundry Debtors', creditDays: 45, gstNo: '27AACFM7863K1ZS', panNo: 'AACFM7863K', opBalance: '₹30,000', address: 'College Chowk, Pune', bankAccountNo: '3214578001252', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN045', accountName: 'Meera Farm Supplies 44', groupName: 'Sundry Creditors', creditDays: 30, gstNo: '27AACFM7864K1ZS', panNo: 'AACFM7864K', opBalance: '₹31,400', address: 'Market Lane, Nashik', bankAccountNo: '3214578001253', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN046', accountName: 'Meera Farm Supplies 45', groupName: 'Sundry Debtors', creditDays: 60, gstNo: '27AACFM7865K1ZS', panNo: 'AACFM7865K', opBalance: '₹32,100', address: 'APMC Yard, Sangli', bankAccountNo: '3214578001254', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN047', accountName: 'Meera Farm Supplies 46', groupName: 'Sundry Creditors', creditDays: 45, gstNo: '27AACFM7866K1ZS', panNo: 'AACFM7866K', opBalance: '₹33,000', address: 'Market Street, Kolhapur', bankAccountNo: '3214578001255', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN048', accountName: 'Meera Farm Supplies 47', groupName: 'Sundry Debtors', creditDays: 30, gstNo: '27AACFM7867K1ZS', panNo: 'AACFM7867K', opBalance: '₹34,800', address: 'Station Area, Pune', bankAccountNo: '3214578001256', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN049', accountName: 'Meera Farm Supplies 48', groupName: 'Sundry Creditors', creditDays: 60, gstNo: '27AACFM7868K1ZS', panNo: 'AACFM7868K', opBalance: '₹35,600', address: 'Main Chowk, Satara', bankAccountNo: '3214578001257', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN050', accountName: 'Meera Farm Supplies 49', groupName: 'Sundry Debtors', creditDays: 45, gstNo: '27AACFM7869K1ZS', panNo: 'AACFM7869K', opBalance: '₹36,200', address: 'College Road, Nashik', bankAccountNo: '3214578001258', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN051', accountName: 'Meera Farm Supplies 50', groupName: 'Sundry Creditors', creditDays: 30, gstNo: '27AACFM7870K1ZS', panNo: 'AACFM7870K', opBalance: '₹37,500', address: 'Ring Road, Solapur', bankAccountNo: '3214578001259', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN052', accountName: 'Meera Farm Supplies 51', groupName: 'Sundry Debtors', creditDays: 60, gstNo: '27AACFM7871K1ZS', panNo: 'AACFM7871K', opBalance: '₹38,100', address: 'Market Yard, Ahmednagar', bankAccountNo: '3214578001260', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN053', accountName: 'Meera Farm Supplies 52', groupName: 'Sundry Creditors', creditDays: 45, gstNo: '27AACFM7872K1ZS', panNo: 'AACFM7872K', opBalance: '₹39,400', address: 'APMC Market, Karad', bankAccountNo: '3214578001261', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN054', accountName: 'Meera Farm Supplies 53', groupName: 'Sundry Debtors', creditDays: 30, gstNo: '27AACFM7873K1ZS', panNo: 'AACFM7873K', opBalance: '₹40,000', address: 'Bus Stand Road, Miraj', bankAccountNo: '3214578001262', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN055', accountName: 'Meera Farm Supplies 54', groupName: 'Sundry Creditors', creditDays: 60, gstNo: '27AACFM7874K1ZS', panNo: 'AACFM7874K', opBalance: '₹41,200', address: 'Main Road, Ichalkaranji', bankAccountNo: '3214578001263', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN056', accountName: 'Meera Farm Supplies 55', groupName: 'Sundry Debtors', creditDays: 45, gstNo: '27AACFM7875K1ZS', panNo: 'AACFM7875K', opBalance: '₹42,500', address: 'Laxmi Road, Pune', bankAccountNo: '3214578001264', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN057', accountName: 'Meera Farm Supplies 56', groupName: 'Sundry Creditors', creditDays: 30, gstNo: '27AACFM7876K1ZS', panNo: 'AACFM7876K', opBalance: '₹43,100', address: 'Market Area, Kolhapur', bankAccountNo: '3214578001265', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN058', accountName: 'Meera Farm Supplies 57', groupName: 'Sundry Debtors', creditDays: 60, gstNo: '27AACFM7877K1ZS', panNo: 'AACFM7877K', opBalance: '₹44,600', address: 'Station Chowk, Sangli', bankAccountNo: '3214578001266', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN059', accountName: 'Meera Farm Supplies 58', groupName: 'Sundry Creditors', creditDays: 45, gstNo: '27AACFM7878K1ZS', panNo: 'AACFM7878K', opBalance: '₹45,200', address: 'Shivaji Road, Satara', bankAccountNo: '3214578001267', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN060', accountName: 'Meera Farm Supplies 59', groupName: 'Sundry Debtors', creditDays: 30, gstNo: '27AACFM7879K1ZS', panNo: 'AACFM7879K', opBalance: '₹46,700', address: 'Old Market, Kolhapur', bankAccountNo: '3214578001268' , ifscCode: 'ICIC001234', status: 'Inactive' },
-        { code: 'VEN061', accountName: 'Meera Farm Supplies 60', groupName: 'Sundry Debtors', creditDays: 45, gstNo: '27AACFM7851K1ZS', panNo: 'AACFM7851K', opBalance: '₹18,200', address: 'Tilak Road, Pune', bankAccountNo: '3214578001240', ifscCode: 'ICIC001234', status: 'Inactive' },
-        { code: 'VEN062', accountName: 'Meera Farm Supplies 61', groupName: 'Sundry Creditors', creditDays: 30, gstNo: '27AACFM7852K1ZS', panNo: 'AACFM7852K', opBalance: '₹19,500', address: 'College Road, Nashik', bankAccountNo: '3214578001241', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN063', accountName: 'Meera Farm Supplies 62', groupName: 'Sundry Debtors', creditDays: 60, gstNo: '27AACFM7853K1ZS', panNo: 'AACFM7853K', opBalance: '₹20,000', address: 'Ring Road, Solapur', bankAccountNo: '3214578001242', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN064', accountName: 'Meera Farm Supplies 63', groupName: 'Sundry Creditors', creditDays: 45, gstNo: '27AACFM7854K1ZS', panNo: 'AACFM7854K', opBalance: '₹21,400', address: 'Market Yard, Ahmednagar', bankAccountNo: '3214578001243', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN065', accountName: 'Meera Farm Supplies 64', groupName: 'Sundry Debtors', creditDays: 30, gstNo: '27AACFM7855K1ZS', panNo: 'AACFM7855K', opBalance: '₹22,300', address: 'APMC Market, Karad', bankAccountNo: '3214578001244', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN066', accountName: 'Meera Farm Supplies 65', groupName: 'Sundry Creditors', creditDays: 60, gstNo: '27AACFM7856K1ZS', panNo: 'AACFM7856K', opBalance: '₹23,000', address: 'Bus Stand Road, Miraj', bankAccountNo: '3214578001245', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN067', accountName: 'Meera Farm Supplies 66', groupName: 'Sundry Debtors', creditDays: 45, gstNo: '27AACFM7857K1ZS', panNo: 'AACFM7857K', opBalance: '₹24,600', address: 'Main Road, Ichalkaranji', bankAccountNo: '3214578001246', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN068', accountName: 'Meera Farm Supplies 67', groupName: 'Sundry Creditors', creditDays: 30, gstNo: '27AACFM7858K1ZS', panNo: 'AACFM7858K', opBalance: '₹25,000', address: 'Laxmi Road, Pune', bankAccountNo: '3214578001247', ifscCode: 'SBIN0000456', status: 'Inactive' },
-        { code: 'VEN069', accountName: 'Meera Farm Supplies 68', groupName: 'Sundry Debtors', creditDays: 60, gstNo: '27AACFM7859K1ZS', panNo: 'AACFM7859K', opBalance: '₹26,700', address: 'Market Area, Kolhapur', bankAccountNo: '3214578001248', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN070', accountName: 'Meera Farm Supplies 69', groupName: 'Sundry Creditors', creditDays: 45, gstNo: '27AACFM7860K1ZS', panNo: 'AACFM7860K', opBalance: '₹27,200', address: 'Station Chowk, Sangli', bankAccountNo: '3214578001249', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN071', accountName: 'Meera Farm Supplies 70', groupName: 'Sundry Debtors', creditDays: 30, gstNo: '27AACFM7861K1ZS', panNo: 'AACFM7861K', opBalance: '₹28,100', address: 'Shivaji Road, Satara', bankAccountNo: '3214578001250', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN072', accountName: 'Meera Farm Supplies 71', groupName: 'Sundry Creditors', creditDays: 60, gstNo: '27AACFM7862K1ZS', panNo: 'AACFM7862K', opBalance: '₹29,500', address: 'Old Market, Kolhapur', bankAccountNo: '3214578001251', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN073', accountName: 'Meera Farm Supplies 72', groupName: 'Sundry Debtors', creditDays: 45, gstNo: '27AACFM7863K1ZS', panNo: 'AACFM7863K', opBalance: '₹30,000', address: 'College Chowk, Pune', bankAccountNo: '3214578001252', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN074', accountName: 'Meera Farm Supplies 73', groupName: 'Sundry Creditors', creditDays: 30, gstNo: '27AACFM7864K1ZS', panNo: 'AACFM7864K', opBalance: '₹31,400', address: 'Market Lane, Nashik', bankAccountNo: '3214578001253', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN075', accountName: 'Meera Farm Supplies 74', groupName: 'Sundry Debtors', creditDays: 60, gstNo: '27AACFM7865K1ZS', panNo: 'AACFM7865K', opBalance: '₹32,100', address: 'APMC Yard, Sangli', bankAccountNo: '3214578001254', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN076', accountName: 'Meera Farm Supplies 75', groupName: 'Sundry Creditors', creditDays: 45, gstNo: '27AACFM7866K1ZS', panNo: 'AACFM7866K', opBalance: '₹33,000', address: 'Market Street, Kolhapur', bankAccountNo: '3214578001255', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN077', accountName: 'Meera Farm Supplies 76', groupName: 'Sundry Debtors', creditDays: 30, gstNo: '27AACFM7867K1ZS', panNo: 'AACFM7867K', opBalance: '₹34,800', address: 'Station Area, Pune', bankAccountNo: '3214578001256', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN078', accountName: 'Meera Farm Supplies 77', groupName: 'Sundry Creditors', creditDays: 60, gstNo: '27AACFM7868K1ZS', panNo: 'AACFM7868K', opBalance: '₹35,600', address: 'Main Chowk, Satara', bankAccountNo: '3214578001257', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN079', accountName: 'Meera Farm Supplies 78', groupName: 'Sundry Debtors', creditDays: 45, gstNo: '27AACFM7845K1ZS', panNo: 'AACFM7845K', opBalance: '₹12,500', address: 'Shanti Nagar Colony, Kolhapur', bankAccountNo: '3214578001234', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN080', accountName: 'Meera Farm Supplies 79', groupName: 'Sundry Creditors', creditDays: 30, gstNo: '27AACFM7846K1ZS', panNo: 'AACFM7846K', opBalance: '₹13,000', address: 'Market Road, Nashik', bankAccountNo: '3214578001235', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN081', accountName: 'Meera Farm Supplies 80', groupName: 'Sundry Debtors', creditDays: 60, gstNo: '27AACFM7847K1ZS', panNo: 'AACFM7847K', opBalance: '₹14,200', address: 'Station Road, Pune', bankAccountNo: '3214578001236', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN082', accountName: 'Meera Farm Supplies 81', groupName: 'Sundry Creditors', creditDays: 45, gstNo: '27AACFM7848K1ZS', panNo: 'AACFM7848K', opBalance: '₹15,100', address: 'Main Bazaar, Satara', bankAccountNo: '3214578001237', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN083', accountName: 'Meera Farm Supplies 82', groupName: 'Sundry Debtors', creditDays: 30, gstNo: '27AACFM7849K1ZS', panNo: 'AACFM7849K', opBalance: '₹16,300', address: 'MG Road, Sangli', bankAccountNo: '3214578001238', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN084', accountName: 'Meera Farm Supplies 83', groupName: 'Sundry Creditors', creditDays: 60, gstNo: '27AACFM7850K1ZS', panNo: 'AACFM7850K', opBalance: '₹17,000', address: 'Industrial Area, Kolhapur', bankAccountNo: '3214578001239', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN085', accountName: 'Meera Farm Supplies 84', groupName: 'Sundry Debtors', creditDays: 45, gstNo: '27AACFM7851K1ZS', panNo: 'AACFM7851K', opBalance: '₹18,200', address: 'Tilak Road, Pune', bankAccountNo: '3214578001240', ifscCode: 'ICIC001234', status: 'Inactive' },
-        { code: 'VEN086', accountName: 'Meera Farm Supplies 85', groupName: 'Sundry Creditors', creditDays: 30, gstNo: '27AACFM7852K1ZS', panNo: 'AACFM7852K', opBalance: '₹19,500', address: 'College Road, Nashik', bankAccountNo: '3214578001241', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN087', accountName: 'Meera Farm Supplies 86', groupName: 'Sundry Debtors', creditDays: 60, gstNo: '27AACFM7853K1ZS', panNo: 'AACFM7853K', opBalance: '₹20,000', address: 'Ring Road, Solapur', bankAccountNo: '3214578001242', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN088', accountName: 'Meera Farm Supplies 87', groupName: 'Sundry Creditors', creditDays: 45, gstNo: '27AACFM7854K1ZS', panNo: 'AACFM7854K', opBalance: '₹21,400', address: 'Market Yard, Ahmednagar', bankAccountNo: '3214578001243', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN089', accountName: 'Meera Farm Supplies 88', groupName: 'Sundry Debtors', creditDays: 30, gstNo: '27AACFM7855K1ZS', panNo: 'AACFM7855K', opBalance: '₹22,300', address: 'APMC Market, Karad', bankAccountNo: '3214578001244', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN090', accountName: 'Meera Farm Supplies 89', groupName: 'Sundry Creditors', creditDays: 60, gstNo: '27AACFM7856K1ZS', panNo: 'AACFM7856K', opBalance: '₹23,000', address: 'Bus Stand Road, Miraj', bankAccountNo: '3214578001245', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN091', accountName: 'Meera Farm Supplies 90', groupName: 'Sundry Debtors', creditDays: 45, gstNo: '27AACFM7857K1ZS', panNo: 'AACFM7857K', opBalance: '₹24,600', address: 'Main Road, Ichalkaranji', bankAccountNo: '3214578001246', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN092', accountName: 'Meera Farm Supplies 91', groupName: 'Sundry Creditors', creditDays: 30, gstNo: '27AACFM7858K1ZS', panNo: 'AACFM7858K', opBalance: '₹25,000', address: 'Laxmi Road, Pune', bankAccountNo: '3214578001247', ifscCode: 'SBIN0000456', status: 'Inactive' },
-        { code: 'VEN093', accountName: 'Meera Farm Supplies 92', groupName: 'Sundry Debtors', creditDays: 60, gstNo: '27AACFM7859K1ZS', panNo: 'AACFM7859K', opBalance: '₹26,700', address: 'Market Area, Kolhapur', bankAccountNo: '3214578001248', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN094', accountName: 'Meera Farm Supplies 93', groupName: 'Sundry Creditors', creditDays: 45, gstNo: '27AACFM7860K1ZS', panNo: 'AACFM7860K', opBalance: '₹27,200', address: 'Station Chowk, Sangli', bankAccountNo: '3214578001249', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN095', accountName: 'Meera Farm Supplies 94', groupName: 'Sundry Debtors', creditDays: 30, gstNo: '27AACFM7861K1ZS', panNo: 'AACFM7861K', opBalance: '₹28,100', address: 'Shivaji Road, Satara', bankAccountNo: '3214578001250', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN096', accountName: 'Meera Farm Supplies 95', groupName: 'Sundry Creditors', creditDays: 60, gstNo: '27AACFM7862K1ZS', panNo: 'AACFM7862K', opBalance: '₹29,500', address: 'Old Market, Kolhapur', bankAccountNo: '3214578001251', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN097', accountName: 'Meera Farm Supplies 96', groupName: 'Sundry Debtors', creditDays: 45, gstNo: '27AACFM7863K1ZS', panNo: 'AACFM7863K', opBalance: '₹30,000', address: 'College Chowk, Pune', bankAccountNo: '3214578001252', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN098', accountName: 'Meera Farm Supplies 97', groupName: 'Sundry Creditors', creditDays: 30, gstNo: '27AACFM7864K1ZS', panNo: 'AACFM7864K', opBalance: '₹31,400', address: 'Market Lane, Nashik', bankAccountNo: '3214578001253', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN099', accountName: 'Meera Farm Supplies 98', groupName: 'Sundry Debtors', creditDays: 60, gstNo: '27AACFM7865K1ZS', panNo: 'AACFM7865K', opBalance: '₹32,100', address: 'APMC Yard, Sangli', bankAccountNo: '3214578001254', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN100', accountName: 'Meera Farm Supplies 99', groupName: 'Sundry Creditors', creditDays: 45, gstNo: '27AACFM7866K1ZS', panNo: 'AACFM7866K', opBalance: '₹33,000', address: 'Market Street, Kolhapur', bankAccountNo: '3214578001255', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN101', accountName: 'Meera Farm Supplies 100', groupName: 'Sundry Debtors', creditDays: 30, gstNo: '27AACFM7867K1ZS', panNo: 'AACFM7867K', opBalance: '₹34,800', address: 'Station Area, Pune', bankAccountNo: '3214578001256', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN102', accountName: 'Meera Farm Supplies 101', groupName: 'Sundry Creditors', creditDays: 60, gstNo: '27AACFM7868K1ZS', panNo: 'AACFM7868K', opBalance: '₹35,600', address: 'Main Chowk, Satara', bankAccountNo: '3214578001257', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN103', accountName: 'Meera Farm Supplies 102', groupName: 'Sundry Debtors', creditDays: 45, gstNo: '27AACFM7845K1ZS', panNo: 'AACFM7845K', opBalance: '₹12,500', address: 'Shanti Nagar Colony, Kolhapur', bankAccountNo: '3214578001234', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN104', accountName: 'Meera Farm Supplies 103', groupName: 'Sundry Creditors', creditDays: 30, gstNo: '27AACFM7846K1ZS', panNo: 'AACFM7846K', opBalance: '₹13,000', address: 'Market Road, Nashik', bankAccountNo: '3214578001235', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN105', accountName: 'Meera Farm Supplies 104', groupName: 'Sundry Debtors', creditDays: 60, gstNo: '27AACFM7847K1ZS', panNo: 'AACFM7847K', opBalance: '₹14,200', address: 'Station Road, Pune', bankAccountNo: '3214578001236', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN106', accountName: 'Meera Farm Supplies 105', groupName: 'Sundry Creditors', creditDays: 45, gstNo: '27AACFM7848K1ZS', panNo: 'AACFM7848K', opBalance: '₹15,100', address: 'Main Bazaar, Satara', bankAccountNo: '3214578001237', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN107', accountName: 'Meera Farm Supplies 106', groupName: 'Sundry Debtors', creditDays: 30, gstNo: '27AACFM7849K1ZS', panNo: 'AACFM7849K', opBalance: '₹16,300', address: 'MG Road, Sangli', bankAccountNo: '3214578001238', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN108', accountName: 'Meera Farm Supplies 107', groupName: 'Sundry Creditors', creditDays: 60, gstNo: '27AACFM7850K1ZS', panNo: 'AACFM7850K', opBalance: '₹17,000', address: 'Industrial Area, Kolhapur', bankAccountNo: '3214578001239', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN008', accountName: 'Meera Farm Supplies 7', groupName: 'Sundry Debtors', creditDays: 45, gstNo: '27AACFM7851K1ZS', panNo: 'AACFM7851K', opBalance: '₹18,200', address: 'Tilak Road, Pune', bankAccountNo: '3214578001240', ifscCode: 'ICIC001234', status: 'Inactive' },
-        { code: 'VEN009', accountName: 'Meera Farm Supplies 8', groupName: 'Sundry Creditors', creditDays: 30, gstNo: '27AACFM7852K1ZS', panNo: 'AACFM7852K', opBalance: '₹19,500', address: 'College Road, Nashik', bankAccountNo: '3214578001241', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN010', accountName: 'Meera Farm Supplies 9', groupName: 'Sundry Debtors', creditDays: 60, gstNo: '27AACFM7853K1ZS', panNo: 'AACFM7853K', opBalance: '₹20,000', address: 'Ring Road, Solapur', bankAccountNo: '3214578001242', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN011', accountName: 'Meera Farm Supplies 10', groupName: 'Sundry Creditors', creditDays: 45, gstNo: '27AACFM7854K1ZS', panNo: 'AACFM7854K', opBalance: '₹21,400', address: 'Market Yard, Ahmednagar', bankAccountNo: '3214578001243', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN012', accountName: 'Meera Farm Supplies 11', groupName: 'Sundry Debtors', creditDays: 30, gstNo: '27AACFM7855K1ZS', panNo: 'AACFM7855K', opBalance: '₹22,300', address: 'APMC Market, Karad', bankAccountNo: '3214578001244', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN013', accountName: 'Meera Farm Supplies 12', groupName: 'Sundry Creditors', creditDays: 60, gstNo: '27AACFM7856K1ZS', panNo: 'AACFM7856K', opBalance: '₹23,000', address: 'Bus Stand Road, Miraj', bankAccountNo: '3214578001245', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN014', accountName: 'Meera Farm Supplies 13', groupName: 'Sundry Debtors', creditDays: 45, gstNo: '27AACFM7857K1ZS', panNo: 'AACFM7857K', opBalance: '₹24,600', address: 'Main Road, Ichalkaranji', bankAccountNo: '3214578001246', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN015', accountName: 'Meera Farm Supplies 14', groupName: 'Sundry Creditors', creditDays: 30, gstNo: '27AACFM7858K1ZS', panNo: 'AACFM7858K', opBalance: '₹25,000', address: 'Laxmi Road, Pune', bankAccountNo: '3214578001247', ifscCode: 'SBIN0000456', status: 'Inactive' },
-        { code: 'VEN016', accountName: 'Meera Farm Supplies 15', groupName: 'Sundry Debtors', creditDays: 60, gstNo: '27AACFM7859K1ZS', panNo: 'AACFM7859K', opBalance: '₹26,700', address: 'Market Area, Kolhapur', bankAccountNo: '3214578001248', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN017', accountName: 'Meera Farm Supplies 16', groupName: 'Sundry Creditors', creditDays: 45, gstNo: '27AACFM7860K1ZS', panNo: 'AACFM7860K', opBalance: '₹27,200', address: 'Station Chowk, Sangli', bankAccountNo: '3214578001249', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN018', accountName: 'Meera Farm Supplies 17', groupName: 'Sundry Debtors', creditDays: 30, gstNo: '27AACFM7861K1ZS', panNo: 'AACFM7861K', opBalance: '₹28,100', address: 'Shivaji Road, Satara', bankAccountNo: '3214578001250', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN019', accountName: 'Meera Farm Supplies 18', groupName: 'Sundry Creditors', creditDays: 60, gstNo: '27AACFM7862K1ZS', panNo: 'AACFM7862K', opBalance: '₹29,500', address: 'Old Market, Kolhapur', bankAccountNo: '3214578001251', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN020', accountName: 'Meera Farm Supplies 19', groupName: 'Sundry Debtors', creditDays: 45, gstNo: '27AACFM7863K1ZS', panNo: 'AACFM7863K', opBalance: '₹30,000', address: 'College Chowk, Pune', bankAccountNo: '3214578001252', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN021', accountName: 'Meera Farm Supplies 20', groupName: 'Sundry Creditors', creditDays: 30, gstNo: '27AACFM7864K1ZS', panNo: 'AACFM7864K', opBalance: '₹31,400', address: 'Market Lane, Nashik', bankAccountNo: '3214578001253', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN022', accountName: 'Meera Farm Supplies 21', groupName: 'Sundry Debtors', creditDays: 60, gstNo: '27AACFM7865K1ZS', panNo: 'AACFM7865K', opBalance: '₹32,100', address: 'APMC Yard, Sangli', bankAccountNo: '3214578001254', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN023', accountName: 'Meera Farm Supplies 22', groupName: 'Sundry Creditors', creditDays: 45, gstNo: '27AACFM7866K1ZS', panNo: 'AACFM7866K', opBalance: '₹33,000', address: 'Market Street, Kolhapur', bankAccountNo: '3214578001255', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN024', accountName: 'Meera Farm Supplies 23', groupName: 'Sundry Debtors', creditDays: 30, gstNo: '27AACFM7867K1ZS', panNo: 'AACFM7867K', opBalance: '₹34,800', address: 'Station Area, Pune', bankAccountNo: '3214578001256', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN025', accountName: 'Meera Farm Supplies 24', groupName: 'Sundry Creditors', creditDays: 60, gstNo: '27AACFM7868K1ZS', panNo: 'AACFM7868K', opBalance: '₹35,600', address: 'Main Chowk, Satara', bankAccountNo: '3214578001257', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN002', accountName: 'Meera Farm Supplies 1', groupName: 'Sundry Debtors', creditDays: 45, gstNo: '27AACFM7845K1ZS', panNo: 'AACFM7845K', opBalance: '₹12,500', address: 'Shanti Nagar Colony, Kolhapur', bankAccountNo: '3214578001234', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN003', accountName: 'Meera Farm Supplies 2', groupName: 'Sundry Creditors', creditDays: 30, gstNo: '27AACFM7846K1ZS', panNo: 'AACFM7846K', opBalance: '₹13,000', address: 'Market Road, Nashik', bankAccountNo: '3214578001235', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN004', accountName: 'Meera Farm Supplies 3', groupName: 'Sundry Debtors', creditDays: 60, gstNo: '27AACFM7847K1ZS', panNo: 'AACFM7847K', opBalance: '₹14,200', address: 'Station Road, Pune', bankAccountNo: '3214578001236', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN005', accountName: 'Meera Farm Supplies 4', groupName: 'Sundry Creditors', creditDays: 45, gstNo: '27AACFM7848K1ZS', panNo: 'AACFM7848K', opBalance: '₹15,100', address: 'Main Bazaar, Satara', bankAccountNo: '3214578001237', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN006', accountName: 'Meera Farm Supplies 5', groupName: 'Sundry Debtors', creditDays: 30, gstNo: '27AACFM7849K1ZS', panNo: 'AACFM7849K', opBalance: '₹16,300', address: 'MG Road, Sangli', bankAccountNo: '3214578001238', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN007', accountName: 'Meera Farm Supplies 6', groupName: 'Sundry Creditors', creditDays: 60, gstNo: '27AACFM7850K1ZS', panNo: 'AACFM7850K', opBalance: '₹17,000', address: 'Industrial Area, Kolhapur', bankAccountNo: '3214578001239', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN008', accountName: 'Meera Farm Supplies 7', groupName: 'Sundry Debtors', creditDays: 45, gstNo: '27AACFM7851K1ZS', panNo: 'AACFM7851K', opBalance: '₹18,200', address: 'Tilak Road, Pune', bankAccountNo: '3214578001240', ifscCode: 'ICIC001234', status: 'Inactive' },
-        { code: 'VEN009', accountName: 'Meera Farm Supplies 8', groupName: 'Sundry Creditors', creditDays: 30, gstNo: '27AACFM7852K1ZS', panNo: 'AACFM7852K', opBalance: '₹19,500', address: 'College Road, Nashik', bankAccountNo: '3214578001241', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN010', accountName: 'Meera Farm Supplies 9', groupName: 'Sundry Debtors', creditDays: 60, gstNo: '27AACFM7853K1ZS', panNo: 'AACFM7853K', opBalance: '₹20,000', address: 'Ring Road, Solapur', bankAccountNo: '3214578001242', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN011', accountName: 'Meera Farm Supplies 10', groupName: 'Sundry Creditors', creditDays: 45, gstNo: '27AACFM7854K1ZS', panNo: 'AACFM7854K', opBalance: '₹21,400', address: 'Market Yard, Ahmednagar', bankAccountNo: '3214578001243', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN012', accountName: 'Meera Farm Supplies 11', groupName: 'Sundry Debtors', creditDays: 30, gstNo: '27AACFM7855K1ZS', panNo: 'AACFM7855K', opBalance: '₹22,300', address: 'APMC Market, Karad', bankAccountNo: '3214578001244', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN013', accountName: 'Meera Farm Supplies 12', groupName: 'Sundry Creditors', creditDays: 60, gstNo: '27AACFM7856K1ZS', panNo: 'AACFM7856K', opBalance: '₹23,000', address: 'Bus Stand Road, Miraj', bankAccountNo: '3214578001245', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN014', accountName: 'Meera Farm Supplies 13', groupName: 'Sundry Debtors', creditDays: 45, gstNo: '27AACFM7857K1ZS', panNo: 'AACFM7857K', opBalance: '₹24,600', address: 'Main Road, Ichalkaranji', bankAccountNo: '3214578001246', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN015', accountName: 'Meera Farm Supplies 14', groupName: 'Sundry Creditors', creditDays: 30, gstNo: '27AACFM7858K1ZS', panNo: 'AACFM7858K', opBalance: '₹25,000', address: 'Laxmi Road, Pune', bankAccountNo: '3214578001247', ifscCode: 'SBIN0000456', status: 'Inactive' },
-        { code: 'VEN016', accountName: 'Meera Farm Supplies 15', groupName: 'Sundry Debtors', creditDays: 60, gstNo: '27AACFM7859K1ZS', panNo: 'AACFM7859K', opBalance: '₹26,700', address: 'Market Area, Kolhapur', bankAccountNo: '3214578001248', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN017', accountName: 'Meera Farm Supplies 16', groupName: 'Sundry Creditors', creditDays: 45, gstNo: '27AACFM7860K1ZS', panNo: 'AACFM7860K', opBalance: '₹27,200', address: 'Station Chowk, Sangli', bankAccountNo: '3214578001249', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN018', accountName: 'Meera Farm Supplies 17', groupName: 'Sundry Debtors', creditDays: 30, gstNo: '27AACFM7861K1ZS', panNo: 'AACFM7861K', opBalance: '₹28,100', address: 'Shivaji Road, Satara', bankAccountNo: '3214578001250', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN019', accountName: 'Meera Farm Supplies 18', groupName: 'Sundry Creditors', creditDays: 60, gstNo: '27AACFM7862K1ZS', panNo: 'AACFM7862K', opBalance: '₹29,500', address: 'Old Market, Kolhapur', bankAccountNo: '3214578001251', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN020', accountName: 'Meera Farm Supplies 19', groupName: 'Sundry Debtors', creditDays: 45, gstNo: '27AACFM7863K1ZS', panNo: 'AACFM7863K', opBalance: '₹30,000', address: 'College Chowk, Pune', bankAccountNo: '3214578001252', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN021', accountName: 'Meera Farm Supplies 20', groupName: 'Sundry Creditors', creditDays: 30, gstNo: '27AACFM7864K1ZS', panNo: 'AACFM7864K', opBalance: '₹31,400', address: 'Market Lane, Nashik', bankAccountNo: '3214578001253', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN022', accountName: 'Meera Farm Supplies 21', groupName: 'Sundry Debtors', creditDays: 60, gstNo: '27AACFM7865K1ZS', panNo: 'AACFM7865K', opBalance: '₹32,100', address: 'APMC Yard, Sangli', bankAccountNo: '3214578001254', ifscCode: 'HDFC0001234', status: 'Active' },
-        { code: 'VEN023', accountName: 'Meera Farm Supplies 22', groupName: 'Sundry Creditors', creditDays: 45, gstNo: '27AACFM7866K1ZS', panNo: 'AACFM7866K', opBalance: '₹33,000', address: 'Market Street, Kolhapur', bankAccountNo: '3214578001255', ifscCode: 'ICIC001234', status: 'Active' },
-        { code: 'VEN024', accountName: 'Meera Farm Supplies 23', groupName: 'Sundry Debtors', creditDays: 30, gstNo: '27AACFM7867K1ZS', panNo: 'AACFM7867K', opBalance: '₹34,800', address: 'Station Area, Pune', bankAccountNo: '3214578001256', ifscCode: 'SBIN0000456', status: 'Active' },
-        { code: 'VEN025', accountName: 'Meera Farm Supplies 24', groupName: 'Sundry Creditors', creditDays: 60, gstNo: '27AACFM7868K1ZS', panNo: 'AACFM7868K', opBalance: '₹35,600', address: 'Main Chowk, Satara', bankAccountNo: '3214578001257', ifscCode: 'HDFC0001234', status: 'Active' }
-    ]);
+        const dispatch = useDispatch();
+    const { accounts, total: totalItems, totalPages, loading } = useSelector(state => state.account);
+    const paginatedData = accounts || [];
 
-    const filteredData = tableData.filter(row => {
-        let match = true;
-        if (appliedFilters.gstNo && !row.gstNo.toLowerCase().includes(appliedFilters.gstNo.toLowerCase())) match = false;
-        if (appliedFilters.panNo && !row.panNo.toLowerCase().includes(appliedFilters.panNo.toLowerCase())) match = false;
-        if (appliedFilters.groupName && !row.groupName.toLowerCase().includes(appliedFilters.groupName.toLowerCase())) match = false;
-        if (appliedFilters.creditDays && row.creditDays.toString() !== appliedFilters.creditDays) match = false;
-        if (appliedFilters.status && row.status !== appliedFilters.status) match = false;
-
-        if (searchQuery) {
-            const query = searchQuery.toLowerCase();
-            const hasMatch = Object.values(row).some(val => 
-                val !== null && val !== undefined && val.toString().toLowerCase().includes(query)
-            );
-            if (!hasMatch) match = false;
-        }
-
-        return match;
-    });
+    
 
     useEffect(() => {
         setCurrentPage(1);
     }, [searchQuery, appliedFilters]);
 
-    const totalItems = filteredData.length;
-    const totalPages = Math.ceil(totalItems / rowsPerPage) || 1;
+        useEffect(() => {
+        const params = {
+            page: currentPage,
+            limit: rowsPerPage,
+            search: searchQuery,
+            ...appliedFilters
+        };
+        if (params.status === 'Active') params.isActive = true;
+        else if (params.status === 'InActive') params.isActive = false;
+        
+        Object.keys(params).forEach(k => {
+            if (params[k] === '' || params[k] === undefined) {
+                delete params[k];
+            }
+        });
+        
+        dispatch(fetchAllAccounts(params));
+    }, [dispatch, currentPage, rowsPerPage, searchQuery, appliedFilters]);
+
     const startIndex = (currentPage - 1) * rowsPerPage;
-    const endIndex = Math.min(startIndex + rowsPerPage, totalItems);
-    const paginatedData = filteredData.slice(startIndex, endIndex);
+    const endIndex = Math.min(startIndex + rowsPerPage, totalItems || 0);
 
     const getVisiblePages = () => {
         let pages = [];
@@ -285,68 +136,59 @@ const AccountMaster = () => {
         setAppliedFilters(emptyFilters);
     };
 
-    const handleExportPDF = () => {
-        const tableRows = filteredData.map((row, idx) => [
-            idx + 1,
-            row.code,
-            row.accountName,
-            translateDynamic(row.groupName, t),
-            row.creditDays,
-            row.gstNo,
-            row.panNo,
-            row.opBalance,
-            row.address,
-            row.bankAccountNo,
-            row.ifscCode,
-            row.status.toUpperCase() === 'ACTIVE' ? t('common:active') : t('common:inactive')
-        ]);
-
-        exportToPDF(
-            'Account Master Report', 
-            ['#', 'Vendor Code', 'Account', 'Group Name', 'Credit Days', 'GST.No', 'PAN.No', 'OP.Balance', 'Address', 'Bank A/C No', 'IFSC Code', 'Status'], 
-            tableRows, 
-            'account-master.pdf'
-        );
+        const handleExportPDF = async () => {
         setIsExportOpen(false);
+        try {
+            const params = { format: 'pdf', search: searchQuery, ...appliedFilters };
+            if (params.status === 'Active') params.isActive = true;
+            else if (params.status === 'InActive') params.isActive = false;
+            
+            const response = await accountService.exportAccounts(params);
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'account-master.pdf');
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+        } catch (e) {
+            console.error('Export failed', e);
+        }
     };
-
-    const handleExportExcel = () => {
-        const data = filteredData.map((row, idx) => ({
-            'S.No': idx + 1,
-            'Vendor Code': row.code,
-            [t('modules:account')]: row.accountName,
-            [t('common:group')]: translateDynamic(row.groupName, t),
-            [t('modules:credit_days')]: row.creditDays,
-            'GST.No': row.gstNo,
-            'PAN.No': row.panNo,
-            'OP.Balance': row.opBalance,
-            'Address': row.address,
-            'Bank Account.No': row.bankAccountNo,
-            [t('modules:bank_account_no')]: row.bankAccountNo,
-            [t('modules:ifsc_code')]: row.ifscCode,
-            [t('common:status')]: row.status.toUpperCase() === 'ACTIVE' ? t('common:active') : t('common:inactive')
-        }));
-
-        exportToExcel(data, 'Account Master', 'account-master.xlsx');
+        const handleExportExcel = async () => {
         setIsExportOpen(false);
+        try {
+            const params = { format: 'xlsx', search: searchQuery, ...appliedFilters };
+            if (params.status === 'Active') params.isActive = true;
+            else if (params.status === 'InActive') params.isActive = false;
+            
+            const response = await accountService.exportAccounts(params);
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'account-master.xlsx');
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+        } catch (e) {
+            console.error('Export failed', e);
+        }
     };
-
     const handleAddAccount = (newAccount) => {
-        setTableData([newAccount, ...tableData]);
+        dispatch(fetchAllAccounts({ page: currentPage, limit: rowsPerPage, search: searchQuery, ...appliedFilters }));
         setCurrentView('list');
     };
 
     const handleUpdateAccount = (updatedAccount) => {
-        setTableData(tableData.map(row => row.code === updatedAccount.code ? updatedAccount : row));
+        dispatch(fetchAllAccounts({ page: currentPage, limit: rowsPerPage, search: searchQuery, ...appliedFilters }));
         setCurrentView('list');
         setSelectedAccount(null);
     };
 
-    const toggleStatus = (code, currentStatus, event) => {
+        const toggleStatus = async (id, event) => {
         event.stopPropagation();
-        setTableData(tableData.map(row => 
-            row.code === code ? { ...row, status: currentStatus === 'Active' ? 'Inactive' : 'Active' } : row
-        ));
+        await dispatch(toggleAccountStatus(id));
+        dispatch(fetchAllAccounts({ page: currentPage, limit: rowsPerPage, search: searchQuery, ...appliedFilters }));
         setDropdownIndex(null);
     };
 
@@ -492,13 +334,13 @@ const AccountMaster = () => {
                                     <td className="px-6 py-4">{row.creditDays}</td>
                                     <td className="px-6 py-4">{row.gstNo}</td>
                                     <td className="px-6 py-4">{row.panNo}</td>
-                                    <td className="px-6 py-4">{row.opBalance}</td>
-                                    <td className="px-6 py-4 truncate max-w-[200px]" title={row.address}>{row.address}</td>
-                                    <td className="px-6 py-4">{row.bankAccountNo}</td>
+                                    <td className="px-6 py-4">{row.openingBalance}</td>
+                                    <td className="px-6 py-4 truncate max-w-[200px]" title={row.addressLine1}>{row.addressLine1}</td>
+                                    <td className="px-6 py-4">{row.accountNumber}</td>
                                     <td className="px-6 py-4">{row.ifscCode}</td>
                                     <td className="px-6 py-4">
-                                        <span className={row.status.toUpperCase() === 'ACTIVE' ? 'text-[#014A36] font-medium' : 'text-gray-500'}>
-                                            {row.status.toUpperCase() === 'ACTIVE' ? t('common:active') : t('common:inactive')}
+                                        <span className={row.isActive ? 'text-[#014A36] font-medium' : 'text-gray-500'}>
+                                            {row.isActive ? t('common:active') : t('common:inactive')}
                                         </span>
                                     </td>
                                     <td className={`px-6 py-4 text-center relative ${dropdownIndex === index ? 'z-50' : ''}`}>
@@ -530,11 +372,11 @@ const AccountMaster = () => {
                                                     {t('modules:update_account')}
                                                 </button>
                                                 <button 
-                                                    onClick={(e) => toggleStatus(row.code, row.status, e)} 
+                                                    onClick={(e) => toggleStatus(row.id, e)} 
                                                     className="flex items-center gap-3 w-full px-4 py-2.5 text-[14px] font-medium text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors whitespace-nowrap border-t border-gray-100"
                                                 >
-                                                    <CheckCircle2 size={16} className={row.status.toUpperCase() === 'ACTIVE' ? 'text-gray-500' : 'text-[#014A36]'} />
-                                                    {row.status.toUpperCase() === 'ACTIVE' ? t('common:inactive') : t('common:active')}
+                                                    <CheckCircle2 size={16} className={row.isActive ? 'text-gray-500' : 'text-[#014A36]'} />
+                                                    {row.isActive ? t('common:inactive') : t('common:active')}
                                                 </button>
                                             </div>
                                         )}

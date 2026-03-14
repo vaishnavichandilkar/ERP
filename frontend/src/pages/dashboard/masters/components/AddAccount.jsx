@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
+import accountService from '../../../../services/accountService';
 
 const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchable = false, required = false, widthClass = "w-full" }) => {
     const { t } = useTranslation(['common']);
@@ -154,35 +156,68 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
 
     const [currentStep, setCurrentStep] = useState(1);
     const [msmeEnabled, setMsmeEnabled] = useState(Boolean(initialData?.msmeId));
+    const [areaOptions, setAreaOptions] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isGeneratingCode, setIsGeneratingCode] = useState(false);
+    const [isFetchingPin, setIsFetchingPin] = useState(false);
 
     const GROUP_NAMES = ['Sundry Creditors (Vendor)', 'Sundry Debtors (Customer)'];
     const OP_BALANCE_TYPES = ['Cr', 'Dr'];
-    const REG_UNDER = ['Micro', 'Medium', 'Small'];
+    const REG_UNDER = ['Micro', 'Small', 'Medium'];
     const REG_TYPES = ['Trading', 'Service', 'Manufacturing'];
-    const PREFIX_OPTIONS = ['Mr.', 'Mrs.', 'Miss.', 'Ms.'];
-    const AREA_OPTIONS = [
-        'Panchavati',
-        'Shivaji Nagar',
-        'Industrial Area',
-        'Market Area',
-        'College Road',
-        'Main Bazaar',
-        'Station Road',
-        'MG Road',
-        'APMC Market'
-    ];
+    const PREFIX_OPTIONS = ['Mr', 'Mrs', 'Miss', 'Ms'];
 
-    const handleInputChange = (field, value) => {
+    const handleInputChange = async (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+
+        if (field === 'groupName' && value) {
+            setIsGeneratingCode(true);
+            try {
+                const res = await accountService.generateAccountCode(value);
+                if (res?.code) {
+                    setFormData(prev => ({ ...prev, code: res.code }));
+                    toast.success('Code generated automatically');
+                }
+            } catch (err) {
+                toast.error('Failed to generate code');
+            } finally {
+                setIsGeneratingCode(false);
+            }
+        }
+
+        if (field === 'pinCode' && value.length === 6) {
+            setIsFetchingPin(true);
+            try {
+                const res = await accountService.lookupPincode(value);
+                if (res) {
+                    setFormData(prev => ({
+                        ...prev,
+                        city: res.city || prev.city,
+                        state: res.state || prev.state,
+                        area: (res.areas && res.areas.length > 0) ? res.areas[0] : prev.area
+                    }));
+                    if (res.areas && res.areas.length > 0) {
+                        setAreaOptions(res.areas);
+                    }
+                    toast.success('Location details fetched successfully');
+                }
+            } catch (err) {
+                toast.error('Failed to fetch pincode details automatically. Please enter manually.');
+            } finally {
+                setIsFetchingPin(false);
+            }
+        }
     };
+
+    const isMsmeValid = msmeEnabled ? (formData.msmeId.trim() !== '' && formData.regUnder.trim() !== '' && formData.regType.trim() !== '') : true;
 
     const isNextActive = formData.accountName.trim() !== '' &&
                          formData.groupName.trim() !== '' &&
-                         formData.creditDays.trim() !== '' &&
                          formData.panNo.trim() !== '' &&
-                         formData.code.trim() !== '' &&
+                         formData.creditDays.trim() !== '' &&
                          formData.address1.trim() !== '' &&
-                         formData.pinCode.trim() !== '';
+                         formData.pinCode.trim() !== '' &&
+                         isMsmeValid;
 
     const isAddAccountActive = formData.accountHolder.trim() !== '' &&
                                formData.bankName.trim() !== '' &&
@@ -190,50 +225,57 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                formData.ifscCode.trim() !== '' &&
                                formData.prefix.trim() !== '' &&
                                formData.contactPersonName.trim() !== '' &&
-                               formData.mobileNo.trim() !== '';
+                               formData.mobileNo.trim() !== '' &&
+                               !isLoading;
 
-    const handleAddAccountSubmit = () => {
+    const handleAddAccountSubmit = async () => {
         if (!isAddAccountActive) return;
 
-        const addressComponents = [formData.address1, formData.address2, formData.area, formData.city, formData.state].filter(Boolean);
-        const addressStr = addressComponents.join(', ');
+        setIsLoading(true);
 
-        const newAccount = {
-            ...(initialData || {}),
-            code: formData.code,
+        const payload = {
             accountName: formData.accountName,
             groupName: formData.groupName,
-            creditDays: parseInt(formData.creditDays, 10) || formData.creditDays,
-            gstNo: formData.gstNo || '-',
+            gstNo: formData.gstNo || undefined,
             panNo: formData.panNo,
-            opBalance: formData.opBalance ? (formData.opBalanceType === 'Cr' ? `₹${formData.opBalance}` : `-₹${formData.opBalance}`) : '-',
-            opBalanceRaw: formData.opBalance,
-            opBalanceType: formData.opBalanceType,
-            address: addressStr,
-            address1: formData.address1,
-            address2: formData.address2,
-            area: formData.area,
-            city: formData.city,
-            state: formData.state,
-            pinCode: formData.pinCode,
-            msmeId: formData.msmeId,
-            regUnder: formData.regUnder,
-            regType: formData.regType,
-            accountHolder: formData.accountHolder,
+            creditDays: parseInt(formData.creditDays, 10) || 0,
+            openingBalance: parseInt(formData.opBalance, 10) || 0,
+            balanceType: formData.opBalanceType,
+            code: formData.code,
+            addressLine1: formData.address1,
+            addressLine2: formData.address2 || undefined,
+            pincode: formData.pinCode,
+            area: formData.area || undefined,
+            city: formData.city || undefined,
+            state: formData.state || undefined,
+            msmeStatus: msmeEnabled,
+            msmeRegNo: msmeEnabled ? formData.msmeId : undefined,
+            regUnder: msmeEnabled ? formData.regUnder : undefined,
+            regType: msmeEnabled ? formData.regType : undefined,
+            accountHolderName: formData.accountHolder,
             bankName: formData.bankName,
-            bankAccountNo: formData.accountNumber,
+            accountNumber: formData.accountNumber,
             ifscCode: formData.ifscCode,
             prefix: formData.prefix,
             contactPersonName: formData.contactPersonName,
-            emailId: formData.emailId,
-            mobileNo: formData.mobileNo,
-            status: initialData ? initialData.status : 'Active'
+            emailId: formData.emailId || undefined,
+            mobileNo: formData.mobileNo
         };
 
-        if (isEditMode && onUpdateAccount) {
-            onUpdateAccount(newAccount);
-        } else if (onAddAccount) {
-            onAddAccount(newAccount);
+        try {
+            if (isEditMode) {
+                const response = await accountService.updateAccount(initialData.id, payload);
+                toast.success('Account updated successfully');
+                if (onUpdateAccount) onUpdateAccount(response);
+            } else {
+                const response = await accountService.createAccount(payload);
+                toast.success('Account created successfully');
+                if (onAddAccount) onAddAccount(response);
+            }
+        } catch (error) {
+            toast.error(error?.response?.data?.message || 'Failed to save account');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -271,6 +313,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                 className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
                                 value={formData.accountName}
                                 onChange={(e) => handleInputChange('accountName', e.target.value)}
+                                autoFocus
                             />
                         </div>
 
@@ -351,14 +394,16 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
 
                         {/* Vendor Code */}
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-[13px] font-semibold text-[#4B5563]">
-                                {isEditMode ? t('common:code') : t('vendor_code')} <span className="text-red-500">*</span>
+                            <label className="text-[13px] font-semibold text-[#4B5563] flex items-center justify-between">
+                                <span>{isEditMode ? t('common:code') : t('vendor_code')} <span className="text-red-500">*</span></span>
+                                {isGeneratingCode && <Loader2 size={12} className="animate-spin text-[#014A36]" />}
                             </label>
                             <input
                                 type="text"
                                 placeholder={t('vendor_code')}
-                                className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
+                                className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-gray-500 outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-gray-50 cursor-not-allowed"
                                 value={formData.code}
+                                readOnly
                                 onChange={(e) => handleInputChange('code', e.target.value)}
                             />
                         </div>
@@ -393,8 +438,9 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
 
                         {/* Pin Code */}
                         <div className="flex flex-col gap-1.5">
-                            <label className="text-[13px] font-semibold text-[#4B5563]">
-                                {t('pin_code')} <span className="text-red-500">*</span>
+                            <label className="text-[13px] font-semibold text-[#4B5563] flex items-center justify-between">
+                                <span>{t('pin_code')} <span className="text-red-500">*</span></span>
+                                {isFetchingPin && <Loader2 size={12} className="animate-spin text-[#014A36]" />}
                             </label>
                             <input
                                 type="text"
@@ -409,7 +455,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                         <CustomSelect
                             label={`${t('area')}(${t('common:optional')})`}
                             placeholder={t('enter_area')}
-                            options={AREA_OPTIONS}
+                            options={areaOptions}
                             value={formData.area}
                             onChange={(val) => handleInputChange('area', val)}
                             isSearchable={true}
@@ -423,8 +469,9 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                             <input
                                 type="text"
                                 placeholder={t('enter_city')}
-                                className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
+                                className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-gray-50 cursor-not-allowed"
                                 value={formData.city}
+                                readOnly
                                 onChange={(e) => handleInputChange('city', e.target.value)}
                             />
                         </div>
@@ -437,8 +484,9 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                             <input
                                 type="text"
                                 placeholder={t('enter_state')}
-                                className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-white"
+                                className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-gray-50 cursor-not-allowed"
                                 value={formData.state}
+                                readOnly
                                 onChange={(e) => handleInputChange('state', e.target.value)}
                             />
                         </div>
@@ -460,6 +508,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                 {/* Conditional MSME ID Input directly next to Toggle */}
                                 {msmeEnabled && (
                                     <div className="w-full md:flex-1 animate-in fade-in slide-in-from-left-2 duration-300">
+                                        <label className="text-[13px] font-semibold text-[#4B5563] hidden md:block opacity-0 mb-1.5">_</label>
                                         <input
                                             type="text"
                                             placeholder={t('enter_msme_id')}
@@ -476,11 +525,12 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                         {msmeEnabled && (
                             <div className="animate-in fade-in flex items-end">
                                 <CustomSelect
-                                    label={t('reg_under')}
+                                    label={`${t('reg_under')} *`}
                                     placeholder={t('common:select')}
                                     options={REG_UNDER}
                                     value={formData.regUnder}
                                     onChange={(val) => handleInputChange('regUnder', val)}
+                                    required={true}
                                 />
                             </div>
                         )}
@@ -489,11 +539,12 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                         {msmeEnabled && (
                             <div className="animate-in fade-in">
                                 <CustomSelect
-                                    label={t('reg_type')}
+                                    label={`${t('reg_type')} *`}
                                     placeholder={t('common:select')}
                                     options={REG_TYPES}
                                     value={formData.regType}
                                     onChange={(val) => handleInputChange('regType', val)}
+                                    required={true}
                                 />
                             </div>
                         )}
@@ -650,12 +701,13 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                         <button
                             onClick={handleAddAccountSubmit}
                             disabled={!isAddAccountActive}
-                            className={`px-8 h-[44px] text-white rounded-[8px] text-[14px] font-bold transition-colors shadow-sm ${
+                            className={`px-8 h-[44px] text-white rounded-[8px] text-[14px] font-bold transition-colors shadow-sm flex items-center gap-2 ${
                                 isAddAccountActive 
                                     ? 'bg-[#014A36] hover:bg-[#013b2b] cursor-pointer' 
                                     : 'bg-[#A7C0B8] cursor-not-allowed'
                             }`}
                         >
+                            {isLoading && <Loader2 size={16} className="animate-spin" />}
                             {isEditMode ? t('update_account') : t('add_account')}
                         </button>
                         <button

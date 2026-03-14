@@ -106,6 +106,14 @@ export class AccountMasterController {
     res.send(file.buffer);
   }
 
+  @Get('generate-code')
+  @ApiOperation({ summary: 'Generate next available code for a given group Name' })
+  @ApiQuery({ name: 'group', required: true, type: String })
+  async generateCode(@Query('group') group: string) {
+    const code = await this.accountMasterService.generateCode(group);
+    return { code };
+  }
+
   @Get('pincode/:pincode')
   @ApiOperation({ summary: 'Lookup city, state, and country from a pincode' })
   @ApiParam({ name: 'pincode', required: true, description: '6-digit Indian Pincode' })

@@ -2,7 +2,7 @@ import { RouterProvider } from 'react-router-dom';
 import { router } from './common/routes';
 import { Provider } from 'react-redux';
 import { store } from './redux/store';
-import { Toaster } from './utils/toast-mock';
+import { Toaster } from 'react-hot-toast';
 
 function App() {
   return (

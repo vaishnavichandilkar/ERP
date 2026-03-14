@@ -42,6 +42,11 @@ export const exportAccounts = async (params) => {
     return response;
 };
 
+export const generateAccountCode = async (groupName) => {
+    const response = await axiosInstance.get(`${API_PATH}/generate-code`, { params: { group: groupName } });
+    return response.data;
+};
+
 export default {
     getAllAccounts,
     getAccountById,
@@ -49,5 +54,6 @@ export default {
     updateAccount,
     toggleStatus,
     lookupPincode,
-    exportAccounts
+    exportAccounts,
+    generateAccountCode
 };
