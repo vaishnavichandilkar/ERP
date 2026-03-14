@@ -185,9 +185,9 @@ const AccountMaster = () => {
         setSelectedAccount(null);
     };
 
-        const toggleStatus = async (id, event) => {
+        const toggleStatus = async (account, event) => {
         event.stopPropagation();
-        await dispatch(toggleAccountStatus(id));
+        await dispatch(toggleAccountStatus({ id: account.id, isActive: !account.isActive }));
         dispatch(fetchAllAccounts({ page: currentPage, limit: rowsPerPage, search: searchQuery, ...appliedFilters }));
         setDropdownIndex(null);
     };
@@ -372,7 +372,7 @@ const AccountMaster = () => {
                                                     {t('modules:update_account')}
                                                 </button>
                                                 <button 
-                                                    onClick={(e) => toggleStatus(row.id, e)} 
+                                                    onClick={(e) => toggleStatus(row, e)} 
                                                     className="flex items-center gap-3 w-full px-4 py-2.5 text-[14px] font-medium text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors whitespace-nowrap border-t border-gray-100"
                                                 >
                                                     <CheckCircle2 size={16} className={row.isActive ? 'text-gray-500' : 'text-[#014A36]'} />

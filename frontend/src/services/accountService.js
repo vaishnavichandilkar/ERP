@@ -22,10 +22,9 @@ export const updateAccount = async (id, data) => {
     return response.data;
 };
 
-export const toggleStatus = async (id) => {
-    // Note: The prompt asked for PATCH /api/v1/account-master/:id/status
-    // Assuming backend follows /account-master/:id/status
-    const response = await axiosInstance.patch(`${API_PATH}/${id}/status`);
+export const toggleStatus = async (id, isActive) => {
+    // Backend expects { isActive: boolean } in the body
+    const response = await axiosInstance.patch(`${API_PATH}/${id}/status`, { isActive });
     return response.data;
 };
 
