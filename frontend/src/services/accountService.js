@@ -41,6 +41,16 @@ export const exportAccounts = async (params) => {
     return response;
 };
 
+export const generateCustomerCode = async () => {
+    const response = await axiosInstance.get(`${API_PATH}/generate-customer-code`);
+    return response.data;
+};
+
+export const generateVendorCode = async () => {
+    const response = await axiosInstance.get(`${API_PATH}/generate-vendor-code`);
+    return response.data;
+};
+
 export const generateAccountCode = async (groupName) => {
     const response = await axiosInstance.get(`${API_PATH}/generate-code`, { params: { group: groupName } });
     return response.data;
@@ -54,5 +64,7 @@ export default {
     toggleStatus,
     lookupPincode,
     exportAccounts,
-    generateAccountCode
+    generateAccountCode,
+    generateCustomerCode,
+    generateVendorCode
 };

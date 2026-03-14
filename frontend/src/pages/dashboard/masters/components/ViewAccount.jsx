@@ -50,9 +50,18 @@ const ViewAccount = ({ initialData, onBack }) => {
                     
                     {/* Header Section */}
                     <div className="mb-6">
-                        <h1 className="text-[28px] md:text-[32px] font-bold text-[#111827] mb-2">{data.account || '-'}</h1>
-                        <div className="inline-flex items-center px-4 py-1.5 bg-[#014A36] text-white rounded-[100px] text-[14px] font-medium">
-                            {data.groupName || '-'}
+                        <h1 className="text-[28px] md:text-[32px] font-bold text-[#111827] mb-2">{data.accountName || '-'}</h1>
+                        <div className="flex gap-2">
+                            {data.isCustomer && (
+                                <div className="inline-flex items-center px-4 py-1.5 bg-[#014A36] text-white rounded-[100px] text-[14px] font-medium">
+                                    {t('customer')}
+                                </div>
+                            )}
+                            {data.isVendor && (
+                                <div className="inline-flex items-center px-4 py-1.5 bg-[#4B5563] text-white rounded-[100px] text-[14px] font-medium">
+                                    {t('vendor')}
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -68,8 +77,8 @@ const ViewAccount = ({ initialData, onBack }) => {
                             label2={`${t('op_balance')}:`} value2={renderOpBalance()} 
                         />
                         <InfoTableRow 
-                            label1={`${t('vendor_code')}:`} value1={data.code} 
-                            label2={`${t('reg_type')}:`} value2={data.regType} 
+                            label1={`${t('customer_code')}:`} value1={data.customerCode} 
+                            label2={`${t('vendor_code')}:`} value2={data.vendorCode} 
                         />
                         <InfoTableRow 
                             label1={`${t('address_1')}:`} value1={data.addressLine1} 
@@ -84,8 +93,12 @@ const ViewAccount = ({ initialData, onBack }) => {
                             label2={`${t('state')}:`} value2={data.state} 
                         />
                         <InfoTableRow 
-                            label1={`${t('msme')}:`} value1={data.msmeRegNo} 
-                            label2={`${t('reg_under')}:`} value2={data.regUnder} 
+                            label1={`${t('reg_type')}:`} value1={data.regType} 
+                            label2={`${t('msme')}:`} value2={data.msmeRegNo} 
+                        />
+                        <InfoTableRow 
+                            label1={`${t('reg_under')}:`} value1={data.regUnder} 
+                            label2={''} value2={''} 
                         />
 
                         {/* Bank Details Section */}

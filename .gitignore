@@ -24,7 +24,5 @@ dist-ssr
 *.sw?
 backend/dist
 frontend/.env
-<<<<<<< Updated upstream
-**/prisma/migrations/
-=======
->>>>>>> Stashed changes
+backend/dist
+frontend/.env

@@ -101,13 +101,15 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
     const isEditMode = !!initialData;
     const [formData, setFormData] = useState(initialData ? {
         accountName: initialData.accountName || '',
-        groupName: initialData.groupName || '',
+        isCustomer: initialData.isCustomer || false,
+        isVendor: initialData.isVendor || false,
+        customerCode: initialData.customerCode || '',
+        vendorCode: initialData.vendorCode || '',
         gstNo: initialData.gstNo || '',
         panNo: initialData.panNo || '',
         creditDays: initialData.creditDays ? initialData.creditDays.toString() : '',
         opBalance: initialData.openingBalance?.toString() || '',
         opBalanceType: initialData.balanceType || 'Cr',
-        code: initialData.code || '',
         address1: initialData.addressLine1 || '',
         address2: initialData.addressLine2 || '',
         area: initialData.area || '',
@@ -127,13 +129,15 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
         mobileNo: initialData.mobileNo || ''
     } : {
         accountName: '',
-        groupName: '',
+        isCustomer: false,
+        isVendor: false,
+        customerCode: '',
+        vendorCode: '',
         gstNo: '',
         panNo: '',
         creditDays: '',
         opBalance: '',
         opBalanceType: 'Cr',
-        code: '',
         address1: '',
         address2: '',
         area: '',
@@ -143,7 +147,6 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
         msmeId: '',
         regUnder: '',
         regType: '',
-        // Step 2 new fields
         accountHolder: '',
         bankName: '',
         accountNumber: '',
@@ -170,16 +173,29 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
     const handleInputChange = async (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
 
-        if (field === 'groupName' && value) {
+        if (field === 'isCustomer' && value === true && !formData.customerCode) {
             setIsGeneratingCode(true);
             try {
-                const res = await accountService.generateAccountCode(value);
-                if (res?.code) {
-                    setFormData(prev => ({ ...prev, code: res.code }));
-                    toast.success('Code generated automatically');
+                const res = await accountService.generateCustomerCode();
+                if (res?.customerCode) {
+                    setFormData(prev => ({ ...prev, customerCode: res.customerCode }));
                 }
             } catch (err) {
-                toast.error('Failed to generate code');
+                toast.error('Failed to generate customer code');
+            } finally {
+                setIsGeneratingCode(false);
+            }
+        }
+
+        if (field === 'isVendor' && value === true && !formData.vendorCode) {
+            setIsGeneratingCode(true);
+            try {
+                const res = await accountService.generateVendorCode();
+                if (res?.vendorCode) {
+                    setFormData(prev => ({ ...prev, vendorCode: res.vendorCode }));
+                }
+            } catch (err) {
+                toast.error('Failed to generate vendor code');
             } finally {
                 setIsGeneratingCode(false);
             }
@@ -212,7 +228,9 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
     const isMsmeValid = msmeEnabled ? (formData.msmeId.trim() !== '' && formData.regUnder.trim() !== '' && formData.regType.trim() !== '') : true;
 
     const isNextActive = formData.accountName.trim() !== '' &&
-                         formData.groupName.trim() !== '' &&
+                         (formData.isCustomer || formData.isVendor) &&
+                         (formData.isCustomer ? formData.customerCode.trim() !== '' : true) &&
+                         (formData.isVendor ? formData.vendorCode.trim() !== '' : true) &&
                          formData.panNo.trim() !== '' &&
                          formData.creditDays.trim() !== '' &&
                          formData.address1.trim() !== '' &&
@@ -235,13 +253,15 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
 
         const payload = {
             accountName: formData.accountName,
-            groupName: formData.groupName,
+            isCustomer: formData.isCustomer,
+            isVendor: formData.isVendor,
+            customerCode: formData.isCustomer ? formData.customerCode : undefined,
+            vendorCode: formData.isVendor ? formData.vendorCode : undefined,
             gstNo: formData.gstNo || undefined,
             panNo: formData.panNo,
             creditDays: parseInt(formData.creditDays, 10) || 0,
             openingBalance: parseInt(formData.opBalance, 10) || 0,
             balanceType: formData.opBalanceType,
-            code: formData.code,
             addressLine1: formData.address1,
             addressLine2: formData.address2 || undefined,
             pincode: formData.pinCode,
@@ -317,15 +337,32 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                             />
                         </div>
 
-                        {/* Group Name */}
-                        <CustomSelect
-                            label={t('common:group')}
-                            placeholder={t('common:select_group_under')}
-                            options={GROUP_NAMES}
-                            value={formData.groupName}
-                            onChange={(val) => handleInputChange('groupName', val)}
-                            required={true}
-                        />
+                        {/* Account Type Checkboxes */}
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-[13px] font-semibold text-[#4B5563]">
+                                {t('account_type')} <span className="text-red-500">*</span>
+                            </label>
+                            <div className="flex gap-6 h-[44px] items-center">
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <div 
+                                        className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${formData.isCustomer ? 'bg-[#014A36] border-[#014A36]' : 'border-gray-300 group-hover:border-[#014A36]'}`}
+                                        onClick={() => handleInputChange('isCustomer', !formData.isCustomer)}
+                                    >
+                                        {formData.isCustomer && <div className="w-2.5 h-2.5 bg-white rounded-sm" />}
+                                    </div>
+                                    <span className="text-[14px] text-[#4B5563]">{t('customer')}</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <div 
+                                        className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${formData.isVendor ? 'bg-[#014A36] border-[#014A36]' : 'border-gray-300 group-hover:border-[#014A36]'}`}
+                                        onClick={() => handleInputChange('isVendor', !formData.isVendor)}
+                                    >
+                                        {formData.isVendor && <div className="w-2.5 h-2.5 bg-white rounded-sm" />}
+                                    </div>
+                                    <span className="text-[14px] text-[#4B5563]">{t('vendor')}</span>
+                                </label>
+                            </div>
+                        </div>
 
                         {/* GST.No */}
                         <div className="flex flex-col gap-1.5">
@@ -392,19 +429,33 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                             </div>
                         </div>
 
+                        {/* Customer Code */}
+                        <div className="flex flex-col gap-1.5 animate-in fade-in duration-300">
+                             <label className="text-[13px] font-semibold text-[#4B5563] flex items-center justify-between">
+                                <span>{t('customer_code')}</span>
+                                {isGeneratingCode && formData.isCustomer && !formData.customerCode && <Loader2 size={12} className="animate-spin text-[#014A36]" />}
+                            </label>
+                            <input
+                                type="text"
+                                placeholder={t('customer_code')}
+                                className={`w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] outline-none transition-all ${formData.isCustomer ? 'bg-gray-50 text-[#111827]' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                                value={formData.customerCode}
+                                readOnly
+                            />
+                        </div>
+
                         {/* Vendor Code */}
-                        <div className="flex flex-col gap-1.5">
+                        <div className="flex flex-col gap-1.5 animate-in fade-in duration-300">
                             <label className="text-[13px] font-semibold text-[#4B5563] flex items-center justify-between">
-                                <span>{isEditMode ? t('common:code') : t('vendor_code')} <span className="text-red-500">*</span></span>
-                                {isGeneratingCode && <Loader2 size={12} className="animate-spin text-[#014A36]" />}
+                                <span>{t('vendor_code')}</span>
+                                {isGeneratingCode && formData.isVendor && !formData.vendorCode && <Loader2 size={12} className="animate-spin text-[#014A36]" />}
                             </label>
                             <input
                                 type="text"
                                 placeholder={t('vendor_code')}
-                                className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-gray-500 outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all bg-gray-50 cursor-not-allowed"
-                                value={formData.code}
+                                className={`w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] outline-none transition-all ${formData.isVendor ? 'bg-gray-50 text-[#111827]' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                                value={formData.vendorCode}
                                 readOnly
-                                onChange={(e) => handleInputChange('code', e.target.value)}
                             />
                         </div>
 

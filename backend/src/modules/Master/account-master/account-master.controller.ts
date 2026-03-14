@@ -107,8 +107,22 @@ export class AccountMasterController {
     res.send(file.buffer);
   }
 
+  @Get('generate-customer-code')
+  @ApiOperation({ summary: 'Generate next available customer code' })
+  async generateCustomerCode() {
+    const customerCode = await this.accountMasterService.generateCustomerCode();
+    return { customerCode };
+  }
+
+  @Get('generate-vendor-code')
+  @ApiOperation({ summary: 'Generate next available vendor code' })
+  async generateVendorCode() {
+    const vendorCode = await this.accountMasterService.generateVendorCode();
+    return { vendorCode };
+  }
+
   @Get('generate-code')
-  @ApiOperation({ summary: 'Generate next available code for a given group Name' })
+  @ApiOperation({ summary: 'Generate next available code for a given group Name (Legacy)' })
   @ApiQuery({ name: 'group', required: true, type: String })
   async generateCode(@Query('group') group: string) {
     const code = await this.accountMasterService.generateCode(group);

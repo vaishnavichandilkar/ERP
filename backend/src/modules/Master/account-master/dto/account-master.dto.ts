@@ -41,9 +41,30 @@ export class CreateAccountMasterDto {
   @IsNotEmpty()
   accountName: string;
 
-  @ApiProperty({ enum: GroupNameEnum })
+  @ApiPropertyOptional()
+  @IsBoolean()
+  @IsOptional()
+  isCustomer?: boolean;
+
+  @ApiPropertyOptional()
+  @IsBoolean()
+  @IsOptional()
+  isVendor?: boolean;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  customerCode?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  vendorCode?: string;
+
+  @ApiPropertyOptional({ enum: GroupNameEnum })
   @IsEnum(GroupNameEnum)
-  groupName: GroupNameEnum;
+  @IsOptional()
+  groupName?: GroupNameEnum;
 
   @ApiPropertyOptional()
   @IsString()

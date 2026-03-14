@@ -9,18 +9,16 @@ import * as PDFDocument from 'pdfkit';
 export class AccountMasterService {
   constructor(private prisma: PrismaService) {}
 
-  async generateCode(groupName: string): Promise<string> {
-    const isVendor = groupName === GroupNameEnum.CREDITORS;
-    const prefix = isVendor ? 'VN' : 'CT';
-
+  async generateCustomerCode(): Promise<string> {
+    const prefix = 'CT';
     const lastAccount = await this.prisma.accountMaster.findFirst({
-      where: { groupName },
+      where: { customerCode: { startsWith: prefix } },
       orderBy: { id: 'desc' },
     });
 
     let seq = 1;
-    if (lastAccount && lastAccount.code && lastAccount.code.startsWith(prefix)) {
-      const lastSeq = parseInt(lastAccount.code.replace(prefix, ''), 10);
+    if (lastAccount && lastAccount.customerCode) {
+      const lastSeq = parseInt(lastAccount.customerCode.replace(prefix, ''), 10);
       if (!isNaN(lastSeq)) {
         seq = lastSeq + 1;
       }
@@ -29,10 +27,40 @@ export class AccountMasterService {
     return `${prefix}${seq.toString().padStart(5, '0')}`;
   }
 
-  async create(createDto: CreateAccountMasterDto) {
-    const code = await this.generateCode(createDto.groupName);
+  async generateVendorCode(): Promise<string> {
+    const prefix = 'VN';
+    const lastAccount = await this.prisma.accountMaster.findFirst({
+      where: { vendorCode: { startsWith: prefix } },
+      orderBy: { id: 'desc' },
+    });
 
-    let { city, state } = createDto;
+    let seq = 1;
+    if (lastAccount && lastAccount.vendorCode) {
+      const lastSeq = parseInt(lastAccount.vendorCode.replace(prefix, ''), 10);
+      if (!isNaN(lastSeq)) {
+        seq = lastSeq + 1;
+      }
+    }
+
+    return `${prefix}${seq.toString().padStart(5, '0')}`;
+  }
+
+  async generateCode(groupName: string): Promise<string> {
+    if (groupName === GroupNameEnum.CREDITORS) {
+      return this.generateVendorCode();
+    }
+    return this.generateCustomerCode();
+  }
+
+  async create(createDto: CreateAccountMasterDto) {
+    let { city, state, customerCode, vendorCode, isCustomer, isVendor } = createDto;
+
+    if (isCustomer && !customerCode) {
+      customerCode = await this.generateCustomerCode();
+    }
+    if (isVendor && !vendorCode) {
+      vendorCode = await this.generateVendorCode();
+    }
 
     if (!city || !state) {
       const pinDetails = await this.getPincodeDetails(createDto.pincode);
@@ -45,7 +73,12 @@ export class AccountMasterService {
         ...createDto,
         city: city as string,
         state: state as string,
-        code,
+        customerCode,
+        vendorCode,
+        isCustomer: isCustomer || false,
+        isVendor: isVendor || false,
+        // For backward compatibility if needed, though we should stop using it
+        code: customerCode || vendorCode || '',
       },
     });
   }
@@ -89,8 +122,9 @@ export class AccountMasterService {
       where.OR = [
         // Identity
         { accountName: { contains: filter.search, mode: 'insensitive' } },
+        { customerCode: { contains: filter.search, mode: 'insensitive' } },
+        { vendorCode: { contains: filter.search, mode: 'insensitive' } },
         { code: { contains: filter.search, mode: 'insensitive' } },
-        { groupName: { contains: filter.search, mode: 'insensitive' } },
         
         // Tax
         { gstNo: { contains: filter.search, mode: 'insensitive' } },
@@ -267,9 +301,10 @@ export class AccountMasterService {
 
       // Mandatory Column Sequence
       worksheet.columns = [
-        { header: 'Code', key: 'code', width: 15 },
+        { header: 'Customer Code', key: 'customerCode', width: 15 },
+        { header: 'Vendor Code', key: 'vendorCode', width: 15 },
         { header: 'Account Name', key: 'accountName', width: 30 },
-        { header: 'Group Name', key: 'groupName', width: 25 },
+        { header: 'Type', key: 'type', width: 20 },
         { header: 'Credit Days', key: 'creditDays', width: 12 },
         { header: 'GST No', key: 'gstNo', width: 20 },
         { header: 'PAN No', key: 'panNo', width: 15 },
@@ -283,11 +318,15 @@ export class AccountMasterService {
       accounts.forEach(acc => {
         const fullAddress = `${acc.addressLine1}${acc.area ? ', ' + acc.area : ''}, ${acc.city}`;
         const balance = `${Number(acc.openingBalance).toLocaleString('en-IN')} ${acc.balanceType}`;
+        const types = [];
+        if (acc.isCustomer) types.push('Customer');
+        if (acc.isVendor) types.push('Vendor');
         
         worksheet.addRow({
-          code: acc.code,
+          customerCode: acc.customerCode || '-',
+          vendorCode: acc.vendorCode || '-',
           accountName: acc.accountName,
-          groupName: acc.groupName,
+          type: types.join(', '),
           creditDays: acc.creditDays,
           gstNo: acc.gstNo || '-',
           panNo: acc.panNo,
@@ -349,9 +388,9 @@ export class AccountMasterService {
 
         // Table Constants
         const tableTop = 100;
-        const colX = [20, 60, 155, 245, 285, 355, 415, 485, 610, 695, 765];
+        const colX = [20, 65, 110, 205, 245, 315, 375, 445, 570, 695, 765];
         const headers = [
-          'Code', 'Account Name', 'Group', 'Days', 'GST No', 
+          'Cust CD', 'Vend CD', 'Account Name', 'Days', 'GST No', 
           'PAN', 'Op. Bal', 'Address', 'Bank A/C', 'IFSC', 'Status'
         ];
 
@@ -391,15 +430,15 @@ export class AccountMasterService {
           const balance = `${Number(acc.openingBalance).toLocaleString('en-IN')} ${acc.balanceType}`;
 
           doc.fontSize(7);
-          doc.text(acc.code, colX[0], y, { width: 38, lineBreak: true });
-          doc.text(acc.accountName.substring(0, 30), colX[1], y, { width: 90, lineBreak: true });
-          doc.text(acc.groupName.split(' ')[0], colX[2], y, { width: 85, lineBreak: true });
+          doc.text(acc.customerCode || '-', colX[0], y, { width: 40, lineBreak: true });
+          doc.text(acc.vendorCode || '-', colX[1], y, { width: 40, lineBreak: true });
+          doc.text(acc.accountName.substring(0, 30), colX[2], y, { width: 90, lineBreak: true });
           doc.text(acc.creditDays.toString(), colX[3], y, { width: 35, lineBreak: false });
           doc.text(acc.gstNo || '-', colX[4], y, { width: 65, lineBreak: true });
           doc.text(acc.panNo, colX[5], y, { width: 55, lineBreak: true });
           doc.text(balance, colX[6], y, { width: 65, lineBreak: true });
           doc.text(fullAddress.substring(0, 45), colX[7], y, { width: 120, lineBreak: true });
-          doc.text(acc.accountNumber, colX[8], y, { width: 80, lineBreak: true });
+          doc.text(acc.accountNumber, colX[8], y, { width: 120, lineBreak: true });
           doc.text(acc.ifscCode, colX[9], y, { width: 65, lineBreak: true });
           doc.text(acc.status === MasterStatus.ACTIVE ? 'Active' : 'Inactive', colX[10], y, { width: 50, lineBreak: false });
           

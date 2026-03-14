@@ -291,13 +291,16 @@ const AccountMaster = () => {
                         <thead className="bg-[#F9FAFB] border-b border-[#E5E7EB] text-[13px] font-semibold text-[#6B7280]">
                             <tr>
                                 <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
-                                    <div className="flex items-center gap-2">{t('modules:vendor_code')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
+                                    <div className="flex items-center gap-2">{t('modules:customer_code')}</div>
+                                </th>
+                                <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
+                                    <div className="flex items-center gap-2">{t('modules:vendor_code')}</div>
                                 </th>
                                 <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
                                     <div className="flex items-center gap-2">{t('modules:account')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
                                 </th>
                                 <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
-                                    <div className="flex items-center gap-2">{t('common:group')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
+                                    <div className="flex items-center gap-2">{t('modules:account_type')}</div>
                                 </th>
                                 <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
                                     <div className="flex items-center gap-2">{t('modules:credit_days')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
@@ -329,9 +332,15 @@ const AccountMaster = () => {
                         <tbody className="text-[14px] text-[#111827]">
                             {paginatedData.map((row, index) => (
                                 <tr key={index} className="border-b border-[#E5E7EB] hover:bg-gray-50/50 transition-colors">
-                                    <td className="px-6 py-4 font-medium">{row.code}</td>
+                                    <td className="px-6 py-4 font-medium">{row.customerCode || '-'}</td>
+                                    <td className="px-6 py-4 font-medium">{row.vendorCode || '-'}</td>
                                     <td className="px-6 py-4">{row.accountName}</td>
-                                    <td className="px-6 py-4">{translateDynamic(row.groupName, t)}</td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex gap-1.5 flex-wrap">
+                                            {row.isCustomer && <span className="px-2 py-0.5 bg-[#014A36]/10 text-[#014A36] rounded text-[11px] font-bold uppercase tracking-wider">{t('modules:customer')}</span>}
+                                            {row.isVendor && <span className="px-2 py-0.5 bg-[#4B5563]/10 text-[#4B5563] rounded text-[11px] font-bold uppercase tracking-wider">{t('modules:vendor')}</span>}
+                                        </div>
+                                    </td>
                                     <td className="px-6 py-4">{row.creditDays}</td>
                                     <td className="px-6 py-4">{row.gstNo}</td>
                                     <td className="px-6 py-4">{row.panNo}</td>

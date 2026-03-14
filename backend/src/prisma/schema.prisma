@@ -247,13 +247,19 @@ model AccountMaster {
 
   // Data Schema & Sequence matches UI
   accountName    String
-  groupName      String
+  isCustomer     Boolean @default(false)
+  isVendor       Boolean @default(false)
+  customerCode   String? @unique
+  vendorCode     String? @unique
+  
+  groupName      String? // Deprecated but kept for safety during transition
+  code           String? @unique // Deprecated but kept for safety during transition
+
   gstNo          String?
   panNo          String
   creditDays     Int
   openingBalance Decimal
   balanceType    String
-  code           String @unique
 
   addressLine1   String
   addressLine2   String?
