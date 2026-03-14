@@ -20,7 +20,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const filteredOptions = isSearchable && searchTerm
+    const filteredOptions = isSearchable && searchTerm && searchTerm.toLowerCase() !== (value || '').toLowerCase()
         ? options.filter(opt => opt.toLowerCase().includes(searchTerm.toLowerCase()))
         : options;
 

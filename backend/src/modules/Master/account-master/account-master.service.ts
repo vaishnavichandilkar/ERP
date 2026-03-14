@@ -206,7 +206,11 @@ export class AccountMasterService {
 
       if (data && data[0] && data[0].Status === 'Success' && data[0].PostOffice && data[0].PostOffice.length > 0) {
         const postOffices = data[0].PostOffice;
-        const areas = postOffices.map((po: any) => po.Name);
+        const areas = Array.from(new Set(
+          postOffices
+            .map((po: any) => po.Name)
+            .filter((name: any) => typeof name === 'string' && name.trim() !== '')
+        )).sort();
         const postOffice = postOffices[0];
         
         await this.prisma.pincode.upsert({
