@@ -35,7 +35,7 @@ model User {
   subSubGroups          SubSubGroup[]
   subSubSubGroups       SubSubSubGroup[]
   subSubSubSubGroups    SubSubSubSubGroup[]
-  userGroups            UserGroup[]
+
   units                 UnitMaster[]
   @@map("User")
 }
@@ -415,18 +415,3 @@ model SubSubSubSubGroup {
   @@map("sub_sub_sub_sub_groups")
 }
 
-model UserGroup {
-  id          Int          @id @default(autoincrement())
-  parent_id   Int?
-  name        String
-  userId      Int?
-  status      MasterStatus @default(ACTIVE)
-  created_at  DateTime     @default(now())
-  updated_at  DateTime     @updatedAt
-
-  parent      UserGroup?   @relation("UserGroupToUserGroup", fields: [parent_id], references: [id])
-  children    UserGroup[]  @relation("UserGroupToUserGroup")
-  user        User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("user_groups")
-}
