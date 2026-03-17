@@ -26,3 +26,4 @@ backend/dist
 frontend/.env
 backend/dist
 frontend/.env
+backend/src/prisma/migrations
