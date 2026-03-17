@@ -318,12 +318,6 @@ const AccountMaster = () => {
                                     <div className="flex items-center gap-2">{t('common:address')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
                                 </th>
                                 <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
-                                    <div className="flex items-center gap-2">{t('modules:bank_account_no')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
-                                </th>
-                                <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
-                                    <div className="flex items-center gap-2">{t('modules:ifsc_code')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
-                                </th>
-                                <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
                                     <div className="flex items-center gap-2">{t('common:status')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
                                 </th>
                                 <th className="px-6 py-4 whitespace-nowrap text-center">{t('common:action')}</th>
@@ -346,8 +340,6 @@ const AccountMaster = () => {
                                     <td className="px-6 py-4">{row.panNo}</td>
                                     <td className="px-6 py-4">{row.openingBalance}</td>
                                     <td className="px-6 py-4 truncate max-w-[200px]" title={row.addressLine1}>{row.addressLine1}</td>
-                                    <td className="px-6 py-4">{row.accountNumber}</td>
-                                    <td className="px-6 py-4">{row.ifscCode}</td>
                                     <td className="px-6 py-4">
                                         <span className={row.status === 'ACTIVE' ? 'text-[#014A36] font-medium' : 'text-gray-500'}>
                                             {row.status === 'ACTIVE' ? t('common:active') : t('common:inactive')}
@@ -503,8 +495,8 @@ const AccountMaster = () => {
                                     className="w-full h-[46px] px-3 pr-10 border border-[#D1D5DB] rounded-[6px] text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/20 transition-all appearance-none bg-white font-['Plus_Jakarta_Sans']"
                                 >
                                     <option value="" disabled className="hidden"></option>
-                                    <option value="Sundry Creditors">{t('modules:sundry_creditors')}</option>
-                                    <option value="Sundry Debtors">{t('modules:sundry_debtors')}</option>
+                                    <option value="Sundry Creditors (Vendor)">{t('modules:sundry_creditors')}</option>
+                                    <option value="Sundry Debtors (Customer)">{t('modules:sundry_debtors')}</option>
                                 </select>
                                 <ChevronDown size={18} className="absolute right-3 top-1/2 translate-y-[20%] pointer-events-none text-[#6B7280]" />
                             </div>

@@ -248,39 +248,20 @@ enum MasterStatus {
 model AccountMaster {
   id Int @id @default(autoincrement())
 
-  // Data Schema & Sequence matches UI
-  accountName    String
-  isCustomer     Boolean @default(false)
-  isVendor       Boolean @default(false)
-  customerCode   String? @unique
-  vendorCode     String? @unique
-  
-  groupName      String? // Deprecated but kept for safety during transition
-  code           String? @unique // Deprecated but kept for safety during transition
+  accountName String
+  groupName   String[]
 
-  gstNo          String?
-  panNo          String
-  creditDays     Int
-  openingBalance Decimal
-  balanceType    String
+  gstNo String?
+  panNo String
 
-  addressLine1   String
-  addressLine2   String?
-  pincode        String
-  area           String?
-  city           String
-  state          String
-
-  msmeStatus     Boolean @default(false)
-  msmeRegNo      String?
-  regType        String?
-  regUnder       String?
-
-  // Bank Details
-  accountHolderName String
-  bankName          String
-  accountNumber     String
-  ifscCode          String
+  addressLine1 String
+  addressLine2 String?
+  pincode      String
+  area         String?
+  subDistrict  String?
+  district     String?
+  state        String
+  country      String?
 
   // Contact Persons
   prefix            ContactPrefix
@@ -288,10 +269,29 @@ model AccountMaster {
   emailId           String?
   mobileNo          String
 
+  // Supplier Details
+  supplierCode           String?  @unique
+  supplierCreditDays     Int?
+  supplierOpeningBalance Decimal?
+
+  // Customer Details
+  customerCode           String?  @unique
+  customerCreditDays     Int?
+  customerOpeningBalance Decimal?
+
+  // MSME Details
+  msmeEnabled        Boolean @default(false)
+  msmeId             String?
+  regUnder           String?
+  regType            String?
+  msmeCertificateUrl String?
+
+  otherDocuments Json?
+
   // Metadata
   status    MasterStatus @default(ACTIVE)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
   @@map("account_master")
 }
