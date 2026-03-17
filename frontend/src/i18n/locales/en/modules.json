@@ -196,5 +196,7 @@
     "edit_unit_details": "Edit Unit Details",
     "unit_form_desc_add": "Please fill in the information below to create a new unit category in the system library.",
     "unit_form_desc_edit": "Please fill in the information below to update the unit details in the system library.",
-    "view_unit_details": "Full details and status of the selected unit category"
+    "view_unit_details": "Full details and status of the selected unit category",
+    "group_required": "Group name is required",
+    "parent_group_required": "Please select a parent group Under"
 }

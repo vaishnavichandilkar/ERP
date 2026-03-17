@@ -22,7 +22,12 @@ export class GroupMasterRepository {
                             where: { userId },
                             include: {
                                 sub_sub_sub_groups: {
-                                    where: { userId }
+                                    where: { userId },
+                                    include: {
+                                        sub_sub_sub_sub_groups: {
+                                            where: { userId }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -49,6 +54,9 @@ export class GroupMasterRepository {
             } else if (level === 3) {
                 name = item.name;
                 children = item.sub_sub_sub_groups ? this.mapNestedGroups(item.sub_sub_sub_groups, 4) : [];
+            } else if (level === 4) {
+                name = item.name;
+                children = item.sub_sub_sub_sub_groups ? this.mapNestedGroups(item.sub_sub_sub_sub_groups, 5) : [];
             } else {
                 name = item.name;
                 children = [];
@@ -57,7 +65,7 @@ export class GroupMasterRepository {
             return {
                 ...item,
                 id: `${level}_${item.id}`, // Generate Virtual Unique ID
-                parent_id: item.parent_id || (item.group_id ? `1_${item.group_id}` : (item.sub_group_id ? `2_${item.sub_group_id}` : (item.sub_sub_group_id ? `3_${item.sub_sub_group_id}` : null))),
+                parent_id: item.parent_id || (item.group_id ? `1_${item.group_id}` : (item.sub_group_id ? `2_${item.sub_group_id}` : (item.sub_sub_group_id ? `3_${item.sub_sub_group_id}` : (item.sub_sub_sub_group_id ? `4_${item.sub_sub_sub_group_id}` : null)))),
                 group_name: name,
                 level,
                 children,
@@ -93,6 +101,11 @@ export class GroupMasterRepository {
                     where: { id, userId }
                 });
                 return g4 ? { level: 4, data: g4 } : null;
+            case 5:
+                const g5 = await this.prisma.subSubSubSubGroup.findFirst({
+                    where: { id, userId }
+                });
+                return g5 ? { level: 5, data: g5 } : null;
             default:
                 return null;
         }
@@ -131,6 +144,17 @@ export class GroupMasterRepository {
         });
     }
 
+    async createSubSubSubSubGroup(data: { name: string; sub_sub_sub_group_id: number; userId: number }) {
+        return this.prisma.subSubSubSubGroup.create({
+            data: {
+                name: data.name,
+                sub_sub_sub_group_id: data.sub_sub_sub_group_id,
+                userId: data.userId,
+                status: MasterStatus.ACTIVE,
+            },
+        });
+    }
+
     // Temporary method for root level creation if ever needed (not requested but good to have)
     async createPrimaryGroup(data: { group_name: string; userId: number }) {
         return this.prisma.group.create({
@@ -154,6 +178,7 @@ export class GroupMasterRepository {
             case 2: return this.prisma.subGroup.update({ where, data: { status } });
             case 3: return this.prisma.subSubGroup.update({ where, data: { status } });
             case 4: return this.prisma.subSubSubGroup.update({ where, data: { status } });
+            case 5: return this.prisma.subSubSubSubGroup.update({ where, data: { status } });
             default: return null;
         }
     }
@@ -163,6 +188,7 @@ export class GroupMasterRepository {
             case 2: return this.prisma.subGroup.findFirst({ where: { subgroup_name: name, group_id: parent_id, userId } });
             case 3: return this.prisma.subSubGroup.findFirst({ where: { name, sub_group_id: parent_id, userId } });
             case 4: return this.prisma.subSubSubGroup.findFirst({ where: { name, sub_sub_group_id: parent_id, userId } });
+            case 5: return this.prisma.subSubSubSubGroup.findFirst({ where: { name, sub_sub_sub_group_id: parent_id, userId } });
             default: return null;
         }
     }
@@ -190,6 +216,11 @@ export class GroupMasterRepository {
                     where,
                     data: { name: data.group_name, sub_sub_group_id: data.parent_id }
                 });
+            case 5:
+                return this.prisma.subSubSubSubGroup.update({
+                    where,
+                    data: { name: data.group_name, sub_sub_sub_group_id: data.parent_id }
+                });
             default:
                 return null;
         }
@@ -201,11 +232,10 @@ export class GroupMasterRepository {
 
         const flatten = (items: any[], depth: number) => {
             items.forEach(item => {
-                if (item.status === MasterStatus.ACTIVE && item.level < 4) {
-                    const indent = ' '.repeat((item.level - 1) * 2);
+                if (item.status === MasterStatus.ACTIVE && item.level < 5) {
                     flatList.push({
                         ...item,
-                        display_name: `${indent}${item.group_name}`
+                        display_name: item.group_name
                     });
                     if (item.children && item.children.length > 0) {
                         flatten(item.children, depth + 1);

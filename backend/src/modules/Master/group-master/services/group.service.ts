@@ -35,11 +35,11 @@ export class GroupMasterService {
         if (!parentInfo) {
             throw new NotFoundException(`Parent group with ID ${parent_uid} not found`);
         }
-        
+
         const parent_raw_id = parentInfo.data.id;
         const targetLevel = parentInfo.level + 1;
-        if (targetLevel > 4) {
-            throw new ForbiddenException('Maximum hierarchy level reached (Level 4)');
+        if (targetLevel > 5) {
+            throw new ForbiddenException('Maximum hierarchy level reached (Level 4 sub-groups)');
         }
 
         // 2. Check for duplicates in the target level/table
@@ -59,6 +59,9 @@ export class GroupMasterService {
                 break;
             case 4:
                 data = await this.groupRepository.createSubSubSubGroup({ name: group_name, sub_sub_group_id: parent_raw_id, userId });
+                break;
+            case 5:
+                data = await this.groupRepository.createSubSubSubSubGroup({ name: group_name, sub_sub_sub_group_id: parent_raw_id, userId });
                 break;
             default:
                 throw new ForbiddenException('Invalid hierarchy level');

@@ -118,27 +118,44 @@ const AddGroupModal = ({ isOpen, onClose, onSuccess }) => {
                     )}
                     {/* Group Input */}
                     <div className="space-y-1.5">
-                        <label className="text-[13px] font-medium text-[#4B5563]">{t('common:group')}</label>
+                        <label className="text-[13px] font-medium text-[#4B5563]">
+                            {t('common:group')} <span className="text-red-500">*</span>
+                        </label>
                         <input
                             type="text"
                             value={groupName}
                             onChange={(e) => setGroupName(e.target.value)}
                             placeholder={t('common:enter_group_text')}
-                            className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-3.5 outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all placeholder:text-[#9CA3AF] text-[14px] text-[#111827]"
+                            className={`w-full h-[44px] border rounded-[8px] px-3.5 outline-none focus:ring-1 focus:ring-[#014A36]/10 transition-all placeholder:text-[#9CA3AF] text-[14px] text-[#111827]
+                                ${error && !groupName.trim() ? 'border-red-300 bg-red-50/30' : 'border-[#E5E7EB] focus:border-[#014A36]'}`}
                         />
                     </div>
 
                     {/* Group Under Dropdown */}
                     <div className="space-y-1.5 pb-2">
-                        <label className="text-[13px] font-medium text-[#4B5563]">{t('common:group_under')}</label>
+                        <label className="text-[13px] font-medium text-[#4B5563]">
+                            {t('common:group_under')} <span className="text-red-500">*</span>
+                        </label>
                         <div className="relative" ref={dropdownRef}>
                             <div
                                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                className={`w-full h-[44px] border ${isDropdownOpen ? 'border-[#014A36] ring-1 ring-[#014A36]/10' : 'border-[#E5E7EB] hover:border-gray-300'} rounded-[8px] px-3.5 flex items-center justify-between cursor-pointer transition-all bg-white`}
+                                className={`w-full h-[44px] border ${isDropdownOpen ? 'border-[#014A36] ring-1 ring-[#014A36]/10' : 'border-[#E5E7EB] hover:border-gray-300'} 
+                                    ${error && !selectedGroup ? 'border-red-300 bg-red-50/30' : ''}
+                                    rounded-[8px] px-3.5 flex items-center justify-between cursor-pointer transition-all bg-white`}
                             >
-                                <span className={`text-[14px] ${selectedGroup ? 'text-[#111827]' : 'text-[#9CA3AF]'}`}>
-                                    {selectedGroup ? translateDynamic(selectedGroup.group_name, t) : t('common:select_group_under')}
-                                </span>
+                                <div className="flex items-center overflow-hidden">
+                                    {selectedGroup ? (
+                                        <>
+                                            {selectedGroup.level === 1 && selectedGroup.is_header && <span className="mr-2">📁</span>}
+                                            {selectedGroup.level > 1 && <span className="text-gray-400 mr-2">↳</span>}
+                                            <span className={`text-[14px] truncate ${selectedGroup.level === 1 && selectedGroup.is_header ? 'font-bold text-[#111827]' : 'text-[#111827]'}`}>
+                                                {translateDynamic(selectedGroup.group_name, t)}
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <span className="text-[14px] text-[#9CA3AF]">{t('common:select_group_under')}</span>
+                                    )}
+                                </div>
                                 <ChevronDown size={18} className={`text-[#6B7280] transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : 'rotate-0'}`} />
                             </div>
 
@@ -161,23 +178,45 @@ const AddGroupModal = ({ isOpen, onClose, onSuccess }) => {
 
                                     <div className="max-h-[200px] overflow-y-auto py-1.5 px-1.5">
                                         {filteredGroups.length > 0 ? (
-                                            filteredGroups.map((group) => (
-                                                <div
-                                                    key={group.id}
-                                                    onClick={() => {
-                                                        setSelectedGroup(group);
-                                                        setIsDropdownOpen(false);
-                                                    }}
-                                                    className={`px-3 py-2 rounded-[6px] hover:bg-[#F3F4F6] cursor-pointer text-[13px] transition-colors mb-0.5
-                                                        ${selectedGroup?.id === group.id ? 'bg-[#F3F4F6] text-[#014A36] font-medium' : 'text-[#4B5563]'}
-                                                        ${group.level === 1 ? 'font-bold' : ''}`}
-                                                >
-                                                    <div className="flex items-center justify-between">
-                                                        <span className="whitespace-pre">{translateDynamic(group.display_name, t)}</span>
-                                                        {group.level === 1 && group.is_header && <span className="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">HEADER</span>}
+                                            filteredGroups.map((group) => {
+                                                const isHeader = group.level === 1 && group.is_header;
+                                                const indentation = (group.level - 1) * 10;
+
+                                                return (
+                                                    <div
+                                                        key={group.id}
+                                                        onClick={() => {
+                                                            setSelectedGroup(group);
+                                                            setIsDropdownOpen(false);
+                                                        }}
+                                                        className={`px-3 py-2 rounded-[6px] hover:bg-[#F3F4F6] cursor-pointer text-[13px] transition-all mb-0.5
+                                                            ${selectedGroup?.id === group.id ? 'bg-[#F3F4F6] text-[#014A36] font-medium' : 'text-[#4B5563]'}
+                                                            ${isHeader ? 'mt-3 first:mt-0 font-bold border-t border-gray-50 pt-2.5' : ''}`}
+                                                    >
+                                                        <div className="flex items-center justify-between">
+                                                            <div className="flex items-center overflow-hidden">
+                                                                {!isHeader && (
+                                                                    <>
+                                                                        <span className="whitespace-pre text-transparent select-none">
+                                                                            {' '.repeat(indentation)}
+                                                                        </span>
+                                                                        <span className="text-gray-500 mr-1 flex-shrink-0 font-medium">↳</span>
+                                                                    </>
+                                                                )}
+                                                                {isHeader && <span className="mr-2 flex-shrink-0 text-amber-600">📁</span>}
+                                                                <span className={`truncate ${isHeader ? 'text-[#111827]' : 'text-[#374151]'}`}>
+                                                                    {translateDynamic(group.group_name, t)}
+                                                                </span>
+                                                            </div>
+                                                            {isHeader && (
+                                                                <span className="text-[9px] bg-gray-100 text-[#6B7280] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider flex-shrink-0 ml-2 border border-gray-200">
+                                                                    {t('common:header') || 'HEADER'}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            ))
+                                                );
+                                            })
                                         ) : (
                                             <div className="px-3 py-2 text-[12px] text-gray-400 text-center">No groups found</div>
                                         )}

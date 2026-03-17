@@ -178,5 +178,7 @@
     "agricultural_inputs": "कृषि संसाधन",
     "wheat_seeds": "गेहूं के बीज",
     "digital_indicator": "डिजिटल इंडिकेटर",
-    "crop_nutrients": "फसल पोषक तत्व"
+    "crop_nutrients": "फसल पोषक तत्व",
+    "group_required": "ग्रुप का नाम आवश्यक है",
+    "parent_group_required": "कृपया एक पैरेंट ग्रुप चुनें"
 }
