@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Search, Download, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, CheckCircle2, XCircle, ArrowLeft, ArrowRight, ChevronDown } from 'lucide-react';
+import { Search, Download, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, CheckCircle2, XCircle, ArrowLeft, ArrowRight, ChevronDown, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import AddCategoryModal from './components/AddCategoryModal';
 import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
@@ -164,70 +164,88 @@ const CategoryMaster = () => {
 
     return (
         <div className="flex flex-col animate-in fade-in duration-500">
-            {/* Add Type Button (Top Right) */}
-            <div className="flex justify-end mb-6">
-                <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="w-full sm:w-auto px-6 h-[44px] bg-[#014A36] text-white rounded-[8px] text-[14px] font-bold hover:bg-[#013b2b] transition-all shadow-sm flex items-center justify-center gap-2"
-                >
-                    {t('add_category')}
-                </button>
+            <div className="flex flex-col gap-1 mb-8">
+                <div className="flex items-center justify-between">
+                    <h1 className="text-[28px] font-bold text-[#111827] tracking-tight">{t('modules:category_master')}</h1>
+                    <button 
+                        onClick={() => setIsModalOpen(true)}
+                        className="w-full sm:w-auto px-8 h-[44px] bg-[#073318] text-white rounded-[10px] text-[15px] font-bold hover:bg-[#04200f] transition-all shadow-sm flex items-center justify-center">
+                        {t('modules:add_category')}
+                    </button>
+                </div>
+                <p className="text-[#6B7280] text-[15px]">{t('modules:category_master_desc') || 'View, verify, and manage product categories and sub-categories to keep your inventory organized.'}</p>
             </div>
 
             {/* Content List Array */}
-            <div className={`flex flex-col bg-white rounded-[12px] border border-[#E5E7EB] shadow-sm mb-8 ${activeRowDropdown ? '!overflow-visible' : 'overflow-hidden'}`}>
+            <div className={`flex flex-col bg-white rounded-[16px] border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-8 ${activeRowDropdown ? '!overflow-visible' : 'overflow-hidden'}`}>
                 {/* Action Bar (Search + Export) inner */}
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-b border-[#E5E7EB] bg-white">
-                    <div className="relative w-full sm:w-[320px]">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                        <input
-                            type="text"
-                            placeholder={t('common:search_anything')}
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full h-[40px] bg-[#F9FAFB] border border-[#E5E7EB] rounded-[8px] pl-10 pr-4 text-[14px] outline-none focus:border-[#014A36] transition-all"
-                        />
-                    </div>
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 border-b border-[#F3F4F6] bg-white">
+                    <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                        <div className="relative w-full sm:w-[320px]">
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                            <input
+                                type="text"
+                                placeholder="Search by anything..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full h-[42px] bg-white border border-[#E5E7EB] rounded-[10px] pl-10 pr-10 text-[14px] outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/10 transition-all placeholder:text-gray-400"
+                            />
+                            {searchQuery && (
+                                <button 
+                                    onClick={() => setSearchQuery('')}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                >
+                                    <X size={16} />
+                                </button>
+                            )}
+                        </div>
 
-                    <div className="flex flex-wrap items-center gap-3">
                         <button
                             onClick={toggleExpandAll}
-                            className="flex items-center gap-2 px-4 h-[40px] border border-[#E5E7EB] rounded-[8px] text-[14px] font-medium text-[#4B5563] hover:bg-gray-50 transition-all bg-white"
+                            className="flex items-center gap-2 px-4 h-[42px] border border-[#E5E7EB] rounded-[10px] text-[14px] font-semibold text-[#4B5563] hover:bg-gray-50 transition-all bg-white shadow-sm"
                         >
                             {isAllExpanded ? <Minimize2 size={16} className="text-gray-400" /> : <Maximize2 size={16} className="text-gray-400" />}
                             {isAllExpanded ? t('common:collapse_all') : t('common:expand_all')}
                         </button>
 
-                        <div className="relative" ref={exportRef}>
-                            <button
-                                onClick={() => setIsExportOpen(!isExportOpen)}
-                                className={`flex items-center gap-2 px-4 h-[40px] border rounded-[8px] text-[14px] font-medium transition-all duration-200 bg-white
-                                    ${isExportOpen ? 'border-[#014A36] text-[#014A36] shadow-sm' : 'border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
-                            >
-                                <Download size={18} className={isExportOpen ? 'text-[#014A36]' : 'text-gray-400'} />
-                                {t('common:export')}
-                            </button>
+                        <button
+                            className="flex items-center justify-center w-[42px] h-[42px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] hover:bg-gray-50 transition-colors bg-white shadow-sm"
+                            title="Refresh Data"
+                            onClick={() => window.location.reload()}
+                        >
+                            <RefreshCw size={18} className="text-gray-400" />
+                        </button>
+                    </div>
 
-                            {/* Export Dropdown */}
-                            {isExportOpen && (
-                                <div className="absolute top-full right-0 mt-2 w-[160px] bg-white border border-gray-100 rounded-[8px] shadow-lg z-[50] py-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                                    <button
-                                        onClick={handleExportPDF}
-                                        className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
-                                    >
-                                        <FileText size={18} className="text-red-500" />
-                                        {t('common:pdf')}
-                                    </button>
-                                    <button
-                                        onClick={handleExportExcel}
-                                        className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
-                                    >
-                                        <FileSpreadsheet size={18} className="text-green-600" />
-                                        {t('common:excel')}
-                                    </button>
-                                </div>
-                            )}
-                        </div>
+                    <div className="relative flex items-center gap-3" ref={exportRef}>
+                        <button
+                            onClick={() => setIsExportOpen(!isExportOpen)}
+                            className={`flex items-center justify-center gap-2 px-4 h-[42px] border rounded-[10px] text-[14px] font-semibold transition-all duration-200 bg-white
+                                ${isExportOpen ? 'border-[#073318] text-[#073318]' : 'border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
+                        >
+                            <Download size={18} className={isExportOpen ? 'text-[#073318]' : 'text-gray-400'} />
+                            {t('common:export')}
+                        </button>
+
+                        {/* Export Dropdown */}
+                        {isExportOpen && (
+                            <div className="absolute top-full right-0 mt-2 w-[160px] bg-white border border-gray-100 rounded-[12px] shadow-[0_10px_30px_rgba(0,0,0,0.1)] z-[50] py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <button
+                                    onClick={handleExportPDF}
+                                    className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#0A3622] transition-colors"
+                                >
+                                    <FileText size={18} className="text-red-500" />
+                                    {t('common:pdf')}
+                                </button>
+                                <button
+                                    onClick={handleExportExcel}
+                                    className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#0A3622] transition-colors"
+                                >
+                                    <FileSpreadsheet size={18} className="text-green-600" />
+                                    {t('common:excel')}
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
                 {/* Header title internally */}
@@ -362,49 +380,49 @@ const CategoryMaster = () => {
                 </div>
 
                 {/* Pagination Footer */}
-                <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-[#E5E7EB] bg-white gap-4">
-                    <div className="flex items-center gap-3 text-[14px] text-[#4B5563]">
+                <div className="flex flex-col sm:flex-row items-center justify-between px-8 py-6 border-t border-[#F3F4F6] bg-white gap-4">
+                    <div className="flex items-center gap-3 text-[14px] text-[#6B7280] font-medium">
                         <span>{t('common:show')}</span>
-                        <select
-                            value={itemsPerPage}
-                            onChange={(e) => {
-                                setItemsPerPage(Number(e.target.value));
-                                setCurrentPage(1); // Reset to first page when changing page size
-                            }}
-                            className="border border-[#E5E7EB] rounded-[6px] px-2 py-1 outline-none focus:border-[#014A36] text-[#111827] bg-white cursor-pointer"
-                        >
-                            <option value={5}>5</option>
-                            <option value={10}>10</option>
-                            <option value={20}>20</option>
-                            <option value={50}>50</option>
-                        </select>
+                        <div className="relative group">
+                            <select
+                                value={itemsPerPage}
+                                onChange={(e) => {
+                                    setItemsPerPage(Number(e.target.value));
+                                    setCurrentPage(1);
+                                }}
+                                className="appearance-none border border-[#E5E7EB] rounded-[8px] pl-3 pr-8 py-1.5 outline-none focus:border-[#073318] text-[#111827] bg-[#F9FAFB] cursor-pointer font-bold transition-all hover:bg-white"
+                            >
+                                <option value={5}>5</option>
+                                <option value={10}>10</option>
+                                <option value={20}>20</option>
+                                <option value={50}>50</option>
+                            </select>
+                            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none group-hover:text-[#073318]" />
+                        </div>
                         <span>{t('common:per_page')}</span>
                     </div>
 
-                    <div className="flex items-center gap-4 text-[14px]">
-                        <span className="text-[#6B7280]">
-                            {totalItems > 0 ? `${startIndex + 1}-${endIndex} ${t('common:of')} ${totalItems}` : `0-0 ${t('common:of')} 0`}
+                    <div className="flex items-center gap-6">
+                        <span className="text-[#6B7280] text-[14px] font-medium">
+                            {totalItems > 0 ? `${startIndex + 1}–${endIndex} of ${totalItems}` : `0-0 of 0`}
                         </span>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1.5">
                             <button
                                 onClick={() => handlePageChange(currentPage - 1)}
                                 disabled={currentPage === 1}
-                                className="p-1.5 text-[#6B7280] hover:text-[#111827] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                className="w-10 h-10 flex items-center justify-center text-[#6B7280] hover:bg-gray-50 hover:text-[#111827] disabled:opacity-30 disabled:cursor-not-allowed transition-all rounded-[10px]"
                             >
-                                <ArrowLeft size={18} />
+                                <ArrowLeft size={20} />
                             </button>
-                            <div className="flex items-center gap-1 px-2">
+                            <div className="flex items-center gap-1.5">
                                 {getVisiblePages().map((page, index) => (
                                     <button
                                         key={index}
                                         onClick={() => typeof page === 'number' ? handlePageChange(page) : null}
-                                        disabled={typeof page !== 'number'}
-                                        className={`w-8 h-8 rounded-[8px] flex items-center justify-center transition-colors text-[14px]
-                                            ${page === '...'
-                                                ? 'text-[#6B7280] cursor-default bg-transparent'
-                                                : currentPage === page
-                                                    ? 'bg-[#F3F4F6] text-[#111827] font-semibold'
-                                                    : 'text-[#6B7280] font-medium hover:bg-gray-50'
+                                        className={`w-10 h-10 rounded-[10px] flex items-center justify-center transition-all text-[14px] font-bold
+                                            ${currentPage === page
+                                                ? 'bg-[#F9FAFB] text-[#111827] shadow-sm'
+                                                : 'text-[#6B7280] hover:bg-gray-50 hover:text-[#111827]'
                                             }`}
                                     >
                                         {page}
@@ -414,9 +432,9 @@ const CategoryMaster = () => {
                             <button
                                 onClick={() => handlePageChange(currentPage + 1)}
                                 disabled={currentPage === totalPages || totalPages === 0}
-                                className="p-1.5 text-[#6B7280] hover:text-[#111827] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                className="w-10 h-10 flex items-center justify-center text-[#6B7280] hover:bg-gray-50 hover:text-[#111827] disabled:opacity-30 disabled:cursor-not-allowed transition-all rounded-[10px]"
                             >
-                                <ArrowRight size={18} />
+                                <ArrowRight size={20} />
                             </button>
                         </div>
                     </div>

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Download, Plus, Filter, MoreVertical, X, FileText, FileSpreadsheet, Eye, FileEdit, ArrowLeft, ArrowRight, ChevronsUpDown, CheckCircle2, XCircle } from 'lucide-react';
+import { Search, Download, Filter, MoreVertical, X, FileText, FileSpreadsheet, Eye, FileEdit, ArrowLeft, ArrowRight, ChevronsUpDown, CheckCircle2, XCircle, RefreshCw, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import ProductForm from './components/ProductForm';
 import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
@@ -174,60 +174,84 @@ const ProductMaster = () => {
             {/* Conditional Content: Table or Form */}
             {currentView.type === 'list' ? (
                 <>
-                    {/* Top Action Bar (Add Product Button) */}
-                    <div className="flex justify-end mb-6">
-                        <button
-                            onClick={() => setCurrentView({ type: 'add', data: null })}
-                            className="w-full sm:w-auto px-6 h-[44px] bg-[#014A36] text-white rounded-[8px] text-[14px] font-bold hover:bg-[#013b2b] transition-all shadow-sm flex items-center justify-center gap-2"
-                        >
-                            {t('add_product')}
-                        </button>
+                    <div className="flex flex-col gap-1 mb-8">
+                        <div className="flex items-center justify-between">
+                            <h1 className="text-[22px] font-bold text-[#111827] tracking-tight">{t('modules:product_master')}</h1>
+                            <button
+                                onClick={() => setCurrentView({ type: 'add', data: null })}
+                                className="w-full sm:w-auto px-8 h-[44px] bg-[#073318] text-white rounded-[10px] text-[15px] font-bold hover:bg-[#04200f] transition-all shadow-sm flex items-center justify-center"
+                            >
+                                {t('modules:add_product')}
+                            </button>
+                        </div>
+                        <p className="text-[#6B7280] text-[15px]">{t('modules:product_master_desc') || 'View, verify, and manage all products in your inventory, including HSN codes and tax configurations.'}</p>
                     </div>
 
                     {/* Table Area */}
-                    <div className="flex flex-col bg-white rounded-[12px] border border-[#E5E7EB] shadow-sm w-full mb-8">
-                        {/* Action Bar (Search, Filter, Export) inner */}
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-b border-[#E5E7EB] bg-white">
-                            <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+                    <div className="flex flex-col bg-white rounded-[16px] border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.03)] w-full overflow-hidden mb-8">
+                        {/* Table Header Section */}
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 border-b border-[#F3F4F6]">
+                            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
                                 <div className="relative w-full sm:w-[320px]">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                                     <input
                                         type="text"
-                                        placeholder={t('common:search_anything')}
+                                        placeholder="Search by anything..."
                                         value={searchQuery}
                                         onChange={(e) => {
                                             setSearchQuery(e.target.value);
                                             setCurrentPage(1);
                                         }}
-                                        className="w-full h-[40px] bg-[#F9FAFB] border border-[#E5E7EB] rounded-[8px] pl-10 pr-4 text-[14px] outline-none focus:border-[#014A36] transition-all"
+                                        className="w-full h-[42px] bg-white border border-[#E5E7EB] rounded-[10px] pl-10 pr-10 text-[14px] outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/10 transition-all placeholder:text-gray-400"
                                     />
+                                    {searchQuery && (
+                                        <button 
+                                            onClick={() => {
+                                                setSearchQuery('');
+                                                setCurrentPage(1);
+                                            }}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                    )}
                                 </div>
                                 <button
                                     onClick={() => setIsFilterOpen(true)}
-                                    className="flex items-center gap-2 px-6 h-[40px] border border-[#E5E7EB] rounded-[8px] text-[14px] font-medium text-[#4B5563] hover:bg-gray-50 transition-all bg-white"
+                                    className="flex items-center gap-2 px-4 h-[42px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-semibold hover:bg-gray-50 transition-all bg-white shadow-sm"
                                 >
                                     <Filter size={18} className="text-gray-400" />
                                     {t('common:filter')}
                                 </button>
+                                <button
+                                    className="flex items-center justify-center w-[42px] h-[42px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] hover:bg-gray-50 transition-colors bg-white shadow-sm"
+                                    title="Refresh Data"
+                                    onClick={() => {
+                                        // Logic to refresh data if connected to real API
+                                        window.location.reload();
+                                    }}
+                                >
+                                    <RefreshCw size={18} className="text-gray-400" />
+                                </button>
                             </div>
 
-                            <div className="relative w-full sm:w-auto" ref={exportRef}>
+                            <div className="relative flex items-center gap-3" ref={exportRef}>
                                 <button
                                     onClick={() => setIsExportOpen(!isExportOpen)}
-                                    className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 h-[40px] border rounded-[8px] text-[14px] font-medium transition-all duration-200 bg-white
-                                        ${isExportOpen ? 'border-[#014A36] text-[#014A36]' : 'border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
+                                    className={`flex items-center justify-center gap-2 px-4 h-[42px] border rounded-[10px] text-[14px] font-semibold transition-all duration-200 bg-white
+                                                        ${isExportOpen ? 'border-[#073318] text-[#073318]' : 'border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
                                 >
-                                    <Download size={18} className={isExportOpen ? 'text-[#014A36]' : 'text-gray-400'} />
+                                    <Download size={18} className={isExportOpen ? 'text-[#073318]' : 'text-gray-400'} />
                                     {t('common:export')}
                                 </button>
 
                                 {isExportOpen && (
                                     <div className="absolute top-full right-0 mt-2 w-[160px] bg-white border border-gray-100 rounded-[12px] shadow-[0_10px_30px_rgba(0,0,0,0.1)] z-[50] py-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                                        <button onClick={handleExportPDF} className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors">
+                                        <button onClick={handleExportPDF} className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#0A3622] transition-colors">
                                             <FileText size={18} className="text-red-500" />
                                             {t('common:pdf')}
                                         </button>
-                                        <button onClick={handleExportExcel} className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors">
+                                        <button onClick={handleExportExcel} className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#0A3622] transition-colors">
                                             <FileSpreadsheet size={18} className="text-green-600" />
                                             {t('common:excel')}
                                         </button>
@@ -236,53 +260,58 @@ const ProductMaster = () => {
                             </div>
                         </div>
 
-                        <div className="overflow-x-auto w-full min-h-[260px]">
+                        <div className="overflow-x-auto w-full min-h-[400px]">
                             <table className="w-full min-w-[1200px] text-left border-collapse">
                                 <thead>
-                                    <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB] text-[13px] font-semibold text-[#6B7280]">
-                                        <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
-                                            <div className="flex items-center gap-2">{t('product_code')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
+                                    <tr className="bg-[#F9FAFB] border-b border-[#F3F4F6] text-[14px] font-bold text-[#374151]">
+                                        <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB]">
+                                            <div className="flex items-center gap-2 uppercase tracking-tight">{t('product_code')} <ChevronsUpDown size={14} className="text-gray-300" /></div>
                                         </th>
-                                        <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
-                                            <div className="flex items-center gap-2">{t('product_name')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
+                                        <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB]">
+                                            <div className="flex items-center gap-2 uppercase tracking-tight">{t('product_name')} <ChevronsUpDown size={14} className="text-gray-300" /></div>
                                         </th>
-                                        <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
-                                            <div className="flex items-center gap-2">{t('uom')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
+                                        <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB]">
+                                            <div className="flex items-center gap-2 uppercase tracking-tight">{t('uom')} <ChevronsUpDown size={14} className="text-gray-300" /></div>
                                         </th>
-                                        <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
-                                            <div className="flex items-center gap-2">{t('product_type')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
+                                        <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB]">
+                                            <div className="flex items-center gap-2 uppercase tracking-tight">{t('product_type')} <ChevronsUpDown size={14} className="text-gray-300" /></div>
                                         </th>
-                                        <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
-                                            <div className="flex items-center gap-2">{t('category')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
+                                        <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB]">
+                                            <div className="flex items-center gap-2 uppercase tracking-tight">{t('category')} <ChevronsUpDown size={14} className="text-gray-300" /></div>
                                         </th>
-                                        <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
-                                            <div className="flex items-center gap-2">{t('sub_category')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
+                                        <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB]">
+                                            <div className="flex items-center gap-2 uppercase tracking-tight">{t('sub_category')} <ChevronsUpDown size={14} className="text-gray-300" /></div>
                                         </th>
-                                        <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
-                                            <div className="flex items-center gap-2">{t('hsn_code')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
+                                        <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB]">
+                                            <div className="flex items-center gap-2 uppercase tracking-tight">{t('hsn_code')} <ChevronsUpDown size={14} className="text-gray-300" /></div>
                                         </th>
-                                        <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
-                                            <div className="flex items-center gap-2">{t('tax_percent')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
+                                        <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB]">
+                                            <div className="flex items-center gap-2 uppercase tracking-tight">{t('tax_percent')} <ChevronsUpDown size={14} className="text-gray-300" /></div>
                                         </th>
-                                        <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
-                                            <div className="flex items-center gap-2">{t('common:status')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
+                                        <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB]">
+                                            <div className="flex items-center gap-2 uppercase tracking-tight">{t('common:status')} <ChevronsUpDown size={14} className="text-gray-300" /></div>
                                         </th>
-                                        <th className="px-6 py-4 whitespace-nowrap text-center">{t('common:action')}</th>
+                                        <th className="px-6 py-5 whitespace-nowrap text-center uppercase tracking-tight">{t('common:action')}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="text-[14px] text-[#111827]">
                                     {currentData.length > 0 ? currentData.map((row, index) => (
-                                        <tr key={row.id} className="border-b border-[#E5E7EB] last:border-b-0 hover:bg-gray-50/50 transition-colors">
-                                            <td className="px-6 py-4">{row.code}</td>
-                                            <td className="px-6 py-4 font-medium">{translateDynamic(row.name, t)}</td>
-                                            <td className="px-6 py-4">{translateDynamic(row.uom, t)}</td>
-                                            <td className="px-6 py-4">{translateDynamic(row.type, t)}</td>
-                                            <td className="px-6 py-4">{translateDynamic(row.category, t)}</td>
-                                            <td className="px-6 py-4">{translateDynamic(row.subcategory, t)}</td>
-                                            <td className="px-6 py-4">{row.hsn}</td>
-                                            <td className="px-6 py-4">{row.tax}</td>
-                                            <td className="px-6 py-4">{row.status.toUpperCase() === 'ACTIVE' ? t('common:active') : t('common:inactive')}</td>
-                                            <td className={`px-6 py-4 text-center relative ${activeDropdown === row.id ? 'z-50' : ''}`}>
+                                        <tr key={row.id} className="border-b border-[#F3F4F6] last:border-b-0 hover:bg-[#F9FAFB] transition-all group">
+                                            <td className="px-6 py-5 font-bold text-[#111827] border-r border-[#F3F4F6]">{row.code}</td>
+                                            <td className="px-6 py-5 font-bold text-[#111827] border-r border-[#F3F4F6]">{translateDynamic(row.name, t)}</td>
+                                            <td className="px-6 py-5 font-medium text-[#4B5563] border-r border-[#F3F4F6]">{translateDynamic(row.uom, t)}</td>
+                                            <td className="px-6 py-5 font-medium text-[#4B5563] border-r border-[#F3F4F6]">{translateDynamic(row.type, t)}</td>
+                                            <td className="px-6 py-5 font-medium text-[#4B5563] border-r border-[#F3F4F6]">{translateDynamic(row.category, t)}</td>
+                                            <td className="px-6 py-5 font-medium text-[#4B5563] border-r border-[#F3F4F6]">{translateDynamic(row.subcategory, t)}</td>
+                                            <td className="px-6 py-5 text-[#6B7280] border-r border-[#F3F4F6]">{row.hsn}</td>
+                                            <td className="px-6 py-5 text-[#6B7280] border-r border-[#F3F4F6]">{row.tax}</td>
+                                            <td className="px-6 py-5 border-r border-[#F3F4F6]">
+                                                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-bold ${row.status.toUpperCase() === 'ACTIVE' ? 'bg-[#ECFDF5] text-[#059669]' : 'bg-[#FEF2F2] text-[#DC2626]'}`}>
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${row.status.toUpperCase() === 'ACTIVE' ? 'bg-[#059669]' : 'bg-[#DC2626]'}`}></span>
+                                                    {row.status.toUpperCase() === 'ACTIVE' ? t('common:active') : t('common:inactive')}
+                                                </div>
+                                            </td>
+                                            <td className={`px-6 py-5 text-center relative ${activeDropdown === row.id ? 'z-50' : ''}`}>
                                                 <button
                                                     onClick={(e) => toggleDropdown(row.id, e)}
                                                     className="p-1 hover:bg-gray-100 rounded-full transition-colors text-gray-500"
@@ -293,37 +322,37 @@ const ProductMaster = () => {
                                                 {activeDropdown === row.id && (
                                                     <div
                                                         ref={dropdownRef}
-                                                        className={`absolute right-6 w-max min-w-[170px] bg-white border border-gray-100 rounded-[12px] shadow-[0_10px_30px_rgba(0,0,0,0.15)] z-[100] py-2 animate-in fade-in duration-200 text-left ${index >= currentData.length - 2 && currentData.length > 2
+                                                        className={`absolute right-6 w-max min-w-[190px] bg-white border border-gray-100 rounded-[12px] shadow-[0_10px_30px_rgba(0,0,0,0.15)] z-[100] py-2 animate-in fade-in duration-200 text-left ${index >= currentData.length - 2 && currentData.length > 2
                                                             ? 'bottom-[80%] mb-1 slide-in-from-bottom-2'
                                                             : 'top-[80%] mt-1 slide-in-from-top-2'
                                                             }`}
                                                     >
                                                         <button
                                                             onClick={() => setCurrentView({ type: 'view', data: row })}
-                                                            className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors whitespace-nowrap font-medium"
+                                                            className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#0A3622] transition-colors whitespace-nowrap font-bold"
                                                         >
-                                                            <Eye size={16} />
+                                                            <Eye size={16} className="text-gray-400" />
                                                             {t('view_product')}
                                                         </button>
                                                         <button
                                                             onClick={() => setCurrentView({ type: 'edit', data: row })}
-                                                            className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors whitespace-nowrap font-medium"
+                                                            className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#0A3622] transition-colors whitespace-nowrap font-bold"
                                                         >
-                                                            <FileEdit size={16} />
+                                                            <FileEdit size={16} className="text-gray-400" />
                                                             {t('update_product')}
                                                         </button>
                                                         <button
                                                             onClick={() => handleToggleStatus(row.id)}
-                                                            className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors whitespace-nowrap font-medium border-t border-gray-100"
+                                                            className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#0A3622] transition-colors whitespace-nowrap font-bold border-t border-gray-100"
                                                         >
                                                             {row.status.toUpperCase() === 'ACTIVE' ? (
                                                                 <>
-                                                                    <CheckCircle2 size={16} className="text-gray-500" />
+                                                                    <XCircle size={16} className="text-red-500" />
                                                                     {t('common:inactive')}
                                                                 </>
                                                             ) : (
                                                                 <>
-                                                                    <CheckCircle2 size={16} className="text-[#014A36]" />
+                                                                    <CheckCircle2 size={16} className="text-[#0A3622]" />
                                                                     {t('common:active')}
                                                                 </>
                                                             )}
@@ -334,8 +363,10 @@ const ProductMaster = () => {
                                         </tr>
                                     )) : (
                                         <tr>
-                                            <td colSpan="10" className="px-6 py-12 text-center text-gray-500">
-                                                {t('no_products_found')}
+                                            <td colSpan="10" className="px-6 py-20 text-center text-gray-400">
+                                                <div className="flex flex-col items-center gap-3">
+                                                    <span className="font-medium">{t('no_products_found')}</span>
+                                                </div>
                                             </td>
                                         </tr>
                                     )}
@@ -344,49 +375,49 @@ const ProductMaster = () => {
                         </div>
 
                         {/* Pagination */}
-                        <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-[#E5E7EB] bg-white gap-4">
-                            <div className="flex items-center gap-3 text-[14px] text-[#4B5563]">
+                        <div className="flex flex-col sm:flex-row items-center justify-between px-8 py-6 border-t border-[#F3F4F6] bg-white gap-4">
+                            <div className="flex items-center gap-3 text-[14px] text-[#6B7280] font-medium">
                                 <span>{t('common:show')}</span>
-                                <select
-                                    value={itemsPerPage}
-                                    onChange={(e) => {
-                                        setItemsPerPage(Number(e.target.value));
-                                        setCurrentPage(1); // Reset to first page when changing page size
-                                    }}
-                                    className="border border-[#E5E7EB] rounded-[6px] px-2 py-1 outline-none focus:border-[#014A36] text-[#111827] bg-white cursor-pointer"
-                                >
-                                    <option value={5}>5</option>
-                                    <option value={10}>10</option>
-                                    <option value={20}>20</option>
-                                    <option value={50}>50</option>
-                                </select>
+                                <div className="relative group">
+                                    <select
+                                        value={itemsPerPage}
+                                        onChange={(e) => {
+                                            setItemsPerPage(Number(e.target.value));
+                                            setCurrentPage(1);
+                                        }}
+                                        className="appearance-none border border-[#E5E7EB] rounded-[8px] pl-3 pr-8 py-1.5 outline-none focus:border-[#073318] text-[#111827] bg-[#F9FAFB] cursor-pointer font-bold transition-all hover:bg-white"
+                                    >
+                                        <option value={5}>5</option>
+                                        <option value={10}>10</option>
+                                        <option value={20}>20</option>
+                                        <option value={50}>50</option>
+                                    </select>
+                                    <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none group-hover:text-[#073318]" />
+                                </div>
                                 <span>{t('common:per_page')}</span>
                             </div>
 
-                            <div className="flex items-center gap-4 text-[14px]">
-                                <span className="text-[#6B7280]">
-                                    {totalItems > 0 ? `${startIndex + 1}-${endIndex} ${t('common:of')} ${totalItems}` : `0-0 ${t('common:of')} 0`}
+                            <div className="flex items-center gap-6">
+                                <span className="text-[#6B7280] text-[14px] font-medium">
+                                    {totalItems > 0 ? `${startIndex + 1}–${endIndex} of ${totalItems}` : `0-0 of 0`}
                                 </span>
-                                <div className="flex items-center gap-1">
+                                <div className="flex items-center gap-1.5">
                                     <button
                                         onClick={() => handlePageChange(currentPage - 1)}
                                         disabled={currentPage === 1}
-                                        className="p-1.5 text-[#6B7280] hover:text-[#111827] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        className="w-10 h-10 flex items-center justify-center text-[#6B7280] hover:bg-gray-50 hover:text-[#111827] disabled:opacity-30 disabled:cursor-not-allowed transition-all rounded-[10px]"
                                     >
-                                        <ArrowLeft size={18} />
+                                        <ArrowLeft size={20} />
                                     </button>
-                                    <div className="flex items-center gap-1 px-2">
+                                    <div className="flex items-center gap-1.5">
                                         {getVisiblePages().map((page, index) => (
                                             <button
                                                 key={index}
                                                 onClick={() => typeof page === 'number' ? handlePageChange(page) : null}
-                                                disabled={typeof page !== 'number'}
-                                                className={`w-8 h-8 rounded-[8px] flex items-center justify-center transition-colors text-[14px]
-                                                    ${page === '...'
-                                                        ? 'text-[#6B7280] cursor-default bg-transparent'
-                                                        : currentPage === page
-                                                            ? 'bg-[#F3F4F6] text-[#111827] font-semibold'
-                                                            : 'text-[#6B7280] font-medium hover:bg-gray-50'
+                                                className={`w-10 h-10 rounded-[10px] flex items-center justify-center transition-all text-[14px] font-bold
+                                                    ${currentPage === page
+                                                        ? 'bg-[#F9FAFB] text-[#111827] shadow-sm'
+                                                        : 'text-[#6B7280] hover:bg-gray-50 hover:text-[#111827]'
                                                     }`}
                                             >
                                                 {page}
@@ -396,9 +427,9 @@ const ProductMaster = () => {
                                     <button
                                         onClick={() => handlePageChange(currentPage + 1)}
                                         disabled={currentPage === totalPages || totalPages === 0}
-                                        className="p-1.5 text-[#6B7280] hover:text-[#111827] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        className="w-10 h-10 flex items-center justify-center text-[#6B7280] hover:bg-gray-50 hover:text-[#111827] disabled:opacity-30 disabled:cursor-not-allowed transition-all rounded-[10px]"
                                     >
-                                        <ArrowRight size={18} />
+                                        <ArrowRight size={20} />
                                     </button>
                                 </div>
                             </div>
@@ -417,10 +448,10 @@ const ProductMaster = () => {
                     <div className={`fixed top-0 right-0 h-full w-full sm:w-[400px] bg-white shadow-2xl z-[70] transform transition-transform duration-300 ease-in-out flex flex-col ${isFilterOpen ? 'translate-x-0' : 'translate-x-full'}`}>
                         {/* Header */}
                         <div className="flex items-center justify-between px-6 py-5 border-b border-[#E5E7EB]">
-                            <h2 className="text-[18px] font-bold text-[#111827]">{t('apply_filters')}</h2>
+                            <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">{t('apply_filters')}</h2>
                             <button
                                 onClick={() => setIsFilterOpen(false)}
-                                className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+                                className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-[#111827] hover:bg-gray-100 rounded-full transition-all"
                             >
                                 <X size={20} />
                             </button>
@@ -435,7 +466,7 @@ const ProductMaster = () => {
                                     <select
                                         value={filterInputs.uom}
                                         onChange={(e) => setFilterInputs({ ...filterInputs, uom: e.target.value })}
-                                        className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] pl-4 pr-10 text-[14px] text-[#111827] outline-none focus:border-[#014A36] appearance-none bg-white"
+                                        className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] pl-4 pr-10 text-[14px] text-[#111827] outline-none focus:border-[#073318] appearance-none bg-white"
                                     >
                                         <option value="">{t('common:all')}</option>
                                         <option value="KG">KG</option>
@@ -456,7 +487,7 @@ const ProductMaster = () => {
                                     <select
                                         value={filterInputs.status}
                                         onChange={(e) => setFilterInputs({ ...filterInputs, status: e.target.value })}
-                                        className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] pl-4 pr-10 text-[14px] text-[#111827] outline-none focus:border-[#014A36] appearance-none bg-white"
+                                        className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] pl-4 pr-10 text-[14px] text-[#111827] outline-none focus:border-[#073318] appearance-none bg-white"
                                     >
                                         <option value="">{t('common:all')}</option>
                                         <option value="Active">{t('common:active')}</option>
@@ -477,25 +508,25 @@ const ProductMaster = () => {
                                         value={filterInputs.productType}
                                         onChange={(e) => setFilterInputs({ ...filterInputs, productType: e.target.value })}
                                         placeholder={t('eg_goods')}
-                                        className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] bg-white"
+                                        className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#073318] bg-white"
                                     />
                                 </div>
                             </div>
                         </div>
 
                         {/* Footer Buttons */}
-                        <div className="px-6 py-5 border-t border-[#E5E7EB] flex items-center gap-4 bg-white">
+                        <div className="px-8 py-6 border-t border-[#E5E7EB] flex items-center gap-4 bg-white">
                             <button
                                 onClick={handleClearFilter}
-                                className="flex-1 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors"
+                                className="flex-1 h-[48px] border border-[#E5E7EB] rounded-[10px] text-[15px] font-bold text-[#4B5563] hover:bg-gray-50 hover:text-[#111827] transition-all bg-white"
                             >
                                 {t('common:clear_filter')}
                             </button>
                             <button
                                 onClick={handleApplyFilter}
-                                className="flex-1 h-[44px] bg-[#014A36] text-white rounded-[8px] text-[14px] font-bold hover:bg-[#013b2b] transition-colors shadow-sm"
+                                className="flex-1 h-[48px] bg-[#073318] text-white rounded-[10px] text-[15px] font-bold hover:bg-[#04200f] transition-all shadow-md"
                             >
-                                {t('apply_filter')}
+                                {t('common:apply_filter') || 'Apply Filter'}
                             </button>
                         </div>
                     </div>

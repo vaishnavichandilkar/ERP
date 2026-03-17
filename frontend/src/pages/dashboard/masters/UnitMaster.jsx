@@ -554,7 +554,7 @@ const UnitMaster = () => {
                                 onClick={handleApplyFilter}
                                 className="flex-1 h-[46px] bg-[#073318] text-white rounded-[10px] text-[15px] font-bold hover:bg-[#04200f] transition-colors shadow-sm"
                             >
-                                {t('apply_filter')}
+                                {t('common:apply_filter') || 'Apply Filter'}
                             </button>
                         </div>
                     </div>

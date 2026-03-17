@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchAllAccounts, toggleAccountStatus } from '../../../redux/account/accountSlice';
-import { Search, Download, Filter, MoreVertical, Eye, Edit3, CheckCircle2, ChevronDown, ArrowLeft, ArrowRight, ChevronsUpDown, X, FileText, FileSpreadsheet } from 'lucide-react';
+import { Search, Download, Filter, MoreVertical, Eye, Edit3, CheckCircle2, ChevronDown, ArrowLeft, ArrowRight, ChevronsUpDown, X, FileText, FileSpreadsheet, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
 import { translateDynamic } from '../../../utils/i18nUtils';
@@ -207,44 +207,65 @@ const AccountMaster = () => {
 
     return (
         <div className="flex flex-col font-['Plus_Jakarta_Sans'] w-full animate-in fade-in duration-500">
-            {/* Top aligned Add Button */}
-            <div className="flex justify-end mb-6">
-                <button 
-                    onClick={() => setCurrentView('add')}
-                    className="w-full sm:w-auto px-6 h-[44px] bg-[#014A36] text-white rounded-[8px] text-[14px] font-bold hover:bg-[#013b2b] transition-all flex items-center justify-center gap-2 shadow-sm">
-                    {t('modules:add_account')}
-                </button>
+            <div className="flex flex-col gap-1 mb-8">
+                <div className="flex items-center justify-between">
+                    <h1 className="text-[28px] font-bold text-[#111827] tracking-tight">{t('modules:account_master')}</h1>
+                    <button 
+                        onClick={() => setCurrentView('add')}
+                        className="w-full sm:w-auto px-8 h-[44px] bg-[#073318] text-white rounded-[10px] text-[15px] font-bold hover:bg-[#04200f] transition-all shadow-sm flex items-center justify-center">
+                        {t('modules:add_account')}
+                    </button>
+                </div>
+                <p className="text-[#6B7280] text-[15px]">{t('modules:account_master_desc') || 'View, verify, and manage all customer and vendor accounts, including balance and contact information.'}</p>
             </div>
 
             {/* Main Content Box */}
-            <div className="bg-white rounded-[12px] border border-[#E5E7EB] shadow-sm">
+            <div className="bg-white rounded-[16px] border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden">
 
                 {/* Search, Filter, Export Bar */}
-                <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-b border-[#E5E7EB] gap-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between p-6 border-b border-[#F3F4F6] bg-white gap-4">
                     <div className="flex items-center gap-3 w-full sm:w-auto flex-1">
                         <div className="relative w-full sm:w-[320px]">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                             <input
                                 type="text"
-                                placeholder={t('common:search_anything')}
+                                placeholder="Search by anything..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full h-[40px] bg-[#F9FAFB] border border-[#E5E7EB] rounded-[8px] pl-10 pr-4 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] outline-none focus:border-[#014A36] transition-all"
+                                className="w-full h-[42px] bg-white border border-[#E5E7EB] rounded-[10px] pl-10 pr-10 text-[14px] text-[#111827] placeholder:text-gray-400 outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/10 transition-all"
                             />
+                            {searchQuery && (
+                                <button 
+                                    onClick={() => setSearchQuery('')}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                >
+                                    <X size={16} />
+                                </button>
+                            )}
                         </div>
-                        <button onClick={() => setIsFilterOpen(true)} className="flex items-center gap-2 px-6 h-[40px] border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-medium hover:bg-gray-50 transition-colors bg-white">
+                        <button 
+                            onClick={() => setIsFilterOpen(true)} 
+                            className="flex items-center gap-2 px-6 h-[42px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-semibold hover:bg-gray-50 transition-colors bg-white shadow-sm"
+                        >
                             <Filter size={18} className="text-gray-400" />
                             {t('common:filter')}
+                        </button>
+                        <button
+                            className="flex items-center justify-center w-[42px] h-[42px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] hover:bg-gray-50 transition-colors bg-white shadow-sm"
+                            title="Refresh Data"
+                            onClick={() => dispatch(fetchAllAccounts({ page: currentPage, limit: rowsPerPage, search: searchQuery, ...appliedFilters }))}
+                        >
+                            <RefreshCw size={18} className="text-gray-400" />
                         </button>
                     </div>
 
                     <div className="relative" ref={exportRef}>
                         <button 
                             onClick={() => setIsExportOpen(!isExportOpen)}
-                            className={`flex items-center gap-2 px-6 h-[40px] border rounded-[8px] text-[14px] font-medium transition-all duration-200 bg-white
-                                ${isExportOpen ? 'border-[#014A36] text-[#014A36] shadow-sm' : 'border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
+                            className={`flex items-center gap-2 px-6 h-[42px] border rounded-[10px] text-[14px] font-semibold transition-all duration-200 bg-white
+                                ${isExportOpen ? 'border-[#073318] text-[#073318]' : 'border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
                         >
-                            <Download size={18} className={isExportOpen ? 'text-[#014A36]' : 'text-gray-400'} />
+                            <Download size={18} className={isExportOpen ? 'text-[#073318]' : 'text-gray-400'} />
                             {t('common:export')}
                         </button>
 
@@ -253,14 +274,14 @@ const AccountMaster = () => {
                             <div className="absolute top-full right-0 mt-2 w-[160px] bg-white border border-gray-100 rounded-[12px] shadow-[0_10px_30px_rgba(0,0,0,0.1)] z-[50] py-2 animate-in fade-in slide-in-from-top-2 duration-200">
                                 <button
                                     onClick={handleExportPDF}
-                                    className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
+                                    className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors"
                                 >
                                     <FileText size={18} className="text-red-500" />
                                     PDF
                                 </button>
                                 <button
                                     onClick={handleExportExcel}
-                                    className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
+                                    className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors"
                                 >
                                     <FileSpreadsheet size={18} className="text-green-600" />
                                     Excel
@@ -288,68 +309,68 @@ const AccountMaster = () => {
                         }
                     `}</style>
                     <table className="w-full whitespace-nowrap text-left min-w-[1200px]">
-                        <thead className="bg-[#F9FAFB] border-b border-[#E5E7EB] text-[13px] font-semibold text-[#6B7280]">
+                        <thead className="bg-[#F9FAFB] border-b border-[#E5E7EB] text-[12px] font-bold text-[#6B7280] uppercase tracking-wider">
                             <tr>
-                                <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
+                                <th className="px-6 py-4 border-r border-[#E5E7EB] cursor-pointer hover:text-[#073318] transition-colors group">
                                     <div className="flex items-center gap-2">{t('modules:customer_code')}</div>
                                 </th>
-                                <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
+                                <th className="px-6 py-4 border-r border-[#E5E7EB] cursor-pointer hover:text-[#073318] transition-colors group">
                                     <div className="flex items-center gap-2">{t('modules:vendor_code')}</div>
                                 </th>
-                                <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
+                                <th className="px-6 py-4 border-r border-[#E5E7EB] cursor-pointer hover:text-[#073318] transition-colors group">
                                     <div className="flex items-center gap-2">{t('modules:account')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
                                 </th>
-                                <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
+                                <th className="px-6 py-4 border-r border-[#E5E7EB] cursor-pointer hover:text-[#073318] transition-colors group">
                                     <div className="flex items-center gap-2">{t('modules:account_type')}</div>
                                 </th>
-                                <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
+                                <th className="px-6 py-4 border-r border-[#E5E7EB] cursor-pointer hover:text-[#073318] transition-colors group">
                                     <div className="flex items-center gap-2">{t('modules:credit_days')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
                                 </th>
-                                <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
+                                <th className="px-6 py-4 border-r border-[#E5E7EB] cursor-pointer hover:text-[#073318] transition-colors group">
                                     <div className="flex items-center gap-2">{t('modules:gst_no')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
                                 </th>
-                                <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
+                                <th className="px-6 py-4 border-r border-[#E5E7EB] cursor-pointer hover:text-[#073318] transition-colors group">
                                     <div className="flex items-center gap-2">{t('modules:pan_no')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
                                 </th>
-                                <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
+                                <th className="px-6 py-4 border-r border-[#E5E7EB] cursor-pointer hover:text-[#073318] transition-colors group">
                                     <div className="flex items-center gap-2">{t('modules:op_balance')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
                                 </th>
-                                <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
+                                <th className="px-6 py-4 border-r border-[#E5E7EB] cursor-pointer hover:text-[#073318] transition-colors group">
                                     <div className="flex items-center gap-2">{t('common:address')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
                                 </th>
-                                <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
+                                <th className="px-6 py-4 border-r border-[#E5E7EB] cursor-pointer hover:text-[#073318] transition-colors group">
                                     <div className="flex items-center gap-2">{t('modules:bank_account_no')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
                                 </th>
-                                <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
+                                <th className="px-6 py-4 border-r border-[#E5E7EB] cursor-pointer hover:text-[#073318] transition-colors group">
                                     <div className="flex items-center gap-2">{t('modules:ifsc_code')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
                                 </th>
-                                <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
+                                <th className="px-6 py-4 border-r border-[#E5E7EB] cursor-pointer hover:text-[#073318] transition-colors group">
                                     <div className="flex items-center gap-2">{t('common:status')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
                                 </th>
-                                <th className="px-6 py-4 whitespace-nowrap text-center">{t('common:action')}</th>
+                                <th className="px-6 py-4 text-center">{t('common:action')}</th>
                             </tr>
                         </thead>
                         <tbody className="text-[14px] text-[#111827]">
                             {paginatedData.map((row, index) => (
-                                <tr key={index} className="border-b border-[#E5E7EB] hover:bg-gray-50/50 transition-colors">
-                                    <td className="px-6 py-4 font-medium">{row.customerCode || '-'}</td>
-                                    <td className="px-6 py-4 font-medium">{row.vendorCode || '-'}</td>
-                                    <td className="px-6 py-4">{row.accountName}</td>
-                                    <td className="px-6 py-4">
+                                <tr key={index} className="border-b border-[#F3F4F6] hover:bg-gray-50/50 transition-colors">
+                                    <td className="px-6 py-4 border-r border-[#F3F4F6] font-bold text-[#111827]">{row.customerCode || '-'}</td>
+                                    <td className="px-6 py-4 border-r border-[#F3F4F6] font-bold text-[#111827]">{row.vendorCode || '-'}</td>
+                                    <td className="px-6 py-4 border-r border-[#F3F4F6] font-bold text-[#111827]">{row.accountName}</td>
+                                    <td className="px-6 py-4 border-r border-[#F3F4F6]">
                                         <div className="flex gap-1.5 flex-wrap">
-                                            {row.isCustomer && <span className="px-2 py-0.5 bg-[#014A36]/10 text-[#014A36] rounded text-[11px] font-bold uppercase tracking-wider">{t('modules:customer')}</span>}
+                                            {row.isCustomer && <span className="px-2 py-0.5 bg-[#073318]/10 text-[#073318] rounded text-[11px] font-bold uppercase tracking-wider">{t('modules:customer')}</span>}
                                             {row.isVendor && <span className="px-2 py-0.5 bg-[#4B5563]/10 text-[#4B5563] rounded text-[11px] font-bold uppercase tracking-wider">{t('modules:vendor')}</span>}
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">{row.creditDays}</td>
-                                    <td className="px-6 py-4">{row.gstNo}</td>
-                                    <td className="px-6 py-4">{row.panNo}</td>
-                                    <td className="px-6 py-4">{row.openingBalance}</td>
-                                    <td className="px-6 py-4 truncate max-w-[200px]" title={row.addressLine1}>{row.addressLine1}</td>
-                                    <td className="px-6 py-4">{row.accountNumber}</td>
-                                    <td className="px-6 py-4">{row.ifscCode}</td>
-                                    <td className="px-6 py-4">
-                                        <span className={row.status === 'ACTIVE' ? 'text-[#014A36] font-medium' : 'text-gray-500'}>
+                                    <td className="px-6 py-4 border-r border-[#F3F4F6] font-medium">{row.creditDays}</td>
+                                    <td className="px-6 py-4 border-r border-[#F3F4F6] font-medium">{row.gstNo}</td>
+                                    <td className="px-6 py-4 border-r border-[#F3F4F6] font-medium">{row.panNo}</td>
+                                    <td className="px-6 py-4 border-r border-[#F3F4F6] font-medium">{row.openingBalance}</td>
+                                    <td className="px-6 py-4 border-r border-[#F3F4F6] truncate max-w-[200px]" title={row.addressLine1}>{row.addressLine1}</td>
+                                    <td className="px-6 py-4 border-r border-[#F3F4F6] font-medium">{row.accountNumber}</td>
+                                    <td className="px-6 py-4 border-r border-[#F3F4F6] font-medium">{row.ifscCode}</td>
+                                    <td className="px-6 py-4 border-r border-[#F3F4F6]">
+                                        <span className={row.status === 'ACTIVE' ? 'text-[#073318] font-bold' : 'text-gray-500 font-bold'}>
                                             {row.status === 'ACTIVE' ? t('common:active') : t('common:inactive')}
                                         </span>
                                     </td>
@@ -398,53 +419,61 @@ const AccountMaster = () => {
                 </div>
 
                 {/* Pagination */}
-                <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-[#E5E7EB] bg-white gap-4">
-                    <div className="flex items-center gap-3 text-[14px] text-[#4B5563]">
+                <div className="flex flex-col sm:flex-row items-center justify-between px-8 py-6 border-t border-[#F3F4F6] bg-white gap-4">
+                    <div className="flex items-center gap-3 text-[14px] text-[#6B7280] font-medium">
                         <span>{t('common:show')}</span>
-                        <div className="relative">
+                        <div className="relative group">
                             <select 
                                 value={rowsPerPage}
                                 onChange={(e) => {
                                     setRowsPerPage(Number(e.target.value));
                                     setCurrentPage(1);
                                 }}
-                                className="appearance-none border border-[#D1D5DB] rounded-[6px] pl-3 pr-8 py-1.5 outline-none bg-transparent hover:border-gray-400 focus:border-[#014A36] transition-colors cursor-pointer text-[#111827]"
+                                className="appearance-none border border-[#E5E7EB] rounded-[8px] pl-3 pr-8 py-1.5 outline-none focus:border-[#073318] text-[#111827] bg-[#F9FAFB] cursor-pointer font-bold transition-all hover:bg-white"
                             >
                                 <option value={5}>5</option>
                                 <option value={10}>10</option>
                                 <option value={20}>20</option>
                                 <option value={50}>50</option>
                             </select>
-                            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400" />
+                            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none group-hover:text-[#073318]" />
                         </div>
                         <span>{t('common:per_page')}</span>
                     </div>
 
-                    <div className="flex items-center gap-4 text-[14px]">
-                        <span>{totalItems === 0 ? '0-0 of 0' : `${startIndex + 1}–${endIndex} of ${totalItems}`}</span>
-                        <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-6">
+                        <span className="text-[#6B7280] text-[14px] font-medium">
+                            {totalItems === 0 ? '0-0 of 0' : `${startIndex + 1}–${endIndex} of ${totalItems}`}
+                        </span>
+                        <div className="flex items-center gap-1.5">
                             <button 
                                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                 disabled={currentPage === 1}
-                                className={`w-[32px] h-[32px] flex items-center justify-center rounded-[6px] transition-colors ${currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100 text-[#4B5563]'}`}
+                                className="w-10 h-10 flex items-center justify-center text-[#6B7280] hover:bg-gray-50 hover:text-[#111827] disabled:opacity-30 disabled:cursor-not-allowed transition-all rounded-[10px]"
                             >
-                                <ArrowLeft size={16} />
+                                <ArrowLeft size={20} />
                             </button>
-                            {getVisiblePages().map(page => (
-                                <button 
-                                    key={page}
-                                    onClick={() => setCurrentPage(page)}
-                                    className={`w-[32px] h-[32px] flex items-center justify-center rounded-[6px] transition-colors ${currentPage === page ? 'bg-[#F3F4F6] text-[#111827] font-semibold' : 'hover:bg-gray-100 text-[#6B7280]'}`}
-                                >
-                                    {page}
-                                </button>
-                            ))}
+                            <div className="flex items-center gap-1.5">
+                                {getVisiblePages().map(page => (
+                                    <button 
+                                        key={page}
+                                        onClick={() => setCurrentPage(page)}
+                                        className={`w-10 h-10 rounded-[10px] flex items-center justify-center transition-all text-[14px] font-bold
+                                            ${currentPage === page 
+                                                ? 'bg-[#F9FAFB] text-[#111827] shadow-sm' 
+                                                : 'text-[#6B7280] hover:bg-gray-50 hover:text-[#111827]'
+                                            }`}
+                                    >
+                                        {page}
+                                    </button>
+                                ))}
+                            </div>
                             <button 
                                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                 disabled={currentPage === totalPages}
-                                className={`w-[32px] h-[32px] flex items-center justify-center rounded-[6px] transition-colors ${currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100 text-[#4B5563]'}`}
+                                className="w-10 h-10 flex items-center justify-center text-[#6B7280] hover:bg-gray-50 hover:text-[#111827] disabled:opacity-30 disabled:cursor-not-allowed transition-all rounded-[10px]"
                             >
-                                <ArrowRight size={16} />
+                                <ArrowRight size={20} />
                             </button>
                         </div>
                     </div>
@@ -481,7 +510,7 @@ const AccountMaster = () => {
                                     name="gstNo"
                                     value={filterInputs.gstNo}
                                     onChange={handleFilterChange}
-                                    className="w-full h-[46px] px-3 border border-[#D1D5DB] rounded-[6px] text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/20 transition-all placeholder:text-gray-400"
+                                    className="w-full h-[46px] px-3 border border-[#D1D5DB] rounded-[6px] text-[14px] text-[#111827] outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/20 transition-all placeholder:text-gray-400"
                                 />
                             </div>
                             <div>
@@ -491,7 +520,7 @@ const AccountMaster = () => {
                                     name="panNo"
                                     value={filterInputs.panNo}
                                     onChange={handleFilterChange}
-                                    className="w-full h-[46px] px-3 border border-[#D1D5DB] rounded-[6px] text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/20 transition-all placeholder:text-gray-400"
+                                    className="w-full h-[46px] px-3 border border-[#D1D5DB] rounded-[6px] text-[14px] text-[#111827] outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/20 transition-all placeholder:text-gray-400"
                                 />
                             </div>
                             <div className="relative">
@@ -500,7 +529,7 @@ const AccountMaster = () => {
                                     name="groupName"
                                     value={filterInputs.groupName}
                                     onChange={handleFilterChange}
-                                    className="w-full h-[46px] px-3 pr-10 border border-[#D1D5DB] rounded-[6px] text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/20 transition-all appearance-none bg-white font-['Plus_Jakarta_Sans']"
+                                    className="w-full h-[46px] px-3 pr-10 border border-[#D1D5DB] rounded-[6px] text-[14px] text-[#111827] outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/20 transition-all appearance-none bg-white font-['Plus_Jakarta_Sans']"
                                 >
                                     <option value="" disabled className="hidden"></option>
                                     <option value="Sundry Creditors">{t('modules:sundry_creditors')}</option>
@@ -515,7 +544,7 @@ const AccountMaster = () => {
                                     name="creditDays"
                                     value={filterInputs.creditDays}
                                     onChange={handleFilterChange}
-                                    className="w-full h-[46px] px-3 border border-[#D1D5DB] rounded-[6px] text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/20 transition-all placeholder:text-gray-400"
+                                    className="w-full h-[46px] px-3 border border-[#D1D5DB] rounded-[6px] text-[14px] text-[#111827] outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/20 transition-all placeholder:text-gray-400"
                                 />
                             </div>
                             <div className="relative">
@@ -524,7 +553,7 @@ const AccountMaster = () => {
                                     name="status"
                                     value={filterInputs.status}
                                     onChange={handleFilterChange}
-                                    className="w-full h-[46px] px-3 pr-10 border border-[#D1D5DB] rounded-[6px] text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/20 transition-all appearance-none bg-white font-['Plus_Jakarta_Sans']"
+                                    className="w-full h-[46px] px-3 pr-10 border border-[#D1D5DB] rounded-[6px] text-[14px] text-[#111827] outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/20 transition-all appearance-none bg-white font-['Plus_Jakarta_Sans']"
                                 >
                                     <option value="" disabled className="hidden"></option>
                                     <option value="Active">{t('common:active')}</option>
@@ -542,12 +571,12 @@ const AccountMaster = () => {
                             >
                                 {t('common:clear')}
                             </button>
-                            <button
-                                onClick={applyFilters}
-                                className="flex-1 h-[48px] bg-[#014A36] text-white text-[14px] font-semibold rounded-[6px] hover:bg-[#013b2b] transition-colors"
-                            >
-                                {t('common:apply_filters')}
-                            </button>
+                                <button
+                                    onClick={applyFilters}
+                                    className="flex-1 h-[48px] bg-[#073318] text-white text-[14px] font-bold rounded-[8px] hover:bg-[#04200f] transition-colors shadow-sm"
+                                >
+                                    {t('common:apply_filter') || 'Apply Filter'}
+                                </button>
                         </div>
                     </div>
                 </div>

@@ -80,17 +80,15 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
 
 const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
     const { t } = useTranslation(['modules', 'common']);
-    // Mode can be 'add', 'edit', 'view'
+    const [loading, setLoading] = useState(false);
 
-    // Format UOM to match the full name style if needed, or stick to provided list. 
-    // In our list it is 'TON' instead of 'Ton', but for simplicity using the list precisely.
     const getInitialUOM = (uom) => {
         if (!uom) return '';
         if (uom.toUpperCase() === 'KG') return 'KGS';
         return uom;
     };
 
-    const [formData, setFormData] = useState({
+    const initialFormData = {
         productName: initialData?.name || '',
         productCode: initialData?.code || '',
         uom: getInitialUOM(initialData?.uom),
@@ -100,7 +98,9 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
         hsnCode: initialData?.hsn || '',
         tax: initialData?.tax || '',
         description: initialData?.name || ''
-    });
+    };
+
+    const [formData, setFormData] = useState(initialFormData);
 
     const UOM_LIST = [
         'BAG', 'BAL', 'BDL', 'BKL', 'BOU', 'BOX', 'BTL', 'BUN', 'CAN', 'CBM',
@@ -134,19 +134,33 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
     };
 
     const isView = mode === 'view';
-    const showAsterisk = mode === 'add';
+    const showAsterisk = true;
+
+    const isDirty = mode === 'edit' ? (
+        formData.productName !== initialFormData.productName ||
+        formData.productCode !== initialFormData.productCode ||
+        formData.uom !== initialFormData.uom ||
+        formData.productType !== initialFormData.productType ||
+        formData.category !== initialFormData.category ||
+        formData.subcategory !== initialFormData.subcategory ||
+        formData.hsnCode !== initialFormData.hsnCode ||
+        formData.tax !== initialFormData.tax ||
+        formData.description !== initialFormData.description
+    ) : true;
+
+    const isFilled = !!(formData.productName && formData.productCode && formData.uom && formData.productType && formData.category);
 
     const renderInput = (label, field, placeholder) => (
-        <div className="flex flex-col gap-1.5 w-full">
-            <label className="text-[13px] font-semibold text-[#4B5563]">
+        <div className="flex flex-col gap-2 w-full">
+            <label className="text-[14px] font-medium text-[#4B5563]">
                 {label} {showAsterisk && <span className="text-red-500">*</span>}
             </label>
             <input
                 type="text"
                 placeholder={placeholder}
                 disabled={isView}
-                className={`w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none transition-all bg-white 
-                    ${isView ? 'cursor-default' : 'focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10'}`}
+                className={`w-full h-[46px] border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] text-[#111827] outline-none transition-all bg-white 
+                    ${isView ? 'cursor-default' : 'focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/10'}`}
                 value={formData[field]}
                 onChange={(e) => handleInputChange(field, e.target.value)}
             />
@@ -154,25 +168,25 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
     );
 
     const renderViewMode = () => (
-        <div className="flex flex-col w-full bg-white border border-[#E5E7EB] rounded-[12px] overflow-hidden shadow-sm animate-in fade-in duration-300 min-h-[500px]">
+        <div className="flex flex-col w-full bg-white border border-[#E5E7EB] rounded-[16px] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.03)] animate-in fade-in duration-300">
             {/* Header */}
-            <div className="px-6 py-4 border-b border-[#E5E7EB] bg-white">
-                <h3 className="text-[16px] font-bold text-[#111827]">{t('modules:view_product')}</h3>
-            </div>
-
-            {/* Product Identity Section */}
-            <div className="px-8 py-8 flex flex-col gap-4">
-                <h1 className="text-[32px] font-semibold text-[#111827] leading-tight">
-                    {formData.productName}
-                </h1>
-                <div className="inline-flex items-center px-4 py-1.5 bg-[#012E22] text-[#FFFFFF] rounded-[8px] text-[14px] font-bold w-fit tracking-wider">
-                    {formData.productCode}
+            <div className="px-8 py-6 border-b border-[#F3F4F6] bg-white flex items-center justify-between">
+                <div>
+                    <h3 className="text-[20px] font-bold text-[#111827]">{t('modules:view_product')}</h3>
                 </div>
+                <button
+                    onClick={onBack}
+                    className="flex items-center gap-2 px-6 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-bold hover:bg-gray-50 transition-all bg-white shadow-sm"
+                >
+                    {t('common:back')}
+                </button>
             </div>
 
             {/* Detailed Info Table */}
-            <div className="flex flex-col mx-8 mb-8 border border-[#E5E7EB] rounded-[8px] overflow-hidden">
+            <div className="flex flex-col">
                 {[
+                    { label: t('modules:product_name'), value: formData.productName },
+                    { label: t('modules:product_code'), value: formData.productCode },
                     { label: t('modules:uom'), value: formData.uom },
                     { label: t('modules:product_type'), value: formData.productType },
                     { label: t('modules:category'), value: formData.category },
@@ -181,24 +195,30 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
                     { label: t('modules:tax_percent'), value: formData.tax },
                     { label: t('modules:product_desc'), value: formData.description || '-' }
                 ].map((item, idx) => (
-                    <div key={idx} className="flex border-b border-[#E5E7EB] min-h-[48px]">
-                        <div className="w-[200px] bg-[#F9FAFB] px-6 py-3 flex items-center border-r border-[#E5E7EB]">
-                            <span className="text-[13px] font-semibold text-[#6B7280]">{item.label}:</span>
+                    <div key={idx} className="flex border-b border-[#F3F4F6] min-h-[56px] last:border-b-0 group">
+                        <div className="w-[240px] bg-[#F9FAFB] px-8 py-4 flex items-center border-r border-[#F3F4F6]">
+                            <span className="text-[14px] font-bold text-gray-500 uppercase tracking-tight">{item.label}:</span>
                         </div>
-                        <div className="flex-1 px-6 py-3 flex items-center bg-white">
-                            <span className="text-[14px] text-[#111827] font-medium">{item.value}</span>
+                        <div className="flex-1 px-8 py-4 flex items-center bg-white group-hover:bg-[#F9FAFB]/50 transition-colors">
+                            <span className="text-[16px] font-bold text-[#111827]">{item.value}</span>
                         </div>
                     </div>
                 ))}
             </div>
 
             {/* Footer Buttons */}
-            <div className="px-8 py-6 flex justify-end mt-auto border-t border-[#E5E7EB]">
+            <div className="px-8 py-6 bg-[#F9FAFB]/50 flex justify-end gap-3 border-t border-[#F3F4F6]">
                 <button
                     onClick={onBack}
-                    className="px-8 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors bg-white shadow-sm"
+                    className="px-8 h-[46px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-bold hover:bg-white transition-all bg-white"
                 >
-                    {t('common:back')}
+                    {t('common:cancel')}
+                </button>
+                <button
+                    onClick={() => onBack()}
+                    className="px-8 h-[46px] bg-[#073318] text-white rounded-[10px] text-[14px] font-bold hover:bg-[#04200f] transition-all shadow-sm flex items-center justify-center min-w-[140px]"
+                >
+                    {t('modules:update_product')}
                 </button>
             </div>
         </div>
@@ -215,27 +235,30 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
     return (
         <div className="flex flex-col w-full h-full animate-in fade-in duration-300">
             {/* Top Action Bar */}
-            <div className="flex justify-end mb-6">
+            <div className="flex justify-start mb-8">
                 <button
                     onClick={onBack}
-                    className="px-6 h-[44px] bg-white border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors shadow-sm"
+                    className="flex items-center gap-2 px-6 h-[44px] bg-white border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-bold hover:bg-gray-50 transition-all shadow-sm"
                 >
                     {t('common:back')}
                 </button>
             </div>
 
             {/* Form Container */}
-            <div className="bg-white rounded-[12px] border border-[#E5E7EB] shadow-sm flex flex-col w-full">
+            <div className="bg-white rounded-[16px] border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col w-full mb-12">
                 {/* Header */}
-                <div className="px-6 py-5 border-b border-[#E5E7EB]">
-                    <h2 className="text-[18px] font-bold text-[#111827]">
+                <div className="px-8 py-6 border-b border-[#F3F4F6] bg-white">
+                    <h2 className="text-[24px] font-bold text-[#111827] tracking-tight">
                         {mode === 'add' ? t('modules:add_product') : mode === 'edit' ? t('modules:update_product') : t('modules:view_product')}
                     </h2>
+                    <p className="text-[15px] text-gray-500 mt-1">
+                        {mode === 'add' ? 'Please fill in the information below to create a new product.' : 'Make changes to the product details below.'}
+                    </p>
                 </div>
 
                 {/* Form Body */}
-                <div className="p-6 md:p-8 flex flex-col gap-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                <div className="p-8 md:p-10 flex flex-col gap-8 w-full">
+                    <div className="grid grid-cols-1 gap-8 w-full">
                         {renderInput(t('modules:product_name'), 'productName', t('modules:enter_product_name'))}
                         {renderInput(t('modules:product_code'), 'productCode', t('modules:product_code_auto'))}
 
@@ -282,24 +305,33 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
 
                         {renderInput(t('modules:hsn_code'), 'hsnCode', t('common:enter') + ' ' + t('modules:hsn_code'))}
                         {renderInput(t('modules:tax_percent'), 'tax', t('modules:tax_auto'))}
+                        {renderInput(t('modules:product_desc'), 'description', t('modules:enter_product_desc'))}
                     </div>
-
-                    {renderInput(t('modules:product_desc'), 'description', t('modules:enter_product_desc'))}
                 </div>
 
                 {/* Footer Buttons */}
-                <div className="px-6 py-5 border-t border-[#E5E7EB] flex items-center justify-end gap-4 bg-white/50 rounded-b-[12px]">
+                <div className="px-8 py-6 border-t border-[#F3F4F6] flex items-center justify-end gap-4 bg-[#F9FAFB]/30">
                     <button
+                        type="button"
                         onClick={onBack}
-                        className="px-8 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors bg-white"
+                        disabled={loading}
+                        className="px-8 h-[48px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[15px] font-bold hover:bg-gray-50 transition-all bg-white"
                     >
                         {t('common:cancel')}
                     </button>
                     <button
-                        onClick={onBack}
-                        className="px-8 h-[44px] bg-[#014A36] text-white rounded-[8px] text-[14px] font-bold hover:bg-[#013b2b] transition-colors shadow-sm opacity-90 hover:opacity-100"
+                        type="button"
+                        onClick={() => !loading && isFilled && isDirty && onBack()}
+                        disabled={loading || !isFilled || (mode === 'edit' && !isDirty)}
+                        className={`px-10 h-[48px] text-white rounded-[10px] text-[15px] font-bold transition-all shadow-md flex items-center justify-center min-w-[180px] ${loading || !isFilled || (mode === 'edit' && !isDirty) ? 'bg-gray-400 cursor-not-allowed shadow-none' : 'bg-[#073318] hover:bg-[#04200f]'}`}
                     >
-                        {mode === 'add' ? t('modules:add_product') : t('modules:update_product')}
+                        {loading ? (
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        ) : (
+                            <div className="flex items-center justify-center">
+                                {mode === 'add' ? t('modules:add_product') : t('modules:update_product')}
+                            </div>
+                        )}
                     </button>
                 </div>
             </div>

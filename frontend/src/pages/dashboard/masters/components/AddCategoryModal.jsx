@@ -57,9 +57,9 @@ const AddCategoryModal = ({ isOpen, onClose }) => {
                 className={`bg-white w-full max-w-[440px] rounded-[16px] shadow-2xl transition-all duration-300 transform ${isOpen ? 'scale-100 translate-y-0' : 'scale-95 translate-y-4'}`}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between p-5 border-b border-[#F3F4F6]">
-                    <h2 className="text-[15px] font-bold text-[#111827]">{t('modules:add_category', 'Add Category')}</h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <div className="flex items-center justify-between px-6 py-5 border-b border-[#F3F4F6]">
+                    <h2 className="text-[18px] font-bold text-[#111827] tracking-tight">{t('modules:add_category', 'Add Category')}</h2>
+                    <button onClick={onClose} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-[#111827] hover:bg-gray-100 rounded-full transition-all">
                         <X size={18} />
                     </button>
                 </div>
@@ -67,27 +67,27 @@ const AddCategoryModal = ({ isOpen, onClose }) => {
                 {/* Form Body */}
                 <div className="p-6 space-y-6">
                     {/* Category Input */}
-                    <div className="space-y-1.5">
-                        <label className="text-[13px] font-medium text-[#4B5563]">{t('modules:category', 'Category Name')}</label>
+                    <div className="space-y-2">
+                        <label className="text-[14px] font-bold text-[#4B5563]">{t('modules:category', 'Category Name')}</label>
                         <input
                             type="text"
                             placeholder={t('common:enter_category_name', 'Enter category name')}
-                            className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-3.5 outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all placeholder:text-[#9CA3AF] text-[14px] text-[#111827]"
+                            className="w-full h-[46px] border border-[#E5E7EB] rounded-[10px] px-4 outline-none focus:border-[#073318] focus:ring-4 focus:ring-[#073318]/5 transition-all placeholder:text-gray-400 text-[14px] text-[#111827] bg-[#F9FAFB] hover:bg-white"
                         />
                     </div>
 
                     {/* Category Under Dropdown */}
-                    <div className="space-y-1.5 pb-2">
-                        <label className="text-[13px] font-medium text-[#4B5563]">{t('common:category_under', 'Category Under')}</label>
+                    <div className="space-y-2 pb-2">
+                        <label className="text-[14px] font-bold text-[#4B5563]">{t('common:category_under', 'Category Under')}</label>
                         <div className="relative" ref={dropdownRef}>
                             <div
                                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                className={`w-full h-[44px] border ${isDropdownOpen ? 'border-[#014A36] ring-1 ring-[#014A36]/10' : 'border-[#E5E7EB] hover:border-gray-300'} rounded-[8px] px-3.5 flex items-center justify-between cursor-pointer transition-all bg-white`}
+                                className={`w-full h-[46px] border ${isDropdownOpen ? 'border-[#073318] ring-4 ring-[#073318]/5' : 'border-[#E5E7EB] hover:border-gray-300'} rounded-[10px] px-4 flex items-center justify-between cursor-pointer transition-all bg-[#F9FAFB] hover:bg-white`}
                             >
-                                <span className={`text-[14px] ${selectedCategory ? 'text-[#111827]' : 'text-[#9CA3AF]'}`}>
+                                <span className={`text-[14px] font-medium ${selectedCategory ? 'text-[#111827]' : 'text-gray-400'}`}>
                                     {selectedCategory ? translateDynamic(selectedCategory, t) : t('common:select_category_under', 'Select category under')}
                                 </span>
-                                <ChevronDown size={18} className={`text-[#6B7280] transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : 'rotate-0'}`} />
+                                <ChevronDown size={18} className={`text-gray-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : 'rotate-0'}`} />
                             </div>
 
                             {isDropdownOpen && (
@@ -108,8 +108,8 @@ const AddCategoryModal = ({ isOpen, onClose }) => {
                                                 setSelectedCategory(category);
                                                 setIsDropdownOpen(false);
                                             }}
-                                            className={`px-3.5 py-2.5 mx-1.5 rounded-[6px] hover:bg-[#F3F4F6] cursor-pointer text-[14px] transition-colors
-                                                ${selectedCategory === category ? 'bg-[#F3F4F6] text-[#014A36] font-medium' : 'text-[#4B5563]'}`}
+                                            className={`px-3.5 py-2.5 mx-1.5 rounded-[8px] hover:bg-gray-50 cursor-pointer text-[14px] transition-colors
+                                                ${selectedCategory === category ? 'bg-gray-50 text-[#073318] font-bold' : 'text-[#4B5563] font-medium'}`}
                                         >
                                             {translateDynamic(category, t)}
                                         </div>
@@ -120,18 +120,18 @@ const AddCategoryModal = ({ isOpen, onClose }) => {
                     </div>
 
                     {/* Footer Buttons */}
-                    <div className="flex items-center justify-center gap-4 pt-4">
+                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#F3F4F6]">
                         <button
-                            className="px-10 h-[44px] bg-[#014A36] text-white font-semibold rounded-[8px] hover:bg-[#013b2b] transition-colors text-[14px]"
+                            className="px-6 h-[46px] border border-[#E5E7EB] text-[#4B5563] font-bold rounded-[10px] hover:bg-gray-50 hover:text-[#111827] transition-all text-[14px] bg-white shadow-sm"
+                            onClick={onClose}
+                        >
+                            {t('common:cancel', 'Cancel')}
+                        </button>
+                        <button
+                            className="px-10 h-[46px] bg-[#073318] text-white font-bold rounded-[10px] hover:bg-[#04200f] transition-all text-[14px] shadow-md"
                             onClick={onClose}
                         >
                             {t('common:save', 'Save')}
-                        </button>
-                        <button
-                            className="px-6 h-[44px] border border-[#E5E7EB] text-[#4B5563] font-semibold rounded-[8px] hover:bg-gray-50 transition-colors text-[14px]"
-                            onClick={onClose}
-                        >
-                            {t('common:exit', 'Exit')}
                         </button>
                     </div>
                 </div>

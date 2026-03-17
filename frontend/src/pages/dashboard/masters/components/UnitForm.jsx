@@ -398,26 +398,25 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onEdit 
     }
 
     return (
-        <div className="flex flex-col w-full h-full animate-in fade-in duration-300">
-            <div className="flex justify-start mb-8">
-                <button
-                    onClick={onBack}
-                    className="flex items-center gap-2 px-6 h-[44px] bg-white border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-bold hover:bg-gray-50 transition-all shadow-sm"
-                >
-                    {t('common:back')}
-                </button>
-            </div>
-
-            <div className="bg-white rounded-[16px] border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col w-full mb-12">
-                <div className="px-8 py-6 border-b border-[#F3F4F6] bg-white">
-                    <h2 className="text-[24px] font-bold text-[#111827] tracking-tight">
-                        {mode === 'add' ? t('modules:add_new_unit') : t('modules:edit_unit_details')}
-                    </h2>
-                    <p className="text-[15px] text-gray-500 mt-1">
-                        {mode === 'add' ? t('modules:unit_form_desc_add') : t('modules:unit_form_desc_edit')}
-                    </p>
+        <div className="flex flex-col w-full h-full animate-in fade-in duration-300 p-2">
+            <div className="bg-white rounded-[16px] border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col w-full overflow-hidden mb-12">
+                {/* Header */}
+                <div className="px-8 py-6 border-b border-[#F3F4F6] bg-white flex items-center justify-between">
+                    <div>
+                        <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">
+                            {mode === 'add' ? t('modules:add_new_unit') : t('modules:edit_unit_details')}
+                        </h2>
+                    </div>
+                    <button
+                        onClick={onBack}
+                        className="flex items-center gap-2 px-6 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-bold hover:bg-gray-50 transition-all bg-white shadow-sm"
+                    >
+                        <ArrowLeft size={18} />
+                        {t('common:back')}
+                    </button>
                 </div>
 
+                {/* Form Body */}
                 <div className="p-8 md:p-10 flex flex-col gap-8 w-full">
                     <div className="grid grid-cols-1 gap-8 w-full">
                         <CustomSelect
@@ -466,12 +465,13 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onEdit 
                     </div>
                 </div>
 
-                <div className="px-8 py-6 border-t border-[#F3F4F6] flex items-center justify-end gap-4 bg-[#F9FAFB]/30">
+                {/* Footer Buttons */}
+                <div className="px-8 py-6 bg-[#F9FAFB]/50 flex justify-end gap-3 border-t border-[#F3F4F6]">
                     <button
                         type="button"
                         onClick={onBack}
                         disabled={loading}
-                        className="px-8 h-[48px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[15px] font-bold hover:bg-gray-50 transition-all bg-white"
+                        className="px-8 h-[46px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-bold hover:bg-white transition-all bg-white shadow-sm"
                     >
                         {t('common:cancel')}
                     </button>
@@ -479,13 +479,13 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onEdit 
                         type="button"
                         onClick={handleSubmit}
                         disabled={loading || !isFilled || (mode === 'edit' && !isDirty)}
-                        className={`px-10 h-[48px] text-white rounded-[10px] text-[15px] font-bold transition-all shadow-md flex items-center justify-center min-w-[180px] ${loading || !isFilled || (mode === 'edit' && !isDirty) ? 'bg-gray-400 cursor-not-allowed shadow-none' : 'bg-[#073318] hover:bg-[#04200f]'}`}
+                        className={`px-8 h-[46px] text-white rounded-[10px] text-[14px] font-bold transition-all shadow-md flex items-center justify-center min-w-[160px] ${loading || !isFilled || (mode === 'edit' && !isDirty) ? 'bg-gray-400 cursor-not-allowed shadow-none' : 'bg-[#073318] hover:bg-[#04200f]'}`}
                     >
                         {loading ? (
                             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                         ) : (
                             <div className="flex items-center justify-center">
-                                {t('modules:save_unit') || 'Save Unit'}
+                                {mode === 'add' ? (t('modules:save_unit') || 'Save Unit') : (t('modules:update_unit') || 'Update Unit')}
                             </div>
                         )}
                     </button>
