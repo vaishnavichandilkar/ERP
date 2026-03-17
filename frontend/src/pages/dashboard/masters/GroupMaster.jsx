@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Search, Download, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, ShieldCheck, ShieldX, CheckCircle2, XCircle } from 'lucide-react';
+import { Search, Download, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, ShieldCheck, ShieldX, CheckCircle2, XCircle, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import AddGroupModal from './components/AddGroupModal';
 import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
@@ -44,12 +44,9 @@ const GroupMaster = () => {
     // Handle click outside for export dropdown
     useEffect(() => {
         const handleClickOutside = (event) => {
-            // Close export dropdown if clicking outside
             if (exportRef.current && !exportRef.current.contains(event.target)) {
                 setIsExportOpen(false);
             }
-
-            // Close row dropdown only if clicking outside any row dropdown trigger or menu
             if (!event.target.closest('.dropdown-trigger') && !event.target.closest('.dropdown-menu')) {
                 setActiveRowDropdown(null);
             }
@@ -58,7 +55,6 @@ const GroupMaster = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Helper to toggle expansion
     const toggleGroup = (id) => {
         setExpandedGroups(prev => ({
             ...prev,
@@ -66,105 +62,226 @@ const GroupMaster = () => {
         }));
     };
 
+    const hasMatchingChild = (group, query) => {
+        if (group.group_name.toLowerCase().includes(query.toLowerCase())) return true;
+        if (group.children && group.children.length > 0) {
+            return group.children.some(child => hasMatchingChild(child, query));
+        }
+        return false;
+    };
+
     const filteredData = useMemo(() => {
         if (!searchQuery) return groups;
-
-        const q = searchQuery.toLowerCase();
-        return groups.filter(section => {
-            const nameMatch = section.group_name.toLowerCase().includes(q);
-            const itemsMatch = (section.sub_groups || []).some(item => item.sub_group_name.toLowerCase().includes(q));
-            return nameMatch || itemsMatch;
-        });
+        return groups.filter(group => hasMatchingChild(group, searchQuery));
     }, [groups, searchQuery]);
 
-    const isAllExpanded = Object.keys(expandedGroups).length === groups.length && Object.values(expandedGroups).every(Boolean);
+    const getAllIds = (items) => {
+        let ids = [];
+        items.forEach(item => {
+            ids.push(item.id);
+            if (item.children && item.children.length > 0) {
+                ids = ids.concat(getAllIds(item.children));
+            }
+        });
+        return ids;
+    };
+
+    const allGroupIds = useMemo(() => getAllIds(groups), [groups]);
+    const isAllExpanded = allGroupIds.length > 0 && allGroupIds.every(id => expandedGroups[id]);
 
     const toggleExpandAll = () => {
         if (isAllExpanded) {
             setExpandedGroups({});
         } else {
             const newExpanded = {};
-            groups.forEach(section => newExpanded[section.id] = true);
+            allGroupIds.forEach(id => newExpanded[id] = true);
             setExpandedGroups(newExpanded);
         }
     };
 
-    const handleToggleStatus = async (subGroupId, currentStatusText, type = 'sub') => {
-        const nextStatus = currentStatusText === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-        console.log(`[Toggle] SubGroupID: ${subGroupId}, Current: ${currentStatusText}, Next: ${nextStatus}`);
-        
+    const handleToggleStatus = async (groupId, currentStatus) => {
+        const nextStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
         setActiveRowDropdown(null);
-        
-        try {
-            const response = await masterService.updateSubGroupStatus(subGroupId, nextStatus);
 
-            console.log('[Toggle] Server Response:', response);
-            
+        try {
+            const response = await masterService.updateGroupStatus(groupId, nextStatus);
             if (response.success) {
-                const toastMsg = nextStatus === 'ACTIVE' 
-                    ? 'Group activated successfully' 
-                    : 'Group inactivated successfully';
-                showToast(toastMsg);
-                // Refresh data to sync with DB
+                showToast(nextStatus === 'ACTIVE' ? 'Group activated successfully' : 'Group inactivated successfully');
                 fetchGroups();
             } else {
                 showToast(response.message || 'Failed to update status', 'error');
             }
         } catch (err) {
-            console.error('[Toggle] Error:', err);
-            const errMsg = err.response?.data?.message || err.message || 'Server error';
-            showToast(errMsg, 'error');
+            console.error('Error:', err);
+            showToast(err.response?.data?.message || err.message || 'Server error', 'error');
         }
     };
 
     // Export Logic
     const handleExportPDF = () => {
         const tableRows = [];
-        const prepareRows = (sections) => {
-            sections.forEach(sec => {
-                tableRows.push([{ content: translateDynamic(sec.group_name, t), colSpan: 2, styles: { fontStyle: 'bold' } }]);
-                (sec.sub_groups || []).forEach((item, idx) => {
-                    tableRows.push([`${idx + 1}.`, translateDynamic(item.sub_group_name, t)]);
-                });
+        const prepareRows = (items, level = 0) => {
+            items.forEach((item, idx) => {
+                const indent = '  '.repeat(level);
+                tableRows.push([
+                    level === 0 ? `${idx + 1}.` : '',
+                    `${indent}${translateDynamic(item.group_name, t)}`
+                ]);
+                if (item.children && item.children.length > 0) {
+                    prepareRows(item.children, level + 1);
+                }
             });
         };
-
         prepareRows(groups);
-
         exportToPDF('Group Master Report', ['#', 'Group Name'], tableRows, 'group-master.pdf');
         setIsExportOpen(false);
     };
 
     const handleExportExcel = () => {
         const data = [];
-        const handlePrepareData = (sections) => {
-            sections.forEach(sec => {
-                data.push({ 'Type': '', [t('common:group')]: translateDynamic(sec.group_name, t), [t('common:sub_group')]: '' });
-                (sec.sub_groups || []).forEach(item => {
-                    data.push({ 'Type': '', [t('common:group')]: '', [t('common:sub_group')]: translateDynamic(item.sub_group_name, t) });
+        const prepareData = (items, level = 0) => {
+            items.forEach(item => {
+                data.push({
+                    'Level': level,
+                    'Group Name': translateDynamic(item.group_name, t),
+                    'Status': item.status
                 });
+                if (item.children && item.children.length > 0) {
+                    prepareData(item.children, level + 1);
+                }
             });
-            data.push({}); // Empty row
         };
-
-        handlePrepareData(groups);
-
+        prepareData(groups);
         exportToExcel(data, 'Group Master', 'group-master.xlsx');
         setIsExportOpen(false);
     };
 
+    const renderGroupRow = (group, depth = 0) => {
+        const hasChildren = group.children && group.children.length > 0;
+        const isExpanded = expandedGroups[group.id] || (searchQuery && hasMatchingChild(group, searchQuery));
+        const dropdownId = `dropdown-${group.id}`;
+        const isHighlighted = searchQuery && group.group_name.toLowerCase().includes(searchQuery.toLowerCase());
+
+        return (
+            <React.Fragment key={group.id}>
+                <div
+                    className={`flex items-center justify-between px-4 py-4 border-b border-[#F3F4F6] transition-all duration-200 group-row
+                        ${depth === 0 ? 'bg-[#F9FAFB]/50' : 'bg-white'}
+                        ${isHighlighted ? 'bg-yellow-50' : 'hover:bg-gray-50'}`}
+                >
+                    <div
+                        className="flex items-center flex-1 cursor-pointer select-none gap-3"
+                        style={{ paddingLeft: `${depth * 28}px` }}
+                        onClick={() => hasChildren && toggleGroup(group.id)}
+                    >
+                        {/* Plus/Minus Toggle - Darker & bolder */}
+                        <div className="w-6 h-6 flex items-center justify-center">
+                            {hasChildren ? (
+                                <div className={`p-0.5 rounded transition-colors duration-200 ${isExpanded ? 'bg-red-50 text-red-600' : 'bg-[#014A36]/5 text-[#111827]'}`}>
+                                    {isExpanded ? (
+                                        <Minus size={14} strokeWidth={3} />
+                                    ) : (
+                                        <Plus size={14} strokeWidth={3} />
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="w-1.5 h-1.5 bg-[#4B5563] rounded-full ml-0.5" />
+                            )}
+                        </div>
+
+                        {/* Group Name with Visual Hierarchy */}
+                        <div className="flex flex-col">
+                            <span className={`text-[14px] transition-colors
+                                ${depth === 0 ? 'font-bold text-[#111827]' : 'font-medium text-[#374151]'}
+                                ${group.status === 'INACTIVE' ? 'text-gray-400' : ''}`}
+                            >
+                                {translateDynamic(group.group_name, t)}
+                                {group.is_header && group.level === 1 && (
+                                    <span className="ml-2 px-1.5 py-0.5 bg-gray-100 text-[#6B7280] text-[9px] font-bold rounded uppercase tracking-wider">
+                                        Header
+                                    </span>
+                                )}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Properly Aligned Actions Area */}
+                    <div className="flex items-center gap-6 shrink-0 ml-4">
+                        {/* Status Badge */}
+                        <div className="w-[80px] flex justify-end">
+                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border
+                                ${group.status === 'ACTIVE'
+                                    ? 'bg-green-50 text-green-700 border-green-100'
+                                    : 'bg-red-50 text-red-700 border-red-100'}`}
+                            >
+                                {group.status === 'ACTIVE' ? t('common:active') : t('common:inactive')}
+                            </span>
+                        </div>
+
+                        {/* Three-dot menu aligned to the right */}
+                        <div className="relative w-8 flex justify-center">
+                            {(!group.is_header || group.level !== 1) && (
+                                <>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setActiveRowDropdown(activeRowDropdown === dropdownId ? null : dropdownId);
+                                        }}
+                                        className={`p-1.5 rounded-md transition-all duration-200 dropdown-trigger
+                                            ${activeRowDropdown === dropdownId ? 'bg-gray-100 text-[#014A36]' : 'text-gray-400 hover:text-[#014A36] hover:bg-white border border-transparent'}`}
+                                    >
+                                        <MoreVertical size={18} />
+                                    </button>
+
+                                    {activeRowDropdown === dropdownId && (
+                                        <div className="absolute right-0 top-full mt-1 w-[140px] bg-white border border-[#E5E7EB] rounded-[10px] shadow-xl z-[100] py-1.5 animate-in zoom-in-95 duration-200 dropdown-menu">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleToggleStatus(group.id, group.status);
+                                                }}
+                                                className="w-full px-4 py-2 flex items-center gap-3 text-[13px] font-semibold text-[#4B5563] hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
+                                            >
+                                                {group.status === 'ACTIVE' ? (
+                                                    <>
+                                                        <ShieldX size={16} className="text-gray-400" />
+                                                        {t('common:inactive')}
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <ShieldCheck size={16} className="text-gray-400" />
+                                                        {t('common:active')}
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+                {/* Recursive Children with Indentation */}
+                {hasChildren && isExpanded && (
+                    <div className="animate-in slide-in-from-top-2 duration-300">
+                        {group.children.map(child => renderGroupRow(child, depth + 1))}
+                    </div>
+                )}
+            </React.Fragment>
+        );
+    };
+
     return (
-        <div className="flex flex-col animate-in fade-in duration-500 relative">
-            {/* Toast Notification */}
+        <div className="flex flex-col animate-in fade-in duration-500 relative font-['Plus_Jakarta_Sans']">
             {toast && (
-                <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded-[12px] shadow-[0_10px_30px_rgba(0,0,0,0.15)] flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300
+                <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded-[12px] shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300
                     ${toast.type === 'error' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-[#014A36] text-white'}`}>
                     {toast.type === 'error' ? <XCircle size={18} /> : <CheckCircle2 size={18} />}
                     <span className="text-[14px] font-medium">{toast.message}</span>
                 </div>
             )}
 
-            {/* Add Type Button (Top Right) */}
+            {/* Top Action Section */}
             <div className="flex justify-end mb-6">
                 <button
                     onClick={() => setIsModalOpen(true)}
@@ -175,9 +292,8 @@ const GroupMaster = () => {
                 </button>
             </div>
 
-            {/* Content List Array */}
-            <div className={`flex flex-col bg-white rounded-[12px] border border-[#E5E7EB] shadow-sm mb-8 ${activeRowDropdown ? '!overflow-visible' : 'overflow-hidden'}`}>
-                {/* Action Bar (Search + Export) inner */}
+            {/* Table Container */}
+            <div className={`flex flex-col bg-white rounded-[12px] border border-[#E5E7EB] shadow-sm mb-8 overflow-hidden`}>
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-b border-[#E5E7EB] bg-white">
                     <div className="relative w-full sm:w-[320px]">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -186,14 +302,14 @@ const GroupMaster = () => {
                             placeholder={t('common:search_anything')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full h-[40px] bg-[#F9FAFB] border border-[#E5E7EB] rounded-[8px] pl-10 pr-4 text-[14px] outline-none focus:border-[#014A36] transition-all"
+                            className="w-full h-[40px] bg-[#F9FAFB] border border-[#E5E7EB] rounded-[8px] pl-10 pr-4 text-[14px] outline-none focus:border-[#014A36] transition-all text-[#111827]"
                         />
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3">
                         <button
                             onClick={toggleExpandAll}
-                            className="flex items-center gap-2 px-4 h-[40px] border border-[#E5E7EB] rounded-[8px] text-[14px] font-medium text-[#4B5563] hover:bg-gray-50 transition-all bg-white"
+                            className="flex items-center gap-2 px-4 h-[40px] border border-[#E5E7EB] rounded-[8px] text-[13px] font-semibold text-[#4B5563] hover:bg-gray-50 transition-all bg-white"
                         >
                             {isAllExpanded ? <Minimize2 size={16} className="text-gray-400" /> : <Maximize2 size={16} className="text-gray-400" />}
                             {isAllExpanded ? t('common:collapse_all') : t('common:expand_all')}
@@ -202,16 +318,15 @@ const GroupMaster = () => {
                         <div className="relative" ref={exportRef}>
                             <button
                                 onClick={() => setIsExportOpen(!isExportOpen)}
-                                className={`flex items-center gap-2 px-4 h-[40px] border rounded-[8px] text-[14px] font-medium transition-all duration-200 bg-white
+                                className={`flex items-center gap-2 px-4 h-[40px] border rounded-[8px] text-[13px] font-semibold transition-all duration-200 bg-white
                                     ${isExportOpen ? 'border-[#014A36] text-[#014A36] shadow-sm' : 'border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
                             >
                                 <Download size={18} className={isExportOpen ? 'text-[#014A36]' : 'text-gray-400'} />
                                 {t('common:export')}
                             </button>
 
-                            {/* Export Dropdown */}
                             {isExportOpen && (
-                                <div className="absolute top-full right-0 mt-2 w-[160px] bg-white border border-gray-100 rounded-[12px] shadow-[0_10px_30px_rgba(0,0,0,0.1)] z-[50] py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="absolute top-full right-0 mt-2 w-[160px] bg-white border border-gray-100 rounded-[12px] shadow-lg z-[50] py-2 animate-in fade-in slide-in-from-top-2 duration-200">
                                     <button
                                         onClick={handleExportPDF}
                                         className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
@@ -232,121 +347,27 @@ const GroupMaster = () => {
                     </div>
                 </div>
 
-                {isLoading ? (
-                    <div className="p-12 text-center">
-                        <div className="inline-block w-6 h-6 border-2 border-[#014A36] border-t-transparent rounded-full animate-spin mb-2" />
-                        <p className="text-gray-400 text-[14px]">{t('common:loading')}</p>
-                    </div>
-                ) : filteredData.length > 0 ? (
-                    filteredData.map((section) => {
-                        // If searching and items match, auto-expand
-                        const isSearchExpanding = searchQuery && (section.sub_groups || []).some(item =>
-                            item.sub_group_name.toLowerCase().includes(searchQuery.toLowerCase())
-                        );
-                        const isExpanded = expandedGroups[section.id] || isSearchExpanding;
-
-                        return (
-                            <div key={section.id} className="flex flex-col border-b border-[#E5E7EB] last:border-b-0">
-                                <div
-                                    className="flex items-center justify-between p-4 bg-[#F9FAFB] hover:bg-[#F3F4F6] transition-colors group"
-                                >
-                                    <div
-                                        className="flex items-center gap-3 cursor-pointer select-none"
-                                        onClick={() => toggleGroup(section.id)}
-                                    >
-                                        <div className="flex items-center justify-center w-5 h-5">
-                                            {isExpanded ? (
-                                                <span className="text-[#111827] font-bold text-[18px] leading-none">—</span>
-                                            ) : (
-                                                <Plus size={14} className="text-[#111827] stroke-[3px]" />
-                                            )}
-                                        </div>
-                                        <span className={`text-[14px] font-bold ${section.status === 'ACTIVE' ? 'text-[#111827]' : 'text-gray-400 italic'}`}>
-                                            {translateDynamic(section.group_name, t)} {section.status === 'INACTIVE' && `(${t('common:inactive')})`}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* Sub-items with smooth transition */}
-                                <div className={`transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'} ${activeRowDropdown?.includes('-item-') ? '!overflow-visible' : 'overflow-hidden'}`}>
-                                    <div className="flex flex-col bg-gray-50/30 border-t border-[#E5E7EB]/50">
-                                        {(section.sub_groups || []).map((item, itemIdx) => {
-                                            const isHighlighted = searchQuery && item.sub_group_name.toLowerCase().includes(searchQuery.toLowerCase());
-                                            const dropdownId = `${section.id}-item-${item.id}`;
-                                            const currentStatus = item.status;
-
-                                            return (
-                                                <div
-                                                    key={item.id}
-                                                    className={`relative flex items-center justify-between p-3.5 pl-[52px] text-[13px] border-b border-[#E5E7EB]/50 last:border-b-0 transition-colors
-                                                        ${isHighlighted ? 'bg-yellow-50 text-[#014A36]' : 'text-[#6B7280]'}`}
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="font-medium text-[#4B5563]">
-                                                            {itemIdx + 1}. {translateDynamic(item.sub_group_name, t)}
-                                                        </span>
-                                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${currentStatus === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                                            {currentStatus === 'ACTIVE' ? t('common:active') : t('common:inactive')}
-                                                        </span>
-                                                    </div>
-
-                                                    <div className="relative flex items-center">
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setActiveRowDropdown(activeRowDropdown === dropdownId ? null : dropdownId);
-                                                            }}
-                                                            className={`p-1.5 rounded-md transition-all duration-200 dropdown-trigger
-                                                                ${activeRowDropdown === dropdownId ? 'bg-gray-100 text-[#014A36]' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`}
-                                                        >
-                                                            <MoreVertical size={18} />
-                                                        </button>
-
-                                                        {/* Row Action Dropdown */}
-                                                        {activeRowDropdown === dropdownId && (
-                                                            <div className="absolute right-0 top-full mt-1 w-[130px] bg-white border border-[#E5E7EB] rounded-[10px] shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1),0_8px_10px_-6px_rgba(0,0,0,0.1)] z-[100] py-1.5 animate-in zoom-in-95 duration-200 dropdown-menu">
-                                                                {currentStatus === 'ACTIVE' ? (
-                                                                    <button
-                                                                        onClick={(e) => { 
-                                                                            e.stopPropagation(); 
-                                                                            handleToggleStatus(item.id, item.status); 
-                                                                        }}
-                                                                        className="w-full px-4 py-2 flex items-center gap-3 text-[14px] font-medium text-[#4B5563] hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
-                                                                    >
-                                                                        <ShieldX size={16} className="text-gray-400" />
-                                                                        {t('common:inactive')}
-                                                                    </button>
-                                                                ) : (
-                                                                    <button
-                                                                        onClick={(e) => { 
-                                                                            e.stopPropagation(); 
-                                                                            handleToggleStatus(item.id, item.status); 
-                                                                        }}
-                                                                        className="w-full px-4 py-2 flex items-center gap-3 text-[14px] font-medium text-[#4B5563] hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
-                                                                    >
-                                                                        <ShieldCheck size={16} className="text-gray-400" />
-                                                                        {t('common:active')}
-                                                                    </button>
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
+                <div className="min-w-full overflow-x-auto overflow-y-hidden">
+                    <div className="flex flex-col divide-y divide-[#F3F4F6]">
+                        {isLoading ? (
+                            <div className="p-16 text-center">
+                                <div className="inline-block w-8 h-8 border-2 border-[#014A36] border-t-transparent rounded-full animate-spin mb-4" />
+                                <p className="text-[#6B7280] text-[14px] font-medium">{t('common:loading_groups') || 'Loading groups...'}</p>
                             </div>
-                        );
-                    })
-                ) : (
-                    <div className="p-12 text-center text-gray-400 text-[14px]">
-                        {t('no_matching_groups')}
+                        ) : filteredData.length > 0 ? (
+                            filteredData.map(group => renderGroupRow(group))
+                        ) : (
+                            <div className="p-16 text-center">
+                                <Search size={40} className="mx-auto text-gray-200 mb-4" />
+                                <p className="text-gray-400 text-[15px] font-medium">
+                                    {t('no_matching_groups')}
+                                </p>
+                            </div>
+                        )}
                     </div>
-                )}
+                </div>
             </div>
 
-            {/* Add Group Modal */}
             <AddGroupModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}

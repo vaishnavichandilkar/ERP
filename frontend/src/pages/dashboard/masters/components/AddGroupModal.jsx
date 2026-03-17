@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, ChevronDown } from 'lucide-react';
+import { X, ChevronDown, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import masterService from '../../../../services/masterService';
 import { translateDynamic } from '../../../../utils/i18nUtils';
@@ -8,9 +8,10 @@ const AddGroupModal = ({ isOpen, onClose, onSuccess }) => {
     const { t } = useTranslation(['common', 'modules']);
     const [isVisible, setIsVisible] = useState(false);
     const [selectedGroup, setSelectedGroup] = useState(null);
-    const [subGroupName, setSubGroupName] = useState('');
+    const [groupName, setGroupName] = useState('');
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const [headerGroups, setHeaderGroups] = useState([]);
+    const [allGroups, setAllGroups] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const modalRef = useRef(null);
@@ -18,12 +19,13 @@ const AddGroupModal = ({ isOpen, onClose, onSuccess }) => {
 
     useEffect(() => {
         if (isOpen) {
-            fetchHeaderGroups();
+            fetchDropdownGroups();
             setIsVisible(true);
             document.body.style.overflow = 'hidden';
-            setSubGroupName('');
+            setGroupName('');
             setSelectedGroup(null);
             setError('');
+            setSearchQuery('');
         } else {
             const timer = setTimeout(() => setIsVisible(false), 300);
             document.body.style.overflow = '';
@@ -31,33 +33,33 @@ const AddGroupModal = ({ isOpen, onClose, onSuccess }) => {
         }
     }, [isOpen]);
 
-    const fetchHeaderGroups = async () => {
+    const fetchDropdownGroups = async () => {
         try {
             const response = await masterService.getGroupDropdown();
             if (response.success) {
-                setHeaderGroups(response.data);
+                setAllGroups(response.data);
             }
         } catch (err) {
-            console.error('Failed to fetch header groups', err);
+            console.error('Failed to fetch dropdown groups', err);
         }
     };
 
     const handleSave = async () => {
-        if (!subGroupName.trim()) {
-            setError(t('modules:sub_group_required'));
+        if (!groupName.trim()) {
+            setError(t('modules:group_required') || 'Group name is required');
             return;
         }
         if (!selectedGroup) {
-            setError(t('modules:header_group_required'));
+            setError(t('modules:parent_group_required') || 'Parent group is required');
             return;
         }
 
         setIsLoading(true);
         setError('');
         try {
-            const response = await masterService.createSubGroup({
-                sub_group_name: subGroupName,
-                group_id: selectedGroup.id
+            const response = await masterService.createGroup({
+                group_name: groupName,
+                parent_id: selectedGroup.id
             });
 
             if (response.success) {
@@ -70,6 +72,10 @@ const AddGroupModal = ({ isOpen, onClose, onSuccess }) => {
             setIsLoading(false);
         }
     };
+
+    const filteredGroups = allGroups.filter(g =>
+        g.display_name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -115,8 +121,8 @@ const AddGroupModal = ({ isOpen, onClose, onSuccess }) => {
                         <label className="text-[13px] font-medium text-[#4B5563]">{t('common:group')}</label>
                         <input
                             type="text"
-                            value={subGroupName}
-                            onChange={(e) => setSubGroupName(e.target.value)}
+                            value={groupName}
+                            onChange={(e) => setGroupName(e.target.value)}
                             placeholder={t('common:enter_group_text')}
                             className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-3.5 outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 transition-all placeholder:text-[#9CA3AF] text-[14px] text-[#111827]"
                         />
@@ -137,20 +143,45 @@ const AddGroupModal = ({ isOpen, onClose, onSuccess }) => {
                             </div>
 
                             {isDropdownOpen && (
-                                <div className="absolute top-full left-0 w-full mt-1.5 bg-white border border-[#E5E7EB] rounded-[8px] shadow-lg z-50 py-1.5 max-h-[200px] overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
-                                    {headerGroups.map((group) => (
-                                        <div
-                                            key={group.id}
-                                            onClick={() => {
-                                                setSelectedGroup(group);
-                                                setIsDropdownOpen(false);
-                                            }}
-                                            className={`px-3.5 py-2.5 mx-1.5 rounded-[6px] hover:bg-[#F3F4F6] cursor-pointer text-[14px] transition-colors
-                                                ${selectedGroup?.id === group.id ? 'bg-[#F3F4F6] text-[#014A36] font-medium' : 'text-[#4B5563]'}`}
-                                        >
-                                            {translateDynamic(group.group_name, t)}
+                                <div className="absolute top-full left-0 w-full mt-1.5 bg-white border border-[#E5E7EB] rounded-[8px] shadow-lg z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                    {/* Search inside dropdown */}
+                                    <div className="p-2 border-b border-[#F3F4F6]">
+                                        <div className="relative">
+                                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                                            <input
+                                                type="text"
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                                placeholder={t('common:search_groups')}
+                                                className="w-full h-[32px] bg-[#F9FAFB] border border-[#E5E7EB] rounded-[6px] pl-8 pr-3 text-[12px] outline-none focus:border-[#014A36] transition-all"
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
                                         </div>
-                                    ))}
+                                    </div>
+
+                                    <div className="max-h-[200px] overflow-y-auto py-1.5 px-1.5">
+                                        {filteredGroups.length > 0 ? (
+                                            filteredGroups.map((group) => (
+                                                <div
+                                                    key={group.id}
+                                                    onClick={() => {
+                                                        setSelectedGroup(group);
+                                                        setIsDropdownOpen(false);
+                                                    }}
+                                                    className={`px-3 py-2 rounded-[6px] hover:bg-[#F3F4F6] cursor-pointer text-[13px] transition-colors mb-0.5
+                                                        ${selectedGroup?.id === group.id ? 'bg-[#F3F4F6] text-[#014A36] font-medium' : 'text-[#4B5563]'}
+                                                        ${group.level === 1 ? 'font-bold' : ''}`}
+                                                >
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="whitespace-pre">{translateDynamic(group.display_name, t)}</span>
+                                                        {group.level === 1 && group.is_header && <span className="text-[9px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">HEADER</span>}
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="px-3 py-2 text-[12px] text-gray-400 text-center">No groups found</div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </div>

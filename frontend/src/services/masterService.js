@@ -48,18 +48,13 @@ const masterService = {
         return response.data;
     },
 
-    createSubGroup: async (data) => {
-        const response = await axiosInstance.post('/group-master/sub-group', data);
+    createGroup: async (data) => {
+        const response = await axiosInstance.post('/group-master', data);
         return response.data;
     },
 
-    updateSubGroup: async (id, data) => {
-        const response = await axiosInstance.put(`/group-master/sub-group/${id}`, data);
-        return response.data;
-    },
-
-    updateSubGroupStatus: async (id, status) => {
-        const response = await axiosInstance.patch(`/group-master/sub-group/${id}/status`, { status });
+    updateGroup: async (id, data) => {
+        const response = await axiosInstance.put(`/group-master/${id}`, data);
         return response.data;
     },
 
@@ -67,6 +62,11 @@ const masterService = {
         const response = await axiosInstance.patch(`/group-master/${id}/status`, { status });
         return response.data;
     },
+
+    // Aliases for transition
+    createSubGroup: (data) => masterService.createGroup(data),
+    updateSubGroup: (id, data) => masterService.updateGroup(id, data),
+    updateSubGroupStatus: (id, status) => masterService.updateGroupStatus(id, status),
 };
 
 export default masterService;

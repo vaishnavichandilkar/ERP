@@ -30,7 +30,11 @@ model User {
   bankDetail            BankDetail?
   sellerDocuments       SellerDocument[]       @relation("UploadedByUser")
   shopDetail            ShopDetail?
-  subGroups             AccountSubGroup[]
+  groups                Group[]
+  subGroups             SubGroup[]
+  subSubGroups          SubSubGroup[]
+  subSubSubGroups       SubSubSubGroup[]
+  userGroups            UserGroup[]
   units                 UnitMaster[]
   @@map("User")
 }
@@ -46,8 +50,6 @@ model UserProfile {
 
   @@map("user_profiles")
 }
-
-
 
 model ShopDetail {
   id        Int      @id @default(autoincrement())
@@ -329,28 +331,85 @@ model UnitMaster {
   @@map("unit_master")
 }
 
-model AccountGroup {
-  id         Int               @id @default(autoincrement())
-  group_name String            @unique
-  status     MasterStatus      @default(ACTIVE)
-  created_at DateTime          @default(now())
-  updated_at DateTime          @updatedAt
-  sub_groups AccountSubGroup[]
 
-  @@map("account_groups")
+model Group {
+  id          Int          @id @default(autoincrement())
+  group_name  String
+  parent_id   Int?
+  userId      Int?
+  is_header   Boolean      @default(false)
+  status      MasterStatus @default(ACTIVE)
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+
+  parent      Group?       @relation("GroupToGroup", fields: [parent_id], references: [id])
+  children    Group[]      @relation("GroupToGroup")
+  user        User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  sub_groups  SubGroup[]
+
+  @@map("groups")
 }
 
-model AccountSubGroup {
+model SubGroup {
   id             Int          @id @default(autoincrement())
-  sub_group_name String
   group_id       Int
-  userId         Int
+  subgroup_name  String
+  userId         Int?
   status         MasterStatus @default(ACTIVE)
   created_at     DateTime     @default(now())
   updated_at     DateTime     @updatedAt
-  group          AccountGroup @relation(fields: [group_id], references: [id], onDelete: Cascade)
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, group_id, sub_group_name])
-  @@map("account_sub_groups")
+  group          Group        @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  user           User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sub_sub_groups SubSubGroup[]
+
+  @@map("sub_groups")
+}
+
+model SubSubGroup {
+  id               Int                   @id @default(autoincrement())
+  sub_group_id     Int
+  name             String
+  userId           Int?
+  status           MasterStatus          @default(ACTIVE)
+  created_at       DateTime              @default(now())
+  updated_at       DateTime              @updatedAt
+
+  sub_group        SubGroup              @relation(fields: [sub_group_id], references: [id], onDelete: Cascade)
+  user             User?                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sub_sub_sub_groups SubSubSubGroup[]
+
+  @@map("sub_sub_groups")
+}
+
+model SubSubSubGroup {
+  id                 Int               @id @default(autoincrement())
+  sub_sub_group_id   Int
+  name               String
+  userId             Int?
+  status             MasterStatus      @default(ACTIVE)
+  created_at         DateTime          @default(now())
+  updated_at         DateTime          @updatedAt
+
+  sub_sub_group      SubSubGroup       @relation(fields: [sub_sub_group_id], references: [id], onDelete: Cascade)
+  user               User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sub_sub_sub_groups")
+}
+
+model UserGroup {
+  id          Int          @id @default(autoincrement())
+  parent_id   Int?
+  name        String
+  userId      Int?
+  status      MasterStatus @default(ACTIVE)
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+
+  parent      UserGroup?   @relation("UserGroupToUserGroup", fields: [parent_id], references: [id])
+  children    UserGroup[]  @relation("UserGroupToUserGroup")
+  user        User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_groups")
 }

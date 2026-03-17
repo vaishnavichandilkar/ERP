@@ -1,4 +1,4 @@
-import { IsBoolean, IsEnum, IsInt, IsNotEmpty, IsString } from 'class-validator';
+import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export enum MasterStatus {
@@ -6,34 +6,26 @@ export enum MasterStatus {
     INACTIVE = 'INACTIVE',
 }
 
-export class CreateSubGroupDto {
-    @ApiProperty({ example: 'Light Bill' })
+export class CreateGroupDto {
+    @ApiProperty({ example: 'Utilities' })
     @IsString()
     @IsNotEmpty()
-    sub_group_name: string;
+    group_name: string;
 
-    @ApiProperty({ example: 1 })
-    @IsInt()
+    @ApiProperty({ example: '1_1', required: true })
     @IsNotEmpty()
-    group_id: number;
+    parent_id: any;
 }
 
-export class UpdateSubGroupDto {
-    @ApiProperty({ example: 'Electric Bill' })
+export class UpdateGroupDto {
+    @ApiProperty({ example: 'Electricity' })
     @IsString()
     @IsNotEmpty()
-    sub_group_name: string;
+    group_name: string;
 
-    @ApiProperty({ example: 1 })
-    @IsInt()
+    @ApiProperty({ example: '1_1', required: true })
     @IsNotEmpty()
-    group_id: number;
-}
-
-export class UpdateSubGroupStatusDto {
-    @ApiProperty({ example: 'ACTIVE', enum: MasterStatus })
-    @IsEnum(MasterStatus)
-    status: MasterStatus;
+    parent_id: any;
 }
 
 export class UpdateGroupStatusDto {
