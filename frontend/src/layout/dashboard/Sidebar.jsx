@@ -9,7 +9,7 @@ import {
     Settings,
     X
 } from 'lucide-react';
-import logo from '../../assets/images/ERP_Logo2.png';
+import logo from '../../assets/images/ERP_Logo1.png';
 import { useTranslation } from 'react-i18next';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
@@ -37,18 +37,18 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             )}
 
              {/* Sidebar Container */}
-            <aside className={`fixed lg:relative inset-y-0 left-0 z-50 bg-white border-r border-[#E5E7EB] transform transition-all duration-300 ease-in-out flex flex-col shrink-0 ${isOpen ? 'w-[260px] translate-x-0' : 'w-0 -translate-x-full lg:translate-x-0 lg:w-[80px]'}`}>
+            <aside className={`fixed lg:relative inset-y-0 left-0 z-50 bg-[#073318] border-r border-[#031d0d] transform transition-all duration-300 ease-in-out flex flex-col shrink-0 ${isOpen ? 'w-[260px] translate-x-0' : 'w-0 -translate-x-full lg:translate-x-0 lg:w-[80px]'}`}>
                 {/* Fixed width container to prevent squashing during transition */}
                 <div className={`${isOpen ? 'w-[260px]' : 'lg:w-[80px] w-[260px]'} flex flex-col h-full overflow-hidden transition-all duration-300`}>
                 {/* Logo Area */}
-                <div className={`h-[72px] flex items-center border-b border-[#E5E7EB] shrink-0 transition-all duration-300 ${isOpen ? 'px-6 justify-between' : 'lg:px-0 lg:justify-center px-6 justify-between'}`}>
+                <div className={`h-[72px] flex items-center border-b border-[#031d0d] shrink-0 transition-all duration-300 ${isOpen ? 'px-6 justify-between' : 'lg:px-0 lg:justify-center px-6 justify-between'}`}>
                     <img 
                         src={logo} 
                         alt="WeighPro Logo" 
-                        className={`transition-all duration-300 ${isOpen ? 'h-[70px]' : 'lg:h-[40px] lg:scale-125 h-[70px]'}`} 
+                        className={`transition-all duration-300 ${isOpen ? 'h-[50px]' : 'lg:h-[30px] lg:scale-125 h-[50px]'}`} 
                         onError={(e) => { e.target.style.display = 'none' }} 
                     />
-                    <button onClick={() => setIsOpen(false)} className="lg:hidden text-gray-500 hover:text-gray-700">
+                    <button onClick={() => setIsOpen(false)} className="lg:hidden text-white/70 hover:text-white">
                         <X size={20} />
                     </button>
                 </div>
@@ -70,12 +70,12 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                                     if (window.innerWidth < 1024) setIsOpen(false);
                                 }}
                                 className={`flex items-center rounded-[10px] text-[14px] font-medium transition-all duration-300 whitespace-nowrap overflow-hidden ${isOpen ? 'gap-3 px-3 py-2.5' : 'lg:gap-0 lg:px-0 lg:justify-center lg:h-[48px] gap-3 px-3 py-2.5'} ${isActive
-                                    ? 'bg-[#F3F4F6] text-[#111827]'
-                                    : 'text-[#4B5563] hover:bg-[#F9FAFB] hover:text-[#111827]'
+                                    ? 'bg-white/15 text-white border-l-4 border-[#A3E635]'
+                                    : 'text-white/70 hover:bg-white/10 hover:text-white'
                                     }`}
                                 title={!isOpen ? item.label : ''}
                             >
-                                <Icon size={20} strokeWidth={isActive ? 2.5 : 2} className={`${isActive ? "text-[#111827]" : "text-[#9CA3AF]"} shrink-0`} />
+                                <Icon size={20} strokeWidth={isActive ? 2.5 : 2} className={`${isActive ? "text-[#A3E635]" : "text-white/60"} shrink-0`} />
                                 <span className={`transition-opacity duration-300 ${isOpen ? 'opacity-100 flex-1' : 'lg:hidden opacity-0 w-0'}`}>
                                     {item.label}
                                 </span>

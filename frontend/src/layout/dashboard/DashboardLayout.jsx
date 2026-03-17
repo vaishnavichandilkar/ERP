@@ -14,7 +14,7 @@ const DashboardLayout = () => {
     }
 
     return (
-        <div className="flex h-screen bg-white font-['Plus_Jakarta_Sans'] overflow-hidden">
+        <div className="flex h-screen bg-[#F9FAFB] font-['Plus_Jakarta_Sans',sans-serif] overflow-hidden">
             <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
             <div className="flex flex-col flex-1 min-w-0 overflow-hidden">

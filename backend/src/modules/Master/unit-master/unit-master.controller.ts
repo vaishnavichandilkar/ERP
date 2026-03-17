@@ -23,6 +23,12 @@ export class UnitMasterController {
         return this.service.getDistinctUnitNames();
     }
 
+    @Get('gst-uoms')
+    @ApiOperation({ summary: 'Get distinct GST UOM codes from system library' })
+    getGstUoms() {
+        return this.service.getDistinctGstUoms();
+    }
+
     @Get('uom/:unit_name')
     @ApiOperation({ summary: 'Get UOM codes by unit name from system library' })
     getUomByUnitName(@Param('unit_name') unitName: string) {

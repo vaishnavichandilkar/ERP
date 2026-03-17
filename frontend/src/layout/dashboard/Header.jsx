@@ -80,7 +80,7 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
         }
 
         return (
-            <div className="flex items-center text-[#4B5563] text-[13px] lg:text-[15px] font-medium uppercase tracking-wide">
+            <div className="flex items-center text-[#111827] text-[14px] lg:text-[16px] font-semibold uppercase tracking-tight">
                 {breadcrumbElements}
             </div>
         );

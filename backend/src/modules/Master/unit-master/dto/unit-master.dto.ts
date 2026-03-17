@@ -59,6 +59,11 @@ export class UnitQueryDto {
     @IsString()
     unit_name?: string;
 
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
+    full_name_of_measurement?: string;
+
     @ApiProperty({ enum: UnitStatus, required: false })
     @IsOptional()
     @IsEnum(UnitStatus)

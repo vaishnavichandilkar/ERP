@@ -43,6 +43,15 @@ export class UnitMasterService {
         return { data: result.map(r => r.unit_name) };
     }
 
+    async getDistinctGstUoms() {
+        const result = await this.prisma.systemUomLibrary.findMany({
+            distinct: ['uom_code'],
+            select: { uom_code: true },
+            orderBy: { uom_code: 'asc' }
+        });
+        return { data: result.map(r => r.uom_code) };
+    }
+
     async getUomByUnitName(unitName: string) {
         const result = await this.prisma.systemUomLibrary.findMany({
             where: { unit_name: unitName },
@@ -105,7 +114,7 @@ export class UnitMasterService {
     }
 
     async getUnitsList(userId: number, query: UnitQueryDto) {
-        const { search, gst_uom, unit_name, status, page = '1', limit = '10', sortBy = 'created_at', sortOrder = 'desc' } = query;
+        const { search, gst_uom, unit_name, full_name_of_measurement, status, page = '1', limit = '10', sortBy = 'created_at', sortOrder = 'desc' } = query;
 
         const skip = (parseInt(page) - 1) * parseInt(limit);
         const take = parseInt(limit);
@@ -132,6 +141,9 @@ export class UnitMasterService {
         }
         if (unit_name) {
             where.unit_name = unit_name;
+        }
+        if (full_name_of_measurement) {
+            where.full_name_of_measurement = { contains: full_name_of_measurement, mode: 'insensitive' };
         }
         if (status) {
             where.status = status;
@@ -170,11 +182,6 @@ export class UnitMasterService {
 
     async updateUnit(userId: number, id: number, dto: UpdateUnitDto) {
         const unit = await this.getUnitById(userId, id);
-
-        // Ensure system units cannot be edited
-        if (unit.source === UnitSource.SYSTEM) {
-            throw new ForbiddenException('System library units cannot be edited');
-        }
 
         if (dto.gst_uom && dto.gst_uom !== unit.gst_uom) {
             const existing = await this.prisma.unitMaster.findFirst({

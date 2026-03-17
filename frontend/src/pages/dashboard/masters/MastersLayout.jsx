@@ -45,19 +45,16 @@ const MastersLayout = () => {
                             key={tab.path}
                             to={tab.path}
                             className={({ isActive }) =>
-                                `relative pb-4 text-[14px] md:text-[16px] font-semibold transition-all duration-300 ease-in-out whitespace-nowrap
+                                `relative text-[14px] md:text-[16px] font-semibold transition-all duration-300 ease-in-out whitespace-nowrap
                                 ${isActive
-                                    ? 'text-[#014A36]'
-                                    : 'text-[#6B7280] hover:text-[#111827]'
+                                    ? 'text-[#073318] bg-[#073318]/5 border border-[#073318] px-4 py-2 rounded-lg'
+                                    : 'text-[#6B7280] hover:text-[#111827] px-4 py-2'
                                 }`
                             }
                         >
                             {({ isActive }) => (
                                 <>
                                     {tab.name}
-                                    {isActive && (
-                                        <div className="absolute bottom-0 left-0 w-full h-[2.5px] bg-[#014A36] rounded-t-full" />
-                                    )}
                                 </>
                             )}
                         </NavLink>

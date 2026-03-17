@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, ArrowLeft, Plus, FileEdit } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import unitService from '../../../../services/masters/unitService';
 import { toast } from '../../../../utils/toast-mock';
@@ -46,12 +46,12 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
     };
 
     return (
-        <div className="flex flex-col gap-1.5 relative w-full" ref={dropdownRef}>
-            <label className="text-[13px] font-semibold text-[#4B5563]">
+        <div className="flex flex-col gap-2 relative w-full" ref={dropdownRef}>
+            <label className="text-[14px] font-bold text-[#374151]">
                 {label} {showAsterisk && <span className="text-red-500">*</span>}
             </label>
             <div
-                className={`w-full h-[44px] flex items-center justify-between px-4 border rounded-[8px] bg-white transition-colors ${disabled ? 'cursor-default border-[#E5E7EB]' : isOpen ? 'border-[#014A36] ring-1 ring-[#014A36]/10 cursor-pointer' : 'border-[#E5E7EB] hover:border-gray-300 cursor-pointer'}`}
+                className={`w-full h-[46px] flex items-center justify-between px-4 border rounded-[10px] bg-white transition-all ${disabled ? 'cursor-default border-[#E5E7EB] bg-[#F9FAFB]' : isOpen ? 'border-[#073318] ring-1 ring-[#073318]/10 cursor-pointer' : 'border-[#E5E7EB] hover:border-gray-300 cursor-pointer'}`}
                 onClick={() => !disabled && setIsOpen(!isOpen)}
             >
                 {isSearchable && isOpen ? (
@@ -71,34 +71,36 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                 )}
                 {!disabled && (isOpen ? <ChevronUp size={16} className="text-gray-400 shrink-0" /> : <ChevronDown size={16} className="text-gray-400 shrink-0" />)}
             </div>
-            {error && <span className="text-red-500 text-[12px] mt-0.5 ml-1 animate-in fade-in slide-in-from-top-1 duration-200">{error}</span>}
+            {error && <span className="text-red-500 text-[11px] mt-0.5 ml-1 animate-in fade-in slide-in-from-top-1 duration-200 font-medium">*{error}</span>}
 
             {isOpen && !disabled && (
-                <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-white border border-gray-100 rounded-[8px] shadow-lg z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="max-h-[240px] overflow-y-auto w-full py-1 custom-scrollbar">
-                        {filteredOptions?.length > 0 ? (
-                            filteredOptions.map((opt, idx) => (
-                                <div
-                                    key={idx}
-                                    className={`px-4 py-2.5 text-[14px] cursor-pointer transition-colors ${value === opt ? 'bg-[#F9FAFB] text-[#014A36] font-semibold' : 'text-[#4B5563] hover:bg-gray-50'}`}
-                                    onClick={() => {
-                                        onChange(opt);
-                                        setIsOpen(false);
-                                        setSearchTerm('');
-                                    }}
-                                >
-                                    {translateDynamic(opt, t)}
-                                </div>
-                            ))
-                        ) : (
-                            <div className="px-4 py-3 text-[14px] text-gray-500 text-center">{t('common:no_options_found')}</div>
-                        )}
-                    </div>
+                <div className="absolute top-[calc(100%+6px)] left-0 w-full bg-white border border-gray-100 rounded-[12px] shadow-[0_10px_30px_rgba(0,0,0,0.1)] z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                    {!disabled && options?.length > 0 && (
+                        <div className="max-h-[350px] overflow-y-auto w-full py-2 custom-scrollbar">
+                            {filteredOptions?.length > 0 ? (
+                                filteredOptions.map((opt, idx) => (
+                                    <div
+                                        key={idx}
+                                        className={`px-4 py-3 text-[14px] cursor-pointer transition-colors ${value === opt ? 'bg-[#F9FAFB] text-[#073318] font-bold' : 'text-[#4B5563] hover:bg-gray-50 font-medium'}`}
+                                        onClick={() => {
+                                            onChange(opt);
+                                            setIsOpen(false);
+                                            setSearchTerm('');
+                                        }}
+                                    >
+                                        {translateDynamic(opt, t)}
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="px-4 py-4 text-[14px] text-gray-500 text-center">{t('common:no_options_found')}</div>
+                            )}
+                        </div>
+                    )}
 
                     {actionLabel && onAction && (
-                        <div className="border-t border-gray-200 p-1 bg-gray-50/50">
+                        <div className="border-t border-gray-100 p-2 bg-gray-50/50">
                             {isAddingNew ? (
-                                <div className="flex flex-col gap-1 p-1">
+                                <div className="flex flex-col gap-2 p-1">
                                     <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                                         <input
                                             type="text"
@@ -109,12 +111,12 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                                                 if (e.target.value.trim()) setSubError(false);
                                             }}
                                             placeholder={t('common:enter_value')}
-                                            className={`flex-1 h-[32px] px-3 bg-white border rounded-[4px] text-[13px] outline-none transition-colors ${subError ? 'border-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.1)]' : 'border-gray-200 focus:border-[#014A36]'}`}
+                                            className={`flex-1 h-[36px] px-3 bg-white border rounded-[8px] text-[13px] outline-none transition-colors ${subError ? 'border-red-500 shadow-[0_0_0_1px_rgba(239,68,68,0.1)]' : 'border-gray-200 focus:border-[#073318]'}`}
                                             onKeyDown={(e) => e.key === 'Enter' && handleAddNew(e)}
                                         />
                                         <button
                                             onClick={handleAddNew}
-                                            className="h-[32px] px-3 bg-[#014A36] text-white text-[12px] font-semibold rounded-[4px] hover:bg-[#013b2b]"
+                                            className="h-[36px] px-4 bg-[#073318] text-white text-[12px] font-bold rounded-[8px] hover:bg-[#04200f] transition-colors"
                                         >
                                             {t('common:add')}
                                         </button>
@@ -125,12 +127,12 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                                                 setNewValue('');
                                                 setSubError(false);
                                             }}
-                                            className="h-[32px] px-3 text-[#4B5563] text-[12px] font-medium hover:bg-gray-100 rounded-[4px]"
+                                            className="h-[36px] px-3 text-[#6B7280] text-[12px] font-semibold hover:bg-white rounded-[8px] transition-colors"
                                         >
                                             {t('common:cancel')}
                                         </button>
                                     </div>
-                                    {subError && <span className="text-red-500 text-[11px] font-medium ml-1 animate-in fade-in slide-in-from-top-1 duration-200">Value is required</span>}
+                                    {subError && <span className="text-red-500 text-[11px] font-medium ml-1">Value is required</span>}
                                 </div>
                             ) : (
                                 <button
@@ -138,7 +140,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                                         e.stopPropagation();
                                         setIsAddingNew(true);
                                     }}
-                                    className="w-full py-2.5 text-[14px] text-[#014A36] font-semibold hover:bg-[#014A36]/5 transition-colors flex items-center justify-center gap-2"
+                                    className="w-full py-3 text-[14px] text-[#073318] font-bold hover:bg-[#073318]/5 transition-all flex items-center justify-center gap-2 rounded-[8px]"
                                 >
                                     <span className="text-[18px]">+</span> {actionLabel}
                                 </button>
@@ -151,7 +153,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
     );
 };
 
-const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) => {
+const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onEdit }) => {
     const { t } = useTranslation(['modules', 'common']);
     const [loading, setLoading] = useState(false);
     const [unitNameOptions, setUnitNameOptions] = useState([]);
@@ -246,16 +248,20 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) => {
             try {
                 const response = await unitService.getMeasurementByUom(value);
                 const measurementName = response.data || '';
+                
+                // Automatically fill measurement name
                 setFormData(prev => ({
                     ...prev,
                     full_name_of_measurement: measurementName
                 }));
 
-                if (measurementName && !fullNameOptions.includes(measurementName)) {
-                    setFullNameOptions(prev => [...prev, measurementName]);
+                // Ensure it exists in options if found in library
+                if (measurementName) {
+                    setFullNameOptions(prev => prev.includes(measurementName) ? prev : [...prev, measurementName]);
                 }
             } catch (error) {
                 console.error('Error loading measurement name:', error);
+                // If not found in library, keep measurement empty for user to fill
             }
         }
     };
@@ -281,7 +287,20 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) => {
         setFormData(prev => ({ ...prev, full_name_of_measurement: newValue }));
     };
 
+    const isFilled = !!(formData.unit_name && formData.gst_uom && formData.full_name_of_measurement);
+    
+    const isDirty = mode === 'edit' && initialData ? (
+        formData.unit_name !== initialData.unit_name ||
+        formData.gst_uom !== initialData.gst_uom ||
+        formData.full_name_of_measurement !== initialData.full_name_of_measurement
+    ) : true;
+
     const handleSubmit = async () => {
+        if (mode === 'edit' && !isDirty) {
+            toast.error("Please make changes to save");
+            return;
+        }
+
         const newErrors = {};
         if (!formData.unit_name) newErrors.unit_name = 'Unit Name is required';
         if (!formData.gst_uom) newErrors.gst_uom = 'GST UOM is required';
@@ -289,7 +308,6 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) => {
 
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
-            toast.error(t('common:please_fill_required_fields'));
             return;
         }
 
@@ -304,10 +322,9 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) => {
             if (mode === 'add') {
                 await unitService.createUnit(payload);
             } else {
-                // Ensure ID is a number and present
                 const updateId = initialData?.id;
                 if (!updateId) {
-                    throw new Error('Update ID not found');
+                    throw new Error(t('common:error_invalid_id'));
                 }
                 await unitService.updateUnit(updateId, payload);
             }
@@ -324,9 +341,18 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) => {
     const isView = mode === 'view';
 
     const renderViewMode = () => (
-        <div className="flex flex-col w-full bg-white border border-[#E5E7EB] rounded-[12px] overflow-hidden shadow-sm animate-in fade-in duration-300">
-            <div className="px-6 py-4 border-b border-[#E5E7EB] bg-[#F9FAFB]">
-                <h3 className="text-[16px] font-bold text-[#111827]">{t('modules:view_unit')}</h3>
+        <div className="flex flex-col w-full bg-white border border-[#E5E7EB] rounded-[16px] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.03)] animate-in fade-in duration-300">
+            <div className="px-8 py-6 border-b border-[#F3F4F6] bg-white flex items-center justify-between">
+                <div>
+                    <h3 className="text-[20px] font-bold text-[#111827]">{t('modules:view_unit')}</h3>
+                </div>
+                <button
+                    onClick={onBack}
+                    className="flex items-center gap-2 px-6 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-bold hover:bg-gray-50 transition-all bg-white shadow-sm"
+                >
+                    <ArrowLeft size={18} />
+                    {t('common:back')}
+                </button>
             </div>
 
             <div className="flex flex-col">
@@ -335,23 +361,29 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) => {
                     { label: t('modules:gst_uom'), value: formData.gst_uom },
                     { label: t('modules:full_name_of_measurement'), value: formData.full_name_of_measurement || '-' }
                 ].map((item, idx) => (
-                    <div key={idx} className="flex border-b border-[#E5E7EB] min-h-[52px]">
-                        <div className="w-[200px] bg-[#F9FAFB] px-6 py-4 flex items-center border-r border-[#E5E7EB]">
-                            <span className="text-[14px] font-semibold text-[#4B5563]">{item.label}:</span>
+                    <div key={idx} className="flex border-b border-[#F3F4F6] min-h-[56px] last:border-b-0 group">
+                        <div className="w-[240px] bg-[#F9FAFB] px-8 py-4 flex items-center border-r border-[#F3F4F6]">
+                            <span className="text-[14px] font-bold text-gray-500 uppercase tracking-tight">{item.label}:</span>
                         </div>
-                        <div className="flex-1 px-6 py-4 flex items-center bg-white">
-                            <span className="text-[14px] font-medium text-[#111827]">{item.value}</span>
+                        <div className="flex-1 px-8 py-4 flex items-center bg-white group-hover:bg-[#F9FAFB]/50 transition-colors">
+                            <span className="text-[16px] font-bold text-[#111827]">{item.value}</span>
                         </div>
                     </div>
                 ))}
             </div>
 
-            <div className="px-6 py-4 bg-white flex justify-end mt-4">
+            <div className="px-8 py-6 bg-[#F9FAFB]/50 flex justify-end gap-3 border-t border-[#F3F4F6]">
                 <button
                     onClick={onBack}
-                    className="px-8 h-[40px] border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors bg-white shadow-sm"
+                    className="px-8 h-[46px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-bold hover:bg-white transition-all bg-white"
                 >
-                    {t('common:back')}
+                    {t('common:cancel')}
+                </button>
+                <button
+                    onClick={() => initialData && onEdit && onEdit(initialData)}
+                    className="px-8 h-[46px] bg-[#073318] text-white rounded-[10px] text-[14px] font-bold hover:bg-[#04200f] transition-all shadow-sm flex items-center justify-center min-w-[140px]"
+                >
+                    {t('modules:edit_unit')}
                 </button>
             </div>
         </div>
@@ -367,24 +399,27 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) => {
 
     return (
         <div className="flex flex-col w-full h-full animate-in fade-in duration-300">
-            <div className="flex justify-end mb-6">
+            <div className="flex justify-start mb-8">
                 <button
                     onClick={onBack}
-                    className="px-6 h-[44px] bg-white border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors shadow-sm"
+                    className="flex items-center gap-2 px-6 h-[44px] bg-white border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-bold hover:bg-gray-50 transition-all shadow-sm"
                 >
                     {t('common:back')}
                 </button>
             </div>
 
-            <div className="bg-white rounded-[12px] border border-[#E5E7EB] shadow-sm flex flex-col w-full">
-                <div className="px-6 py-5 border-b border-[#E5E7EB]">
-                    <h2 className="text-[18px] font-bold text-[#111827]">
-                        {mode === 'add' ? t('modules:add_unit') : t('modules:update_unit')}
+            <div className="bg-white rounded-[16px] border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col w-full mb-12">
+                <div className="px-8 py-6 border-b border-[#F3F4F6] bg-white">
+                    <h2 className="text-[24px] font-bold text-[#111827] tracking-tight">
+                        {mode === 'add' ? t('modules:add_new_unit') : t('modules:edit_unit_details')}
                     </h2>
+                    <p className="text-[15px] text-gray-500 mt-1">
+                        {mode === 'add' ? t('modules:unit_form_desc_add') : t('modules:unit_form_desc_edit')}
+                    </p>
                 </div>
 
-                <div className="p-6 md:p-8 flex flex-col gap-6">
-                    <div className="flex flex-col gap-6 w-full">
+                <div className="p-8 md:p-10 flex flex-col gap-8 w-full">
+                    <div className="grid grid-cols-1 gap-8 w-full">
                         <CustomSelect
                             label={t('modules:unit_name')}
                             placeholder={t('modules:select_unit_category')}
@@ -431,25 +466,27 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) => {
                     </div>
                 </div>
 
-                <div className="px-6 py-5 border-t border-[#E5E7EB] flex items-center justify-end gap-4 bg-white/50 rounded-b-[12px]">
+                <div className="px-8 py-6 border-t border-[#F3F4F6] flex items-center justify-end gap-4 bg-[#F9FAFB]/30">
                     <button
                         type="button"
                         onClick={onBack}
                         disabled={loading}
-                        className="px-8 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors bg-white"
+                        className="px-8 h-[48px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[15px] font-bold hover:bg-gray-50 transition-all bg-white"
                     >
                         {t('common:cancel')}
                     </button>
                     <button
                         type="button"
                         onClick={handleSubmit}
-                        disabled={loading}
-                        className="px-8 h-[44px] bg-[#014A36] text-white rounded-[8px] text-[14px] font-bold hover:bg-[#013b2b] transition-all shadow-sm flex items-center justify-center min-w-[140px]"
+                        disabled={loading || !isFilled || (mode === 'edit' && !isDirty)}
+                        className={`px-10 h-[48px] text-white rounded-[10px] text-[15px] font-bold transition-all shadow-md flex items-center justify-center min-w-[180px] ${loading || !isFilled || (mode === 'edit' && !isDirty) ? 'bg-gray-400 cursor-not-allowed shadow-none' : 'bg-[#073318] hover:bg-[#04200f]'}`}
                     >
                         {loading ? (
                             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                         ) : (
-                            mode === 'add' ? t('modules:add_unit') : t('modules:update_unit')
+                            <div className="flex items-center justify-center">
+                                {t('modules:save_unit') || 'Save Unit'}
+                            </div>
                         )}
                     </button>
                 </div>

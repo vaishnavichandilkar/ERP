@@ -13,6 +13,11 @@ const unitService = {
         return response.data;
     },
 
+    getGstUoms: async () => {
+        const response = await axiosInstance.get('/master/gst-uoms');
+        return response.data;
+    },
+
     // Get all GST UOM codes for the selected unit name
     getUomByUnitName: async (unitName) => {
         const response = await axiosInstance.get(`/master/uom/${unitName}`);
