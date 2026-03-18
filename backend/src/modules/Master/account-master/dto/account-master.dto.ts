@@ -8,31 +8,89 @@ import {
   Matches,
   IsEnum,
   ValidateIf,
+  IsArray,
+  ValidateNested,
+  ArrayMinSize,
+  ArrayUnique,
+  IsUrl,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { ContactPrefix, MasterStatus } from '@prisma/client';
 
 export enum GroupNameEnum {
-  CREDITORS = 'Sundry Creditors (Vendor)',
-  DEBTORS = 'Sundry Debtors (Customer)',
-}
-
-export enum BalanceTypeEnum {
-  CR = 'Cr',
-  DR = 'Dr',
+  SUPPLIER = 'SUPPLIER',
+  CUSTOMER = 'CUSTOMER',
 }
 
 export enum RegTypeEnum {
-  TRADING = 'Trading',
-  SERVICE = 'Service',
-  MANUFACTURING = 'Manufacturing',
+  Trading = 'Trading',
+  Manufacturing = 'Manufacturing',
+  Service = 'Service',
 }
 
 export enum RegUnderEnum {
-  MICRO = 'Micro',
-  SMALL = 'Small',
-  MEDIUM = 'Medium',
+  Micro = 'Micro',
+  Small = 'Small',
+  Medium = 'Medium',
+}
+
+export class ContactPersonDto {
+  @ApiProperty({ enum: ContactPrefix })
+  @IsEnum(ContactPrefix)
+  @IsNotEmpty()
+  prefix: ContactPrefix;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @ApiPropertyOptional()
+  @IsEmail()
+  @IsOptional()
+  email?: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^[6-9]\d{9}$/, { message: 'Mobile number must be a valid 10-digit Indian number starting with 6-9' })
+  mobile: string;
+}
+
+export class LedgerDetailsDto {
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  creditDays?: number;
+
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  openingBalance?: number;
+}
+
+export class MsmeDetailsDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^UDYAM-[A-Z]{2}-\d{2}-\d{7}$/, { message: 'MSME ID must follow the pattern UDYAM-XX-12-1234567' })
+  msmeId: string;
+
+  @ApiProperty({ enum: RegUnderEnum })
+  @IsEnum(RegUnderEnum)
+  @IsNotEmpty()
+  regUnder: RegUnderEnum;
+
+  @ApiProperty({ enum: RegTypeEnum })
+  @IsEnum(RegTypeEnum)
+  @IsNotEmpty()
+  regType: RegTypeEnum;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  certificateUrl?: string;
 }
 
 export class CreateAccountMasterDto {
@@ -41,57 +99,25 @@ export class CreateAccountMasterDto {
   @IsNotEmpty()
   accountName: string;
 
-  @ApiPropertyOptional()
-  @IsBoolean()
-  @IsOptional()
-  isCustomer?: boolean;
-
-  @ApiPropertyOptional()
-  @IsBoolean()
-  @IsOptional()
-  isVendor?: boolean;
-
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
-  customerCode?: string;
+  @ApiProperty({ type: [String], enum: GroupNameEnum })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayUnique()
+  @IsEnum(GroupNameEnum, { each: true })
+  @IsNotEmpty()
+  groupName: GroupNameEnum[];
 
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
-  vendorCode?: string;
-
-  @ApiPropertyOptional({ enum: GroupNameEnum })
-  @IsEnum(GroupNameEnum)
-  @IsOptional()
-  groupName?: GroupNameEnum;
-
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
+  @Matches(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, { message: 'Invalid GST format' })
   gstNo?: string;
 
-  @ApiProperty({ description: 'Indian PAN Format validation' })
+  @ApiProperty()
   @IsString()
   @IsNotEmpty()
-  @Matches(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, {
-    message: 'PAN must be a valid Indian PAN format (e.g., ABCDE1234F)',
-  })
+  @Matches(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, { message: 'PAN must be a valid Indian PAN format (e.g., ABCDE1234F)' })
   panNo: string;
-
-  @ApiProperty()
-  @IsNumber()
-  @Type(() => Number)
-  creditDays: number;
-
-  @ApiProperty()
-  @IsNumber()
-  @Type(() => Number)
-  openingBalance: number;
-
-  @ApiProperty({ enum: BalanceTypeEnum })
-  @IsEnum(BalanceTypeEnum)
-  balanceType: BalanceTypeEnum;
 
   @ApiProperty()
   @IsString()
@@ -106,6 +132,7 @@ export class CreateAccountMasterDto {
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
+  @Matches(/^\d{6}$/, { message: 'Pincode must be exactly 6 digits' })
   pincode: string;
 
   @ApiPropertyOptional()
@@ -116,7 +143,12 @@ export class CreateAccountMasterDto {
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
-  city?: string;
+  subDistrict?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  district?: string;
 
   @ApiPropertyOptional()
   @IsString()
@@ -124,74 +156,47 @@ export class CreateAccountMasterDto {
   state?: string;
 
   @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  country?: string;
+
+  @ApiProperty()
+  @ValidateNested()
+  @Type(() => ContactPersonDto)
+  @IsNotEmpty()
+  contactPerson: ContactPersonDto;
+
+  @ApiPropertyOptional()
+  @ValidateIf(o => o.groupName?.includes(GroupNameEnum.SUPPLIER))
+  @ValidateNested()
+  @Type(() => LedgerDetailsDto)
+  @IsOptional()
+  supplier?: LedgerDetailsDto;
+
+  @ApiPropertyOptional()
+  @ValidateIf(o => o.groupName?.includes(GroupNameEnum.CUSTOMER))
+  @ValidateNested()
+  @Type(() => LedgerDetailsDto)
+  @IsOptional()
+  customer?: LedgerDetailsDto;
+
+  @ApiPropertyOptional()
   @IsBoolean()
   @IsOptional()
-  msmeStatus?: boolean;
+  msmeEnabled?: boolean;
 
   @ApiPropertyOptional()
-  @ValidateIf(o => o.msmeStatus === true)
-  @IsString()
+  @ValidateIf(o => o.msmeEnabled === true)
+  @ValidateNested()
+  @Type(() => MsmeDetailsDto)
   @IsNotEmpty()
-  msmeRegNo?: string;
-
-  @ApiPropertyOptional({ enum: RegTypeEnum })
-  @ValidateIf(o => o.msmeStatus === true)
-  @IsEnum(RegTypeEnum)
-  @IsNotEmpty()
-  regType?: RegTypeEnum;
-
-  @ApiPropertyOptional({ enum: RegUnderEnum })
-  @ValidateIf(o => o.msmeStatus === true)
-  @IsEnum(RegUnderEnum)
-  @IsNotEmpty()
-  regUnder?: RegUnderEnum;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  accountHolderName: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  bankName: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  accountNumber: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  @Matches(/^[A-Z]{4}0[A-Z0-9]{6}$/, { message: 'Invalid IFSC Code format' })
-  ifscCode: string;
-
-  @ApiProperty({ enum: ContactPrefix })
-  @IsEnum(ContactPrefix)
-  @IsNotEmpty()
-  prefix: ContactPrefix;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  contactPersonName: string;
+  msmeDetails?: MsmeDetailsDto;
 
   @ApiPropertyOptional()
-  @IsEmail()
+  @IsArray()
+  @IsString({ each: true })
   @IsOptional()
-  emailId?: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  @Matches(/^[0-9]{10}$/, { message: 'Mobile number must be a 10-digit number' })
-  mobileNo: string;
-
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
-  code?: string;
+  otherDocuments?: string[];
 
   @ApiPropertyOptional({ enum: MasterStatus })
   @IsEnum(MasterStatus)

@@ -10,7 +10,7 @@ export class AccountMasterService {
   constructor(private prisma: PrismaService) {}
 
   async generateCustomerCode(): Promise<string> {
-    const prefix = 'CT';
+    const prefix = 'CUS';
     const lastAccount = await this.prisma.accountMaster.findFirst({
       where: { customerCode: { startsWith: prefix } },
       orderBy: { id: 'desc' },
@@ -24,63 +24,105 @@ export class AccountMasterService {
       }
     }
 
-    return `${prefix}${seq.toString().padStart(5, '0')}`;
+    return `${prefix}${seq.toString().padStart(4, '0')}`;
   }
 
-  async generateVendorCode(): Promise<string> {
-    const prefix = 'VN';
+  async generateSupplierCode(): Promise<string> {
+    const prefix = 'SUP';
     const lastAccount = await this.prisma.accountMaster.findFirst({
-      where: { vendorCode: { startsWith: prefix } },
+      where: { supplierCode: { startsWith: prefix } },
       orderBy: { id: 'desc' },
     });
 
     let seq = 1;
-    if (lastAccount && lastAccount.vendorCode) {
-      const lastSeq = parseInt(lastAccount.vendorCode.replace(prefix, ''), 10);
+    if (lastAccount && lastAccount.supplierCode) {
+      const lastSeq = parseInt(lastAccount.supplierCode.replace(prefix, ''), 10);
       if (!isNaN(lastSeq)) {
         seq = lastSeq + 1;
       }
     }
 
-    return `${prefix}${seq.toString().padStart(5, '0')}`;
+    return `${prefix}${seq.toString().padStart(4, '0')}`;
   }
 
   async generateCode(groupName: string): Promise<string> {
-    if (groupName === GroupNameEnum.CREDITORS) {
-      return this.generateVendorCode();
+    if (groupName === GroupNameEnum.SUPPLIER) {
+      return this.generateSupplierCode();
     }
     return this.generateCustomerCode();
   }
 
   async create(createDto: CreateAccountMasterDto) {
-    let { city, state, customerCode, vendorCode, isCustomer, isVendor } = createDto;
+    let { subDistrict, district, country, state } = createDto;
 
-    if (isCustomer && !customerCode) {
+    let supplierCode = null;
+    let customerCode = null;
+
+    if (createDto.groupName.includes(GroupNameEnum.SUPPLIER)) {
+      supplierCode = await this.generateSupplierCode();
+    }
+    
+    if (createDto.groupName.includes(GroupNameEnum.CUSTOMER)) {
       customerCode = await this.generateCustomerCode();
     }
-    if (isVendor && !vendorCode) {
-      vendorCode = await this.generateVendorCode();
-    }
 
-    if (!city || !state) {
+    if (!district || !state) {
       const pinDetails = await this.getPincodeDetails(createDto.pincode);
-      city = city || pinDetails.city;
+      district = district || pinDetails.district;
+      subDistrict = subDistrict || pinDetails.subDistrict;
       state = state || pinDetails.state;
+      country = country || pinDetails.country;
     }
 
-    return this.prisma.accountMaster.create({
+    const account = await this.prisma.accountMaster.create({
       data: {
-        ...createDto,
-        city: city as string,
-        state: state as string,
+        accountName: createDto.accountName,
+        groupName: createDto.groupName,
+        gstNo: createDto.gstNo,
+        panNo: createDto.panNo,
+        
+        addressLine1: createDto.addressLine1,
+        addressLine2: createDto.addressLine2,
+        pincode: createDto.pincode,
+        area: createDto.area,
+        subDistrict,
+        district,
+        state,
+        country,
+
+        prefix: createDto.contactPerson.prefix,
+        contactPersonName: createDto.contactPerson.name,
+        emailId: createDto.contactPerson.email,
+        mobileNo: createDto.contactPerson.mobile,
+
+        supplierCode,
+        supplierCreditDays: createDto.supplier?.creditDays,
+        supplierOpeningBalance: createDto.supplier?.openingBalance,
+
         customerCode,
-        vendorCode,
-        isCustomer: isCustomer || false,
-        isVendor: isVendor || false,
-        // For backward compatibility if needed, though we should stop using it
-        code: customerCode || vendorCode || '',
+        customerCreditDays: createDto.customer?.creditDays,
+        customerOpeningBalance: createDto.customer?.openingBalance,
+
+        msmeEnabled: createDto.msmeEnabled || false,
+        msmeId: createDto.msmeEnabled ? createDto.msmeDetails?.msmeId : null,
+        regUnder: createDto.msmeEnabled ? createDto.msmeDetails?.regUnder : null,
+        regType: createDto.msmeEnabled ? createDto.msmeDetails?.regType : null,
+        msmeCertificateUrl: createDto.msmeEnabled ? createDto.msmeDetails?.certificateUrl : null,
+
+        otherDocuments: createDto.otherDocuments ? createDto.otherDocuments : Prisma.DbNull,
+        status: createDto.status || MasterStatus.ACTIVE
       },
     });
+    
+    return {
+      success: true,
+      message: "Account created successfully",
+      data: {
+        accountId: account.id,
+        supplierCode: account.supplierCode,
+        customerCode: account.customerCode
+      }
+    };
   }
 
   async findAll(filter: { 
@@ -97,7 +139,7 @@ export class AccountMasterService {
     const where: Prisma.AccountMasterWhereInput = {};
     
     if (filter.groupName) {
-      where.groupName = filter.groupName;
+      where.groupName = { has: filter.groupName };
     }
     
     if (filter.gstNo) {
@@ -109,7 +151,10 @@ export class AccountMasterService {
     }
 
     if (filter.creditDays !== undefined) {
-      where.creditDays = filter.creditDays;
+      where.OR = [
+        { supplierCreditDays: filter.creditDays },
+        { customerCreditDays: filter.creditDays }
+      ];
     }
 
     if (filter.status) {
@@ -119,22 +164,15 @@ export class AccountMasterService {
     if (filter.search) {
       const parsedNum = parseInt(filter.search, 10);
       
-      where.OR = [
+      const searchConditions: Prisma.AccountMasterWhereInput['OR'] = [
         // Identity
         { accountName: { contains: filter.search, mode: 'insensitive' } },
         { customerCode: { contains: filter.search, mode: 'insensitive' } },
-        { vendorCode: { contains: filter.search, mode: 'insensitive' } },
-        { code: { contains: filter.search, mode: 'insensitive' } },
+        { supplierCode: { contains: filter.search, mode: 'insensitive' } },
         
         // Tax
         { gstNo: { contains: filter.search, mode: 'insensitive' } },
         { panNo: { contains: filter.search, mode: 'insensitive' } },
-
-        // Finance
-        { accountNumber: { contains: filter.search, mode: 'insensitive' } },
-        { ifscCode: { contains: filter.search, mode: 'insensitive' } },
-        { bankName: { contains: filter.search, mode: 'insensitive' } },
-        { accountHolderName: { contains: filter.search, mode: 'insensitive' } },
 
         // Contact
         { contactPersonName: { contains: filter.search, mode: 'insensitive' } },
@@ -145,11 +183,22 @@ export class AccountMasterService {
         { addressLine1: { contains: filter.search, mode: 'insensitive' } },
         { pincode: { contains: filter.search, mode: 'insensitive' } },
         { area: { contains: filter.search, mode: 'insensitive' } },
-        { city: { contains: filter.search, mode: 'insensitive' } },
+        { district: { contains: filter.search, mode: 'insensitive' } },
       ];
 
       if (!isNaN(parsedNum)) {
-        where.OR.push({ creditDays: parsedNum });
+        searchConditions.push({ supplierCreditDays: parsedNum });
+        searchConditions.push({ customerCreditDays: parsedNum });
+      }
+
+      if (where.OR) {
+         where.AND = [
+           { OR: where.OR },
+           { OR: searchConditions }
+         ];
+         delete where.OR;
+      } else {
+         where.OR = searchConditions;
       }
     }
 
@@ -204,25 +253,61 @@ export class AccountMasterService {
 
   async update(id: number, updateDto: UpdateAccountMasterDto) {
     await this.findOne(id);
-
-    if (updateDto.code) {
-      const existingCode = await this.prisma.accountMaster.findFirst({
-        where: { 
-          code: updateDto.code,
-          id: { not: id }
-        },
-      });
-
-      if (existingCode) {
-        throw new BadRequestException('Code already exists for another account');
-      }
+    
+    // Convert nested properties back for update if needed. We'll simplify Update strategy.
+    const data: Prisma.AccountMasterUpdateInput = {
+      accountName: updateDto.accountName,
+      groupName: updateDto.groupName,
+      gstNo: updateDto.gstNo,
+      panNo: updateDto.panNo,
+      addressLine1: updateDto.addressLine1,
+      addressLine2: updateDto.addressLine2,
+      pincode: updateDto.pincode,
+      area: updateDto.area,
+      subDistrict: updateDto.subDistrict,
+      district: updateDto.district,
+      state: updateDto.state,
+      country: updateDto.country,
+      prefix: updateDto.contactPerson?.prefix,
+      contactPersonName: updateDto.contactPerson?.name,
+      emailId: updateDto.contactPerson?.email,
+      mobileNo: updateDto.contactPerson?.mobile,
+      supplierCreditDays: updateDto.supplier?.creditDays,
+      supplierOpeningBalance: updateDto.supplier?.openingBalance,
+      customerCreditDays: updateDto.customer?.creditDays,
+      customerOpeningBalance: updateDto.customer?.openingBalance,
+      msmeEnabled: updateDto.msmeEnabled,
+    };
+    
+    if (updateDto.msmeEnabled === true && updateDto.msmeDetails) {
+       data.msmeId = updateDto.msmeDetails.msmeId;
+       data.regUnder = updateDto.msmeDetails.regUnder;
+       data.regType = updateDto.msmeDetails.regType;
+       data.msmeCertificateUrl = updateDto.msmeDetails.certificateUrl;
+    } else if (updateDto.msmeEnabled === false) {
+       data.msmeId = null;
+       data.regUnder = null;
+       data.regType = null;
+       data.msmeCertificateUrl = null;
     }
 
-    // code should practically not be updated manually according to rules, but DTO allows it for flexible overrides
-    return this.prisma.accountMaster.update({
+    if (updateDto.otherDocuments) {
+       data.otherDocuments = updateDto.otherDocuments;
+    }
+
+    // Clean undefined
+    Object.keys(data).forEach(key => data[key as keyof typeof data] === undefined && delete data[key as keyof typeof data]);
+
+    const updated = await this.prisma.accountMaster.update({
       where: { id },
-      data: updateDto,
+      data,
     });
+    
+    return {
+      success: true,
+      message: "Account updated successfully",
+      data: updated
+    };
   }
 
   async updateStatus(id: number, updateStatusDto: UpdateAccountStatusDto) {
@@ -262,8 +347,10 @@ export class AccountMasterService {
         
         return {
           areas: areas,
-          city: postOffice.District, 
+          district: postOffice.District || '', 
           state: postOffice.State,
+          subDistrict: postOffice.Block || postOffice.District || '',
+          country: postOffice.Country || 'India',
         };
       } else {
         // Fallback to local DB if available
@@ -274,8 +361,10 @@ export class AccountMasterService {
         if (localPincode) {
           return {
             areas: [], // Cannot provide dropdown options from local generic cache without area DB
-            city: localPincode.district,
+            district: localPincode.district,
             state: localPincode.state,
+            subDistrict: '',
+            country: 'India',
           };
         }
 
@@ -302,38 +391,26 @@ export class AccountMasterService {
       // Mandatory Column Sequence
       worksheet.columns = [
         { header: 'Customer Code', key: 'customerCode', width: 15 },
-        { header: 'Vendor Code', key: 'vendorCode', width: 15 },
+        { header: 'Supplier Code', key: 'supplierCode', width: 15 },
         { header: 'Account Name', key: 'accountName', width: 30 },
-        { header: 'Type', key: 'type', width: 20 },
-        { header: 'Credit Days', key: 'creditDays', width: 12 },
+        { header: 'Groups', key: 'groupName', width: 20 },
         { header: 'GST No', key: 'gstNo', width: 20 },
         { header: 'PAN No', key: 'panNo', width: 15 },
-        { header: 'Opening Balance', key: 'openingBalance', width: 20 },
         { header: 'Address', key: 'address', width: 40 },
-        { header: 'Bank Account No', key: 'accountNumber', width: 20 },
-        { header: 'IFSC Code', key: 'ifscCode', width: 15 },
         { header: 'Status', key: 'status', width: 12 },
       ];
 
       accounts.forEach(acc => {
-        const fullAddress = `${acc.addressLine1}${acc.area ? ', ' + acc.area : ''}, ${acc.city}`;
-        const balance = `${Number(acc.openingBalance).toLocaleString('en-IN')} ${acc.balanceType}`;
-        const types = [];
-        if (acc.isCustomer) types.push('Customer');
-        if (acc.isVendor) types.push('Vendor');
+        const fullAddress = `${acc.addressLine1}${acc.area ? ', ' + acc.area : ''}, ${acc.district}`;
         
         worksheet.addRow({
           customerCode: acc.customerCode || '-',
-          vendorCode: acc.vendorCode || '-',
+          supplierCode: acc.supplierCode || '-',
           accountName: acc.accountName,
-          type: types.join(', '),
-          creditDays: acc.creditDays,
+          groupName: acc.groupName.join(', '),
           gstNo: acc.gstNo || '-',
           panNo: acc.panNo,
-          openingBalance: balance,
           address: fullAddress,
-          accountNumber: acc.accountNumber,
-          ifscCode: acc.ifscCode,
           status: acc.status === MasterStatus.ACTIVE ? 'Active' : 'Inactive',
         });
       });
@@ -350,10 +427,8 @@ export class AccountMasterService {
       // Add Autofilter
       worksheet.autoFilter = {
         from: { row: 1, column: 1 },
-        to: { row: 1, column: 11 },
+        to: { row: 1, column: 8 },
       };
-
-      // Set number format for credit days if needed, but it's already fine
       
       const buffer = await workbook.xlsx.writeBuffer();
       return {
@@ -365,7 +440,7 @@ export class AccountMasterService {
     
     if (format === 'pdf') {
       return new Promise<any>((resolve, reject) => {
-        // Landscape A4 for 11 columns
+        // Landscape A4
         const doc = new PDFDocument({ margin: 20, size: 'A4', layout: 'landscape' });
         const buffers: Buffer[] = [];
         
@@ -388,10 +463,10 @@ export class AccountMasterService {
 
         // Table Constants
         const tableTop = 100;
-        const colX = [20, 65, 110, 205, 245, 315, 375, 445, 570, 695, 765];
+        const colX = [20, 75, 130, 245, 345, 415, 470, 750];
         const headers = [
-          'Cust CD', 'Vend CD', 'Account Name', 'Days', 'GST No', 
-          'PAN', 'Op. Bal', 'Address', 'Bank A/C', 'IFSC', 'Status'
+          'Cust Code', 'Supp Code', 'Account Name', 'Groups', 'GST No', 
+          'PAN', 'Address', 'Status'
         ];
 
         // Draw Header row
@@ -407,7 +482,6 @@ export class AccountMasterService {
 
         // Table Rows
         accounts.forEach((acc, index) => {
-          // Page Break logic
           if (y > 550) {
             doc.addPage({ margin: 20, size: 'A4', layout: 'landscape' });
             y = 40;
@@ -421,26 +495,21 @@ export class AccountMasterService {
             doc.fillColor('#000000').font('Helvetica');
           }
 
-          // Shaded background for even rows
           if (index % 2 === 1) {
             doc.rect(15, y - 3, 805, 15).fill('#F2F2F2').fillColor('#000000');
           }
 
-          const fullAddress = `${acc.addressLine1}${acc.area ? ', ' + acc.area : ''}, ${acc.city}`;
-          const balance = `${Number(acc.openingBalance).toLocaleString('en-IN')} ${acc.balanceType}`;
+          const fullAddress = `${acc.addressLine1}${acc.area ? ', ' + acc.area : ''}, ${acc.district}`;
 
           doc.fontSize(7);
-          doc.text(acc.customerCode || '-', colX[0], y, { width: 40, lineBreak: true });
-          doc.text(acc.vendorCode || '-', colX[1], y, { width: 40, lineBreak: true });
-          doc.text(acc.accountName.substring(0, 30), colX[2], y, { width: 90, lineBreak: true });
-          doc.text(acc.creditDays.toString(), colX[3], y, { width: 35, lineBreak: false });
+          doc.text(acc.customerCode || '-', colX[0], y, { width: 50, lineBreak: true });
+          doc.text(acc.supplierCode || '-', colX[1], y, { width: 50, lineBreak: true });
+          doc.text(acc.accountName.substring(0, 30), colX[2], y, { width: 110, lineBreak: true });
+          doc.text(acc.groupName.join(', '), colX[3], y, { width: 95, lineBreak: false });
           doc.text(acc.gstNo || '-', colX[4], y, { width: 65, lineBreak: true });
-          doc.text(acc.panNo, colX[5], y, { width: 55, lineBreak: true });
-          doc.text(balance, colX[6], y, { width: 65, lineBreak: true });
-          doc.text(fullAddress.substring(0, 45), colX[7], y, { width: 120, lineBreak: true });
-          doc.text(acc.accountNumber, colX[8], y, { width: 120, lineBreak: true });
-          doc.text(acc.ifscCode, colX[9], y, { width: 65, lineBreak: true });
-          doc.text(acc.status === MasterStatus.ACTIVE ? 'Active' : 'Inactive', colX[10], y, { width: 50, lineBreak: false });
+          doc.text(acc.panNo, colX[5], y, { width: 50, lineBreak: true });
+          doc.text(fullAddress.substring(0, 90), colX[6], y, { width: 275, lineBreak: true });
+          doc.text(acc.status === MasterStatus.ACTIVE ? 'Active' : 'Inactive', colX[7], y, { width: 50, lineBreak: false });
           
           y += 18;
         });
