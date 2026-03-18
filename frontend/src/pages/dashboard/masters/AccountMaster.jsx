@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchAllAccounts, toggleAccountStatus } from '../../../redux/account/accountSlice';
-import { Search, Download, Filter, MoreVertical, Eye, Edit3, CheckCircle2, ChevronDown, ArrowLeft, ArrowRight, ChevronsUpDown, X, FileText, FileSpreadsheet } from 'lucide-react';
+import { Search, Download, Filter, MoreVertical, Eye, Edit3, CheckCircle2, ChevronDown, RefreshCw, ArrowLeft, ArrowRight, ChevronsUpDown, X, FileText, FileSpreadsheet } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
 import { translateDynamic } from '../../../utils/i18nUtils';
@@ -35,6 +35,7 @@ const AccountMaster = () => {
     });
     const [currentView, setCurrentView] = useState('list');
     const [selectedAccount, setSelectedAccount] = useState(null);
+    const isFilterApplied = Object.values(appliedFilters).some(val => val !== '');
 
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [currentPage, setCurrentPage] = useState(1);
@@ -124,7 +125,7 @@ const AccountMaster = () => {
         setIsFilterOpen(false);
     };
 
-    const clearFilters = () => {
+    const handleClearFilter = () => {
         const emptyFilters = {
             gstNo: '',
             panNo: '',
@@ -134,6 +135,7 @@ const AccountMaster = () => {
         };
         setFilterInputs(emptyFilters);
         setAppliedFilters(emptyFilters);
+        setIsFilterOpen(false);
     };
 
         const handleExportPDF = async () => {
@@ -211,7 +213,8 @@ const AccountMaster = () => {
             <div className="flex justify-end mb-6">
                 <button 
                     onClick={() => setCurrentView('add')}
-                    className="w-full sm:w-auto px-6 h-[44px] bg-[#014A36] text-white rounded-[8px] text-[14px] font-bold hover:bg-[#013b2b] transition-all flex items-center justify-center gap-2 shadow-sm">
+                    className="w-full sm:w-auto px-8 h-[44px] bg-[#073318] text-white rounded-[10px] text-[15px] font-bold hover:bg-[#04200f] transition-all shadow-sm flex items-center justify-center"
+                >
                     {t('modules:add_account')}
                 </button>
             </div>
@@ -223,28 +226,54 @@ const AccountMaster = () => {
                 <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-b border-[#E5E7EB] gap-4">
                     <div className="flex items-center gap-3 w-full sm:w-auto flex-1">
                         <div className="relative w-full sm:w-[320px]">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                             <input
                                 type="text"
-                                placeholder={t('common:search_anything')}
+                                placeholder="Search By Anything..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full h-[40px] bg-[#F9FAFB] border border-[#E5E7EB] rounded-[8px] pl-10 pr-4 text-[14px] text-[#111827] placeholder:text-[#9CA3AF] outline-none focus:border-[#014A36] transition-all"
+                                className="w-full h-[42px] bg-white border border-[#E5E7EB] rounded-[10px] pl-10 pr-10 text-[14px] text-[#111827] placeholder:text-gray-400 outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/10 transition-all shadow-sm"
                             />
+                            {searchQuery && (
+                                <button 
+                                    onClick={() => setSearchQuery('')}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                >
+                                    <X size={16} />
+                                </button>
+                            )}
                         </div>
-                        <button onClick={() => setIsFilterOpen(true)} className="flex items-center gap-2 px-6 h-[40px] border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-medium hover:bg-gray-50 transition-colors bg-white">
-                            <Filter size={18} className="text-gray-400" />
-                            {t('common:filter')}
+                        <button 
+                            onClick={() => isFilterApplied ? handleClearFilter() : setIsFilterOpen(true)} 
+                            className={`flex items-center gap-2 px-4 h-[42px] border rounded-[10px] text-[14px] font-bold transition-all shadow-sm
+                                ${isFilterApplied 
+                                    ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100' 
+                                    : 'bg-white border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
+                        >
+                            <Filter size={18} className={isFilterApplied ? "text-red-500" : "text-gray-400"} />
+                            {isFilterApplied ? t('common:clear') : t('common:filter')}
+                        </button>
+                        <button
+                            onClick={() => {
+                                // Assume handles are similar.
+                                dispatch(fetchAllAccounts({ page: 1, limit: rowsPerPage }));
+                                setSearchQuery('');
+                                handleClearFilter();
+                            }}
+                            className="flex items-center justify-center w-[42px] h-[42px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] hover:bg-gray-50 transition-colors bg-white shadow-sm"
+                            title="Refresh Data"
+                        >
+                            <RefreshCw size={18} className="text-gray-400" />
                         </button>
                     </div>
 
                     <div className="relative" ref={exportRef}>
                         <button 
                             onClick={() => setIsExportOpen(!isExportOpen)}
-                            className={`flex items-center gap-2 px-6 h-[40px] border rounded-[8px] text-[14px] font-medium transition-all duration-200 bg-white
-                                ${isExportOpen ? 'border-[#014A36] text-[#014A36] shadow-sm' : 'border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
+                            className={`flex items-center justify-center gap-2 px-4 h-[42px] border rounded-[10px] text-[14px] font-bold transition-all duration-200 bg-white
+                                ${isExportOpen ? 'border-[#073318] text-[#073318]' : 'border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
                         >
-                            <Download size={18} className={isExportOpen ? 'text-[#014A36]' : 'text-gray-400'} />
+                            <Download size={18} className={isExportOpen ? 'text-[#073318]' : 'text-gray-400'} />
                             {t('common:export')}
                         </button>
 
@@ -253,17 +282,17 @@ const AccountMaster = () => {
                             <div className="absolute top-full right-0 mt-2 w-[160px] bg-white border border-gray-100 rounded-[12px] shadow-[0_10px_30px_rgba(0,0,0,0.1)] z-[50] py-2 animate-in fade-in slide-in-from-top-2 duration-200">
                                 <button
                                     onClick={handleExportPDF}
-                                    className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
+                                    className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors"
                                 >
                                     <FileText size={18} className="text-red-500" />
-                                    PDF
+                                    {t('common:pdf')}
                                 </button>
                                 <button
                                     onClick={handleExportExcel}
-                                    className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors"
+                                    className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors"
                                 >
                                     <FileSpreadsheet size={18} className="text-green-600" />
-                                    Excel
+                                    {t('common:excel')}
                                 </button>
                             </div>
                         )}

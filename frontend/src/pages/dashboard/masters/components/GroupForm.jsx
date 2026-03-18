@@ -249,7 +249,7 @@ const GroupForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) => {
                     >
                         {isLoading ? (
                             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        ) : (mode === 'add' ? (t('modules:save_group') || 'Save Group') : (t('modules:update_group') || 'Update Group'))}
+                        ) : (mode === 'add' ? 'Save Group' : (t('modules:update_group') || 'Update Group'))}
                     </button>
                 </div>
             </div>
