@@ -260,21 +260,18 @@ export class OnboardingService {
     }
 
     async updatePersonalDetails(userId: number, dto: Step4DetailsDto) {
-        let email = dto.email?.trim() || null;
-        if (email === '') email = null;
+        const email = dto.email.trim();
 
-        // Check for email uniqueness before updating only if email is provided
-        if (email) {
-            const existingWithEmail = await this.prisma.user.findFirst({
-                where: {
-                    email: email,
-                    id: { not: userId }
-                }
-            });
-
-            if (existingWithEmail) {
-                throw new BadRequestException(`Email '${email}' is already in use by another account.`);
+        // Check for email uniqueness before updating
+        const existingWithEmail = await this.prisma.user.findFirst({
+            where: {
+                email: email,
+                id: { not: userId }
             }
+        });
+
+        if (existingWithEmail) {
+            throw new BadRequestException(`Email '${email}' is already in use by another account.`);
         }
 
         await this.validateAndAdvanceStep(userId, 4, 4, { ...dto, email });

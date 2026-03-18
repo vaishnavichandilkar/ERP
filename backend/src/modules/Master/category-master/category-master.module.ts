@@ -1,9 +1,13 @@
 import { Module } from '@nestjs/common';
-import { CategoryMasterService } from './category-master.service';
-import { CategoryMasterController } from './category-master.controller';
+import { CategoryMasterService } from './services/category-master.service';
+import { CategoryMasterController } from './controllers/category-master.controller';
+import { CategoryMasterRepository } from './repositories/category-master.repository';
+import { PrismaModule } from '../../../infrastructure/prisma/prisma.module';
 
 @Module({
-  providers: [CategoryMasterService],
-  controllers: [CategoryMasterController]
+  imports: [PrismaModule],
+  providers: [CategoryMasterService, CategoryMasterRepository],
+  controllers: [CategoryMasterController],
+  exports: [CategoryMasterService]
 })
-export class CategoryMasterModule {}
+export class CategoryMasterModule { }

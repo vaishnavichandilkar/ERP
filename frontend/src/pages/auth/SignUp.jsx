@@ -310,6 +310,7 @@ const SignUp = () => {
                 if (!/^[a-zA-Z\s]+$/.test(value)) return `${name === 'firstName' ? 'First' : 'Last'} name must contain only letters and spaces.`;
                 break;
             case 'email':
+                if (!value) return 'Email is required.';
                 if (!/\S+@\S+\.\S+/.test(value)) return 'Invalid email format.';
                 break;
             case 'phone':
@@ -592,7 +593,6 @@ const SignUp = () => {
                                 <div className="mb-6">
                                     <CustomInput
                                         label={t('auth:email')}
-                                        optional={true}
                                         placeholder={t('auth:placeholder_email')}
                                         name="email"
                                         type="email"
@@ -603,11 +603,11 @@ const SignUp = () => {
                                     />
                                 </div>
                                 <button
-                                    disabled={!formData.firstName || !formData.lastName || isLoading || !!fieldErrors.firstName || !!fieldErrors.lastName || !!fieldErrors.email}
+                                    disabled={!formData.firstName || !formData.lastName || !formData.email || isLoading || !!fieldErrors.firstName || !!fieldErrors.lastName || !!fieldErrors.email}
                                     onClick={handleNext}
                                     className="w-full h-[56px] text-white text-[16px] font-['Plus_Jakarta_Sans'] font-medium rounded-[8px] transition-colors disabled:opacity-100 disabled:cursor-not-allowed hover:bg-[#86a89d]"
                                     style={{
-                                        backgroundColor: (!formData.firstName || !formData.lastName || !!fieldErrors.firstName || !!fieldErrors.lastName || !!fieldErrors.email) ? '#A7C0B8' : '#0F3D2E'
+                                        backgroundColor: (!formData.firstName || !formData.lastName || !formData.email || !!fieldErrors.firstName || !!fieldErrors.lastName || !!fieldErrors.email) ? '#A7C0B8' : '#0F3D2E'
                                     }}
                                 >
                                     {isLoading ? t('auth:saving') : t('auth:save_continue')}

@@ -61,11 +61,10 @@ export class Step4DetailsDto {
     @Matches(/^[a-zA-Z\s]+$/, { message: 'last name must contain only letters and spaces' })
     last_name: string;
 
-    @ApiProperty({ example: 'john.doe@example.com', required: false })
+    @ApiProperty({ example: 'john.doe@example.com', required: true })
     @IsEmail()
-    @IsOptional()
-    @ValidateIf((o) => o.email !== '')
-    email?: string;
+    @IsNotEmpty()
+    email: string;
 }
 
 export class Step5BusinessDto {
