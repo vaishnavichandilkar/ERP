@@ -35,6 +35,7 @@ const AccountMaster = () => {
     });
     const [currentView, setCurrentView] = useState('list');
     const [selectedAccount, setSelectedAccount] = useState(null);
+    const isFilterApplied = Object.values(appliedFilters).some(val => val !== '');
 
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [currentPage, setCurrentPage] = useState(1);
@@ -216,7 +217,7 @@ const AccountMaster = () => {
                         {t('modules:add_account')}
                     </button>
                 </div>
-                <p className="text-[#6B7280] text-[15px]">{t('modules:account_master_desc') || 'View, verify, and manage all customer and vendor accounts, including balance and contact information.'}</p>
+                <p className="text-[#6B7280] text-[15px]">{t('modules:account_master_desc')}</p>
             </div>
 
             {/* Main Content Box */}
@@ -229,26 +230,29 @@ const AccountMaster = () => {
                             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                             <input
                                 type="text"
-                                placeholder="Search by anything..."
+                                placeholder="Search By Anything..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full h-[42px] bg-white border border-[#E5E7EB] rounded-[10px] pl-10 pr-10 text-[14px] text-[#111827] placeholder:text-gray-400 outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/10 transition-all"
+                                className="w-full h-[42px] bg-white border border-[#E5E7EB] rounded-[10px] pl-10 pr-10 text-[14px] text-[#111827] placeholder:text-gray-400 outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/10 transition-all shadow-sm"
                             />
                             {searchQuery && (
                                 <button 
                                     onClick={() => setSearchQuery('')}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                                 >
                                     <X size={16} />
                                 </button>
                             )}
                         </div>
                         <button 
-                            onClick={() => setIsFilterOpen(true)} 
-                            className="flex items-center gap-2 px-6 h-[42px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-semibold hover:bg-gray-50 transition-colors bg-white shadow-sm"
+                            onClick={() => isFilterApplied ? clearFilters() : setIsFilterOpen(true)} 
+                            className={`flex items-center gap-2 px-6 h-[42px] border rounded-[10px] text-[14px] font-bold transition-all shadow-sm
+                                ${isFilterApplied 
+                                    ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100' 
+                                    : 'bg-white border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
                         >
-                            <Filter size={18} className="text-gray-400" />
-                            {t('common:filter')}
+                            <Filter size={18} className={isFilterApplied ? 'text-red-500' : 'text-gray-400'} />
+                            {isFilterApplied ? t('common:clear') : t('common:filter')}
                         </button>
                         <button
                             className="flex items-center justify-center w-[42px] h-[42px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] hover:bg-gray-50 transition-colors bg-white shadow-sm"
@@ -262,7 +266,7 @@ const AccountMaster = () => {
                     <div className="relative" ref={exportRef}>
                         <button 
                             onClick={() => setIsExportOpen(!isExportOpen)}
-                            className={`flex items-center gap-2 px-6 h-[42px] border rounded-[10px] text-[14px] font-semibold transition-all duration-200 bg-white
+                            className={`flex items-center gap-2 px-6 h-[42px] border rounded-[10px] text-[14px] font-bold transition-all duration-200 bg-white
                                 ${isExportOpen ? 'border-[#073318] text-[#073318]' : 'border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
                         >
                             <Download size={18} className={isExportOpen ? 'text-[#073318]' : 'text-gray-400'} />
@@ -370,48 +374,50 @@ const AccountMaster = () => {
                                     <td className="px-6 py-4 border-r border-[#F3F4F6] font-medium">{row.accountNumber}</td>
                                     <td className="px-6 py-4 border-r border-[#F3F4F6] font-medium">{row.ifscCode}</td>
                                     <td className="px-6 py-4 border-r border-[#F3F4F6]">
-                                        <span className={row.status === 'ACTIVE' ? 'text-[#073318] font-bold' : 'text-gray-500 font-bold'}>
-                                            {row.status === 'ACTIVE' ? t('common:active') : t('common:inactive')}
-                                        </span>
+                                        <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-bold ${row.status === 'ACTIVE' ? 'bg-[#ECFDF5] text-[#059669]' : 'bg-[#FEF2F2] text-[#DC2626]'}`}>
+                                            <span className={`w-1.5 h-1.5 rounded-full ${row.status === 'ACTIVE' ? 'bg-[#059669]' : 'bg-[#DC2626]'}`}></span>
+                                            {row.status === 'ACTIVE' ? 'Active' : 'Inactive'}
+                                        </div>
                                     </td>
-                                    <td className={`px-6 py-4 text-center relative ${dropdownIndex === index ? 'z-50' : ''}`}>
-                                        <button onClick={(e) => toggleDropdown(index, e)} className="p-1 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
-                                            <MoreVertical size={18} />
-                                        </button>
+                                            <td className={`px-6 py-4 text-center relative ${dropdownIndex === index ? 'z-50' : ''}`}>
+                                                <button onClick={(e) => toggleDropdown(index, e)} className="p-1 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
+                                                    <MoreVertical size={18} />
+                                                </button>
 
-                                        {dropdownIndex === index && (
-                                            <div 
-                                                ref={dropdownRef} 
-                                                className={`absolute right-6 w-max min-w-[180px] bg-white border border-gray-100 rounded-[12px] shadow-[0_10px_30px_rgba(0,0,0,0.15)] z-[100] py-2 animate-in fade-in duration-200 text-left ${
-                                                    index >= paginatedData.length - 2 && paginatedData.length > 2
-                                                        ? 'bottom-[80%] mb-1 slide-in-from-bottom-2'
-                                                        : 'top-[80%] mt-1 slide-in-from-top-2'
-                                                }`}
-                                            >
-                                                <button 
-                                                    onClick={(e) => { e.stopPropagation(); setSelectedAccount(row); setCurrentView('view'); setDropdownIndex(null); }} 
-                                                    className="flex items-center gap-3 w-full px-4 py-2.5 text-[14px] font-medium text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors whitespace-nowrap"
-                                                >
-                                                    <Eye size={16} />
-                                                    {t('modules:view_account')}
-                                                </button>
-                                                <button 
-                                                    onClick={(e) => { e.stopPropagation(); setSelectedAccount(row); setCurrentView('edit'); setDropdownIndex(null); }} 
-                                                    className="flex items-center gap-3 w-full px-4 py-2.5 text-[14px] font-medium text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors whitespace-nowrap"
-                                                >
-                                                    <Edit3 size={16} />
-                                                    {t('modules:update_account')}
-                                                </button>
-                                                <button 
-                                                    onClick={(e) => toggleStatus(row, e)} 
-                                                    className="flex items-center gap-3 w-full px-4 py-2.5 text-[14px] font-medium text-gray-700 hover:bg-[#F9FAFB] hover:text-[#014A36] transition-colors whitespace-nowrap border-t border-gray-100"
-                                                >
-                                                    <CheckCircle2 size={16} className={row.status === 'ACTIVE' ? 'text-gray-500' : 'text-[#014A36]'} />
-                                                    {row.status === 'ACTIVE' ? t('common:inactive') : t('common:active')}
-                                                </button>
-                                            </div>
-                                        )}
-                                    </td>
+                                                {dropdownIndex === index && (
+                                                    <div 
+                                                        ref={dropdownRef} 
+                                                        className={`absolute right-6 w-max min-w-[200px] bg-white border border-gray-100 rounded-[14px] shadow-[0_10px_40px_rgba(0,0,0,0.12)] z-[110] py-2 animate-in fade-in zoom-in-95 duration-200 text-left ${
+                                                            index >= paginatedData.length - 2 && paginatedData.length > 2
+                                                                ? 'bottom-[80%] mb-1 slide-in-from-bottom-2'
+                                                                : 'top-[80%] mt-1 slide-in-from-top-2'
+                                                        }`}
+                                                    >
+                                                        <button 
+                                                            onClick={(e) => { e.stopPropagation(); setSelectedAccount(row); setCurrentView('view'); setDropdownIndex(null); }} 
+                                                            className="w-full px-5 py-3 flex items-center gap-3 text-[14px] font-bold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap"
+                                                        >
+                                                            <Eye size={18} className="text-gray-400" />
+                                                            {t('modules:view_account')}
+                                                        </button>
+                                                        <button 
+                                                            onClick={(e) => { e.stopPropagation(); setSelectedAccount(row); setCurrentView('edit'); setDropdownIndex(null); }} 
+                                                            className="w-full px-5 py-3 flex items-center gap-3 text-[14px] font-bold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap"
+                                                        >
+                                                            <Edit3 size={18} className="text-gray-400" />
+                                                            {t('modules:update_account')}
+                                                        </button>
+                                                        <div className="h-[1px] bg-[#F3F4F6] mx-2 my-1" />
+                                                        <button 
+                                                            onClick={(e) => toggleStatus(row, e)} 
+                                                            className="w-full px-5 py-3 flex items-center gap-3 text-[14px] font-bold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap"
+                                                        >
+                                                            <CheckCircle2 size={18} className={row.status === 'ACTIVE' ? 'text-gray-400' : 'text-[#073318]'} />
+                                                            {row.status === 'ACTIVE' ? t('common:inactive') : t('common:active')}
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </td>
                                 </tr>
                             ))}
                         </tbody>
@@ -483,104 +489,122 @@ const AccountMaster = () => {
 
             {isFilterOpen && (
                 <div
-                    className="fixed inset-0 z-[100] flex justify-end"
-                >
-                    {/* Overlay */}
-                    <div
-                        className="absolute inset-0 bg-black/50 transition-opacity"
+                    className="fixed inset-0 z-[60] bg-slate-900/20 backdrop-blur-[2px] transition-all duration-300 ease-in-out"
+                    onClick={() => setIsFilterOpen(false)}
+                />
+            )}
+
+            {/* Filter Sidebar Offcanvas */}
+            <div className={`fixed top-0 right-0 h-full w-full sm:w-[480px] bg-white shadow-2xl z-[70] transform transition-transform duration-300 ease-in-out flex flex-col ${isFilterOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-5 border-b border-[#E5E7EB]">
+                    <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">{t('common:apply_filters')}</h2>
+                    <button
                         onClick={() => setIsFilterOpen(false)}
-                    />
+                        className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-[#111827] hover:bg-gray-100 rounded-full transition-all"
+                    >
+                        <X size={20} />
+                    </button>
+                </div>
 
-                    {/* Drawer */}
-                    <div className="relative w-[400px] max-w-full bg-white h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
-                        {/* Drawer Header */}
-                        <div className="flex items-center justify-between p-6 pb-4">
-                            <h2 className="text-[16px] font-bold text-[#111827] font-['Plus_Jakarta_Sans']">{t('common:apply_filters')}</h2>
-                            <button onClick={() => setIsFilterOpen(false)} className="text-black hover:text-[#111827] transition-colors p-1 rounded-full hover:bg-gray-100">
-                                <X size={20} strokeWidth={1.5} />
-                            </button>
-                        </div>
+                {/* Body */}
+                <div className="flex-1 px-6 py-6 overflow-y-auto space-y-6">
+                    {/* GST No Filter */}
+                    <div className="space-y-2">
+                        <label className="text-[13px] font-semibold text-[#4B5563]">{t('modules:gst_no')}</label>
+                        <input
+                            type="text"
+                            name="gstNo"
+                            value={filterInputs.gstNo}
+                            onChange={handleFilterChange}
+                            placeholder="Enter GST No"
+                            className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#073318] bg-white font-medium"
+                        />
+                    </div>
 
-                        {/* Drawer Body */}
-                        <div className="flex-1 overflow-y-auto px-6 py-2 space-y-6">
-                            <div>
-                                <label className="block text-[13px] font-medium text-[#374151] mb-2">{t('modules:gst_no')}</label>
-                                <input
-                                    type="text"
-                                    name="gstNo"
-                                    value={filterInputs.gstNo}
-                                    onChange={handleFilterChange}
-                                    className="w-full h-[46px] px-3 border border-[#D1D5DB] rounded-[6px] text-[14px] text-[#111827] outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/20 transition-all placeholder:text-gray-400"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-[13px] font-medium text-[#374151] mb-2">{t('modules:pan_no')}</label>
-                                <input
-                                    type="text"
-                                    name="panNo"
-                                    value={filterInputs.panNo}
-                                    onChange={handleFilterChange}
-                                    className="w-full h-[46px] px-3 border border-[#D1D5DB] rounded-[6px] text-[14px] text-[#111827] outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/20 transition-all placeholder:text-gray-400"
-                                />
-                            </div>
-                            <div className="relative">
-                                <label className="block text-[13px] font-medium text-[#374151] mb-2">{t('modules:group_name')}</label>
-                                <select
-                                    name="groupName"
-                                    value={filterInputs.groupName}
-                                    onChange={handleFilterChange}
-                                    className="w-full h-[46px] px-3 pr-10 border border-[#D1D5DB] rounded-[6px] text-[14px] text-[#111827] outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/20 transition-all appearance-none bg-white font-['Plus_Jakarta_Sans']"
-                                >
-                                    <option value="" disabled className="hidden"></option>
-                                    <option value="Sundry Creditors">{t('modules:sundry_creditors')}</option>
-                                    <option value="Sundry Debtors">{t('modules:sundry_debtors')}</option>
-                                </select>
-                                <ChevronDown size={18} className="absolute right-3 top-1/2 translate-y-[20%] pointer-events-none text-[#6B7280]" />
-                            </div>
-                            <div>
-                                <label className="block text-[13px] font-medium text-[#374151] mb-2">{t('modules:credit_days')}</label>
-                                <input
-                                    type="text"
-                                    name="creditDays"
-                                    value={filterInputs.creditDays}
-                                    onChange={handleFilterChange}
-                                    className="w-full h-[46px] px-3 border border-[#D1D5DB] rounded-[6px] text-[14px] text-[#111827] outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/20 transition-all placeholder:text-gray-400"
-                                />
-                            </div>
-                            <div className="relative">
-                                <label className="block text-[13px] font-medium text-[#374151] mb-2">{t('common:status')}</label>
-                                <select
-                                    name="status"
-                                    value={filterInputs.status}
-                                    onChange={handleFilterChange}
-                                    className="w-full h-[46px] px-3 pr-10 border border-[#D1D5DB] rounded-[6px] text-[14px] text-[#111827] outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/20 transition-all appearance-none bg-white font-['Plus_Jakarta_Sans']"
-                                >
-                                    <option value="" disabled className="hidden"></option>
-                                    <option value="Active">{t('common:active')}</option>
-                                    <option value="InActive">{t('common:inactive')}</option>
-                                </select>
-                                <ChevronDown size={18} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[#6B7280]" />
-                            </div>
-                        </div>
+                    {/* PAN No Filter */}
+                    <div className="space-y-2">
+                        <label className="text-[13px] font-semibold text-[#4B5563]">{t('modules:pan_no')}</label>
+                        <input
+                            type="text"
+                            name="panNo"
+                            value={filterInputs.panNo}
+                            onChange={handleFilterChange}
+                            placeholder="Enter PAN No"
+                            className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#073318] bg-white font-medium"
+                        />
+                    </div>
 
-                        {/* Drawer Footer */}
-                        <div className="p-6 border-t border-[#E5E7EB] flex items-center justify-between gap-4 bg-white mt-auto">
-                            <button
-                                onClick={clearFilters}
-                                className="flex-1 h-[48px] bg-white border border-[#D1D5DB] text-[#374151] text-[14px] font-semibold rounded-[6px] hover:bg-gray-50 transition-colors"
+                    {/* Group Name Filter */}
+                    <div className="space-y-2">
+                        <label className="text-[13px] font-semibold text-[#4B5563]">{t('modules:group_name')}</label>
+                        <div className="relative">
+                            <select
+                                name="groupName"
+                                value={filterInputs.groupName}
+                                onChange={handleFilterChange}
+                                className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] pl-4 pr-10 text-[14px] text-[#111827] outline-none focus:border-[#073318] appearance-none bg-white font-medium"
                             >
-                                {t('common:clear')}
-                            </button>
-                                <button
-                                    onClick={applyFilters}
-                                    className="flex-1 h-[48px] bg-[#073318] text-white text-[14px] font-bold rounded-[8px] hover:bg-[#04200f] transition-colors shadow-sm"
-                                >
-                                    {t('common:apply_filter') || 'Apply Filter'}
-                                </button>
+                                <option value="">{t('common:all')}</option>
+                                <option value="Sundry Creditors">{t('modules:sundry_creditors')}</option>
+                                <option value="Sundry Debtors">{t('modules:sundry_debtors')}</option>
+                            </select>
+                            <div className="absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none text-gray-400">
+                                <ChevronDown size={14} />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Credit Days Filter */}
+                    <div className="space-y-2">
+                        <label className="text-[13px] font-semibold text-[#4B5563]">{t('modules:credit_days')}</label>
+                        <input
+                            type="text"
+                            name="creditDays"
+                            value={filterInputs.creditDays}
+                            onChange={handleFilterChange}
+                            placeholder="Enter Credit Days"
+                            className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#073318] bg-white font-medium"
+                        />
+                    </div>
+
+                    {/* Status Filter */}
+                    <div className="space-y-2">
+                        <label className="text-[13px] font-semibold text-[#4B5563]">{t('common:status')}</label>
+                        <div className="relative">
+                            <select
+                                name="status"
+                                value={filterInputs.status}
+                                onChange={handleFilterChange}
+                                className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] pl-4 pr-10 text-[14px] text-[#111827] outline-none focus:border-[#073318] appearance-none bg-white font-medium"
+                            >
+                                <option value="">{t('common:all')}</option>
+                                <option value="Active">{t('common:active')}</option>
+                                <option value="InActive">{t('common:inactive')}</option>
+                            </select>
+                            <div className="absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none text-gray-400">
+                                <ChevronDown size={14} />
+                            </div>
                         </div>
                     </div>
                 </div>
-            )}
+
+                {/* Footer Buttons */}
+                <div className="px-8 py-6 border-t border-[#E5E7EB] flex items-center gap-4 bg-white">
+                    <button
+                        onClick={clearFilters}
+                        className="flex-1 h-[48px] border border-[#E5E7EB] rounded-[10px] text-[15px] font-bold text-[#4B5563] hover:bg-gray-50 hover:text-[#111827] transition-all bg-white shadow-sm"
+                    >
+                        {t('common:clear')}
+                    </button>
+                    <button
+                        onClick={applyFilters}
+                        className="flex-1 h-[48px] bg-[#073318] text-white rounded-[10px] text-[15px] font-bold hover:bg-[#04200f] transition-all shadow-md shadow-[#073318]/10"
+                    >
+                        {t('common:apply_filter')}
+                    </button>
+                </div>
+            </div>
         </div>
     );
 };

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { translateDynamic } from '../../../../utils/i18nUtils';
 
@@ -10,7 +10,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
     const dropdownRef = useRef(null);
 
     const filteredOptions = isSearchable && searchTerm
-        ? options.filter(opt => opt.toLowerCase().includes(searchTerm.toLowerCase()))
+        ? options.filter(opt => opt?.toLowerCase().includes(searchTerm.toLowerCase()))
         : options;
 
     useEffect(() => {
@@ -78,20 +78,14 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
     );
 };
 
-const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
+const ProductForm = ({ mode = 'add', initialData = null, onBack, onEdit, onSuccess }) => {
     const { t } = useTranslation(['modules', 'common']);
     const [loading, setLoading] = useState(false);
-
-    const getInitialUOM = (uom) => {
-        if (!uom) return '';
-        if (uom.toUpperCase() === 'KG') return 'KGS';
-        return uom;
-    };
 
     const initialFormData = {
         productName: initialData?.name || '',
         productCode: initialData?.code || '',
-        uom: getInitialUOM(initialData?.uom),
+        uom: initialData?.uom || '',
         productType: initialData?.type || '',
         category: initialData?.category || '',
         subcategory: initialData?.subcategory || '',
@@ -102,39 +96,17 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
 
     const [formData, setFormData] = useState(initialFormData);
 
-    const UOM_LIST = [
-        'BAG', 'BAL', 'BDL', 'BKL', 'BOU', 'BOX', 'BTL', 'BUN', 'CAN', 'CBM',
-        'CCM', 'CMS', 'CTN', 'DOZ', 'DRM', 'GGR', 'GMS', 'GRS', 'GYD', 'KGS',
-        'KLR', 'KME', 'MLT', 'MTR', 'MTS', 'NOS', 'PAC', 'PCS', 'PRS', 'QTL',
-        'ROL', 'SET', 'SQF', 'SQM', 'SQY', 'TBS', 'TGM', 'THD', 'TON', 'TUB',
-        'UGC', 'UNT', 'YDS', 'OTHER'
-    ];
-
-    const PRODUCT_TYPES = [t('modules:goods'), t('modules:service')];
-    const CATEGORIES = [
-        t('modules:cattle_feed'),
-        t('modules:fertilizers'),
-        t('modules:weighing_equipment'),
-        t('modules:agricultural_inputs'),
-        t('modules:silage'),
-        t('modules:animal_feed'),
-        t('modules:seeds')
-    ];
-    const SUBCATEGORIES = [
-        t('modules:maize_silage'),
-        t('modules:cattle_feed'),
-        t('modules:wheat_seeds'),
-        t('modules:organic_fertilizers'),
-        t('modules:digital_indicator'),
-        t('modules:crop_nutrients')
-    ];
+    const UOM_LIST = ['KGS', 'NOS', 'BAG', 'BOX', 'PCS'];
+    const PRODUCT_TYPES = ['Goods', 'Service'];
+    const CATEGORIES = ['Silage', 'Animal Feed', 'Fertilizers', 'Seeds'];
+    const SUBCATEGORIES = ['Maize Silage', 'Cattle Feed', 'Wheat Seeds'];
 
     const handleInputChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
     const isView = mode === 'view';
-    const showAsterisk = true;
+    const isFilled = !!(formData.productName && formData.productCode && formData.uom && formData.productType && formData.category);
 
     const isDirty = mode === 'edit' ? (
         formData.productName !== initialFormData.productName ||
@@ -148,19 +120,26 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
         formData.description !== initialFormData.description
     ) : true;
 
-    const isFilled = !!(formData.productName && formData.productCode && formData.uom && formData.productType && formData.category);
+    const handleSubmit = async () => {
+        setLoading(true);
+        // Simulate API call
+        setTimeout(() => {
+            setLoading(false);
+            onSuccess();
+        }, 800);
+    };
 
-    const renderInput = (label, field, placeholder) => (
-        <div className="flex flex-col gap-2 w-full">
-            <label className="text-[14px] font-medium text-[#4B5563]">
+    const renderInput = (label, field, placeholder, showAsterisk = true) => (
+        <div className="flex flex-col gap-1.5 w-full">
+            <label className="text-[13px] font-semibold text-[#4B5563]">
                 {label} {showAsterisk && <span className="text-red-500">*</span>}
             </label>
             <input
                 type="text"
                 placeholder={placeholder}
                 disabled={isView}
-                className={`w-full h-[46px] border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] text-[#111827] outline-none transition-all bg-white 
-                    ${isView ? 'cursor-default' : 'focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/10'}`}
+                className={`w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none transition-all bg-white 
+                    ${isView ? 'cursor-default' : 'focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 hover:border-gray-300'}`}
                 value={formData[field]}
                 onChange={(e) => handleInputChange(field, e.target.value)}
             />
@@ -168,21 +147,20 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
     );
 
     const renderViewMode = () => (
-        <div className="flex flex-col w-full bg-white border border-[#E5E7EB] rounded-[16px] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.03)] animate-in fade-in duration-300">
+        <div className="bg-white rounded-[16px] border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col w-full overflow-hidden mb-12 animate-in fade-in duration-300">
             {/* Header */}
             <div className="px-8 py-6 border-b border-[#F3F4F6] bg-white flex items-center justify-between">
-                <div>
-                    <h3 className="text-[20px] font-bold text-[#111827]">{t('modules:view_product')}</h3>
-                </div>
+                <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">{t('modules:view_product')}</h2>
                 <button
                     onClick={onBack}
                     className="flex items-center gap-2 px-6 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-bold hover:bg-gray-50 transition-all bg-white shadow-sm"
                 >
+                    <ArrowLeft size={18} />
                     {t('common:back')}
                 </button>
             </div>
 
-            {/* Detailed Info Table */}
+            {/* Content Table */}
             <div className="flex flex-col">
                 {[
                     { label: t('modules:product_name'), value: formData.productName },
@@ -206,7 +184,7 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
                 ))}
             </div>
 
-            {/* Footer Buttons */}
+            {/* Footer */}
             <div className="px-8 py-6 bg-[#F9FAFB]/50 flex justify-end gap-3 border-t border-[#F3F4F6]">
                 <button
                     onClick={onBack}
@@ -215,7 +193,7 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
                     {t('common:cancel')}
                 </button>
                 <button
-                    onClick={() => onBack()}
+                    onClick={() => onEdit && onEdit(initialData)}
                     className="px-8 h-[46px] bg-[#073318] text-white rounded-[10px] text-[14px] font-bold hover:bg-[#04200f] transition-all shadow-sm flex items-center justify-center min-w-[140px]"
                 >
                     {t('modules:update_product')}
@@ -224,41 +202,28 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
         </div>
     );
 
-    if (isView) {
-        return (
-            <div className="flex flex-col w-full h-full p-2">
-                {renderViewMode()}
-            </div>
-        );
-    }
+    if (isView) return renderViewMode();
 
     return (
-        <div className="flex flex-col w-full h-full animate-in fade-in duration-300">
-            {/* Top Action Bar */}
-            <div className="flex justify-start mb-8">
-                <button
-                    onClick={onBack}
-                    className="flex items-center gap-2 px-6 h-[44px] bg-white border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-bold hover:bg-gray-50 transition-all shadow-sm"
-                >
-                    {t('common:back')}
-                </button>
-            </div>
-
-            {/* Form Container */}
-            <div className="bg-white rounded-[16px] border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col w-full mb-12">
+        <div className="flex flex-col w-full h-full animate-in fade-in duration-300 p-2">
+            <div className={`bg-white rounded-[16px] border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col w-full mb-12 ${isView ? 'overflow-hidden' : 'overflow-visible'}`}>
                 {/* Header */}
-                <div className="px-8 py-6 border-b border-[#F3F4F6] bg-white">
-                    <h2 className="text-[24px] font-bold text-[#111827] tracking-tight">
-                        {mode === 'add' ? t('modules:add_product') : mode === 'edit' ? t('modules:update_product') : t('modules:view_product')}
+                <div className="px-8 py-6 border-b border-[#F3F4F6] bg-white flex items-center justify-between">
+                    <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">
+                        {mode === 'add' ? t('modules:add_product') : t('modules:update_product')}
                     </h2>
-                    <p className="text-[15px] text-gray-500 mt-1">
-                        {mode === 'add' ? 'Please fill in the information below to create a new product.' : 'Make changes to the product details below.'}
-                    </p>
+                    <button
+                        onClick={onBack}
+                        className="flex items-center gap-2 px-6 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-bold hover:bg-gray-50 transition-all bg-white shadow-sm"
+                    >
+                        <ArrowLeft size={18} />
+                        {t('common:back')}
+                    </button>
                 </div>
 
                 {/* Form Body */}
                 <div className="p-8 md:p-10 flex flex-col gap-8 w-full">
-                    <div className="grid grid-cols-1 gap-8 w-full">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8 w-full">
                         {renderInput(t('modules:product_name'), 'productName', t('modules:enter_product_name'))}
                         {renderInput(t('modules:product_code'), 'productCode', t('modules:product_code_auto'))}
 
@@ -269,8 +234,7 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
                             value={formData.uom}
                             onChange={(val) => handleInputChange('uom', val)}
                             isSearchable={true}
-                            disabled={isView}
-                            showAsterisk={showAsterisk}
+                            showAsterisk={true}
                         />
 
                         <CustomSelect
@@ -279,8 +243,7 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
                             options={PRODUCT_TYPES}
                             value={formData.productType}
                             onChange={(val) => handleInputChange('productType', val)}
-                            disabled={isView}
-                            showAsterisk={showAsterisk}
+                            showAsterisk={true}
                         />
 
                         <CustomSelect
@@ -289,8 +252,7 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
                             options={CATEGORIES}
                             value={formData.category}
                             onChange={(val) => handleInputChange('category', val)}
-                            disabled={isView}
-                            showAsterisk={showAsterisk}
+                            showAsterisk={true}
                         />
 
                         <CustomSelect
@@ -299,31 +261,32 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack }) => {
                             options={SUBCATEGORIES}
                             value={formData.subcategory}
                             onChange={(val) => handleInputChange('subcategory', val)}
-                            disabled={isView}
-                            showAsterisk={showAsterisk}
+                            showAsterisk={true}
                         />
 
                         {renderInput(t('modules:hsn_code'), 'hsnCode', t('common:enter') + ' ' + t('modules:hsn_code'))}
                         {renderInput(t('modules:tax_percent'), 'tax', t('modules:tax_auto'))}
-                        {renderInput(t('modules:product_desc'), 'description', t('modules:enter_product_desc'))}
+                        <div className="md:col-span-2">
+                            {renderInput(t('modules:product_desc'), 'description', t('modules:enter_product_desc'))}
+                        </div>
                     </div>
                 </div>
 
                 {/* Footer Buttons */}
-                <div className="px-8 py-6 border-t border-[#F3F4F6] flex items-center justify-end gap-4 bg-[#F9FAFB]/30">
+                <div className="px-8 py-6 bg-[#F9FAFB]/50 flex justify-end gap-3 border-t border-[#F3F4F6]">
                     <button
                         type="button"
                         onClick={onBack}
                         disabled={loading}
-                        className="px-8 h-[48px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[15px] font-bold hover:bg-gray-50 transition-all bg-white"
+                        className="px-8 h-[46px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-bold hover:bg-white transition-all bg-white"
                     >
                         {t('common:cancel')}
                     </button>
                     <button
                         type="button"
-                        onClick={() => !loading && isFilled && isDirty && onBack()}
+                        onClick={handleSubmit}
                         disabled={loading || !isFilled || (mode === 'edit' && !isDirty)}
-                        className={`px-10 h-[48px] text-white rounded-[10px] text-[15px] font-bold transition-all shadow-md flex items-center justify-center min-w-[180px] ${loading || !isFilled || (mode === 'edit' && !isDirty) ? 'bg-gray-400 cursor-not-allowed shadow-none' : 'bg-[#073318] hover:bg-[#04200f]'}`}
+                        className={`px-10 h-[46px] text-white rounded-[10px] text-[14px] font-bold transition-all shadow-md flex items-center justify-center min-w-[160px] ${loading || !isFilled || (mode === 'edit' && !isDirty) ? 'bg-gray-400 cursor-not-allowed shadow-none' : 'bg-[#073318] hover:bg-[#04200f]'}`}
                     >
                         {loading ? (
                             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>

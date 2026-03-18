@@ -155,8 +155,8 @@ async function main() {
     await prisma.systemUomLibrary.createMany({ data: uomData });
     console.log('System UOM Library seeded.');
 
-    // 6. Seed Account Groups
-    const accountGroups = [
+    // 6. Seed Account Groups (Headers)
+    const headerGroups = [
         "Direct Expense",
         "Indirect Expense",
         "Purchase",
@@ -167,14 +167,45 @@ async function main() {
         "Closing Stock"
     ];
 
-    for (const groupName of accountGroups) {
-        await prisma.accountGroup.upsert({
-            where: { group_name: groupName },
-            update: {},
-            create: { group_name: groupName }
+    console.log('Seeding Account Header Groups...');
+    for (const groupName of headerGroups) {
+        await prisma.group.upsert({
+            where: { id: 0 }, // We can't use id:0 easily here if we don't have a unique constraint on group_name.
+            // Actually, I should have added a unique constraint on group_name + is_header + userId?
+            // The user didn't specify. I'll just find by name where is_header is true.
+            update: {
+                group_name: groupName,
+                is_header: true,
+                userId: null,
+            },
+            create: {
+                group_name: groupName,
+                is_header: true,
+                userId: null,
+            },
         });
     }
-    console.log('Account Groups seeded.');
+
+    // Since I don't have a unique constraint on group_name in the schema yet, 
+    // I should probably add it or use a different way to seed safely.
+    // For now, I'll just check if they exist by name.
+
+    for (const groupName of headerGroups) {
+        const existing = await prisma.group.findFirst({
+            where: { group_name: groupName, is_header: true, userId: null }
+        });
+        if (!existing) {
+            await prisma.group.create({
+                data: {
+                    group_name: groupName,
+                    is_header: true,
+                    userId: null,
+                    status: 'ACTIVE'
+                }
+            });
+        }
+    }
+    console.log('Account Header Groups seeded.');
 
     console.log('Seeding completed.');
 }

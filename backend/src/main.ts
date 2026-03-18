@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 import { setupSwagger } from './config/swagger.config';
 import { ValidationPipe } from '@nestjs/common';
@@ -33,7 +34,8 @@ async function bootstrap() {
     // Swagger
     setupSwagger(app);
 
-    const port = process.env.PORT || 3000;
+    const configService = app.get(ConfigService);
+    const port = configService.get('PORT') || configService.get('port') || 3000;
     await app.listen(port);
     console.log(`Application is running on: http://localhost:${port}`);
     console.log(`Swagger Docs available at: http://localhost:${port}${process.env.SWAGGER_PATH || '/api/docs'}`);

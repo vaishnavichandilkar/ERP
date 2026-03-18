@@ -5,6 +5,7 @@
     "sales": "Sales",
     "settings": "Settings",
     "group_master": "Group Master",
+    "group_master_desc": "View, verify, and manage all account groups and subgroups for organized financial reporting.",
     "add_group": "Add Group",
     "no_matching_groups": "No matching groups found",
     "facility": "Facility",
@@ -17,6 +18,7 @@
     "no_units_found": "No units found matching your search.",
     "apply_filters": "Apply Filters",
     "account_master": "Account Master",
+    "account_master_desc": "View, verify, and manage all customer and vendor accounts, including balance and contact information.",
     "vendor_code": "Vendor Code",
     "customer_code": "Customer Code",
     "account_type": "Account Type",
@@ -35,8 +37,9 @@
     "update_account": "Edit Account",
     "category": "Category",
     "category_master": "Category Master",
-    "category_desc": "Categorize products and services for better organization and reporting.",
+    "category_master_desc": "View, verify, and manage product categories and sub-categories to keep your inventory organized.",
     "product_master": "Product Master",
+    "product_master_desc": "View, verify, and manage all products in your inventory, including HSN codes and tax configurations.",
     "product_code": "Product Code",
     "product_name": "Product Name",
     "uom": "UOM",
@@ -196,5 +199,7 @@
     "edit_unit_details": "Edit Unit Details",
     "unit_form_desc_add": "Please fill in the information below to create a new unit category in the system library.",
     "unit_form_desc_edit": "Please fill in the information below to update the unit details in the system library.",
-    "view_unit_details": "Full details and status of the selected unit category"
+    "view_unit_details": "Full details and status of the selected unit category",
+    "group_required": "Group name is required",
+    "parent_group_required": "Please select a parent group Under"
 }

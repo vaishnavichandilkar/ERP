@@ -46,9 +46,16 @@ export class SmsService {
             await this.snsClient.send(command);
         } catch (error) {
             console.error('AWS SNS Error:', error);
-            if (this.configService.get('NODE_ENV') !== 'production') {
-                console.log(`[DEV ONLY] OTP for ${formattedPhone}: ${otp}`);
+            const isDev = this.configService.get('NODE_ENV') !== 'production' || !this.configService.get('AWS_ACCESS_KEY_ID');
+            
+            if (isDev) {
+                console.log('-------------------------------');
+                console.log(`[DEV MODE] OTP for ${formattedPhone}: ${otp}`);
+                console.log(`[DEV MODE] Error was: ${error.message}`);
+                console.log('-------------------------------');
+                return; // Fallback to logs in dev
             }
+            
             throw new InternalServerErrorException(`Failed to send SMS OTP: ${error.message}`);
         }
     }

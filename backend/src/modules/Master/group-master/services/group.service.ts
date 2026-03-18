@@ -1,123 +1,145 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { GroupMasterRepository } from '../repositories/group.repository';
-import { CreateSubGroupDto, UpdateSubGroupDto, UpdateSubGroupStatusDto, UpdateGroupStatusDto } from '../dto/group-master.dto';
+import { CreateGroupDto, UpdateGroupDto, UpdateGroupStatusDto } from '../dto/group-master.dto';
 
 @Injectable()
 export class GroupMasterService {
     constructor(private readonly groupRepository: GroupMasterRepository) { }
 
-    async getAllGroupsWithSubGroups(userId: number) {
-        const data = await this.groupRepository.findAllWithSubGroups(userId);
+    async getAllGroups(userId: number) {
+        const tree = await this.groupRepository.findAllGroups(userId);
+
         return {
             success: true,
             message: 'Groups retrieved successfully',
-            data,
+            data: tree,
         };
     }
 
-    async getHeaderGroupsForDropdown() {
-        const data = await this.groupRepository.findHeaderGroupsForDropdown();
+    async getDropdownGroups(userId: number) {
+        const data = await this.groupRepository.getDropdownGroups(userId);
         return {
             success: true,
-            message: 'Header groups retrieved successfully',
+            message: 'Dropdown groups retrieved successfully',
             data,
         };
     }
 
-    async createSubGroup(dto: CreateSubGroupDto, userId: number) {
-        const group_id = dto.group_id;
-        const sub_group_name = dto.sub_group_name.trim();
+    async createGroup(dto: CreateGroupDto, userId: number) {
+        // Parent ID might be a virtual ID string (level_id) or a legacy number
+        const parent_uid = typeof dto.parent_id === 'string' ? dto.parent_id : String(dto.parent_id);
+        const group_name = dto.group_name.trim();
 
-        // Check if header group exists
-        const group = await this.groupRepository.findGroupById(group_id);
-        if (!group) {
-            throw new NotFoundException(`Header group with ID ${group_id} not found`);
+        // 1. Identify parent level to determine target table
+        const parentInfo = await this.groupRepository.findGroupLevel(parent_uid, userId);
+        if (!parentInfo) {
+            throw new NotFoundException(`Parent group with ID ${parent_uid} not found`);
         }
 
-        // Check for duplicate sub-group name under the same group for this specific user
-        const existing = await this.groupRepository.findSubGroupByNameAndGroup(sub_group_name, group_id, userId);
+        const parent_raw_id = parentInfo.data.id;
+        const targetLevel = parentInfo.level + 1;
+        if (targetLevel > 5) {
+            throw new ForbiddenException('Maximum hierarchy level reached (Level 4 sub-groups)');
+        }
+
+        // 2. Check for duplicates in the target level/table
+        const existing = await this.groupRepository.findGroupByNameAndParent(group_name, targetLevel, parent_raw_id, userId);
         if (existing) {
-            throw new ConflictException(`Sub-group "${sub_group_name}" already exists under this group`);
+            throw new ConflictException(`Group "${group_name}" already exists under this parent`);
         }
 
-        const data = await this.groupRepository.createSubGroup({
-            sub_group_name,
-            group_id,
-            userId,
-        });
+        // 3. Save to the correct table based on target level
+        let data;
+        switch (targetLevel) {
+            case 2:
+                data = await this.groupRepository.createSubGroup({ subgroup_name: group_name, group_id: parent_raw_id, userId });
+                break;
+            case 3:
+                data = await this.groupRepository.createSubSubGroup({ name: group_name, sub_group_id: parent_raw_id, userId });
+                break;
+            case 4:
+                data = await this.groupRepository.createSubSubSubGroup({ name: group_name, sub_sub_group_id: parent_raw_id, userId });
+                break;
+            case 5:
+                data = await this.groupRepository.createSubSubSubSubGroup({ name: group_name, sub_sub_sub_group_id: parent_raw_id, userId });
+                break;
+            default:
+                throw new ForbiddenException('Invalid hierarchy level');
+        }
 
         return {
             success: true,
-            message: 'Sub-group created successfully',
+            message: 'Group created successfully',
+            data: { ...data, level: targetLevel },
+        };
+    }
+
+    async updateGroup(id: string, dto: UpdateGroupDto, userId: number) {
+        const parent_uid = typeof dto.parent_id === 'string' ? dto.parent_id : String(dto.parent_id);
+        const group_name = dto.group_name.trim();
+
+        // 1. Identify current level and group existence
+        const info = await this.groupRepository.findGroupLevel(id, userId);
+        if (!info) {
+            throw new NotFoundException(`Group with ID ${id} not found`);
+        }
+
+        const level = info.level;
+        const raw_id = info.data.id;
+
+        if (level === 1) {
+            if ((info.data as any)?.is_header) {
+                throw new ForbiddenException('Header groups cannot be edited');
+            }
+        }
+
+        // 2. Check if parent group exists and user has access
+        const parentInfo = await this.groupRepository.findGroupLevel(parent_uid, userId);
+        if (!parentInfo) {
+            throw new NotFoundException(`Parent group with ID ${parent_uid} not found`);
+        }
+
+        const parent_raw_id = parentInfo.data.id;
+
+        // 3. Ensure moving consistent with table levels
+        if (parentInfo.level !== level - 1) {
+            throw new ForbiddenException(`This group is at Level ${level} and must have a Level ${level - 1} parent`);
+        }
+
+        // 4. Check for duplicate group name under same parent
+        const existing = await this.groupRepository.findGroupByNameAndParent(group_name, level, parent_raw_id, userId);
+        if (existing && existing.id !== raw_id) {
+            throw new ConflictException(`Group "${group_name}" already exists under this parent`);
+        }
+
+        const data = await this.groupRepository.updateGroupName(raw_id, level, {
+            group_name,
+            parent_id: parent_raw_id,
+        }, userId);
+
+        return {
+            success: true,
+            message: 'Group updated successfully',
             data,
         };
     }
 
-    async updateSubGroup(id: number, dto: UpdateSubGroupDto, userId: number) {
-        const group_id = dto.group_id;
-        const sub_group_name = dto.sub_group_name.trim();
+    async updateStatus(id: string, dto: UpdateGroupStatusDto, userId: number) {
+        // We need to find which level it belongs to first
+        const info = await this.groupRepository.findGroupLevel(id, userId);
 
-        // Check if sub-group exists and belongs to the user
-        const subGroup = await this.groupRepository.findSubGroupById(id, userId);
-        if (!subGroup) {
-            throw new NotFoundException(`Sub-group with ID ${id} not found or access denied`);
+        if (!info) {
+            throw new NotFoundException(`Group with ID ${id} not found`);
         }
 
-        // Check if header group exists
-        const group = await this.groupRepository.findGroupById(group_id);
-        if (!group) {
-            throw new NotFoundException(`Header group with ID ${group_id} not found`);
+        const data = await this.groupRepository.updateGroupStatus(info.data.id, info.level, dto.status, userId);
+        if (!data) {
+            throw new ForbiddenException('Cannot update status for this group (it may be a header group)');
         }
-
-        // Check for duplicate sub-group name under the same group (excluding current id)
-        const existing = await this.groupRepository.findSubGroupByNameAndGroup(sub_group_name, group_id, userId);
-        if (existing && existing.id !== id) {
-            throw new ConflictException(`Sub-group "${sub_group_name}" already exists under this group`);
-        }
-
-        const data = await this.groupRepository.updateSubGroup(id, {
-            sub_group_name,
-            group_id,
-        });
-
-        return {
-            success: true,
-            message: 'Sub-group updated successfully',
-            data,
-        };
-    }
-
-    async updateGroupStatus(id: number, dto: UpdateGroupStatusDto) {
-        const group = await this.groupRepository.findGroupById(id);
-        if (!group) {
-            throw new NotFoundException(`Header group with ID ${id} not found`);
-        }
-
-        const data = await this.groupRepository.updateGroupStatus(id, dto.status);
 
         return {
             success: true,
             message: `Group status changed to ${dto.status}`,
-            data,
-        };
-    }
-
-    async updateSubGroupStatus(id: number, dto: UpdateSubGroupStatusDto, userId: number) {
-        console.log(`Updating sub-group status: ID=${id}, Status=${dto.status}, UserID=${userId}`);
-        const subGroup = await this.groupRepository.findSubGroupById(id, userId);
-
-        if (!subGroup) {
-            console.warn(`Sub-group not found or access denied for ID=${id}, UserID=${userId}`);
-            throw new NotFoundException(`Sub-group with ID ${id} not found or access denied`);
-        }
-
-        console.log(`Found sub-group: ${JSON.stringify(subGroup)}`);
-        const data = await this.groupRepository.updateSubGroupStatus(id, dto.status);
-        console.log(`Update successful, new data: ${JSON.stringify(data)}`);
-
-        return {
-            success: true,
-            message: `Sub-group status changed to ${dto.status}`,
             data,
         };
     }

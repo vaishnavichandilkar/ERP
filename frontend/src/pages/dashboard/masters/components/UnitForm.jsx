@@ -81,7 +81,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                                 filteredOptions.map((opt, idx) => (
                                     <div
                                         key={idx}
-                                        className={`px-4 py-3 text-[14px] cursor-pointer transition-colors ${value === opt ? 'bg-[#F9FAFB] text-[#073318] font-bold' : 'text-[#4B5563] hover:bg-gray-50 font-medium'}`}
+                                        className={`px-4 py-3 text-[14px] cursor-pointer transition-colors ${value === opt ? 'bg-[#F9FAFB] text-[#073318] font-bold' : 'text-[#4B5563] hover:bg-gray-50'}`}
                                         onClick={() => {
                                             onChange(opt);
                                             setIsOpen(false);
@@ -399,7 +399,7 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onEdit 
 
     return (
         <div className="flex flex-col w-full h-full animate-in fade-in duration-300 p-2">
-            <div className="bg-white rounded-[16px] border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col w-full overflow-hidden mb-12">
+            <div className={`bg-white rounded-[16px] border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col w-full mb-12 transition-all duration-300 ${isView ? 'overflow-hidden' : 'overflow-visible'}`}>
                 {/* Header */}
                 <div className="px-8 py-6 border-b border-[#F3F4F6] bg-white flex items-center justify-between">
                     <div>

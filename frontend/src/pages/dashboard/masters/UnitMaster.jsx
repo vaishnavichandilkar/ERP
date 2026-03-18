@@ -7,22 +7,9 @@ import unitService from '../../../services/masters/unitService';
 import { toast } from '../../../utils/toast-mock';
 
 import { translateDynamic } from '../../../utils/i18nUtils';
+import SuccessToast from './components/SuccessToast';
 
-const SuccessToast = ({ message, onClose }) => {
-    useEffect(() => {
-        const timer = setTimeout(onClose, 3000);
-        return () => clearTimeout(timer);
-    }, [onClose]);
 
-    return (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-4 duration-300">
-            <div className="bg-[#014A36] text-white px-5 py-2.5 rounded-full shadow-lg flex items-center gap-3 min-w-[280px] justify-center">
-                <CheckCircle2 size={18} className="text-white" />
-                <span className="text-[16px] font-medium">{message}</span>
-            </div>
-        </div>
-    );
-};
 
 const UnitMaster = () => {
     const { t } = useTranslation(['modules', 'common']);
@@ -234,13 +221,13 @@ const UnitMaster = () => {
                                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                                     <input
                                         type="text"
-                                        placeholder="Search by anything..."
+                                        placeholder="Search By Anything..."
                                         value={searchQuery}
                                         onChange={(e) => {
                                             setSearchQuery(e.target.value);
                                             setCurrentPage(1);
                                         }}
-                                        className="w-full h-[42px] bg-white border border-[#E5E7EB] rounded-[10px] pl-10 pr-10 text-[14px] outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/10 transition-all placeholder:text-gray-400"
+                                        className="w-full h-[42px] bg-white border border-[#E5E7EB] rounded-[10px] pl-10 pr-10 text-[14px] outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/10 transition-all placeholder:text-gray-400 shadow-sm"
                                     />
                                     {searchQuery && (
                                         <button 
@@ -248,7 +235,7 @@ const UnitMaster = () => {
                                                 setSearchQuery('');
                                                 setCurrentPage(1);
                                             }}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                                         >
                                             <X size={16} />
                                         </button>

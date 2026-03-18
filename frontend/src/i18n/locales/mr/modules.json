@@ -182,5 +182,7 @@
     "agricultural_inputs": "कृषि संसाधने",
     "wheat_seeds": "गव्हाचे बियाणे",
     "digital_indicator": "डिजिटल इंडिकेटर",
-    "crop_nutrients": "पीक पोषक तत्वे"
+    "crop_nutrients": "पीक पोषक तत्वे",
+    "group_required": "ग्रुपचे नाव आवश्यक आहे",
+    "parent_group_required": "कृपया एक मूळ (पॅरेंट) ग्रुप निवडा"
 }

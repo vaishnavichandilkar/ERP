@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import ProductForm from './components/ProductForm';
 import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
 import { translateDynamic } from '../../../utils/i18nUtils';
+import SuccessToast from './components/SuccessToast';
 
 const ProductMaster = () => {
     const { t } = useTranslation(['modules', 'common']);
@@ -14,7 +15,9 @@ const ProductMaster = () => {
     const [activeDropdown, setActiveDropdown] = useState(null);
     const [filterInputs, setFilterInputs] = useState(defaultFilters);
     const [appliedFilters, setAppliedFilters] = useState(defaultFilters);
+    const isFilterApplied = Object.values(appliedFilters).some(val => val !== '');
     const [currentView, setCurrentView] = useState({ type: 'list', data: null });
+    const [showSuccessToast, setShowSuccessToast] = useState({ show: false, message: '' });
     const exportRef = useRef(null);
     const dropdownRef = useRef(null);
 
@@ -38,6 +41,7 @@ const ProductMaster = () => {
         return data;
     };
     const [tableData, setTableData] = useState(generateInitialData());
+    const [loading, setLoading] = useState(false);
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
@@ -109,6 +113,15 @@ const ProductMaster = () => {
         }
     };
 
+    const handleRefresh = async () => {
+        setLoading(true);
+        // Simulation of fetching data
+        setTimeout(() => {
+            setTableData(generateInitialData());
+            setLoading(false);
+        }, 600);
+    };
+
     // Calculate which page numbers to show in the pagination bar (up to 4 pages as requested)
     const getVisiblePages = () => {
         const maxVisible = 4;
@@ -171,12 +184,18 @@ const ProductMaster = () => {
 
     return (
         <div className="flex flex-col relative w-full h-full">
+            {showSuccessToast.show && (
+                <SuccessToast
+                    message={showSuccessToast.message}
+                    onClose={() => setShowSuccessToast({ show: false, message: '' })}
+                />
+            )}
             {/* Conditional Content: Table or Form */}
             {currentView.type === 'list' ? (
                 <>
                     <div className="flex flex-col gap-1 mb-8">
                         <div className="flex items-center justify-between">
-                            <h1 className="text-[22px] font-bold text-[#111827] tracking-tight">{t('modules:product_master')}</h1>
+                            <h1 className="text-[28px] font-bold text-[#111827] tracking-tight">{t('modules:product_master')}</h1>
                             <button
                                 onClick={() => setCurrentView({ type: 'add', data: null })}
                                 className="w-full sm:w-auto px-8 h-[44px] bg-[#073318] text-white rounded-[10px] text-[15px] font-bold hover:bg-[#04200f] transition-all shadow-sm flex items-center justify-center"
@@ -184,7 +203,7 @@ const ProductMaster = () => {
                                 {t('modules:add_product')}
                             </button>
                         </div>
-                        <p className="text-[#6B7280] text-[15px]">{t('modules:product_master_desc') || 'View, verify, and manage all products in your inventory, including HSN codes and tax configurations.'}</p>
+                        <p className="text-[#6B7280] text-[15px]">{t('modules:product_master_desc')}</p>
                     </div>
 
                     {/* Table Area */}
@@ -196,13 +215,13 @@ const ProductMaster = () => {
                                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                                     <input
                                         type="text"
-                                        placeholder="Search by anything..."
+                                        placeholder="Search By Anything..."
                                         value={searchQuery}
                                         onChange={(e) => {
                                             setSearchQuery(e.target.value);
                                             setCurrentPage(1);
                                         }}
-                                        className="w-full h-[42px] bg-white border border-[#E5E7EB] rounded-[10px] pl-10 pr-10 text-[14px] outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/10 transition-all placeholder:text-gray-400"
+                                        className="w-full h-[42px] bg-white border border-[#E5E7EB] rounded-[10px] pl-10 pr-10 text-[14px] text-[#111827] outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/10 transition-all placeholder:text-gray-400 shadow-sm"
                                     />
                                     {searchQuery && (
                                         <button 
@@ -210,26 +229,26 @@ const ProductMaster = () => {
                                                 setSearchQuery('');
                                                 setCurrentPage(1);
                                             }}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                                         >
                                             <X size={16} />
                                         </button>
                                     )}
                                 </div>
                                 <button
-                                    onClick={() => setIsFilterOpen(true)}
-                                    className="flex items-center gap-2 px-4 h-[42px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-semibold hover:bg-gray-50 transition-all bg-white shadow-sm"
+                                    onClick={() => isFilterApplied ? handleClearFilter() : setIsFilterOpen(true)}
+                                    className={`flex items-center gap-2 px-4 h-[42px] border rounded-[10px] text-[14px] font-bold transition-all shadow-sm
+                                        ${isFilterApplied 
+                                            ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100' 
+                                            : 'bg-white border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
                                 >
-                                    <Filter size={18} className="text-gray-400" />
-                                    {t('common:filter')}
+                                    <Filter size={18} className={isFilterApplied ? 'text-red-500' : 'text-gray-400'} />
+                                    {isFilterApplied ? t('common:clear') : t('common:filter')}
                                 </button>
                                 <button
                                     className="flex items-center justify-center w-[42px] h-[42px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] hover:bg-gray-50 transition-colors bg-white shadow-sm"
                                     title="Refresh Data"
-                                    onClick={() => {
-                                        // Logic to refresh data if connected to real API
-                                        window.location.reload();
-                                    }}
+                                    onClick={handleRefresh}
                                 >
                                     <RefreshCw size={18} className="text-gray-400" />
                                 </button>
@@ -238,12 +257,12 @@ const ProductMaster = () => {
                             <div className="relative flex items-center gap-3" ref={exportRef}>
                                 <button
                                     onClick={() => setIsExportOpen(!isExportOpen)}
-                                    className={`flex items-center justify-center gap-2 px-4 h-[42px] border rounded-[10px] text-[14px] font-semibold transition-all duration-200 bg-white
+                                    className={`flex items-center justify-center gap-2 px-4 h-[42px] border rounded-[10px] text-[14px] font-bold transition-all duration-200 bg-white
                                                         ${isExportOpen ? 'border-[#073318] text-[#073318]' : 'border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
-                                >
-                                    <Download size={18} className={isExportOpen ? 'text-[#073318]' : 'text-gray-400'} />
-                                    {t('common:export')}
-                                </button>
+                        >
+                            <Download size={18} className={isExportOpen ? 'text-[#073318]' : 'text-gray-400'} />
+                            {t('common:export')}
+                        </button>
 
                                 {isExportOpen && (
                                     <div className="absolute top-full right-0 mt-2 w-[160px] bg-white border border-gray-100 rounded-[12px] shadow-[0_10px_30px_rgba(0,0,0,0.1)] z-[50] py-2 animate-in fade-in slide-in-from-top-2 duration-200">
@@ -295,7 +314,16 @@ const ProductMaster = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="text-[14px] text-[#111827]">
-                                    {currentData.length > 0 ? currentData.map((row, index) => (
+                                    {loading ? (
+                                        <tr>
+                                            <td colSpan="10" className="px-6 py-20 text-center">
+                                                <div className="flex flex-col items-center gap-3">
+                                                    <div className="w-10 h-10 border-4 border-[#073318]/10 border-t-[#073318] rounded-full animate-spin"></div>
+                                                    <span className="text-gray-400 font-medium">{t('common:loading')}</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ) : currentData.length > 0 ? currentData.map((row, index) => (
                                         <tr key={row.id} className="border-b border-[#F3F4F6] last:border-b-0 hover:bg-[#F9FAFB] transition-all group">
                                             <td className="px-6 py-5 font-bold text-[#111827] border-r border-[#F3F4F6]">{row.code}</td>
                                             <td className="px-6 py-5 font-bold text-[#111827] border-r border-[#F3F4F6]">{translateDynamic(row.name, t)}</td>
@@ -345,17 +373,8 @@ const ProductMaster = () => {
                                                             onClick={() => handleToggleStatus(row.id)}
                                                             className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#0A3622] transition-colors whitespace-nowrap font-bold border-t border-gray-100"
                                                         >
-                                                            {row.status.toUpperCase() === 'ACTIVE' ? (
-                                                                <>
-                                                                    <XCircle size={16} className="text-red-500" />
-                                                                    {t('common:inactive')}
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <CheckCircle2 size={16} className="text-[#0A3622]" />
-                                                                    {t('common:active')}
-                                                                </>
-                                                            )}
+                                                            <CheckCircle2 size={16} className={row.status.toUpperCase() === 'ACTIVE' ? "text-gray-400" : "text-[#0A3622]"} />
+                                                            {row.status.toUpperCase() === 'ACTIVE' ? t('common:inactive') : t('common:active')}
                                                         </button>
                                                     </div>
                                                 )}
@@ -445,7 +464,7 @@ const ProductMaster = () => {
                     )}
 
                     {/* Filter Sidebar Offcanvas */}
-                    <div className={`fixed top-0 right-0 h-full w-full sm:w-[400px] bg-white shadow-2xl z-[70] transform transition-transform duration-300 ease-in-out flex flex-col ${isFilterOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+                    <div className={`fixed top-0 right-0 h-full w-full sm:w-[480px] bg-white shadow-2xl z-[70] transform transition-transform duration-300 ease-in-out flex flex-col ${isFilterOpen ? 'translate-x-0' : 'translate-x-full'}`}>
                         {/* Header */}
                         <div className="flex items-center justify-between px-6 py-5 border-b border-[#E5E7EB]">
                             <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">{t('apply_filters')}</h2>
@@ -536,6 +555,12 @@ const ProductMaster = () => {
                     mode={currentView.type}
                     initialData={currentView.data}
                     onBack={() => setCurrentView({ type: 'list', data: null })}
+                    onEdit={(data) => setCurrentView({ type: 'edit', data })}
+                    onSuccess={() => {
+                        const msg = currentView.type === 'add' ? 'Product added successfully' : 'Product updated successfully';
+                        setShowSuccessToast({ show: true, message: msg });
+                        setCurrentView({ type: 'list', data: null });
+                    }}
                 />
             )}
         </div>

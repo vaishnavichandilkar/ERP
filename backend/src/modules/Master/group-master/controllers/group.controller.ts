@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post, Put, ParseIntPipe, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { GroupMasterService } from '../services/group.service';
-import { CreateSubGroupDto, UpdateSubGroupDto, UpdateSubGroupStatusDto, UpdateGroupStatusDto } from '../dto/group-master.dto';
+import { CreateGroupDto, UpdateGroupDto, UpdateGroupStatusDto } from '../dto/group-master.dto';
 import { JwtAuthGuard } from '../../../../common/guards/jwt-auth.guard';
 
 @ApiTags('Group Master')
@@ -12,55 +12,45 @@ export class GroupMasterController {
     constructor(private readonly groupService: GroupMasterService) { }
 
     @Get()
-    @ApiOperation({ summary: 'Get all groups with their subgroups' })
-    @ApiResponse({ status: 200, description: 'List of groups with subgroups' })
+    @ApiOperation({ summary: 'Get all groups in hierarchical structure' })
+    @ApiResponse({ status: 200, description: 'Hierarchical list of groups' })
     async getAllGroups(@Request() req) {
-        return this.groupService.getAllGroupsWithSubGroups(req.user.userId);
+        return this.groupService.getAllGroups(req.user.userId);
     }
 
     @Get('dropdown')
-    @ApiOperation({ summary: 'Get header groups for dropdown' })
-    @ApiResponse({ status: 200, description: 'List of header groups' })
-    async getDropdown() {
-        return this.groupService.getHeaderGroupsForDropdown();
+    @ApiOperation({ summary: 'Get groups for dropdown' })
+    @ApiResponse({ status: 200, description: 'List of groups for dropdown' })
+    async getDropdown(@Request() req) {
+        return this.groupService.getDropdownGroups(req.user.userId);
     }
 
-    @Post('sub-group')
-    @ApiOperation({ summary: 'Create a new sub-group' })
-    @ApiResponse({ status: 201, description: 'Sub-group created' })
-    async createSubGroup(@Request() req, @Body() dto: CreateSubGroupDto) {
-        return this.groupService.createSubGroup(dto, req.user.userId);
+    @Post()
+    @ApiOperation({ summary: 'Create a new group' })
+    @ApiResponse({ status: 201, description: 'Group created' })
+    async createGroup(@Request() req, @Body() dto: CreateGroupDto) {
+        return this.groupService.createGroup(dto, req.user.userId);
     }
 
-    @Put('sub-group/:id')
-    @ApiOperation({ summary: 'Update an existing sub-group' })
-    @ApiResponse({ status: 200, description: 'Sub-group updated' })
-    async updateSubGroup(
+    @Put(':id')
+    @ApiOperation({ summary: 'Update an existing group' })
+    @ApiResponse({ status: 200, description: 'Group updated' })
+    async updateGroup(
         @Request() req,
-        @Param('id', ParseIntPipe) id: number,
-        @Body() dto: UpdateSubGroupDto,
+        @Param('id') id: string, // Accept virtual UID string
+        @Body() dto: UpdateGroupDto,
     ) {
-        return this.groupService.updateSubGroup(id, dto, req.user.userId);
-    }
-
-    @Patch('sub-group/:id/status')
-    @ApiOperation({ summary: 'Toggle sub-group status' })
-    @ApiResponse({ status: 200, description: 'Status updated' })
-    async updateStatus(
-        @Request() req,
-        @Param('id', ParseIntPipe) id: number,
-        @Body() dto: UpdateSubGroupStatusDto,
-    ) {
-        return this.groupService.updateSubGroupStatus(id, dto, req.user.userId);
+        return this.groupService.updateGroup(id, dto, req.user.userId);
     }
 
     @Patch(':id/status')
-    @ApiOperation({ summary: 'Toggle header group status' })
+    @ApiOperation({ summary: 'Toggle group status' })
     @ApiResponse({ status: 200, description: 'Status updated' })
-    async updateGroupStatus(
-        @Param('id', ParseIntPipe) id: number,
+    async updateStatus(
+        @Request() req,
+        @Param('id') id: string, // Accept virtual UID string
         @Body() dto: UpdateGroupStatusDto,
     ) {
-        return this.groupService.updateGroupStatus(id, dto);
+        return this.groupService.updateStatus(id, dto, req.user.userId);
     }
 }
