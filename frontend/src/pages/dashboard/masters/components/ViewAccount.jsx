@@ -24,16 +24,22 @@ const SectionHeading = ({ title }) => (
     </div>
 );
 
-const ViewAccount = ({ initialData, onBack }) => {
+const ViewAccount = ({ initialData, onBack, onEdit }) => {
     const { t } = useTranslation(['modules', 'common']);
     const data = initialData || {};
 
-    // For OP Balance, prioritize showing raw value + type if available, to match "1000 Cr" style
-    const renderOpBalance = () => {
-        if (data.opBalanceRaw && data.opBalanceType) {
-            return `${data.opBalanceRaw} ${data.opBalanceType}`;
+    const renderSupplierBalance = () => {
+        if (data.supplierOpeningBalance) {
+            return `${data.supplierOpeningBalance} ${data.supplierBalanceType || ''}`;
         }
-        return data.opBalance || '-';
+        return '-';
+    };
+
+    const renderCustomerBalance = () => {
+        if (data.customerOpeningBalance) {
+            return `${data.customerOpeningBalance} ${data.customerBalanceType || ''}`;
+        }
+        return '-';
     };
 
     return (
@@ -41,8 +47,16 @@ const ViewAccount = ({ initialData, onBack }) => {
             {/* Form Container */}
             <div className="bg-white rounded-[12px] border border-[#E5E7EB] shadow-sm flex flex-col w-full animate-in fade-in slide-in-from-left-2 duration-300">
                 {/* Header */}
-                <div className="px-6 py-5 border-b border-[#E5E7EB]">
+                <div className="flex justify-between items-center px-6 py-5 border-b border-[#E5E7EB]">
                     <h2 className="text-[18px] font-bold text-[#111827]">{t('view_account')}</h2>
+                    {onEdit && (
+                        <button
+                            onClick={onEdit}
+                            className="px-6 h-[36px] bg-[#014A36] text-white rounded-[8px] text-[13px] font-semibold hover:bg-[#013b2b] transition-colors shadow-sm flex items-center justify-center"
+                        >
+                            {t('edit_account')}
+                        </button>
+                    )}
                 </div>
 
                 {/* Form Body */}
@@ -52,14 +66,14 @@ const ViewAccount = ({ initialData, onBack }) => {
                     <div className="mb-6">
                         <h1 className="text-[28px] md:text-[32px] font-bold text-[#111827] mb-2">{data.accountName || '-'}</h1>
                         <div className="flex gap-2">
-                            {data.isCustomer && (
+                            {(data.groupName?.includes('CUSTOMER') || data.groupName?.includes('SUNDRY_DEBTORS') || data.isCustomer) && (
                                 <div className="inline-flex items-center px-4 py-1.5 bg-[#014A36] text-white rounded-[100px] text-[14px] font-medium">
-                                    {t('customer')}
+                                    {t('sundry_debtors')}
                                 </div>
                             )}
-                            {data.isVendor && (
+                            {(data.groupName?.includes('SUPPLIER') || data.groupName?.includes('SUNDRY_CREDITORS') || data.isVendor) && (
                                 <div className="inline-flex items-center px-4 py-1.5 bg-[#4B5563] text-white rounded-[100px] text-[14px] font-medium">
-                                    {t('vendor')}
+                                    {t('sundry_creditors')}
                                 </div>
                             )}
                         </div>
@@ -73,14 +87,6 @@ const ViewAccount = ({ initialData, onBack }) => {
                             label2={`${t('pan_no')}:`} value2={data.panNo} 
                         />
                         <InfoTableRow 
-                            label1={`${t('credit_days')}:`} value1={data.creditDays} 
-                            label2={`${t('op_balance')}:`} value2={renderOpBalance()} 
-                        />
-                        <InfoTableRow 
-                            label1={`${t('customer_code')}:`} value1={data.customerCode} 
-                            label2={`${t('vendor_code')}:`} value2={data.vendorCode} 
-                        />
-                        <InfoTableRow 
                             label1={`${t('address_1')}:`} value1={data.addressLine1} 
                             label2={`${t('address_2')}:`} value2={data.addressLine2} 
                         />
@@ -89,28 +95,47 @@ const ViewAccount = ({ initialData, onBack }) => {
                             label2={`${t('pin_code')}:`} value2={data.pincode} 
                         />
                         <InfoTableRow 
-                            label1={`${t('city')}:`} value1={data.city} 
+                            label1={`District:`} value1={data.district} 
                             label2={`${t('state')}:`} value2={data.state} 
                         />
                         <InfoTableRow 
-                            label1={`${t('reg_type')}:`} value1={data.regType} 
-                            label2={`${t('msme')}:`} value2={data.msmeRegNo} 
+                            label1={`${t('msme')}:`} value1={data.msmeEnabled ? 'Yes' : 'No'} 
+                            label2={`MSME ID:`} value2={data.msmeId} 
                         />
                         <InfoTableRow 
-                            label1={`${t('reg_under')}:`} value1={data.regUnder} 
-                            label2={''} value2={''} 
+                            label1={`${t('reg_type')}:`} value1={data.regType} 
+                            label2={`${t('reg_under')}:`} value2={data.regUnder} 
                         />
 
-                        {/* Bank Details Section */}
-                        <SectionHeading title={t('bank_details')} />
-                        <InfoTableRow 
-                            label1={`${t('account_holder')}:`} value1={data.accountHolderName} 
-                            label2={`${t('bank_name')}:`} value2={data.bankName} 
-                        />
-                        <InfoTableRow 
-                            label1={`${t('account_number')}:`} value1={data.accountNumber} 
-                            label2={`${t('ifsc_code')}:`} value2={data.ifscCode} 
-                        />
+                        {/* Customer Ledger Section */}
+                        {(data.groupName?.includes('CUSTOMER') || data.groupName?.includes('SUNDRY_DEBTORS') || data.isCustomer) && (
+                            <>
+                                <SectionHeading title="Customer Ledger Details" />
+                                <InfoTableRow 
+                                    label1={`${t('customer_code')}:`} value1={data.customerCode} 
+                                    label2={'Credit Days:'} value2={data.customerCreditDays} 
+                                />
+                                <InfoTableRow 
+                                    label1={'Opening Balance:'} value1={renderCustomerBalance()} 
+                                    label2={''} value2={''} 
+                                />
+                            </>
+                        )}
+
+                        {/* Supplier Ledger Section */}
+                        {(data.groupName?.includes('SUPPLIER') || data.groupName?.includes('SUNDRY_CREDITORS') || data.isVendor) && (
+                            <>
+                                <SectionHeading title="Supplier Ledger Details" />
+                                <InfoTableRow 
+                                    label1={`Supplier Code:`} value1={data.supplierCode || data.vendorCode} 
+                                    label2={'Credit Days:'} value2={data.supplierCreditDays} 
+                                />
+                                <InfoTableRow 
+                                    label1={'Opening Balance:'} value1={renderSupplierBalance()} 
+                                    label2={''} value2={''} 
+                                />
+                            </>
+                        )}
 
                         {/* Contact Person Details Section */}
                         <SectionHeading title={t('contact_person_details')} />
@@ -125,8 +150,8 @@ const ViewAccount = ({ initialData, onBack }) => {
                         />
                     </div>
 
-                    {/* Back Button */}
-                    <div className="flex justify-end mt-8">
+                    {/* Action Buttons */}
+                    <div className="flex justify-end gap-3 mt-8">
                         <button
                             onClick={onBack}
                             className="px-8 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors bg-white shadow-sm flex items-center justify-center"

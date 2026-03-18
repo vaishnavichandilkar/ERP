@@ -247,6 +247,23 @@ enum MasterStatus {
   INACTIVE
 }
 
+enum BalanceType {
+  Dr
+  Cr
+}
+
+enum RegUnder {
+  Micro
+  Small
+  Medium
+}
+
+enum RegType {
+  Trading
+  Service
+  Manufacturing
+}
+
 model AccountMaster {
   id Int @id @default(autoincrement())
 
@@ -275,17 +292,19 @@ model AccountMaster {
   supplierCode           String?  @unique
   supplierCreditDays     Int?
   supplierOpeningBalance Decimal?
+  supplierBalanceType    BalanceType?
 
   // Customer Details
   customerCode           String?  @unique
   customerCreditDays     Int?
   customerOpeningBalance Decimal?
+  customerBalanceType    BalanceType?
 
   // MSME Details
   msmeEnabled        Boolean @default(false)
   msmeId             String?
-  regUnder           String?
-  regType            String?
+  regUnder           RegUnder?
+  regType            RegType?
   msmeCertificateUrl String?
 
   otherDocuments Json?

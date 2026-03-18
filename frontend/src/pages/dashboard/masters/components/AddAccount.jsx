@@ -161,16 +161,18 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
     const isEditMode = !!initialData;
     const [formData, setFormData] = useState(initialData ? {
         accountName: initialData.accountName || '',
-        isCustomer: initialData.isCustomer || false,
-        isVendor: initialData.isVendor || false,
+        isCustomer: initialData.isCustomer || initialData.groupName?.includes('SUNDRY_DEBTORS') || initialData.groupName?.includes('CUSTOMER') || false,
+        isVendor: initialData.isVendor || initialData.groupName?.includes('SUNDRY_CREDITORS') || initialData.groupName?.includes('SUPPLIER') || false,
         customerCode: initialData.customerCode || '',
-        vendorCode: initialData.vendorCode || '',
+        vendorCode: initialData.vendorCode || initialData.supplierCode || '',
         gstNo: initialData.gstNo || '',
         panNo: initialData.panNo || '',
-        customerCreditDays: (initialData.isCustomer && initialData.creditDays) ? initialData.creditDays.toString() : '',
-        customerOpBalance: (initialData.isCustomer && initialData.openingBalance) ? initialData.openingBalance.toString() : '',
-        vendorCreditDays: (initialData.isVendor && initialData.creditDays) ? initialData.creditDays.toString() : '',
-        vendorOpBalance: (initialData.isVendor && initialData.openingBalance) ? initialData.openingBalance.toString() : '',
+        customerCreditDays: initialData.customerCreditDays ? initialData.customerCreditDays.toString() : (initialData.creditDays ? initialData.creditDays.toString() : ''),
+        customerOpBalance: initialData.customerOpeningBalance ? initialData.customerOpeningBalance.toString() : (initialData.openingBalance ? initialData.openingBalance.toString() : ''),
+        customerBalanceType: initialData.customerBalanceType || (initialData.customer?.balanceType ? initialData.customer.balanceType : 'Dr'),
+        vendorCreditDays: initialData.supplierCreditDays ? initialData.supplierCreditDays.toString() : (initialData.creditDays ? initialData.creditDays.toString() : ''),
+        vendorOpBalance: initialData.supplierOpeningBalance ? initialData.supplierOpeningBalance.toString() : (initialData.openingBalance ? initialData.openingBalance.toString() : ''),
+        vendorBalanceType: initialData.supplierBalanceType || (initialData.supplier?.balanceType ? initialData.supplier.balanceType : 'Cr'),
         address1: initialData.addressLine1 || '',
         address2: initialData.addressLine2 || '',
         area: initialData.area || '',
@@ -197,8 +199,10 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
         panNo: '',
         customerCreditDays: '',
         customerOpBalance: '',
+        customerBalanceType: 'Dr',
         vendorCreditDays: '',
         vendorOpBalance: '',
+        vendorBalanceType: 'Cr',
         address1: '',
         address2: '',
         area: '',
@@ -229,7 +233,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
 
     const REG_UNDER = ['Micro', 'Small', 'Medium'];
     const REG_TYPES = ['Trading', 'Service', 'Manufacturing'];
-    const PREFIX_OPTIONS = ['Mr', 'Mrs', 'Ms', 'Dr'];
+    const PREFIX_OPTIONS = ['Mr', 'Mrs', 'Miss', 'Ms'];
 
     const handleInputChange = async (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -285,76 +289,93 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
         }
     };
 
-    const isMsmeValid = msmeEnabled ? (formData.msmeId.trim() !== '' && formData.regUnder.trim() !== '' && formData.regType.trim() !== '') : true;
-
-    // Based on the prompt rules:
-    // Required Fields: Account Name, Group Name, Address Line 1, Pincode, Contact Prefix, Contact Person Name, Mobile Number.
-    const isFormValid = formData.accountName.trim() !== '' &&
-                        (formData.isCustomer || formData.isVendor) &&
-                        formData.panNo.trim() !== '' &&
-                        formData.address1.trim() !== '' &&
-                        formData.pinCode.trim() !== '' &&
-                        formData.prefix.trim() !== '' &&
-                        formData.contactPersonName.trim() !== '' &&
-                        formData.mobileNo.trim() !== '' &&
-                        isMsmeValid &&
-                        !isLoading;
-
     const handleSave = async () => {
-        if (!isFormValid) {
-            toast.error("Please fill all required fields");
-            return;
+        if (!formData.accountName.trim()) return toast.error("Account Name is required");
+        if (!formData.isCustomer && !formData.isVendor) return toast.error("Please select at least one Group Name (Supplier/Customer)");
+        if (!formData.panNo.trim()) return toast.error("PAN.No is required");
+        if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.panNo.trim().toUpperCase())) return toast.error("Invalid PAN format");
+        if (formData.gstNo && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(formData.gstNo.trim().toUpperCase())) return toast.error("Invalid GST format");
+        if (!formData.address1.trim()) return toast.error("Address 1 is required");
+        if (!formData.pinCode.trim()) return toast.error("Pin Code is required");
+        if (!formData.prefix.trim()) return toast.error("Prefix is required for Contact Person");
+        if (!formData.contactPersonName.trim()) return toast.error("Contact Person Name is required");
+        if (!formData.mobileNo.trim()) return toast.error("Mobile.No is required");
+        
+        if (msmeEnabled) {
+             if (!formData.msmeId?.trim()) return toast.error("MSME ID is required");
+             if (!/^UDYAM-[A-Z]{2}-\d{2}-\d{7}$/.test(formData.msmeId.trim().toUpperCase())) return toast.error("Invalid MSME ID pattern (e.g. UDYAM-XX-12-1234567)");
+             if (!formData.regUnder?.trim()) return toast.error("Reg.Under is required for MSME");
+             if (!formData.regType?.trim()) return toast.error("Reg.Type is required for MSME");
         }
 
         setIsLoading(true);
 
-        const creditDays = formData.isVendor ? parseInt(formData.vendorCreditDays || 0, 10) : parseInt(formData.customerCreditDays || 0, 10);
-        const opBalance = formData.isVendor ? parseInt(formData.vendorOpBalance || 0, 10) : parseInt(formData.customerOpBalance || 0, 10);
+        const fData = new FormData();
+        fData.append('accountName', formData.accountName);
+        let groups = [];
+        if (formData.isVendor) groups.push('SUPPLIER');
+        if (formData.isCustomer) groups.push('CUSTOMER');
+        fData.append('groupName', JSON.stringify(groups));
 
-        const payload = {
-            accountName: formData.accountName,
-            isCustomer: formData.isCustomer,
-            isVendor: formData.isVendor,
-            customerCode: formData.isCustomer ? formData.customerCode : undefined,
-            vendorCode: formData.isVendor ? formData.vendorCode : undefined,
-            gstNo: formData.gstNo || undefined,
-            panNo: formData.panNo,
-            creditDays: creditDays,
-            openingBalance: opBalance,
-            balanceType: 'Cr', // Assuming default as not in UI for new form
-            addressLine1: formData.address1,
-            addressLine2: formData.address2 || undefined,
-            pincode: formData.pinCode,
-            area: formData.area || undefined,
-            city: formData.city || formData.district || 'Unknown', // mapped
-            state: formData.state || 'Unknown',
-            msmeStatus: msmeEnabled,
-            msmeRegNo: msmeEnabled ? formData.msmeId : undefined,
-            regUnder: msmeEnabled ? formData.regUnder : undefined,
-            regType: msmeEnabled ? formData.regType : undefined,
-            // Hidden bank details defaulting to undefined so backend validation passes
-            accountHolderName: undefined,
-            bankName: undefined,
-            accountNumber: undefined,
-            ifscCode: undefined,
-            prefix: formData.prefix,
-            contactPersonName: formData.contactPersonName,
-            emailId: formData.emailId || undefined,
-            mobileNo: formData.mobileNo
-        };
+        if (formData.gstNo) fData.append('gstNo', formData.gstNo);
+        fData.append('panNo', formData.panNo);
+        fData.append('addressLine1', formData.address1);
+        if (formData.address2) fData.append('addressLine2', formData.address2);
+        fData.append('pincode', formData.pinCode);
+        if (formData.area) fData.append('area', formData.area);
+        fData.append('subDistrict', formData.subDistrict || '');
+        fData.append('district', formData.district || formData.city || '');
+        fData.append('state', formData.state || '');
+        fData.append('country', formData.country || 'India');
+
+        fData.append('prefix', formData.prefix);
+        fData.append('contactPersonName', formData.contactPersonName);
+        if (formData.emailId) fData.append('emailId', formData.emailId);
+        fData.append('mobileNo', formData.mobileNo);
+
+        if (formData.isVendor) {
+            if (formData.vendorCode) fData.append('supplierCode', formData.vendorCode);
+            if (formData.vendorCreditDays) fData.append('supplierCreditDays', formData.vendorCreditDays);
+            if (formData.vendorOpBalance) fData.append('supplierOpeningBalance', formData.vendorOpBalance);
+            fData.append('supplierBalanceType', formData.vendorBalanceType || 'Cr');
+        }
+
+        if (formData.isCustomer) {
+            if (formData.customerCode) fData.append('customerCode', formData.customerCode);
+            if (formData.customerCreditDays) fData.append('customerCreditDays', formData.customerCreditDays);
+            if (formData.customerOpBalance) fData.append('customerOpeningBalance', formData.customerOpBalance);
+            fData.append('customerBalanceType', formData.customerBalanceType || 'Dr');
+        }
+
+        if (otherDocs.length > 0) {
+             otherDocs.forEach(d => fData.append('otherDocuments', d));
+        }
+
+        fData.append('msmeEnabled', msmeEnabled ? 'true' : 'false');
+        if (msmeEnabled) {
+             fData.append('msmeId', formData.msmeId);
+             fData.append('regUnder', formData.regUnder);
+             fData.append('regType', formData.regType);
+             if (msmeFile) fData.append('msmeCertificate', msmeFile);
+        }
 
         try {
             if (isEditMode) {
-                const response = await accountService.updateAccount(initialData.id, payload);
+                const response = await accountService.updateAccount(initialData.id, fData);
                 toast.success('Account updated successfully');
                 if (onUpdateAccount) onUpdateAccount(response);
             } else {
-                const response = await accountService.createAccount(payload);
+                const response = await accountService.createAccount(fData);
                 toast.success('Account created successfully');
                 if (onAddAccount) onAddAccount(response);
             }
         } catch (error) {
-            toast.error(error?.response?.data?.message || 'Failed to save account');
+            const errorData = error?.response?.data;
+            if (errorData?.errors && Array.isArray(errorData.errors) && errorData.errors.length > 0) {
+                errorData.errors.forEach(err => toast.error(err));
+            } else {
+                toast.error(errorData?.message || 'Failed to save account');
+            }
         } finally {
             setIsLoading(false);
         }
@@ -421,9 +442,9 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                     <input
                                         type="text"
                                         placeholder="Enter GST number"
-                                        className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10"
+                                        className="w-full h-[44px] uppercase border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10"
                                         value={formData.gstNo}
-                                        onChange={(e) => handleInputChange('gstNo', e.target.value)}
+                                        onChange={(e) => handleInputChange('gstNo', e.target.value.toUpperCase())}
                                     />
                                 </div>
                                 <div className="flex flex-col gap-1.5">
@@ -433,9 +454,9 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                     <input
                                         type="text"
                                         placeholder="Enter PAN number"
-                                        className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10"
+                                        className="w-full h-[44px] uppercase border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10"
                                         value={formData.panNo}
-                                        onChange={(e) => handleInputChange('panNo', e.target.value)}
+                                        onChange={(e) => handleInputChange('panNo', e.target.value.toUpperCase())}
                                     />
                                 </div>
 
@@ -569,14 +590,23 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                         </label>
                                         <input type="text" readOnly placeholder="Code will auto generated" value={formData.vendorCode} className="w-full h-[44px] border border-[#E5E7EB] bg-gray-50 text-gray-600 rounded-[8px] px-4 text-[14px] outline-none" />
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
                                         <div className="flex flex-col gap-1.5">
                                             <label className="text-[13px] font-semibold text-[#4B5563]">Credit Days</label>
                                             <input type="number" placeholder="Enter Credit Days" value={formData.vendorCreditDays} onChange={e => handleInputChange('vendorCreditDays', e.target.value)} className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10" />
                                         </div>
                                         <div className="flex flex-col gap-1.5">
-                                            <label className="text-[13px] font-semibold text-[#4B5563]">Opening Balance(Optional)</label>
-                                            <input type="number" placeholder="Enter Opening Balance" value={formData.vendorOpBalance} onChange={e => handleInputChange('vendorOpBalance', e.target.value)} className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10" />
+                                            <label className="text-[13px] font-semibold text-[#4B5563]">Opening Balance</label>
+                                            <div className="flex w-full gap-2">
+                                                <input type="number" placeholder="Enter Amount" value={formData.vendorOpBalance} onChange={e => handleInputChange('vendorOpBalance', e.target.value)} className="flex-1 h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10" />
+                                                <div className="w-[80px]">
+                                                    <CustomSelect
+                                                        options={['Cr', 'Dr']}
+                                                        value={formData.vendorBalanceType}
+                                                        onChange={(val) => handleInputChange('vendorBalanceType', val)}
+                                                    />
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -592,21 +622,41 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                         </label>
                                         <input type="text" readOnly placeholder="Code will auto generated" value={formData.customerCode} className="w-full h-[44px] border border-[#E5E7EB] bg-gray-50 text-gray-600 rounded-[8px] px-4 text-[14px] outline-none" />
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
                                         <div className="flex flex-col gap-1.5">
                                             <label className="text-[13px] font-semibold text-[#4B5563]">Credit Days</label>
                                             <input type="number" placeholder="Enter Credit Days" value={formData.customerCreditDays} onChange={e => handleInputChange('customerCreditDays', e.target.value)} className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10" />
                                         </div>
                                         <div className="flex flex-col gap-1.5">
-                                            <label className="text-[13px] font-semibold text-[#4B5563]">Opening Balance (Optional)</label>
-                                            <input type="number" placeholder="Enter Opening Balance" value={formData.customerOpBalance} onChange={e => handleInputChange('customerOpBalance', e.target.value)} className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10" />
+                                            <label className="text-[13px] font-semibold text-[#4B5563]">Opening Balance</label>
+                                            <div className="flex w-full gap-2">
+                                                <input type="number" placeholder="Enter Amount" value={formData.customerOpBalance} onChange={e => handleInputChange('customerOpBalance', e.target.value)} className="flex-1 h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10" />
+                                                <div className="w-[80px]">
+                                                    <CustomSelect
+                                                        options={['Dr', 'Cr']}
+                                                        value={formData.customerBalanceType}
+                                                        onChange={(val) => handleInputChange('customerBalanceType', val)}
+                                                    />
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             )}
                         </div>
 
-                        {/* 4. MSME Details */}
+                        {/* 4. Other Documents */}
+                        <div className="flex flex-col gap-6 w-full md:w-1/2">
+                            <FileUploadField 
+                                label="Other Documents" 
+                                accept=".pdf, .jpg, .jpeg, .png" 
+                                maxMb={10} 
+                                multiple={true}
+                                onFileSelect={setOtherDocs} 
+                            />
+                        </div>
+
+                        {/* 5. MSME Details */}
                         <div className="flex flex-col gap-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 items-start">
                                 <div className="flex flex-col gap-1.5">
@@ -614,17 +664,29 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                     <div className="flex items-center gap-4">
                                         <div
                                             className={`w-11 h-6 shrink-0 rounded-full flex items-center p-1 cursor-pointer transition-colors ${msmeEnabled ? 'bg-[#014A36]' : 'bg-gray-200'}`}
-                                            onClick={() => setMsmeEnabled(!msmeEnabled)}
+                                            onClick={() => {
+                                                const newVal = !msmeEnabled;
+                                                setMsmeEnabled(newVal);
+                                                if (!newVal) {
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        msmeId: '',
+                                                        regUnder: '',
+                                                        regType: ''
+                                                    }));
+                                                    setMsmeFile(null);
+                                                }
+                                            }}
                                         >
                                             <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${msmeEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
                                         </div>
                                         {msmeEnabled && (
                                             <input
                                                 type="text"
-                                                placeholder="Enter MSME ID"
-                                                className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10"
+                                                placeholder="Enter MSME ID (UDYAM-XX-12-1234567)"
+                                                className="w-full h-[44px] uppercase border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10"
                                                 value={formData.msmeId}
-                                                onChange={(e) => handleInputChange('msmeId', e.target.value)}
+                                                onChange={(e) => handleInputChange('msmeId', e.target.value.toUpperCase())}
                                             />
                                         )}
                                     </div>
@@ -660,26 +722,15 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                 </div>
                             )}
                         </div>
-
-                        {/* 5. Other Documents */}
-                        <div className="flex flex-col gap-6 w-full md:w-1/2">
-                            <FileUploadField 
-                                label="Other Documents" 
-                                accept=".pdf, .jpg, .jpeg, .png" 
-                                maxMb={10} 
-                                multiple={true}
-                                onFileSelect={setOtherDocs} 
-                            />
-                        </div>
                     </div>
                     
                     {/* Action buttons at bottom */}
                     <div className="mt-10 flex justify-end gap-4 py-4 border-t">
                         <button
                             onClick={handleSave}
-                            disabled={!isFormValid || isLoading}
+                            disabled={isLoading}
                             className={`px-8 h-[40px] text-white rounded-[8px] text-[14px] font-semibold transition-colors flex items-center justify-center gap-2 ${
-                                (isFormValid && !isLoading) ? 'bg-[#A3B8B0] hover:bg-[#8CA299] text-[#014A36]' : 'bg-[#D1D5DB] cursor-not-allowed'
+                                !isLoading ? 'bg-[#A3B8B0] hover:bg-[#8CA299] text-[#014A36]' : 'bg-[#D1D5DB] cursor-not-allowed'
                             }`}
                         >
                             {isLoading && <Loader2 size={16} className="animate-spin" />}

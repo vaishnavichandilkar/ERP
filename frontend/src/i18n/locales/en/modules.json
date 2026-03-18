@@ -24,7 +24,7 @@
     "account_type": "Group Name",
     "customer": "Sundry Debtors (Customer)",
     "vendor": "Sundry Creditors (Vendor)",
-    "sundry_creditors": "Sundry Creditors (Vendor)",
+    "sundry_creditors": "Sundry Creditors (Supplier)",
     "sundry_debtors": "Sundry Debtors (Customer)",
     "account": "Account Name",
     "credit_days": "Credit Days",

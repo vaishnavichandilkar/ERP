@@ -4,13 +4,15 @@ import { CreateAccountMasterDto, GroupNameEnum, UpdateAccountMasterDto, UpdateAc
 import { Prisma, MasterStatus } from '@prisma/client';
 import * as ExcelJS from 'exceljs';
 import * as PDFDocument from 'pdfkit';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class AccountMasterService {
   constructor(private prisma: PrismaService) {}
 
   async generateCustomerCode(): Promise<string> {
-    const prefix = 'CUS';
+    const prefix = 'CT';
     const lastAccount = await this.prisma.accountMaster.findFirst({
       where: { customerCode: { startsWith: prefix } },
       orderBy: { id: 'desc' },
@@ -28,7 +30,7 @@ export class AccountMasterService {
   }
 
   async generateSupplierCode(): Promise<string> {
-    const prefix = 'SUP';
+    const prefix = 'SP';
     const lastAccount = await this.prisma.accountMaster.findFirst({
       where: { supplierCode: { startsWith: prefix } },
       orderBy: { id: 'desc' },
@@ -46,27 +48,70 @@ export class AccountMasterService {
   }
 
   async generateCode(groupName: string): Promise<string> {
-    if (groupName === GroupNameEnum.SUPPLIER) {
+    if (groupName === GroupNameEnum.SUNDRY_CREDITORS || groupName === 'SUPPLIER') {
       return this.generateSupplierCode();
     }
     return this.generateCustomerCode();
   }
 
-  async create(createDto: CreateAccountMasterDto) {
+  private async handleFileUploads(accountId: number, files?: { msmeCertificate?: Express.Multer.File[], otherDocuments?: Express.Multer.File[] }) {
+    if (!files) return;
+    
+    const uploadPath = './uploads/accountmaster';
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+
+    const updates: any = {};
+    if (files?.msmeCertificate?.[0]) {
+      const file = files.msmeCertificate[0];
+      const newName = `${accountId}_${file.originalname.replace(/\s+/g, '_')}`;
+      const newPath = path.join(uploadPath, newName);
+      if (fs.existsSync(file.path)) {
+        fs.renameSync(file.path, newPath);
+        updates.msmeCertificateUrl = `/uploads/accountmaster/${newName}`;
+      }
+    }
+
+    if (files?.otherDocuments && files.otherDocuments.length > 0) {
+      const docUrls = files.otherDocuments.map((file, index) => {
+         const newName = `${accountId}_${file.originalname.replace(/\s+/g, '_')}`;
+         const newPath = path.join(uploadPath, newName);
+         if (fs.existsSync(file.path)) {
+           fs.renameSync(file.path, newPath);
+           return `/uploads/accountmaster/${newName}`;
+         }
+         return null;
+      }).filter(url => url !== null);
+      
+      if (docUrls.length > 0) {
+        updates.otherDocuments = docUrls;
+      }
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await this.prisma.accountMaster.update({
+        where: { id: accountId },
+        data: updates
+      });
+    }
+  }
+
+  async create(createDto: CreateAccountMasterDto, files?: any) {
     let { subDistrict, district, country, state } = createDto;
 
     let supplierCode = null;
     let customerCode = null;
 
-    if (createDto.groupName.includes(GroupNameEnum.SUPPLIER)) {
-      supplierCode = await this.generateSupplierCode();
+    if (createDto.groupName.includes(GroupNameEnum.SUNDRY_CREDITORS)) {
+      supplierCode = createDto.supplierCode || await this.generateSupplierCode();
     }
     
-    if (createDto.groupName.includes(GroupNameEnum.CUSTOMER)) {
-      customerCode = await this.generateCustomerCode();
+    if (createDto.groupName.includes(GroupNameEnum.SUNDRY_DEBTORS)) {
+      customerCode = createDto.customerCode || await this.generateCustomerCode();
     }
 
-    if (!district || !state) {
+    if ((!district || !state) && createDto.pincode) {
       const pinDetails = await this.getPincodeDetails(createDto.pincode);
       district = district || pinDetails.district;
       subDistrict = subDistrict || pinDetails.subDistrict;
@@ -90,29 +135,33 @@ export class AccountMasterService {
         state,
         country,
 
-        prefix: createDto.contactPerson.prefix,
-        contactPersonName: createDto.contactPerson.name,
-        emailId: createDto.contactPerson.email,
-        mobileNo: createDto.contactPerson.mobile,
+        prefix: createDto.prefix,
+        contactPersonName: createDto.contactPersonName,
+        emailId: createDto.emailId,
+        mobileNo: createDto.mobileNo,
 
         supplierCode,
-        supplierCreditDays: createDto.supplier?.creditDays,
-        supplierOpeningBalance: createDto.supplier?.openingBalance,
+        supplierCreditDays: createDto.supplierCreditDays,
+        supplierOpeningBalance: createDto.supplierOpeningBalance,
+        supplierBalanceType: createDto.supplierBalanceType,
 
         customerCode,
-        customerCreditDays: createDto.customer?.creditDays,
-        customerOpeningBalance: createDto.customer?.openingBalance,
+        customerCreditDays: createDto.customerCreditDays,
+        customerOpeningBalance: createDto.customerOpeningBalance,
+        customerBalanceType: createDto.customerBalanceType,
 
         msmeEnabled: createDto.msmeEnabled || false,
-        msmeId: createDto.msmeEnabled ? createDto.msmeDetails?.msmeId : null,
-        regUnder: createDto.msmeEnabled ? createDto.msmeDetails?.regUnder : null,
-        regType: createDto.msmeEnabled ? createDto.msmeDetails?.regType : null,
-        msmeCertificateUrl: createDto.msmeEnabled ? createDto.msmeDetails?.certificateUrl : null,
+        msmeId: createDto.msmeEnabled ? createDto.msmeId : null,
+        regUnder: createDto.msmeEnabled ? createDto.regUnder : null,
+        regType: createDto.msmeEnabled ? createDto.regType : null,
+        msmeCertificateUrl: createDto.msmeEnabled ? createDto.msmeCertificateUrl : null,
 
         otherDocuments: createDto.otherDocuments ? createDto.otherDocuments : Prisma.DbNull,
         status: createDto.status || MasterStatus.ACTIVE
       },
     });
+
+    await this.handleFileUploads(account.id, files);
     
     return {
       success: true,
@@ -129,8 +178,8 @@ export class AccountMasterService {
     groupName?: string; 
     gstNo?: string; 
     panNo?: string; 
-    creditDays?: number; 
-    status?: MasterStatus; 
+    creditDays?: number | string; 
+    status?: MasterStatus | string; 
     search?: string; 
     page?: number;
     limit?: number;
@@ -139,7 +188,8 @@ export class AccountMasterService {
     const where: Prisma.AccountMasterWhereInput = {};
     
     if (filter.groupName) {
-      where.groupName = { has: filter.groupName };
+      const upperGroup = filter.groupName.toUpperCase();
+      where.groupName = { has: upperGroup };
     }
     
     if (filter.gstNo) {
@@ -150,19 +200,26 @@ export class AccountMasterService {
       where.panNo = { contains: filter.panNo, mode: 'insensitive' };
     }
 
-    if (filter.creditDays !== undefined) {
-      where.OR = [
-        { supplierCreditDays: filter.creditDays },
-        { customerCreditDays: filter.creditDays }
-      ];
+    if (filter.creditDays !== undefined && filter.creditDays !== '') {
+      const days = Number(filter.creditDays);
+      if (!isNaN(days)) {
+        where.OR = [
+          { supplierCreditDays: days },
+          { customerCreditDays: days }
+        ];
+      }
     }
 
     if (filter.status) {
-      where.status = filter.status;
+      const statusStr = String(filter.status).toUpperCase();
+      if (statusStr === 'ACTIVE' || statusStr === 'INACTIVE') {
+         where.status = statusStr as MasterStatus;
+      }
     }
 
     if (filter.search) {
       const parsedNum = parseInt(filter.search, 10);
+      const upperSearch = filter.search.toUpperCase();
       
       const searchConditions: Prisma.AccountMasterWhereInput['OR'] = [
         // Identity
@@ -170,6 +227,9 @@ export class AccountMasterService {
         { customerCode: { contains: filter.search, mode: 'insensitive' } },
         { supplierCode: { contains: filter.search, mode: 'insensitive' } },
         
+        // Group / Array matches (exact uppercase check for Enum matches)
+        { groupName: { hasSome: [upperSearch, upperSearch.includes('CRE') ? 'SUNDRY_CREDITORS' : '', upperSearch.includes('DEB') ? 'SUNDRY_DEBTORS' : ''].filter(Boolean) } },
+
         // Tax
         { gstNo: { contains: filter.search, mode: 'insensitive' } },
         { panNo: { contains: filter.search, mode: 'insensitive' } },
@@ -189,7 +249,12 @@ export class AccountMasterService {
       if (!isNaN(parsedNum)) {
         searchConditions.push({ supplierCreditDays: parsedNum });
         searchConditions.push({ customerCreditDays: parsedNum });
+        searchConditions.push({ supplierOpeningBalance: parsedNum });
+        searchConditions.push({ customerOpeningBalance: parsedNum });
       }
+
+      if ('ACTIVE'.startsWith(upperSearch)) searchConditions.push({ status: MasterStatus.ACTIVE });
+      if ('INACTIVE'.startsWith(upperSearch)) searchConditions.push({ status: MasterStatus.INACTIVE });
 
       if (where.OR) {
          where.AND = [
@@ -251,7 +316,7 @@ export class AccountMasterService {
     return account;
   }
 
-  async update(id: number, updateDto: UpdateAccountMasterDto) {
+  async update(id: number, updateDto: UpdateAccountMasterDto, files?: any) {
     await this.findOne(id);
     
     // Convert nested properties back for update if needed. We'll simplify Update strategy.
@@ -268,22 +333,26 @@ export class AccountMasterService {
       district: updateDto.district,
       state: updateDto.state,
       country: updateDto.country,
-      prefix: updateDto.contactPerson?.prefix,
-      contactPersonName: updateDto.contactPerson?.name,
-      emailId: updateDto.contactPerson?.email,
-      mobileNo: updateDto.contactPerson?.mobile,
-      supplierCreditDays: updateDto.supplier?.creditDays,
-      supplierOpeningBalance: updateDto.supplier?.openingBalance,
-      customerCreditDays: updateDto.customer?.creditDays,
-      customerOpeningBalance: updateDto.customer?.openingBalance,
+      prefix: updateDto.prefix,
+      contactPersonName: updateDto.contactPersonName,
+      emailId: updateDto.emailId,
+      mobileNo: updateDto.mobileNo,
+      supplierCode: updateDto.supplierCode,
+      supplierCreditDays: updateDto.supplierCreditDays,
+      supplierOpeningBalance: updateDto.supplierOpeningBalance,
+      supplierBalanceType: updateDto.supplierBalanceType,
+      customerCode: updateDto.customerCode,
+      customerCreditDays: updateDto.customerCreditDays,
+      customerOpeningBalance: updateDto.customerOpeningBalance,
+      customerBalanceType: updateDto.customerBalanceType,
       msmeEnabled: updateDto.msmeEnabled,
     };
     
-    if (updateDto.msmeEnabled === true && updateDto.msmeDetails) {
-       data.msmeId = updateDto.msmeDetails.msmeId;
-       data.regUnder = updateDto.msmeDetails.regUnder;
-       data.regType = updateDto.msmeDetails.regType;
-       data.msmeCertificateUrl = updateDto.msmeDetails.certificateUrl;
+    if (updateDto.msmeEnabled === true) {
+       data.msmeId = updateDto.msmeId;
+       data.regUnder = updateDto.regUnder;
+       data.regType = updateDto.regType;
+       if (updateDto.msmeCertificateUrl) data.msmeCertificateUrl = updateDto.msmeCertificateUrl;
     } else if (updateDto.msmeEnabled === false) {
        data.msmeId = null;
        data.regUnder = null;
@@ -302,6 +371,8 @@ export class AccountMasterService {
       where: { id },
       data,
     });
+    
+    await this.handleFileUploads(id, files);
     
     return {
       success: true,

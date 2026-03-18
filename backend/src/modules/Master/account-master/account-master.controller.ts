@@ -17,7 +17,7 @@ import {
   UseInterceptors, 
   BadRequestException 
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { AccountMasterService } from './account-master.service';
 import { CreateAccountMasterDto, UpdateAccountMasterDto, UpdateAccountStatusDto } from './dto/account-master.dto';
 import { Response } from 'express';
@@ -27,6 +27,24 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { multerConfig } from '../../../config/multer.config';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
+
+const flattenErrors = (errors: any[]): string[] => {
+  const messages: string[] = [];
+  for (const err of errors) {
+    if (err.constraints) {
+      messages.push(...Object.values(err.constraints as Record<string, string>));
+    }
+    if (err.children && err.children.length > 0) {
+      messages.push(...flattenErrors(err.children));
+    }
+  }
+  return messages;
+};
+
+const capitalize = (s: string) => {
+  if (typeof s !== 'string') return s;
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+};
 
 @ApiTags('Account Master')
 @Controller('account-master')
@@ -39,6 +57,44 @@ export class AccountMasterController {
   @ApiOperation({ summary: 'Create a new account with multipart/form-data support' })
   @ApiResponse({ status: 201, description: 'The account has been successfully created.' })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        accountName: { type: 'string' },
+        groupName: { type: 'string', description: 'JSON stringified array [SUNDRY_CREDITORS, SUNDRY_DEBTORS]' },
+        supplierCode: { type: 'string' },
+        customerCode: { type: 'string' },
+        gstNo: { type: 'string' },
+        panNo: { type: 'string' },
+        addressLine1: { type: 'string' },
+        addressLine2: { type: 'string' },
+        pincode: { type: 'string' },
+        area: { type: 'string' },
+        subDistrict: { type: 'string' },
+        district: { type: 'string' },
+        state: { type: 'string' },
+        country: { type: 'string' },
+        prefix: { type: 'string' },
+        contactPersonName: { type: 'string' },
+        emailId: { type: 'string' },
+        mobileNo: { type: 'string' },
+        supplierCreditDays: { type: 'string' },
+        supplierOpeningBalance: { type: 'string' },
+        supplierBalanceType: { type: 'string' },
+        customerCreditDays: { type: 'string' },
+        customerOpeningBalance: { type: 'string' },
+        customerBalanceType: { type: 'string' },
+        msmeEnabled: { type: 'string', description: 'true or false' },
+        msmeId: { type: 'string' },
+        regUnder: { type: 'string' },
+        regType: { type: 'string' },
+        msmeCertificate: { type: 'string', format: 'binary' },
+        otherDocuments: { type: 'array', items: { type: 'string', format: 'binary' } }
+      }
+    }
+  })
   @UseInterceptors(FileFieldsInterceptor([
     { name: 'msmeCertificate', maxCount: 1 },
     { name: 'otherDocuments', maxCount: 5 }
@@ -51,42 +107,46 @@ export class AccountMasterController {
     // Parse nested objects that come as strings in form-data
     if (typeof body.groupName === 'string') {
       try { body.groupName = JSON.parse(body.groupName); } catch (e) {
-          // Fallback if not JSON stringified properly but sent as multiple keys
           if (Array.isArray(body.groupName)) body.groupName = body.groupName;
           else body.groupName = [body.groupName];
       }
     }
-    
-    if (typeof body.contactPerson === 'string') {
-      try { body.contactPerson = JSON.parse(body.contactPerson); } catch (e) {}
-    }
-    
-    if (typeof body.supplier === 'string') {
-      try { body.supplier = JSON.parse(body.supplier); } catch (e) {}
-    }
-    
-    if (typeof body.customer === 'string') {
-      try { body.customer = JSON.parse(body.customer); } catch (e) {}
-    }
-    
-    if (typeof body.msmeDetails === 'string') {
-      try { body.msmeDetails = JSON.parse(body.msmeDetails); } catch (e) {}
+    if (body.groupName && Array.isArray(body.groupName)) {
+      body.groupName = body.groupName.map((g: any) => {
+              if (typeof g === 'string') {
+                  let upper = g.toUpperCase();
+                  if (upper.includes('CREDITOR') || upper.includes('SUPPLIER') || upper === 'VENDOR') return 'SUNDRY_CREDITORS';
+                  if (upper.includes('DEBTOR') || upper.includes('CUSTOMER')) return 'SUNDRY_DEBTORS';
+                  return upper.replace(/\s+/g, '_');
+              }
+          return g;
+      });
     }
 
     if (body.msmeEnabled === 'true') body.msmeEnabled = true;
     if (body.msmeEnabled === 'false') body.msmeEnabled = false;
 
-    // Attach file URLs to payload
-    if (files?.msmeCertificate?.[0]) {
-      body.msmeDetails = body.msmeDetails || {};
-      // Handle the absolute path multer config dynamically returns based on standard upload practices in this repo
-      body.msmeDetails.certificateUrl = `/uploads/${files.msmeCertificate[0].filename}`; 
-    }
+    // Convert string numbers
+    if (body.supplierCreditDays) body.supplierCreditDays = Number(body.supplierCreditDays);
+    if (body.supplierOpeningBalance) body.supplierOpeningBalance = Number(body.supplierOpeningBalance);
+    if (body.customerCreditDays) body.customerCreditDays = Number(body.customerCreditDays);
+    if (body.customerOpeningBalance) body.customerOpeningBalance = Number(body.customerOpeningBalance);
 
+    // Format enums
+    if (body.prefix) body.prefix = capitalize(body.prefix);
+    if (body.supplierBalanceType) body.supplierBalanceType = capitalize(body.supplierBalanceType);
+    if (body.customerBalanceType) body.customerBalanceType = capitalize(body.customerBalanceType);
+    if (body.regUnder) body.regUnder = capitalize(body.regUnder);
+    if (body.regType) body.regType = capitalize(body.regType);
+
+    // Ensure nested dtos are initialized
+    if (files?.msmeCertificate?.[0]) {
+       body.msmeCertificateUrl = "temp-" + files.msmeCertificate[0].filename; 
+    }
+    
     if (files?.otherDocuments && files.otherDocuments.length > 0) {
-      body.otherDocuments = files.otherDocuments.map(file => `/uploads/${file.filename}`);
+       body.otherDocuments = files.otherDocuments.map(f => "temp-" + f.filename);
     } else if (typeof body.otherDocuments === 'string') {
-       // if strings were passed as standard links
        try { body.otherDocuments = JSON.parse(body.otherDocuments); } catch (e) {}
     }
 
@@ -94,14 +154,10 @@ export class AccountMasterController {
     const errors = await validate(dto);
     
     if (errors.length > 0) {
-      const messages = errors.map(err => Object.values(err.constraints || {})).flat();
-      throw new BadRequestException({
-        message: 'Validation failed',
-        errors: messages
-      });
+      throw new BadRequestException(flattenErrors(errors));
     }
 
-    return this.accountMasterService.create(dto);
+    return this.accountMasterService.create(dto, files);
   }
 
   @Get()
@@ -214,8 +270,103 @@ export class AccountMasterController {
   @Put(':id')
   @ApiOperation({ summary: 'Update existing account details' })
   @ApiParam({ name: 'id', required: true, description: 'ID of the account' })
-  update(@Param('id', ParseIntPipe) id: number, @Body() updateAccountMasterDto: UpdateAccountMasterDto) {
-    return this.accountMasterService.update(id, updateAccountMasterDto);
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        accountName: { type: 'string' },
+        groupName: { type: 'string', description: 'JSON stringified array [SUNDRY_CREDITORS, SUNDRY_DEBTORS]' },
+        supplierCode: { type: 'string' },
+        customerCode: { type: 'string' },
+        gstNo: { type: 'string' },
+        panNo: { type: 'string' },
+        addressLine1: { type: 'string' },
+        addressLine2: { type: 'string' },
+        pincode: { type: 'string' },
+        area: { type: 'string' },
+        subDistrict: { type: 'string' },
+        district: { type: 'string' },
+        state: { type: 'string' },
+        country: { type: 'string' },
+        prefix: { type: 'string' },
+        contactPersonName: { type: 'string' },
+        emailId: { type: 'string' },
+        mobileNo: { type: 'string' },
+        supplierCreditDays: { type: 'string' },
+        supplierOpeningBalance: { type: 'string' },
+        supplierBalanceType: { type: 'string' },
+        customerCreditDays: { type: 'string' },
+        customerOpeningBalance: { type: 'string' },
+        customerBalanceType: { type: 'string' },
+        msmeEnabled: { type: 'string', description: 'true or false' },
+        msmeId: { type: 'string' },
+        regUnder: { type: 'string' },
+        regType: { type: 'string' },
+        msmeCertificate: { type: 'string', format: 'binary' },
+        otherDocuments: { type: 'array', items: { type: 'string', format: 'binary' } }
+      }
+    }
+  })
+  @UseInterceptors(FileFieldsInterceptor([
+    { name: 'msmeCertificate', maxCount: 1 },
+    { name: 'otherDocuments', maxCount: 5 }
+  ], multerConfig))
+  async update(
+    @Param('id', ParseIntPipe) id: number, 
+    @Body() body: any,
+    @UploadedFiles() files: { msmeCertificate?: Express.Multer.File[], otherDocuments?: Express.Multer.File[] }
+  ) {
+    if (typeof body.groupName === 'string') {
+      try { body.groupName = JSON.parse(body.groupName); } catch (e) {
+          if (Array.isArray(body.groupName)) body.groupName = body.groupName;
+          else body.groupName = [body.groupName];
+      }
+    }
+    if (body.groupName && Array.isArray(body.groupName)) {
+      body.groupName = body.groupName.map((g: any) => {
+          if (typeof g === 'string') {
+              let upper = g.toUpperCase();
+              if (upper.includes('CREDITOR') || upper.includes('SUPPLIER') || upper === 'VENDOR') return 'SUNDRY_CREDITORS';
+              if (upper.includes('DEBTOR') || upper.includes('CUSTOMER')) return 'SUNDRY_DEBTORS';
+              return upper.replace(/\s+/g, '_');
+          }
+          return g;
+      });
+    }
+
+    if (body.msmeEnabled === 'true') body.msmeEnabled = true;
+    if (body.msmeEnabled === 'false') body.msmeEnabled = false;
+
+    // Convert string numbers
+    if (body.supplierCreditDays) body.supplierCreditDays = Number(body.supplierCreditDays);
+    if (body.supplierOpeningBalance) body.supplierOpeningBalance = Number(body.supplierOpeningBalance);
+    if (body.customerCreditDays) body.customerCreditDays = Number(body.customerCreditDays);
+    if (body.customerOpeningBalance) body.customerOpeningBalance = Number(body.customerOpeningBalance);
+
+    // Format enums
+    if (body.prefix) body.prefix = capitalize(body.prefix);
+    if (body.supplierBalanceType) body.supplierBalanceType = capitalize(body.supplierBalanceType);
+    if (body.customerBalanceType) body.customerBalanceType = capitalize(body.customerBalanceType);
+    if (body.regUnder) body.regUnder = capitalize(body.regUnder);
+    if (body.regType) body.regType = capitalize(body.regType);
+
+    if (files?.msmeCertificate?.[0]) {
+       body.msmeCertificateUrl = "temp-" + files.msmeCertificate[0].filename;
+    }
+    if (files?.otherDocuments?.length) {
+       body.otherDocuments = files.otherDocuments.map(f => "temp-" + f.filename);
+    } else if (typeof body.otherDocuments === 'string') {
+       try { body.otherDocuments = JSON.parse(body.otherDocuments); } catch (e) {}
+    }
+
+    const dto = plainToInstance(UpdateAccountMasterDto, body);
+    const errors = await validate(dto);
+    if (errors.length > 0) {
+      throw new BadRequestException(flattenErrors(errors));
+    }
+
+    return this.accountMasterService.update(id, dto, files);
   }
 
   @Patch(':id/status')

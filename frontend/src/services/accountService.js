@@ -47,8 +47,9 @@ export const generateCustomerCode = async () => {
 };
 
 export const generateVendorCode = async () => {
-    const response = await axiosInstance.get(`${API_PATH}/generate-vendor-code`);
-    return response.data;
+    const response = await axiosInstance.get(`${API_PATH}/generate-supplier-code`);
+    // Map backend supplierCode to vendorCode expected by frontend
+    return { vendorCode: response.data.supplierCode };
 };
 
 export const generateAccountCode = async (groupName) => {

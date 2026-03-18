@@ -204,7 +204,7 @@ const AccountMaster = () => {
     }
 
     if (currentView === 'view') {
-        return <ViewAccount initialData={selectedAccount} onBack={() => { setCurrentView('list'); setSelectedAccount(null); }} />;
+        return <ViewAccount initialData={selectedAccount} onBack={() => { setCurrentView('list'); setSelectedAccount(null); }} onEdit={() => setCurrentView('edit')} />;
     }
 
     return (
@@ -320,10 +320,10 @@ const AccountMaster = () => {
                         <thead className="bg-[#F9FAFB] border-b border-[#E5E7EB] text-[13px] font-semibold text-[#6B7280]">
                             <tr>
                                 <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
-                                    <div className="flex items-center gap-2">{t('modules:customer_code')}</div>
+                                    <div className="flex items-center gap-2">Supplier Code</div>
                                 </th>
                                 <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
-                                    <div className="flex items-center gap-2">{t('modules:vendor_code')}</div>
+                                    <div className="flex items-center gap-2">{t('modules:customer_code')}</div>
                                 </th>
                                 <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
                                     <div className="flex items-center gap-2">{t('modules:account')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
@@ -332,13 +332,13 @@ const AccountMaster = () => {
                                     <div className="flex items-center gap-2">{t('modules:account_type')}</div>
                                 </th>
                                 <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
-                                    <div className="flex items-center gap-2">{t('modules:credit_days')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
-                                </th>
-                                <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
                                     <div className="flex items-center gap-2">{t('modules:gst_no')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
                                 </th>
                                 <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
                                     <div className="flex items-center gap-2">{t('modules:pan_no')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
+                                </th>
+                                <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
+                                    <div className="flex items-center gap-2">{t('modules:credit_days')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
                                 </th>
                                 <th className="px-6 py-4 whitespace-nowrap cursor-pointer hover:text-[#014A36] transition-colors group">
                                     <div className="flex items-center gap-2">{t('modules:op_balance')} <ChevronsUpDown size={14} className="opacity-50 group-hover:opacity-100" /></div>
@@ -355,20 +355,30 @@ const AccountMaster = () => {
                         <tbody className="text-[14px] text-[#111827]">
                             {paginatedData.map((row, index) => (
                                 <tr key={index} className="border-b border-[#E5E7EB] hover:bg-gray-50/50 transition-colors">
+                                    <td className="px-6 py-4 font-medium">{row.supplierCode || row.vendorCode || '-'}</td>
                                     <td className="px-6 py-4 font-medium">{row.customerCode || '-'}</td>
-                                    <td className="px-6 py-4 font-medium">{row.vendorCode || '-'}</td>
-                                    <td className="px-6 py-4">{row.accountName}</td>
+                                    <td className="px-6 py-4 font-semibold text-[#014A36] truncate max-w-[200px]" title={row.accountName}>{row.accountName}</td>
                                     <td className="px-6 py-4">
-                                        <div className="flex gap-1.5 flex-wrap">
-                                            {row.isCustomer && <span className="px-2 py-0.5 bg-[#014A36]/10 text-[#014A36] rounded text-[11px] font-bold uppercase tracking-wider">{t('modules:customer')}</span>}
-                                            {row.isVendor && <span className="px-2 py-0.5 bg-[#4B5563]/10 text-[#4B5563] rounded text-[11px] font-bold uppercase tracking-wider">{t('modules:vendor')}</span>}
+                                        <div className="flex flex-col gap-1.5 flex-wrap">
+                                            {(row.groupName?.includes('CUSTOMER') || row.groupName?.includes('SUNDRY_DEBTORS') || row.isCustomer) && <span className="px-2 py-0.5 bg-[#014A36]/10 text-[#014A36] rounded text-[11px] font-bold uppercase tracking-wider w-max">{t('modules:sundry_debtors')}</span>}
+                                            {(row.groupName?.includes('SUPPLIER') || row.groupName?.includes('SUNDRY_CREDITORS') || row.isVendor) && <span className="px-2 py-0.5 bg-[#4B5563]/10 text-[#4B5563] rounded text-[11px] font-bold uppercase tracking-wider w-max">{t('modules:sundry_creditors')}</span>}
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">{row.creditDays}</td>
-                                    <td className="px-6 py-4">{row.gstNo}</td>
-                                    <td className="px-6 py-4">{row.panNo}</td>
-                                    <td className="px-6 py-4">{row.openingBalance}</td>
-                                    <td className="px-6 py-4 truncate max-w-[200px]" title={row.addressLine1}>{row.addressLine1}</td>
+                                    <td className="px-6 py-4">{row.gstNo || '-'}</td>
+                                    <td className="px-6 py-4 font-medium uppercase">{row.panNo || '-'}</td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-col gap-1 text-[13px]">
+                                            {(row.supplierCreditDays > 0 || row.groupName?.includes('SUPPLIER') || row.groupName?.includes('SUNDRY_CREDITORS')) && <span>Sup: {row.supplierCreditDays || 0}</span>}
+                                            {(row.customerCreditDays > 0 || row.groupName?.includes('CUSTOMER') || row.groupName?.includes('SUNDRY_DEBTORS')) && <span>Cus: {row.customerCreditDays || 0}</span>}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-col gap-1 text-[13px]">
+                                            {(row.supplierOpeningBalance > 0 || row.groupName?.includes('SUPPLIER') || row.groupName?.includes('SUNDRY_CREDITORS')) && <span>Sup: {row.supplierOpeningBalance || 0} {row.supplierBalanceType}</span>}
+                                            {(row.customerOpeningBalance > 0 || row.groupName?.includes('CUSTOMER') || row.groupName?.includes('SUNDRY_DEBTORS')) && <span>Cus: {row.customerOpeningBalance || 0} {row.customerBalanceType}</span>}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 truncate max-w-[200px]" title={`${row.addressLine1 || ''} ${row.area || ''}`.trim()}>{`${row.addressLine1 || ''} ${row.area || ''}`.trim() || '-'}</td>
                                     <td className="px-6 py-4">
                                         <span className={row.status === 'ACTIVE' ? 'text-[#014A36] font-medium' : 'text-gray-500'}>
                                             {row.status === 'ACTIVE' ? t('common:active') : t('common:inactive')}
@@ -487,7 +497,7 @@ const AccountMaster = () => {
                     <div className="relative w-[400px] max-w-full bg-white h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
                         {/* Drawer Header */}
                         <div className="flex items-center justify-between p-6 pb-4">
-                            <h2 className="text-[16px] font-bold text-[#111827] font-['Plus_Jakarta_Sans']">{t('common:apply_filters')}</h2>
+                            <h2 className="text-[16px] font-bold text-[#111827] font-['Plus_Jakarta_Sans']">{t('common:filter')}</h2>
                             <button onClick={() => setIsFilterOpen(false)} className="text-black hover:text-[#111827] transition-colors p-1 rounded-full hover:bg-gray-100">
                                 <X size={20} strokeWidth={1.5} />
                             </button>
@@ -516,7 +526,7 @@ const AccountMaster = () => {
                                 />
                             </div>
                             <div className="relative">
-                                <label className="block text-[13px] font-medium text-[#374151] mb-2">{t('modules:group_name')}</label>
+                                <label className="block text-[13px] font-medium text-[#374151] mb-2">Group Name</label>
                                 <select
                                     name="groupName"
                                     value={filterInputs.groupName}
@@ -524,8 +534,8 @@ const AccountMaster = () => {
                                     className="w-full h-[46px] px-3 pr-10 border border-[#D1D5DB] rounded-[6px] text-[14px] text-[#111827] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/20 transition-all appearance-none bg-white font-['Plus_Jakarta_Sans']"
                                 >
                                     <option value="" disabled className="hidden"></option>
-                                    <option value="Sundry Creditors (Vendor)">{t('modules:sundry_creditors')}</option>
-                                    <option value="Sundry Debtors (Customer)">{t('modules:sundry_debtors')}</option>
+                                    <option value="SUNDRY_CREDITORS">{t('modules:sundry_creditors')}</option>
+                                    <option value="SUNDRY_DEBTORS">{t('modules:sundry_debtors')}</option>
                                 </select>
                                 <ChevronDown size={18} className="absolute right-3 top-1/2 translate-y-[20%] pointer-events-none text-[#6B7280]" />
                             </div>
@@ -567,7 +577,7 @@ const AccountMaster = () => {
                                 onClick={applyFilters}
                                 className="flex-1 h-[48px] bg-[#014A36] text-white text-[14px] font-semibold rounded-[6px] hover:bg-[#013b2b] transition-colors"
                             >
-                                {t('common:apply_filters')}
+                                {t('common:filter')}
                             </button>
                         </div>
                     </div>

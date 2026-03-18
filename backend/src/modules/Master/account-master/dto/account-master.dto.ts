@@ -16,82 +16,13 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ContactPrefix, MasterStatus } from '@prisma/client';
+import { ContactPrefix, MasterStatus, BalanceType, RegUnder, RegType } from '@prisma/client';
 
 export enum GroupNameEnum {
-  SUPPLIER = 'SUPPLIER',
-  CUSTOMER = 'CUSTOMER',
+  SUNDRY_CREDITORS = 'SUNDRY_CREDITORS',
+  SUNDRY_DEBTORS = 'SUNDRY_DEBTORS',
 }
 
-export enum RegTypeEnum {
-  Trading = 'Trading',
-  Manufacturing = 'Manufacturing',
-  Service = 'Service',
-}
-
-export enum RegUnderEnum {
-  Micro = 'Micro',
-  Small = 'Small',
-  Medium = 'Medium',
-}
-
-export class ContactPersonDto {
-  @ApiProperty({ enum: ContactPrefix })
-  @IsEnum(ContactPrefix)
-  @IsNotEmpty()
-  prefix: ContactPrefix;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  name: string;
-
-  @ApiPropertyOptional()
-  @IsEmail()
-  @IsOptional()
-  email?: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  @Matches(/^[6-9]\d{9}$/, { message: 'Mobile number must be a valid 10-digit Indian number starting with 6-9' })
-  mobile: string;
-}
-
-export class LedgerDetailsDto {
-  @ApiPropertyOptional()
-  @IsNumber()
-  @IsOptional()
-  creditDays?: number;
-
-  @ApiPropertyOptional()
-  @IsNumber()
-  @IsOptional()
-  openingBalance?: number;
-}
-
-export class MsmeDetailsDto {
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  @Matches(/^UDYAM-[A-Z]{2}-\d{2}-\d{7}$/, { message: 'MSME ID must follow the pattern UDYAM-XX-12-1234567' })
-  msmeId: string;
-
-  @ApiProperty({ enum: RegUnderEnum })
-  @IsEnum(RegUnderEnum)
-  @IsNotEmpty()
-  regUnder: RegUnderEnum;
-
-  @ApiProperty({ enum: RegTypeEnum })
-  @IsEnum(RegTypeEnum)
-  @IsNotEmpty()
-  regType: RegTypeEnum;
-
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
-  certificateUrl?: string;
-}
 
 export class CreateAccountMasterDto {
   @ApiProperty()
@@ -129,11 +60,11 @@ export class CreateAccountMasterDto {
   @IsOptional()
   addressLine2?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   @Matches(/^\d{6}$/, { message: 'Pincode must be exactly 6 digits' })
-  pincode: string;
+  pincode?: string;
 
   @ApiPropertyOptional()
   @IsString()
@@ -160,26 +91,77 @@ export class CreateAccountMasterDto {
   @IsOptional()
   country?: string;
 
-  @ApiProperty()
-  @ValidateNested()
-  @Type(() => ContactPersonDto)
+  // Contact Persons
+  @ApiProperty({ enum: ContactPrefix })
+  @IsEnum(ContactPrefix)
   @IsNotEmpty()
-  contactPerson: ContactPersonDto;
+  prefix: ContactPrefix;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  contactPersonName: string;
 
   @ApiPropertyOptional()
-  @ValidateIf(o => o.groupName?.includes(GroupNameEnum.SUPPLIER))
-  @ValidateNested()
-  @Type(() => LedgerDetailsDto)
+  @IsEmail()
   @IsOptional()
-  supplier?: LedgerDetailsDto;
+  emailId?: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^\d{10}$/, { message: 'Mobile number must be exactly 10 digits' })
+  mobileNo: string;
 
   @ApiPropertyOptional()
-  @ValidateIf(o => o.groupName?.includes(GroupNameEnum.CUSTOMER))
-  @ValidateNested()
-  @Type(() => LedgerDetailsDto)
-  @IsOptional()
-  customer?: LedgerDetailsDto;
+  @ValidateIf(o => o.groupName?.includes(GroupNameEnum.SUNDRY_CREDITORS))
+  @IsString()
+  @IsNotEmpty({ message: 'Supplier Code is required when Sundry Creditors is selected.' })
+  supplierCode?: string;
 
+  @ApiPropertyOptional()
+  @ValidateIf(o => o.groupName?.includes(GroupNameEnum.SUNDRY_DEBTORS))
+  @IsString()
+  @IsNotEmpty({ message: 'Customer Code is required when Sundry Debtors is selected.' })
+  customerCode?: string;
+
+  // Supplier Details
+  @ApiPropertyOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  supplierCreditDays?: number;
+
+  @ApiPropertyOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  supplierOpeningBalance?: number;
+
+  @ApiPropertyOptional({ enum: BalanceType })
+  @IsEnum(BalanceType)
+  @IsOptional()
+  supplierBalanceType?: BalanceType;
+
+  // Customer Details
+  @ApiPropertyOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  customerCreditDays?: number;
+
+  @ApiPropertyOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @IsOptional()
+  customerOpeningBalance?: number;
+
+  @ApiPropertyOptional({ enum: BalanceType })
+  @IsEnum(BalanceType)
+  @IsOptional()
+  customerBalanceType?: BalanceType;
+
+  // MSME Details
   @ApiPropertyOptional()
   @IsBoolean()
   @IsOptional()
@@ -187,10 +169,27 @@ export class CreateAccountMasterDto {
 
   @ApiPropertyOptional()
   @ValidateIf(o => o.msmeEnabled === true)
-  @ValidateNested()
-  @Type(() => MsmeDetailsDto)
+  @IsString()
   @IsNotEmpty()
-  msmeDetails?: MsmeDetailsDto;
+  @Matches(/^UDYAM-[A-Z]{2}-\d{2}-\d{7}$/, { message: 'MSME ID must follow the pattern UDYAM-XX-12-1234567' })
+  msmeId?: string;
+
+  @ApiPropertyOptional({ enum: RegUnder })
+  @ValidateIf(o => o.msmeEnabled === true)
+  @IsEnum(RegUnder)
+  @IsNotEmpty()
+  regUnder?: RegUnder;
+
+  @ApiPropertyOptional({ enum: RegType })
+  @ValidateIf(o => o.msmeEnabled === true)
+  @IsEnum(RegType)
+  @IsNotEmpty()
+  regType?: RegType;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  msmeCertificateUrl?: string;
 
   @ApiPropertyOptional()
   @IsArray()
