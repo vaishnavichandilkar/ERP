@@ -423,10 +423,24 @@ const AccountMaster = () => {
                                             {row.groupName?.includes('SUNDRY_CREDITORS') && <span className="px-2 py-0.5 bg-[#4B5563]/10 text-[#4B5563] rounded text-[11px] font-bold uppercase tracking-wider">{t('modules:vendor')}</span>}
                                         </div>
                                     </td>
-                                    <td className="px-6 py-5 text-[#4B5563] font-medium border-r border-[#F3F4F6]">{row.creditDays || 0}</td>
+                                    <td className="px-6 py-5 text-[#4B5563] font-medium border-r border-[#F3F4F6]">
+                                        {row.groupName?.includes('SUNDRY_DEBTORS') && row.groupName?.includes('SUNDRY_CREDITORS') 
+                                            ? `${row.customerCreditDays || 0} / ${row.supplierCreditDays || 0}`
+                                            : row.groupName?.includes('SUNDRY_DEBTORS') 
+                                                ? (row.customerCreditDays || 0)
+                                                : (row.supplierCreditDays || 0)
+                                        }
+                                    </td>
                                     <td className="px-6 py-5 text-[#4B5563] font-medium border-r border-[#F3F4F6]">{row.gstNo || '-'}</td>
                                     <td className="px-6 py-5 text-[#4B5563] font-medium border-r border-[#F3F4F6]">{row.panNo || '-'}</td>
-                                    <td className="px-6 py-5 text-[#4B5563] font-medium border-r border-[#F3F4F6]">{row.openingBalance || 0}</td>
+                                    <td className="px-6 py-5 text-[#4B5563] font-medium border-r border-[#F3F4F6]">
+                                        {row.groupName?.includes('SUNDRY_DEBTORS') && row.groupName?.includes('SUNDRY_CREDITORS') 
+                                            ? `${row.customerOpeningBalance || 0} / ${row.supplierOpeningBalance || 0}`
+                                            : row.groupName?.includes('SUNDRY_DEBTORS') 
+                                                ? (row.customerOpeningBalance || 0)
+                                                : (row.supplierOpeningBalance || 0)
+                                        }
+                                    </td>
                                     <td className="px-6 py-5 text-[#6B7280] max-w-[200px] truncate border-r border-[#F3F4F6]" title={row.addressLine1}>{row.addressLine1 || '-'}</td>
                                     <td className="px-6 py-5 border-r border-[#F3F4F6]">
                                         <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-bold ${row.status === 'ACTIVE' ? 'bg-[#ECFDF5] text-[#059669]' : 'bg-[#FEF2F2] text-[#DC2626]'}`}>
