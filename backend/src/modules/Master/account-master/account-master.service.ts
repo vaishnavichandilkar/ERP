@@ -54,44 +54,52 @@ export class AccountMasterService {
     return this.generateCustomerCode();
   }
 
-  private async handleFileUploads(accountId: number, files?: { msmeCertificate?: Express.Multer.File[], otherDocuments?: Express.Multer.File[] }) {
-    if (!files) return;
+  private async handleFileUploads(account: any, files?: { msmeCertificate?: Express.Multer.File[], otherDocuments?: Express.Multer.File[] }) {
+    if (!files || (!files.msmeCertificate && !files.otherDocuments)) return;
     
-    const uploadPath = './uploads/accountmaster';
+    // Create specific folder: uploads/account-master-upload/{id+accountName}
+    const safeAccountName = account.accountName.replace(/[^a-zA-Z0-9]/g, '_');
+    const folderName = `${account.id}${safeAccountName}`;
+    const uploadPath = path.join('./uploads', 'account-master-upload', folderName);
+    
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true });
     }
 
     const updates: any = {};
+    const baseUrl = `/uploads/account-master-upload/${folderName}`;
+
     if (files?.msmeCertificate?.[0]) {
       const file = files.msmeCertificate[0];
-      const newName = `${accountId}_${file.originalname.replace(/\s+/g, '_')}`;
+      const newName = `MSME_${file.originalname.replace(/\s+/g, '_')}`;
       const newPath = path.join(uploadPath, newName);
       if (fs.existsSync(file.path)) {
         fs.renameSync(file.path, newPath);
-        updates.msmeCertificateUrl = `/uploads/accountmaster/${newName}`;
+        updates.msmeCertificateUrl = `${baseUrl}/${newName}`;
       }
     }
 
     if (files?.otherDocuments && files.otherDocuments.length > 0) {
-      const docUrls = files.otherDocuments.map((file, index) => {
-         const newName = `${accountId}_${file.originalname.replace(/\s+/g, '_')}`;
+      const docUrls = files.otherDocuments.map((file) => {
+         const newName = `DOC_${file.originalname.replace(/\s+/g, '_')}`;
          const newPath = path.join(uploadPath, newName);
          if (fs.existsSync(file.path)) {
            fs.renameSync(file.path, newPath);
-           return `/uploads/accountmaster/${newName}`;
+           return `${baseUrl}/${newName}`;
          }
          return null;
       }).filter(url => url !== null);
       
       if (docUrls.length > 0) {
+        // If we already have some docs, we might want to append? 
+        // For now, replacing/setting based on new uploads.
         updates.otherDocuments = docUrls;
       }
     }
 
     if (Object.keys(updates).length > 0) {
       await this.prisma.accountMaster.update({
-        where: { id: accountId },
+        where: { id: account.id },
         data: updates
       });
     }
@@ -162,7 +170,7 @@ export class AccountMasterService {
       },
     });
 
-    await this.handleFileUploads(account.id, files);
+    await this.handleFileUploads(account, files);
     
     return {
       success: true,
@@ -374,7 +382,7 @@ export class AccountMasterService {
       data,
     });
     
-    await this.handleFileUploads(id, files);
+    await this.handleFileUploads(updated, files);
     
     return {
       success: true,

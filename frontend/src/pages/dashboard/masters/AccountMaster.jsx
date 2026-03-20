@@ -419,8 +419,8 @@ const AccountMaster = () => {
                                     <td className="px-6 py-5 font-bold text-[#111827] border-r border-[#F3F4F6]">{row.accountName}</td>
                                     <td className="px-6 py-5 border-r border-[#F3F4F6]">
                                         <div className="flex gap-1.5 flex-wrap">
-                                            {row.isCustomer && <span className="px-2 py-0.5 bg-[#073318]/10 text-[#073318] rounded text-[11px] font-bold uppercase tracking-wider">{t('modules:customer')}</span>}
-                                            {row.isVendor && <span className="px-2 py-0.5 bg-[#4B5563]/10 text-[#4B5563] rounded text-[11px] font-bold uppercase tracking-wider">{t('modules:vendor')}</span>}
+                                            {row.groupName?.includes('SUNDRY_DEBTORS') && <span className="px-2 py-0.5 bg-[#073318]/10 text-[#073318] rounded text-[11px] font-bold uppercase tracking-wider">{t('modules:customer')}</span>}
+                                            {row.groupName?.includes('SUNDRY_CREDITORS') && <span className="px-2 py-0.5 bg-[#4B5563]/10 text-[#4B5563] rounded text-[11px] font-bold uppercase tracking-wider">{t('modules:vendor')}</span>}
                                         </div>
                                     </td>
                                     <td className="px-6 py-5 text-[#4B5563] font-medium border-r border-[#F3F4F6]">{row.creditDays || 0}</td>

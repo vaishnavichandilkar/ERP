@@ -409,8 +409,8 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
         const fData = new FormData();
         fData.append('accountName', formData.accountName);
         let groups = [];
-        if (formData.isVendor) groups.push('SUPPLIER');
-        if (formData.isCustomer) groups.push('CUSTOMER');
+        if (formData.isVendor) groups.push('SUNDRY_CREDITORS');
+        if (formData.isCustomer) groups.push('SUNDRY_DEBTORS');
         fData.append('groupName', JSON.stringify(groups));
 
         if (formData.gstNo) fData.append('gstNo', formData.gstNo);
