@@ -57,42 +57,45 @@ export class AccountMasterService {
   private async handleFileUploads(account: any, files?: { msmeCertificate?: Express.Multer.File[], otherDocuments?: Express.Multer.File[] }) {
     if (!files || (!files.msmeCertificate && !files.otherDocuments)) return;
     
-    // Create specific folder: uploads/account-master-upload/{id+accountName}
+    // Create specific folder: uploads/account_upload/{id}_{accountName}
     const safeAccountName = account.accountName.replace(/[^a-zA-Z0-9]/g, '_');
-    const folderName = `${account.id}${safeAccountName}`;
-    const uploadPath = path.join('./uploads', 'account-master-upload', folderName);
+    const folderName = `${account.id}_${safeAccountName}`;
+    const uploadPath = path.join('./uploads', 'account_upload', folderName);
     
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true });
     }
 
     const updates: any = {};
-    const baseUrl = `/uploads/account-master-upload/${folderName}`;
+    const baseUrl = `account_upload/${folderName}`;
+    const randomNumber = () => Math.floor(100000 + Math.random() * 900000);
 
     if (files?.msmeCertificate?.[0]) {
       const file = files.msmeCertificate[0];
-      const newName = `MSME_${file.originalname.replace(/\s+/g, '_')}`;
-      const newPath = path.join(uploadPath, newName);
+      const extension = path.extname(file.originalname);
+      const randomName = `${randomNumber()}_MSME${extension}`;
+      const newPath = path.join(uploadPath, randomName);
+      
       if (fs.existsSync(file.path)) {
         fs.renameSync(file.path, newPath);
-        updates.msmeCertificateUrl = `${baseUrl}/${newName}`;
+        updates.msmeCertificateUrl = `${baseUrl}/${randomName}`;
       }
     }
 
     if (files?.otherDocuments && files.otherDocuments.length > 0) {
       const docUrls = files.otherDocuments.map((file) => {
-         const newName = `DOC_${file.originalname.replace(/\s+/g, '_')}`;
-         const newPath = path.join(uploadPath, newName);
+         const extension = path.extname(file.originalname);
+         const randomName = `${randomNumber()}_DOC${extension}`;
+         const newPath = path.join(uploadPath, randomName);
+         
          if (fs.existsSync(file.path)) {
            fs.renameSync(file.path, newPath);
-           return `${baseUrl}/${newName}`;
+           return `${baseUrl}/${randomName}`;
          }
          return null;
       }).filter(url => url !== null);
       
       if (docUrls.length > 0) {
-        // If we already have some docs, we might want to append? 
-        // For now, replacing/setting based on new uploads.
         updates.otherDocuments = docUrls;
       }
     }
