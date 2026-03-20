@@ -177,7 +177,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
         isCustomer: initialData.isCustomer || initialData.groupName?.includes('SUNDRY_DEBTORS') || initialData.groupName?.includes('CUSTOMER') || false,
         isVendor: initialData.isVendor || initialData.groupName?.includes('SUNDRY_CREDITORS') || initialData.groupName?.includes('SUPPLIER') || false,
         customerCode: initialData.customerCode || '',
-        vendorCode: initialData.vendorCode || initialData.supplierCode || '',
+        supplierCode: initialData.supplierCode || '',
         gstNo: initialData.gstNo || '',
         panNo: initialData.panNo || '',
         customerCreditDays: initialData.customerCreditDays ? initialData.customerCreditDays.toString() : (initialData.creditDays ? initialData.creditDays.toString() : ''),
@@ -208,7 +208,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
         isCustomer: false,
         isVendor: false,
         customerCode: '',
-        vendorCode: '',
+        supplierCode: '',
         gstNo: '',
         panNo: '',
         customerCreditDays: '',
@@ -240,7 +240,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
     const [areaOptions, setAreaOptions] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isGeneratingCustomerCode, setIsGeneratingCustomerCode] = useState(false);
-    const [isGeneratingVendorCode, setIsGeneratingVendorCode] = useState(false);
+    const [isGeneratingSupplierCode, setIsGeneratingSupplierCode] = useState(false);
     const [isFetchingPin, setIsFetchingPin] = useState(false);
 
     const [msmeFile, setMsmeFile] = useState(null);
@@ -362,15 +362,15 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
             }
         }
 
-        if (field === 'isVendor' && value === true && !formData.vendorCode) {
-            setIsGeneratingVendorCode(true);
+        if (field === 'isVendor' && value === true && !formData.supplierCode) {
+            setIsGeneratingSupplierCode(true);
             try {
-                const res = await accountService.generateVendorCode();
-                if (res?.vendorCode) setFormData(prev => ({ ...prev, vendorCode: res.vendorCode }));
+                const res = await accountService.generateSupplierCode();
+                if (res?.supplierCode) setFormData(prev => ({ ...prev, supplierCode: res.supplierCode }));
             } catch (_err) {
-                toast.error(t('modules:error_generate_vendor_code'));
+                toast.error(t('modules:error_generate_supplier_code'));
             } finally {
-                setIsGeneratingVendorCode(false);
+                setIsGeneratingSupplierCode(false);
             }
         }
 
@@ -430,7 +430,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
         fData.append('mobileNo', formData.mobileNo);
 
         if (formData.isVendor) {
-            if (formData.vendorCode) fData.append('supplierCode', formData.vendorCode);
+            if (formData.supplierCode) fData.append('supplierCode', formData.supplierCode);
             if (formData.vendorCreditDays) fData.append('supplierCreditDays', formData.vendorCreditDays);
             if (formData.vendorOpBalance) fData.append('supplierOpeningBalance', formData.vendorOpBalance);
             fData.append('supplierBalanceType', formData.vendorBalanceType || 'Cr');
@@ -719,10 +719,10 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                     <h4 className="text-[14px] font-semibold text-[#4B5563]">{t('modules:supplier')}</h4>
                                      <div className="flex flex-col gap-1.5">
                                         <label className="text-[13px] font-semibold text-[#4B5563] flex justify-between">
-                                            <span>{t('modules:vendor_code')}</span>
-                                            {isGeneratingVendorCode && <Loader2 size={12} className="animate-spin text-[#014A36]" />}
+                                            <span>{t('modules:supplier_code')}</span>
+                                            {isGeneratingSupplierCode && <Loader2 size={12} className="animate-spin text-[#014A36]" />}
                                         </label>
-                                        <input type="text" readOnly placeholder={t('modules:code_auto_generated')} value={formData.vendorCode} className="w-full h-[44px] border border-[#E5E7EB] bg-gray-50 text-gray-600 rounded-[8px] px-4 text-[14px] outline-none" />
+                                        <input type="text" readOnly placeholder={t('modules:code_auto_generated')} value={formData.supplierCode} className="w-full h-[44px] border border-[#E5E7EB] bg-gray-50 text-gray-600 rounded-[8px] px-4 text-[14px] outline-none" />
                                     </div>
                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
                                         <div className="flex flex-col gap-1.5">

@@ -127,7 +127,7 @@ const ViewAccount = ({ initialData, onBack, onEdit }) => {
                             <>
                                 <SectionHeading title="Supplier Ledger Details" />
                                 <InfoTableRow 
-                                    label1={`Supplier Code:`} value1={data.supplierCode || data.vendorCode} 
+                                    label1={`${t('modules:supplier_code')}:`} value1={data.supplierCode} 
                                     label2={'Credit Days:'} value2={data.supplierCreditDays} 
                                 />
                                 <InfoTableRow 

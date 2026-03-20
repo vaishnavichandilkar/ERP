@@ -19,7 +19,7 @@
     "apply_filters": "Apply Filters",
     "account_master": "Account Master",
     "account_master_desc": "View, verify, and manage all customer and vendor accounts, including balance and contact information.",
-    "vendor_code": "Vendor Code",
+    "supplier_code": "Supplier Code",
     "customer_code": "Customer Code",
     "account_type": "Group Name",
     "customer": "Sundry Debtors (Customer)",

@@ -352,7 +352,7 @@ const AccountMaster = () => {
                                     {t('modules:customer_code')}
                                 </th>
                                 <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB] uppercase tracking-tight">
-                                    {t('modules:vendor_code')}
+                                    {t('modules:supplier_code')}
                                 </th>
                                 <th className="px-6 py-5 border-r border-[#E5E7EB]">
                                     <div className="flex items-center gap-1.5 cursor-pointer hover:text-[#073318] transition-colors uppercase tracking-tight text-left">
@@ -415,7 +415,7 @@ const AccountMaster = () => {
                             ) : paginatedData.length > 0 ? paginatedData.map((row, index) => (
                                 <tr key={index} className="border-b border-[#F3F4F6] last:border-b-0 hover:bg-[#F9FAFB] transition-all group">
                                     <td className="px-6 py-5 text-gray-500 font-medium border-r border-[#F3F4F6]">{row.customerCode || '-'}</td>
-                                    <td className="px-6 py-5 text-gray-500 font-medium border-r border-[#F3F4F6]">{row.vendorCode || '-'}</td>
+                                    <td className="px-6 py-5 text-gray-500 font-medium border-r border-[#F3F4F6]">{row.supplierCode || '-'}</td>
                                     <td className="px-6 py-5 font-bold text-[#111827] border-r border-[#F3F4F6]">{row.accountName}</td>
                                     <td className="px-6 py-5 border-r border-[#F3F4F6]">
                                         <div className="flex gap-1.5 flex-wrap">
