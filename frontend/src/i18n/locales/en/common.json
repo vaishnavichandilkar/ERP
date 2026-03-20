@@ -58,5 +58,9 @@
     "error_saving_data": "Error saving data. Please try again.",
     "please_fill_required_fields": "Please fill all required fields.",
     "status_updated": "Status updated successfully!",
-    "error_fetching_data": "Error fetching data."
+    "error_fetching_data": "Error fetching data.",
+    "click_to_upload": "Click to upload",
+    "or_drag_drop": "or drag and drop",
+    "file_limit_info": "PDF, JPG, PNG (max. {{max}}MB)",
+    "file_size_error": "Some files exceeded the {{max}}MB limit."
 }

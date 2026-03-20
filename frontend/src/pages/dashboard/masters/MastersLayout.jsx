@@ -52,7 +52,7 @@ const MastersLayout = () => {
                                 }`
                             }
                         >
-                            {({ isActive }) => (
+                            {() => (
                                 <>
                                     {tab.name}
                                 </>

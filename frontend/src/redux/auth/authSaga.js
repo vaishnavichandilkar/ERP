@@ -1,8 +1,8 @@
-import { takeLatest, put, call } from 'redux-saga/effects';
+import { takeLatest, put } from 'redux-saga/effects';
 import { loginRequest, loginSuccess, loginFailure } from './authSlice';
 // import { loginApi } from '../../services/authService'; // Assuming this exists
 
-function* handleLogin(action) {
+function* handleLogin() {
     try {
         // const user = yield call(loginApi, action.payload);
         const user = { name: 'User', email: 'test@example.com' }; // Mock

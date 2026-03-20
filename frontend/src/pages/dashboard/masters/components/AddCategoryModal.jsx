@@ -23,6 +23,7 @@ const AddCategoryModal = ({ isOpen, onClose }) => {
 
     useEffect(() => {
         if (isOpen) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setIsVisible(true);
             document.body.style.overflow = 'hidden';
         } else {

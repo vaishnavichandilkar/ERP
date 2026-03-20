@@ -43,7 +43,12 @@ const SignIn = () => {
             await sendLoginOtpApi(phone);
             navigate('/verify-otp', { state: { phone, mode: 'login' } });
         } catch (err) {
-            setError(err.response?.data?.message || t('otp_failed'));
+            const backendMessage = err.response?.data?.message;
+            if (backendMessage === 'This phone number is not registered. Please sign up or try a different number.') {
+                setError(t('phone_not_registered'));
+            } else {
+                setError(backendMessage || t('otp_failed'));
+            }
         } finally {
             setIsLoading(false);
         }

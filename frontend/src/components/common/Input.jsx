@@ -1,5 +1,11 @@
 import React from 'react';
 
+const IconWrapper = ({ children, position }) => (
+    <div className={`absolute flex items-center justify-center pointer-events-none text-gray-500 ${position === 'start' ? 'left-3' : 'right-3'}`}>
+        {children}
+    </div>
+);
+
 const Input = ({ label, type = 'text', value, onChange, placeholder, name, required, startIcon, endIcon, select, children, prefix, invalid, ...props }) => {
     const isSelect = select;
     const baseInputClass = `w-full min-h-[44px] px-3 py-2 border rounded-lg text-gray-900 bg-white placeholder-gray-400 focus:outline-none transition-colors ${invalid ? 'border-red-500 focus:ring-1 focus:ring-red-500/20' : 'border-gray-300 focus:ring-1 focus:ring-[#0B3D2E] focus:border-[#0B3D2E]'}`;
@@ -8,11 +14,6 @@ const Input = ({ label, type = 'text', value, onChange, placeholder, name, requi
     delete props.SelectProps;
 
     const wrapperClass = "flex relative items-center w-full";
-    const IconWrapper = ({ children, position }) => (
-        <div className={`absolute flex items-center justify-center pointer-events-none text-gray-500 ${position === 'start' ? 'left-3' : 'right-3'}`}>
-            {children}
-        </div>
-    );
 
     return (
         <div className="w-full flex justify-start flex-col">

@@ -207,7 +207,12 @@ const VerifyOTP = () => {
                 }
             }
         } catch (err) {
-            setError(err.response?.data?.message || t('invalid_otp'));
+            const backendMessage = err.response?.data?.message;
+            if (backendMessage === 'Invalid or expired OTP') {
+                setError(t('otp_invalid_expired'));
+            } else {
+                setError(backendMessage || t('invalid_otp'));
+            }
         } finally {
             setIsLoading(false);
         }
@@ -228,7 +233,12 @@ const VerifyOTP = () => {
             setOtp(new Array(6).fill(''));
             inputRefs.current[0].focus();
         } catch (err) {
-            setError(err.response?.data?.message || t('failed_to_send'));
+            const backendMessage = err.response?.data?.message;
+            if (backendMessage === 'This phone number is not registered. Please sign up or try a different number.') {
+                setError(t('phone_not_registered'));
+            } else {
+                setError(backendMessage || t('failed_to_send'));
+            }
         } finally {
             setIsLoading(false);
         }
