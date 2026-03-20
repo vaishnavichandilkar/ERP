@@ -1,9 +1,13 @@
 import { Module } from '@nestjs/common';
-import { ProductMasterService } from './product-master.service';
-import { ProductMasterController } from './product-master.controller';
+import { ProductMasterService } from './services/product-master.service';
+import { ProductMasterController } from './controllers/product-master.controller';
+import { ProductMasterRepository } from './repositories/product-master.repository';
+import { PrismaModule } from '../../../infrastructure/prisma/prisma.module';
 
 @Module({
-  providers: [ProductMasterService],
-  controllers: [ProductMasterController]
+  imports: [PrismaModule],
+  providers: [ProductMasterService, ProductMasterRepository],
+  controllers: [ProductMasterController],
+  exports: [ProductMasterService]
 })
-export class ProductMasterModule {}
+export class ProductMasterModule { }

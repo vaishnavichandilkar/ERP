@@ -1,0 +1,100 @@
+import { Body, Controller, Get, Param, Patch, Post, Put, Delete, ParseIntPipe, UseGuards, Request, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ProductMasterService } from '../services/product-master.service';
+import { CreateProductDto, UpdateProductDto, ToggleProductStatusDto } from '../dto/product.dto';
+import { JwtAuthGuard } from '../../../../common/guards/jwt-auth.guard';
+
+@ApiTags('Product Master')
+@Controller('products')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
+export class ProductMasterController {
+    constructor(private readonly service: ProductMasterService) { }
+
+    @Post()
+    @ApiOperation({ summary: 'Create a new Product' })
+    @ApiResponse({ status: 201, description: 'Product created' })
+    async createProduct(@Request() req, @Body() dto: CreateProductDto) {
+        return this.service.createProduct(dto, req.user.userId);
+    }
+
+    @Get('generate-code')
+    @ApiOperation({ summary: 'Generate next available Product Code for the user' })
+    @ApiResponse({ status: 200, description: 'Product Code generated successfully' })
+    async generateCode(@Request() req) {
+        return this.service.generateCodeForUser(req.user.userId);
+    }
+
+    @Get('dropdown/uoms')
+    @ApiOperation({ summary: 'Get active UOMs for dropdown' })
+    @ApiResponse({ status: 200, description: 'List of active UOMs' })
+    async getUomDropdown(@Request() req) {
+        return this.service.getUomDropdown(req.user.userId);
+    }
+
+    @Get('dropdown/categories')
+    @ApiOperation({ summary: 'Get active Categories for dropdown' })
+    @ApiResponse({ status: 200, description: 'List of active Categories' })
+    async getCategoryDropdown(@Request() req) {
+        return this.service.getCategoryDropdown(req.user.userId);
+    }
+
+    @Get('dropdown/sub-categories/:categoryId')
+    @ApiOperation({ summary: 'Get active Sub Categories for dropdown based on category' })
+    @ApiResponse({ status: 200, description: 'List of active Sub Categories' })
+    async getSubCategoryDropdown(
+        @Request() req,
+        @Param('categoryId', ParseIntPipe) categoryId: number
+    ) {
+        return this.service.getSubCategoryDropdown(categoryId, req.user.userId);
+    }
+
+    @Get()
+    @ApiOperation({ summary: 'Get Product list with pagination, search, and filters' })
+    @ApiResponse({ status: 200, description: 'Product list' })
+    @ApiQuery({ name: 'page', required: false, type: Number })
+    @ApiQuery({ name: 'limit', required: false, type: Number })
+    @ApiQuery({ name: 'search', required: false, type: String })
+    @ApiQuery({ name: 'uom_id', required: false, type: Number })
+    @ApiQuery({ name: 'product_type', required: false, type: String, enum: ['GOODS', 'SERVICES'] })
+    @ApiQuery({ name: 'status', required: false, type: String, enum: ['ACTIVE', 'INACTIVE'] })
+    async getProducts(@Request() req, @Query() query: any) {
+        return this.service.getProducts(query, req.user.userId);
+    }
+
+    @Get(':id')
+    @ApiOperation({ summary: 'Get single Product by ID' })
+    @ApiResponse({ status: 200, description: 'Product details' })
+    async getProductById(@Request() req, @Param('id', ParseIntPipe) id: number) {
+        return this.service.getProductById(id, req.user.userId);
+    }
+
+    @Put(':id')
+    @ApiOperation({ summary: 'Update an existing Product' })
+    @ApiResponse({ status: 200, description: 'Product updated' })
+    async updateProduct(
+        @Request() req,
+        @Param('id', ParseIntPipe) id: number,
+        @Body() dto: UpdateProductDto
+    ) {
+        return this.service.updateProduct(id, dto, req.user.userId);
+    }
+
+    @Patch(':id/status')
+    @ApiOperation({ summary: 'Activate or Deactivate a Product' })
+    @ApiResponse({ status: 200, description: 'Product status updated' })
+    async toggleStatus(
+        @Request() req,
+        @Param('id', ParseIntPipe) id: number,
+        @Body() dto: ToggleProductStatusDto
+    ) {
+        return this.service.toggleStatus(id, dto, req.user.userId);
+    }
+
+    @Delete(':id')
+    @ApiOperation({ summary: 'Soft delete a Product' })
+    @ApiResponse({ status: 200, description: 'Product deleted' })
+    async deleteProduct(@Request() req, @Param('id', ParseIntPipe) id: number) {
+        return this.service.deleteProduct(id, req.user.userId);
+    }
+}
