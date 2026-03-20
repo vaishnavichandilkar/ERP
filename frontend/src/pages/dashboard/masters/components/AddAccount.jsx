@@ -166,8 +166,8 @@ const FileUploadField = ({ label, onFileSelect, accept, maxMb, multiple = false 
 };
 
 const PREFIX_OPTIONS = ['Mr', 'Mrs', 'Miss', 'Ms'];
-const REG_UNDER = ['Manufacturing', 'Service', 'Trading'];
-const REG_TYPE = ['Micro', 'Small', 'Medium'];
+const REG_UNDER = ['Micro', 'Small', 'Medium'];
+const REG_TYPE = ['Manufacturing', 'Service', 'Trading'];
 
 const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
     const { t } = useTranslation(['modules', 'common']);
