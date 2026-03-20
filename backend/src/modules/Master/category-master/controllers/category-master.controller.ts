@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post, ParseIntPipe, UseGuards, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { CategoryMasterService } from '../services/category-master.service';
-import { CreateCategoryDto, CreateSubCategoryDto, ToggleStatusDto } from '../dto/category.dto';
+import { CreateCategoryDto, CreateSubCategoryDto, ToggleStatusDto, UpdateCategoryDto, UpdateSubCategoryDto } from '../dto/category.dto';
 import { JwtAuthGuard } from '../../../../common/guards/jwt-auth.guard';
 
 @ApiTags('Category Master')
@@ -59,5 +59,27 @@ export class CategoryMasterController {
         @Body() dto: ToggleStatusDto,
     ) {
         return this.service.toggleSubCategoryStatus(id, dto, req.user.userId);
+    }
+
+    @Patch('category/:id')
+    @ApiOperation({ summary: 'Update Category name' })
+    @ApiResponse({ status: 200, description: 'Category updated' })
+    async updateCategory(
+        @Request() req,
+        @Param('id', ParseIntPipe) id: number,
+        @Body() dto: UpdateCategoryDto,
+    ) {
+        return this.service.updateCategory(id, dto, req.user.userId);
+    }
+
+    @Patch('sub-category/:id')
+    @ApiOperation({ summary: 'Update Sub Category name' })
+    @ApiResponse({ status: 200, description: 'Sub Category updated' })
+    async updateSubCategory(
+        @Request() req,
+        @Param('id', ParseIntPipe) id: number,
+        @Body() dto: UpdateSubCategoryDto,
+    ) {
+        return this.service.updateSubCategory(id, dto, req.user.userId);
     }
 }

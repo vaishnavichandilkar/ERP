@@ -265,6 +265,13 @@ enum RegType {
   Manufacturing
 }
 
+enum CustomerType {
+  industrial
+  institutional
+  dealer
+  retailer
+}
+
 model AccountMaster {
   id Int @id @default(autoincrement())
 
@@ -300,6 +307,7 @@ model AccountMaster {
   customerCreditDays     Int?
   customerOpeningBalance Decimal?
   customerBalanceType    BalanceType?
+  customerType           CustomerType?
 
   // MSME Details
   msmeEnabled        Boolean @default(false)

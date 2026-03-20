@@ -26,7 +26,7 @@ export class AccountMasterService {
       }
     }
 
-    return `${prefix}${seq.toString().padStart(4, '0')}`;
+    return `${prefix}${seq.toString().padStart(5, '0')}`;
   }
 
   async generateSupplierCode(): Promise<string> {
@@ -44,7 +44,7 @@ export class AccountMasterService {
       }
     }
 
-    return `${prefix}${seq.toString().padStart(4, '0')}`;
+    return `${prefix}${seq.toString().padStart(5, '0')}`;
   }
 
   async generateCode(groupName: string): Promise<string> {
@@ -149,6 +149,7 @@ export class AccountMasterService {
         customerCreditDays: createDto.customerCreditDays,
         customerOpeningBalance: createDto.customerOpeningBalance,
         customerBalanceType: createDto.customerBalanceType,
+        customerType: createDto.customerType,
 
         msmeEnabled: createDto.msmeEnabled || false,
         msmeId: createDto.msmeEnabled ? createDto.msmeId : null,
@@ -345,6 +346,7 @@ export class AccountMasterService {
       customerCreditDays: updateDto.customerCreditDays,
       customerOpeningBalance: updateDto.customerOpeningBalance,
       customerBalanceType: updateDto.customerBalanceType,
+      customerType: updateDto.customerType,
       msmeEnabled: updateDto.msmeEnabled,
     };
     
@@ -455,6 +457,19 @@ export class AccountMasterService {
       throw new BadRequestException('No data available to export');
     }
 
+    const now = new Date();
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const hours = now.getHours();
+    const ampm = hours >= 12 ? 'pm' : 'am';
+    const formattedHours = hours % 12 || 12;
+    const d = pad(now.getDate());
+    const m = pad(now.getMonth() + 1);
+    const yyyy = now.getFullYear();
+    const hr = pad(formattedHours);
+    const min = pad(now.getMinutes());
+    const sec = pad(now.getSeconds());
+    const timestamp = `${d}/${m}/${yyyy}, ${hr}:${min}:${sec} ${ampm}`;
+
     if (format === 'xlsx') {
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Accounts');
@@ -486,19 +501,38 @@ export class AccountMasterService {
         });
       });
 
+      // Shift rows to make room for titles
+      worksheet.spliceRows(1, 0, [], [], [], []);
+
+      worksheet.mergeCells('A1:H1');
+      worksheet.getCell('A1').value = 'ERP';
+      worksheet.getCell('A1').font = { size: 18, bold: true };
+      worksheet.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle' };
+
+      worksheet.mergeCells('A2:H2');
+      worksheet.getCell('A2').value = 'Account Master Report';
+      worksheet.getCell('A2').font = { size: 14 };
+      worksheet.getCell('A2').alignment = { horizontal: 'center', vertical: 'middle' };
+
+      worksheet.mergeCells('A3:H3');
+      worksheet.getCell('A3').value = `Exported on: ${timestamp}`;
+      worksheet.getCell('A3').font = { size: 10 };
+      worksheet.getCell('A3').alignment = { horizontal: 'right', vertical: 'middle' };
+
       // Professional Styling
-      worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-      worksheet.getRow(1).fill = {
+      const headerRow = worksheet.getRow(5);
+      headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      headerRow.fill = {
         type: 'pattern',
         pattern: 'solid',
         fgColor: { argb: 'FF4472C4' } // Professional Blue
       };
-      worksheet.getRow(1).alignment = { horizontal: 'center' };
+      headerRow.alignment = { horizontal: 'center' };
 
       // Add Autofilter
       worksheet.autoFilter = {
-        from: { row: 1, column: 1 },
-        to: { row: 1, column: 8 },
+        from: { row: 5, column: 1 },
+        to: { row: 5, column: 8 },
       };
       
       const buffer = await workbook.xlsx.writeBuffer();
@@ -526,10 +560,10 @@ export class AccountMasterService {
         });
 
         // Header
-        doc.fontSize(18).font('Helvetica-Bold').text('Weighting Scale System', { align: 'center' });
+        doc.fontSize(18).font('Helvetica-Bold').text('ERP', { align: 'center' });
         doc.fontSize(14).font('Helvetica').text('Account Master Report', { align: 'center' });
         doc.moveDown(0.5);
-        doc.fontSize(10).text(`Exported on: ${new Date().toLocaleString()}`, { align: 'right' });
+        doc.fontSize(10).text(`Exported on: ${timestamp}`, { align: 'right' });
         doc.moveDown();
 
         // Table Constants

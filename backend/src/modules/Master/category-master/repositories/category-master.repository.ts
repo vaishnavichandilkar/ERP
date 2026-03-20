@@ -102,4 +102,21 @@ export class CategoryMasterRepository {
             data: { status },
         });
     }
+
+    async updateCategoryName(id: number, name: string) {
+        return this.prisma.category.update({
+            where: { id },
+            data: { name },
+        });
+    }
+
+    async updateSubCategoryContent(id: number, name: string, category_id?: number) {
+        return this.prisma.subCategory.update({
+            where: { id },
+            data: { 
+                name,
+                ...(category_id && { category_id })
+            },
+        });
+    }
 }

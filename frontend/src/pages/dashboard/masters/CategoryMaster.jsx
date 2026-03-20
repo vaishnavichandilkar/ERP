@@ -1,8 +1,10 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Search, Download, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, CheckCircle2, XCircle, ArrowLeft, ArrowRight, ChevronDown, RefreshCw, X, Filter, Database } from 'lucide-react';
+import { Search, Download, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, CheckCircle2, XCircle, ArrowLeft, ArrowRight, ChevronDown, RefreshCw, X, Filter, Edit, Loader2, ArrowLeft as LeftIcon, ArrowRight as RightIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-hot-toast';
 import CategoryForm from './components/CategoryForm';
 import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
+import categoryService from '../../../services/masters/categoryService';
 
 const CategoryMaster = () => {
     const { t } = useTranslation(['modules', 'common']);
@@ -10,7 +12,6 @@ const CategoryMaster = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedGroups, setExpandedGroups] = useState({});
     const [isExportOpen, setIsExportOpen] = useState(false);
-    const [itemStatuses, setItemStatuses] = useState({});
     const [activeRowDropdown, setActiveRowDropdown] = useState(null);
     const exportRef = useRef(null);
 
@@ -25,75 +26,28 @@ const CategoryMaster = () => {
     const [appliedFilters, setAppliedFilters] = useState(defaultFilters);
     const isFilterApplied = Object.values(appliedFilters).some(val => val !== '');
 
-    const masterData = useMemo(
-        () => [
-            {
-                id: "cat-silage",
-                name: t("silage"),
-                items: [t("maize_silage"), t("napier_silage"), t("oat_silage")],
-            },
-            {
-                id: "cat-animal-feed",
-                name: t("animal_feed"),
-                items: [t("cattle_feed"), t("poultry_feed"), t("swine_feed")],
-            },
-            {
-                id: "cat-fertilizers",
-                name: t("fertilizers"),
-                items: [
-                    t("organic_fertilizers"),
-                    t("chemical_fertilizers"),
-                    t("liquid_fertilizers"),
-                ],
-            },
-            {
-                id: "cat-seeds",
-                name: t("seeds"),
-                items: [t("hybrid_seeds"), t("vegetable_seeds"), t("flower_seeds")],
-            },
-            {
-                id: "cat-equipment",
-                name: t("farm_equipment"),
-                items: [t("tractors"), t("harvesters"), t("ploughs")],
-            },
-            {
-                id: "cat-chemicals",
-                name: t("agri_chemicals"),
-                items: [t("pesticides"), t("herbicides"), t("fungicides")],
-            },
-            {
-                id: "cat-packaging",
-                name: t("packaging_materials"),
-                items: [t("gunny_bags"), t("plastic_crates"), t("cartons")],
-            },
-            {
-                id: "cat-irrigation",
-                name: t("irrigation_systems"),
-                items: [t("drip_irrigation"), t("sprinklers"), t("pipes")],
-            },
-            {
-                id: "cat-livestock",
-                name: t("livestock_care"),
-                items: [t("veterinary_medicines"), t("vitamins"), t("vaccines")],
-            },
-            {
-                id: "cat-soil",
-                name: t("soil_care"),
-                items: [t("compost"), t("peat_moss"), t("soil_conditioners")],
-            },
-            {
-                id: "cat-greenhouse",
-                name: t("greenhouse_accessories"),
-                items: [t("shade_nets"), t("uv_films"), t("trays")],
-            },
-            {
-                id: "cat-tools",
-                name: t("hand_tools"),
-                items: [t("spades"), t("rakes"), t("pruners")],
-            },
-        ],
-        [t]
-    );
+    const [masterData, setMasterData] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const fetchCategories = async () => {
+        setIsLoading(true);
+        try {
+            const data = await categoryService.getCategories();
+            const mappedData = data.map(cat => ({
+                id: cat.id,
+                name: cat.name,
+                status: cat.status || 'ACTIVE',
+                items: cat.sub_categories || []
+            }));
+            setMasterData(mappedData);
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to fetch categories');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => { fetchCategories(); }, []);
 
     // Handle click outside for export/dropdown
     useEffect(() => {
@@ -101,7 +55,11 @@ const CategoryMaster = () => {
             if (exportRef.current && !exportRef.current.contains(event.target)) {
                 setIsExportOpen(false);
             }
-            setActiveRowDropdown(null);
+            
+            // Only clear dropdown if NOT clicking on a dropdown button or item
+            if (!event.target.closest('[data-dropdown-item="true"]') && !event.target.closest('[data-dropdown-btn="true"]')) {
+                setActiveRowDropdown(null);
+            }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -120,8 +78,8 @@ const CategoryMaster = () => {
         }));
     };
 
-    const isAllExpanded =
-        Object.keys(expandedGroups).length === masterData.length &&
+    const isAllExpanded = masterData.length > 0 && 
+        Object.keys(expandedGroups).length === masterData.length && 
         Object.values(expandedGroups).every(Boolean);
 
     const toggleExpandAll = () => {
@@ -129,36 +87,63 @@ const CategoryMaster = () => {
             setExpandedGroups({});
         } else {
             const newExpanded = {};
-            masterData.forEach((section) => (newExpanded[section.id] = true));
+            masterData.forEach(section => newExpanded[section.id] = true);
             setExpandedGroups(newExpanded);
         }
     };
 
-    const handleToggleStatus = (dropdownId, currentStatus) => {
-        setItemStatuses((prev) => ({
-            ...prev,
-            [dropdownId]: currentStatus === "Active" ? "Inactive" : "Active",
+    const handleToggleStatus = async (id, currentStatus, type) => {
+        const newStatus = currentStatus === 'INACTIVE' ? 'ACTIVE' : 'INACTIVE';
+        
+        // Optimistic UI update
+        setMasterData(prev => prev.map(cat => {
+            if (type === 'category' && Number(cat.id) === Number(id)) {
+                const updatedCat = { ...cat, status: newStatus };
+                if (newStatus === 'INACTIVE') {
+                    updatedCat.items = cat.items.map(sub => ({ ...sub, status: 'INACTIVE' }));
+                }
+                return updatedCat;
+            } else if (type === 'sub_category') {
+                return {
+                    ...cat,
+                    items: cat.items.map(sub => Number(sub.id) === Number(id) ? { ...sub, status: newStatus } : sub)
+                };
+            }
+            return cat;
         }));
-        setActiveRowDropdown(null);
+
+        try {
+            if (type === 'category') {
+                await categoryService.toggleCategoryStatus(id, newStatus);
+            } else {
+                await categoryService.toggleSubCategoryStatus(id, newStatus);
+            }
+            toast.success(newStatus === 'ACTIVE' ? 'Activated successfully' : 'Inactivated successfully');
+            fetchCategories(); // Final sync from DB
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to update status');
+            fetchCategories(); // Revert if failed
+        } finally {
+            setActiveRowDropdown(null);
+        }
     };
 
+    // Filter logic
     const filteredData = () => {
         let data = masterData;
         
-        // Apply search
         if (searchQuery) {
             const q = searchQuery.toLowerCase();
             data = data.filter(section => {
                 const nameMatch = section.name.toLowerCase().includes(q);
-                const itemsMatch = section.items.some(item => item.toLowerCase().includes(q));
+                const itemsMatch = section.items.some(item => (item.name || '').toLowerCase().includes(q));
                 return nameMatch || itemsMatch;
             });
         }
 
-        // Apply status filter
         if (appliedFilters.status) {
             data = data.filter(section => {
-                const status = itemStatuses[`group-${section.id}`] || 'Active';
+                const status = section.status || 'ACTIVE';
                 return status.toLowerCase() === appliedFilters.status.toLowerCase();
             });
         }
@@ -177,15 +162,14 @@ const CategoryMaster = () => {
         setIsFilterOpen(false);
     };
 
+    // Export Logic
     const handleExportPDF = () => {
         const tableRows = [];
         const prepareRows = (sections) => {
-            sections.forEach((sec) => {
-                tableRows.push([
-                    { content: sec.name, colSpan: 2, styles: { fontStyle: "bold" } },
-                ]);
+            sections.forEach(sec => {
+                tableRows.push([{ content: sec.name, colSpan: 2, styles: { fontStyle: 'bold' } }]);
                 sec.items.forEach((item, idx) => {
-                    tableRows.push([`${idx + 1}.`, item]);
+                    tableRows.push([`${idx + 1}.`, item.name]);
                 });
             });
         };
@@ -199,10 +183,10 @@ const CategoryMaster = () => {
     const handleExportExcel = () => {
         const data = [];
         const handlePrepareData = (sections) => {
-            sections.forEach((sec) => {
+            sections.forEach(sec => {
                 data.push({ [t('common:type')]: '', [t('modules:category_name')]: sec.name, [t('modules:sub_category')]: '' });
-                sec.items.forEach((item) => {
-                    data.push({ [t('common:type')]: '', [t('modules:category_name')]: '', [t('modules:sub_category')]: item });
+                sec.items.forEach(item => {
+                    data.push({ [t('common:type')]: '', [t('modules:category_name')]: '', [t('modules:sub_category')]: item.name });
                 });
             });
             data.push({}); // Empty row
@@ -248,7 +232,10 @@ const CategoryMaster = () => {
                 mode={currentView.type}
                 initialData={currentView.data}
                 onBack={() => setCurrentView({ type: 'list', data: null })}
-                onSuccess={() => setCurrentView({ type: 'list', data: null })}
+                onSuccess={() => {
+                    setCurrentView({ type: 'list', data: null });
+                    fetchCategories();
+                }}
             />
         );
     }
@@ -304,6 +291,7 @@ const CategoryMaster = () => {
                                 setSearchQuery('');
                                 setExpandedGroups({});
                                 handleClearFilter();
+                                fetchCategories();
                             }}
                             className="flex items-center justify-center w-[42px] h-[42px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] hover:bg-gray-50 transition-colors bg-white shadow-sm"
                             title="Refresh Data"
@@ -348,10 +336,14 @@ const CategoryMaster = () => {
                 </div>
 
                 <div className="min-h-[300px]">
-                    {paginatedData.length > 0 ? (
+                    {isLoading ? (
+                        <div className="p-12 flex items-center justify-center text-gray-400">
+                            <Loader2 className="w-8 h-8 animate-spin text-[#073318]" />
+                        </div>
+                    ) : paginatedData.length > 0 ? (
                         paginatedData.map((section) => {
                             const isSearchExpanding = searchQuery && section.items.some(item =>
-                                item.toLowerCase().includes(searchQuery.toLowerCase())
+                                (item.name || '').toLowerCase().includes(searchQuery.toLowerCase())
                             );
                             const isExpanded = expandedGroups[section.id] || isSearchExpanding;
 
@@ -372,13 +364,14 @@ const CategoryMaster = () => {
                                             <span className="text-[14px] font-bold text-[#111827]">
                                                 {section.name}
                                             </span>
-                                            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-bold ${itemStatuses[`group-${section.id}`] === 'Inactive' ? 'bg-[#FEF2F2] text-[#DC2626]' : 'bg-[#ECFDF5] text-[#059669]'}`}>
-                                                <span className={`w-1.5 h-1.5 rounded-full ${itemStatuses[`group-${section.id}`] === 'Inactive' ? 'bg-[#DC2626]' : 'bg-[#059669]'}`}></span>
-                                                {itemStatuses[`group-${section.id}`] === 'Inactive' ? t('common:inactive') : t('common:active')}
+                                            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-bold ${section.status === 'INACTIVE' ? 'bg-[#FEF2F2] text-[#DC2626]' : 'bg-[#ECFDF5] text-[#059669]'}`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${section.status === 'INACTIVE' ? 'bg-[#DC2626]' : 'bg-[#059669]'}`}></span>
+                                                {section.status === 'INACTIVE' ? t('common:inactive') : t('common:active')}
                                             </div>
                                         </div>
                                         <div className="relative flex items-center">
                                             <button
+                                                data-dropdown-btn="true"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     setActiveRowDropdown(activeRowDropdown === `group-${section.id}` ? null : `group-${section.id}`);
@@ -391,11 +384,27 @@ const CategoryMaster = () => {
                                             {activeRowDropdown === `group-${section.id}` && (
                                                 <div className="absolute right-full mr-2 min-w-[150px] bg-white border border-gray-100 rounded-[12px] shadow-[0_10px_30px_rgba(0,0,0,0.15)] z-[100] py-2 animate-in zoom-in-95 duration-200">
                                                     <button
-                                                        onClick={(e) => { e.stopPropagation(); handleToggleStatus(`group-${section.id}`, 'Inactive'); }}
+                                                        data-dropdown-item="true"
+                                                        onClick={(e) => { 
+                                                            e.stopPropagation(); 
+                                                            setCurrentView({ type: 'edit', data: { id: section.id, name: section.name, under: 'None', type: 'category' } });
+                                                        }}
                                                         className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] font-bold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap"
                                                     >
-                                                        <CheckCircle2 size={18} className={itemStatuses[`group-${section.id}`] === 'Inactive' ? 'text-[#073318]' : 'text-gray-400'} />
-                                                        {itemStatuses[`group-${section.id}`] === 'Inactive' ? t('common:active') : t('common:inactive')}
+                                                        <Edit size={18} className="text-[#073318]" />
+                                                        {t('common:edit_details', 'Edit Details')}
+                                                    </button>
+                                                    <button
+                                                        data-dropdown-item="true"
+                                                        onClick={(e) => { e.stopPropagation(); handleToggleStatus(section.id, section.status, 'category'); }}
+                                                        className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] font-bold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap"
+                                                    >
+                                                        {section.status === 'INACTIVE' ? (
+                                                            <CheckCircle2 size={18} className="text-[#073318]" />
+                                                        ) : (
+                                                            <XCircle size={18} className="text-gray-400 -mt-0.5" />
+                                                        )}
+                                                        {section.status === 'INACTIVE' ? t('common:active') : t('common:inactive')}
                                                     </button>
                                                 </div>
                                             )}
@@ -405,9 +414,8 @@ const CategoryMaster = () => {
                                     <div className={`transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'} ${activeRowDropdown?.startsWith(`${section.id}-item-`) ? '!overflow-visible' : 'overflow-hidden'}`}>
                                         <div className="flex flex-col bg-gray-50/30 border-t border-[#E5E7EB]/50">
                                             {section.items.map((item, itemIdx) => {
-                                                const isHighlighted = searchQuery && item.toLowerCase().includes(searchQuery.toLowerCase());
+                                                const isHighlighted = searchQuery && (item.name || '').toLowerCase().includes(searchQuery.toLowerCase());
                                                 const dropdownId = `${section.id}-item-${itemIdx}`;
-                                                const currentStatus = itemStatuses[dropdownId] || 'Active';
 
                                                 return (
                                                     <div
@@ -415,12 +423,18 @@ const CategoryMaster = () => {
                                                         className={`relative flex items-center justify-between p-3.5 pl-[52px] text-[13px] border-b border-[#E5E7EB]/50 last:border-b-0 transition-colors
                                                         ${isHighlighted ? 'bg-yellow-50 text-[#073318]' : 'text-[#6B7280]'}`}
                                                     >
-                                                        <span className="font-medium text-[#4B5563]">
-                                                            {itemIdx + 1}. {item}
-                                                        </span>
+                                                        <div className="flex items-center gap-3">
+                                                            <span className="font-medium text-[#4B5563]">
+                                                                {itemIdx + 1}. {item.name}
+                                                            </span>
+                                                            <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold ${item.status === 'INACTIVE' ? 'bg-[#FEF2F2] text-[#DC2626]' : 'bg-[#ECFDF5] text-[#059669]'}`}>
+                                                                {item.status === 'INACTIVE' ? t('common:inactive') : t('common:active')}
+                                                            </div>
+                                                        </div>
 
                                                         <div className="relative flex items-center">
                                                             <button
+                                                                data-dropdown-btn="true"
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     setActiveRowDropdown(activeRowDropdown === dropdownId ? null : dropdownId);
@@ -433,11 +447,27 @@ const CategoryMaster = () => {
                                                             {activeRowDropdown === dropdownId && (
                                                                 <div className="absolute right-full mr-2 min-w-[150px] bg-white border border-gray-100 rounded-[12px] shadow-[0_10px_30px_rgba(0,0,0,0.15)] z-[100] py-2 animate-in zoom-in-95 duration-200">
                                                                     <button
-                                                                        onClick={(e) => { e.stopPropagation(); handleToggleStatus(dropdownId, 'Inactive'); }}
+                                                                        data-dropdown-item="true"
+                                                                        onClick={(e) => { 
+                                                                            e.stopPropagation(); 
+                                                                            setCurrentView({ type: 'edit', data: { id: item.id, name: item.name, under: section.name, type: 'sub_category' } });
+                                                                        }}
                                                                         className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] font-bold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap"
                                                                     >
-                                                                        <CheckCircle2 size={18} className={itemStatuses[dropdownId] === 'Inactive' ? 'text-[#073318]' : 'text-gray-400'} />
-                                                                        {itemStatuses[dropdownId] === 'Inactive' ? t('common:active') : t('common:inactive')}
+                                                                        <Edit size={18} className="text-[#073318]" />
+                                                                        {t('common:edit_details', 'Edit Details')}
+                                                                    </button>
+                                                                    <button
+                                                                        data-dropdown-item="true"
+                                                                        onClick={(e) => { e.stopPropagation(); handleToggleStatus(item.id, item.status, 'sub_category'); }}
+                                                                        className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] font-bold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap"
+                                                                    >
+                                                                        {item.status === 'INACTIVE' ? (
+                                                                            <CheckCircle2 size={18} className="text-[#073318]" />
+                                                                        ) : (
+                                                                            <XCircle size={18} className="text-gray-400 -mt-0.5" />
+                                                                        )}
+                                                                        {item.status === 'INACTIVE' ? t('common:active') : t('common:inactive')}
                                                                     </button>
                                                                 </div>
                                                             )}
@@ -490,7 +520,7 @@ const CategoryMaster = () => {
                                 disabled={currentPage === 1}
                                 className="w-10 h-10 flex items-center justify-center text-[#6B7280] hover:bg-gray-50 hover:text-[#111827] disabled:opacity-30 disabled:cursor-not-allowed transition-all rounded-[10px]"
                             >
-                                <ArrowLeft size={20} />
+                                <LeftIcon size={20} />
                             </button>
                             <div className="flex items-center gap-1.5">
                                 {getVisiblePages().map((page, index) => (
@@ -512,7 +542,7 @@ const CategoryMaster = () => {
                                 disabled={currentPage === totalPages || totalPages === 0}
                                 className="w-10 h-10 flex items-center justify-center text-[#6B7280] hover:bg-gray-50 hover:text-[#111827] disabled:opacity-30 disabled:cursor-not-allowed transition-all rounded-[10px]"
                             >
-                                <ArrowRight size={20} />
+                                <RightIcon size={20} />
                             </button>
                         </div>
                     </div>

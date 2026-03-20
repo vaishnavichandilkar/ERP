@@ -86,6 +86,7 @@ export class AccountMasterController {
         customerCreditDays: { type: 'string' },
         customerOpeningBalance: { type: 'string' },
         customerBalanceType: { type: 'string' },
+        customerType: { type: 'string' },
         msmeEnabled: { type: 'string', description: 'true or false' },
         msmeId: { type: 'string' },
         regUnder: { type: 'string' },
@@ -147,7 +148,12 @@ export class AccountMasterController {
     if (files?.otherDocuments && files.otherDocuments.length > 0) {
        body.otherDocuments = files.otherDocuments.map(f => "temp-" + f.filename);
     } else if (typeof body.otherDocuments === 'string') {
-       try { body.otherDocuments = JSON.parse(body.otherDocuments); } catch (e) {}
+       try { 
+           body.otherDocuments = JSON.parse(body.otherDocuments); 
+       } catch (e) {}
+    }
+    if (!Array.isArray(body.otherDocuments)) {
+       delete body.otherDocuments;
     }
 
     const dto = plainToInstance(CreateAccountMasterDto, body);
@@ -299,6 +305,7 @@ export class AccountMasterController {
         customerCreditDays: { type: 'string' },
         customerOpeningBalance: { type: 'string' },
         customerBalanceType: { type: 'string' },
+        customerType: { type: 'string' },
         msmeEnabled: { type: 'string', description: 'true or false' },
         msmeId: { type: 'string' },
         regUnder: { type: 'string' },
@@ -354,10 +361,15 @@ export class AccountMasterController {
     if (files?.msmeCertificate?.[0]) {
        body.msmeCertificateUrl = "temp-" + files.msmeCertificate[0].filename;
     }
-    if (files?.otherDocuments?.length) {
+    if (files?.otherDocuments && files.otherDocuments.length > 0) {
        body.otherDocuments = files.otherDocuments.map(f => "temp-" + f.filename);
     } else if (typeof body.otherDocuments === 'string') {
-       try { body.otherDocuments = JSON.parse(body.otherDocuments); } catch (e) {}
+       try { 
+           body.otherDocuments = JSON.parse(body.otherDocuments); 
+       } catch (e) {}
+    }
+    if (!Array.isArray(body.otherDocuments)) {
+       delete body.otherDocuments;
     }
 
     const dto = plainToInstance(UpdateAccountMasterDto, body);

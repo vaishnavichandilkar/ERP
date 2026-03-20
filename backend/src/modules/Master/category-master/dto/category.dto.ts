@@ -30,3 +30,19 @@ export class ToggleStatusDto {
     @IsNotEmpty()
     status: MasterStatus;
 }
+
+export class UpdateCategoryDto {
+    @IsString()
+    @IsNotEmpty()
+    name: string;
+}
+
+export class UpdateSubCategoryDto {
+    @IsString()
+    @IsNotEmpty()
+    name: string;
+
+    @IsInt()
+    @IsOptional()
+    category_id?: number;
+}

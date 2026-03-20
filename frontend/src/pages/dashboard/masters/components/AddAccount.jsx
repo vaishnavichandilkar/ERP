@@ -183,6 +183,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
         customerCreditDays: initialData.customerCreditDays ? initialData.customerCreditDays.toString() : (initialData.creditDays ? initialData.creditDays.toString() : ''),
         customerOpBalance: initialData.customerOpeningBalance ? initialData.customerOpeningBalance.toString() : (initialData.openingBalance ? initialData.openingBalance.toString() : ''),
         customerBalanceType: initialData.customerBalanceType || (initialData.customer?.balanceType ? initialData.customer.balanceType : 'Dr'),
+        customerType: initialData.customerType || '',
         vendorCreditDays: initialData.supplierCreditDays ? initialData.supplierCreditDays.toString() : (initialData.creditDays ? initialData.creditDays.toString() : ''),
         vendorOpBalance: initialData.supplierOpeningBalance ? initialData.supplierOpeningBalance.toString() : (initialData.openingBalance ? initialData.openingBalance.toString() : ''),
         vendorBalanceType: initialData.supplierBalanceType || (initialData.supplier?.balanceType ? initialData.supplier.balanceType : 'Cr'),
@@ -213,6 +214,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
         customerCreditDays: '',
         customerOpBalance: '',
         customerBalanceType: 'Dr',
+        customerType: '',
         vendorCreditDays: '',
         vendorOpBalance: '',
         vendorBalanceType: 'Cr',
@@ -439,6 +441,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
             if (formData.customerCreditDays) fData.append('customerCreditDays', formData.customerCreditDays);
             if (formData.customerOpBalance) fData.append('customerOpeningBalance', formData.customerOpBalance);
             fData.append('customerBalanceType', formData.customerBalanceType || 'Dr');
+            if (formData.customerType) fData.append('customerType', formData.customerType);
         }
 
         if (otherDocs.length > 0) {
@@ -786,6 +789,15 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                                 </div>
                                             </div>
                                             {errors.customerOpBalance && <p className="text-[12px] text-red-500 mt-0.5">{errors.customerOpBalance}</p>}
+                                        </div>
+                                        <div className="flex flex-col gap-1.5">
+                                            <label className="text-[13px] font-semibold text-[#4B5563]">Customer Type</label>
+                                            <CustomSelect
+                                                options={['industrial', 'institutional', 'dealer', 'retailer']}
+                                                value={formData.customerType}
+                                                onChange={(val) => handleInputChange('customerType', val)}
+                                                placeholder="Select Customer Type"
+                                            />
                                         </div>
                                     </div>
                                 </div>

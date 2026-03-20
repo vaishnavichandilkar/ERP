@@ -79,6 +79,10 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
     );
 };
 
+import categoryService from '../../../../services/masters/categoryService';
+import { toast } from 'react-hot-toast';
+import { Loader2 } from 'lucide-react';
+
 const CategoryForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) => {
     const { t } = useTranslation(['common', 'modules']);
     const [formData, setFormData] = useState({
@@ -86,17 +90,22 @@ const CategoryForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) =
         category_under: 'None'
     });
     const [errors, setErrors] = useState({});
+    const [dropdownCategories, setDropdownCategories] = useState([]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Mock categories for "Category Under"
-    const categories = [
-        'None',
-        'Silage',
-        'Animal Feed',
-        'Fertilizers',
-        'Seeds',
-        'Farm Equipment',
-        'Agri Chemicals'
-    ];
+    useEffect(() => {
+        const fetchDropdown = async () => {
+            try {
+                const data = await categoryService.getCategoriesDropdown();
+                setDropdownCategories(data || []);
+            } catch (err) {
+                toast.error(t('modules:error_fetching_categories', 'Failed to load categories'));
+            }
+        };
+        fetchDropdown();
+    }, [t]);
+
+    const categories = ['None', ...dropdownCategories.map(c => c.name)];
 
     useEffect(() => {
         if (mode === 'edit' && initialData) {
@@ -110,6 +119,16 @@ const CategoryForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) =
     const validate = () => {
         const newErrors = {};
         if (!formData.category_name.trim()) newErrors.category_name = t('modules:category_name_required', 'Category name is required');
+        
+        if (mode === 'edit' && initialData) {
+            if (initialData.type === 'category' && formData.category_under !== 'None') {
+                newErrors.category_under = 'Cannot convert category to sub-category during edit';
+            }
+            if (initialData.type === 'sub_category' && formData.category_under === 'None') {
+                newErrors.category_under = 'Cannot convert sub-category to category during edit';
+            }
+        }
+        
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -118,8 +137,38 @@ const CategoryForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) =
         e.preventDefault();
         if (!validate()) return;
         
-        // Simulating save
-        onSuccess && onSuccess();
+        setIsSubmitting(true);
+        try {
+            if (mode === 'add') {
+                if (formData.category_under === 'None') {
+                    // Create Category
+                    await categoryService.createCategory({ name: formData.category_name });
+                    toast.success(t('modules:category_added_successfully', 'Category added successfully'));
+                } else {
+                    // Create SubCategory
+                    const cat = dropdownCategories.find(c => c.name === formData.category_under);
+                    if (!cat) throw new Error('Selected parent category not found');
+                    await categoryService.createSubCategory({ name: formData.category_name, category_id: cat.id });
+                    toast.success(t('modules:sub_category_added_successfully', 'Sub Category added successfully'));
+                }
+            } else if (mode === 'edit') {
+                if (initialData.type === 'category') {
+                    await categoryService.updateCategory(initialData.id, { name: formData.category_name });
+                    toast.success(t('modules:category_updated_successfully', 'Category updated successfully'));
+                } else {
+                    const cat = dropdownCategories.find(c => c.name === formData.category_under);
+                    if (!cat) throw new Error('Selected parent category not found');
+                    await categoryService.updateSubCategory(initialData.id, { name: formData.category_name, category_id: cat.id });
+                    toast.success(t('modules:sub_category_updated_successfully', 'Sub Category updated successfully'));
+                }
+            }
+            onSuccess && onSuccess();
+        } catch (error) {
+            const msg = error.response?.data?.message || 'Operation failed';
+            toast.error(msg);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -201,9 +250,10 @@ const CategoryForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) =
                         </button>
                         <button
                             type="submit"
-                            className="px-10 h-[46px] bg-[#073318] text-white font-bold rounded-[10px] hover:bg-[#04200f] transition-all text-[14px] shadow-md shadow-[#073318]/20 flex items-center justify-center gap-2"
+                            disabled={isSubmitting}
+                            className="px-10 h-[46px] bg-[#073318] text-white font-bold rounded-[10px] hover:bg-[#04200f] transition-all text-[14px] shadow-md shadow-[#073318]/20 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
-                            <Plus size={18} />
+                            {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
                             {mode === 'add' ? t('common:add') : t('common:save_changes')}
                         </button>
                     </div>

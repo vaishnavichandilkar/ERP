@@ -16,7 +16,7 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ContactPrefix, MasterStatus, BalanceType, RegUnder, RegType } from '@prisma/client';
+import { ContactPrefix, MasterStatus, BalanceType, RegUnder, RegType, CustomerType } from '@prisma/client';
 
 export enum GroupNameEnum {
   SUNDRY_CREDITORS = 'SUNDRY_CREDITORS',
@@ -162,6 +162,11 @@ export class CreateAccountMasterDto {
   customerBalanceType?: BalanceType;
 
   // MSME Details
+  @ApiPropertyOptional({ enum: CustomerType })
+  @IsEnum(CustomerType)
+  @IsOptional()
+  customerType?: CustomerType;
+
   @ApiPropertyOptional()
   @IsBoolean()
   @IsOptional()
