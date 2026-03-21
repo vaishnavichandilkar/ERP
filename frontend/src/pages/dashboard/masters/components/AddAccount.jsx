@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Check, ChevronDown, ChevronUp, Loader2, UploadCloud } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, Loader2, UploadCloud, ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import accountService from '../../../../services/accountService';
@@ -114,8 +114,11 @@ const FileUploadField = ({ label, onFileSelect, accept, maxMb, multiple = false 
         }
 
         if (multiple) {
-            setFiles(prev => [...prev, ...validFiles]);
-            onFileSelect([...files, ...validFiles]);
+            setFiles(prev => {
+                const nextFiles = [...prev, ...validFiles];
+                onFileSelect(nextFiles);
+                return nextFiles;
+            });
         } else {
             setFiles(validFiles.slice(0, 1));
             onFileSelect(validFiles[0]);
@@ -174,8 +177,8 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
     const isEditMode = !!initialData;
     const [formData, setFormData] = useState(initialData ? {
         accountName: initialData.accountName || '',
-        isCustomer: initialData.isCustomer || initialData.groupName?.includes('SUNDRY_DEBTORS') || initialData.groupName?.includes('CUSTOMER') || false,
-        isVendor: initialData.isVendor || initialData.groupName?.includes('SUNDRY_CREDITORS') || initialData.groupName?.includes('SUPPLIER') || false,
+        isCustomer: initialData.isCustomer || initialData.groupName?.some(g => g.toUpperCase().includes('DEBTOR')) || false,
+        isVendor: initialData.isVendor || initialData.groupName?.some(g => g.toUpperCase().includes('CREDITOR')) || false,
         customerCode: initialData.customerCode || '',
         supplierCode: initialData.supplierCode || '',
         gstNo: initialData.gstNo || '',
@@ -196,7 +199,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
         subDistrict: initialData.subDistrict || '',
         district: initialData.city || '', // map city to district in UI based on api
         country: 'India',
-        msmeId: initialData.msmeRegNo || '',
+        msmeId: initialData.msmeId || initialData.msmeRegNo || '',
         regUnder: initialData.regUnder || '',
         regType: initialData.regType || '',
         prefix: initialData.prefix || '',
@@ -404,6 +407,20 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
     const handleSave = async () => {
         if (!validateAll()) return;
         
+        if (!isFormValid) {
+            // Find which field is missing
+            if (!formData.accountName?.trim() || formData.accountName.trim().length < 3) return toast.error("Missing valid Account Name");
+            if (!formData.isCustomer && !formData.isVendor) return toast.error("Please select at least one Account Type");
+            if (!formData.panNo?.trim() || !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.panNo.trim().toUpperCase())) return toast.error("Missing valid PAN Number");
+            if (!formData.address1?.trim()) return toast.error("Missing Address Line 1");
+            if (!String(formData.pinCode || '').trim() || String(formData.pinCode).trim().length !== 6) return toast.error("Missing 6-digit Pincode");
+            if (!formData.prefix?.trim()) return toast.error("Missing Name Prefix");
+            if (!formData.contactPersonName?.trim()) return toast.error("Missing Contact Person Name");
+            if (!String(formData.mobileNo || '').trim() || String(formData.mobileNo).trim().length !== 10) return toast.error("Missing 10-digit Mobile Number");
+            if (msmeEnabled && (!formData.msmeId?.trim() || !/^UDYAM-[A-Z]{2}-\d{2}-\d{7}$/.test(formData.msmeId.trim().toUpperCase()))) return toast.error("Missing valid MSME ID");
+            return;
+        }
+
         setIsLoading(true);
 
         const fData = new FormData();
@@ -445,7 +462,14 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
         }
 
         if (otherDocs.length > 0) {
-             otherDocs.forEach(d => fData.append('otherDocuments', d));
+             console.log('--- Appending otherDocuments to FormData ---');
+             console.log('Found documents:', otherDocs.length);
+             otherDocs.forEach((d, i) => {
+                 console.log(`Document ${i}:`, d.name, d.size);
+                 fData.append('otherDocuments', d);
+             });
+        } else {
+             console.log('--- No otherDocuments to append ---');
         }
 
         fData.append('msmeEnabled', msmeEnabled ? 'true' : 'false');
@@ -500,19 +524,16 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
 
     return (
         <div className="flex flex-col w-full animate-in fade-in duration-300">
-            {/* Top Action Bar */}
-            <div className="flex justify-end mb-4">
-                <button
-                    onClick={onBack}
-                    className="px-6 h-[40px] bg-white border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors shadow-sm"
-                >
-                    {t('common:back')}
-                </button>
-            </div>
-
             <div className="bg-white rounded-[12px] border border-[#E5E7EB] shadow-sm flex flex-col w-full relative">
-                <div className="flex border-b border-[#E5E7EB] px-6 py-4">
+                <div className="flex border-b border-[#E5E7EB] px-6 py-4 items-center justify-between">
                     <h2 className="text-[18px] font-bold text-[#111827]">{isEditMode ? t('modules:edit_account') : t('modules:add_account')}</h2>
+                    <button
+                        onClick={onBack}
+                        className="flex items-center gap-2 px-6 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-bold hover:bg-gray-50 transition-all bg-white shadow-sm"
+                    >
+                        <ArrowLeft size={18} />
+                        {t('common:back')}
+                    </button>
                 </div>
                 <div className="p-6 md:p-8">
                     <div className="flex flex-col gap-10">

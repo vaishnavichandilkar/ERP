@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchAllAccounts, toggleAccountStatus } from '../../../redux/account/accountSlice';
-import { Search, Download, Filter, MoreVertical, Eye, Edit3, CheckCircle2, ChevronDown, RefreshCw, ArrowLeft, ArrowRight, ChevronsUpDown, X, FileText, FileSpreadsheet, Plus, Database } from 'lucide-react';
+import { Search, Download, Filter, MoreVertical, Eye, Edit3, CheckCircle2, ChevronDown, RefreshCw, ArrowLeft, ArrowRight, ChevronsUpDown, X, FileText, FileSpreadsheet, Plus, Database, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import accountService from '../../../services/accountService';
 import AddAccount from './components/AddAccount';
@@ -124,8 +124,21 @@ const AccountMaster = () => {
     };
 
     const handleFilterChange = (e) => {
-        const { name, value } = e.target;
-        setFilterInputs(prev => ({ ...prev, [name]: value }));
+        const { name, value, type, checked } = e.target;
+        if (type === 'checkbox') {
+            setFilterInputs(prev => {
+                const currentGroups = prev.groupName ? prev.groupName.split(',').filter(g => g !== '') : [];
+                let nextGroups;
+                if (checked) {
+                    nextGroups = [...currentGroups, value];
+                } else {
+                    nextGroups = currentGroups.filter(g => g !== value);
+                }
+                return { ...prev, groupName: nextGroups.join(',') };
+            });
+        } else {
+            setFilterInputs(prev => ({ ...prev, [name]: value }));
+        }
     };
 
     const applyFilters = () => {
@@ -265,9 +278,8 @@ const AccountMaster = () => {
                     <h1 className="text-[28px] font-bold text-[#111827] tracking-tight">{t('modules:account_master')}</h1>
                     <button 
                         onClick={() => { setPreviousView(null); setCurrentView('add'); }}
-                        className="px-6 h-[44px] bg-[#073318] text-white rounded-[10px] text-[15px] font-bold hover:bg-[#04200f] transition-all shadow-sm flex items-center justify-center gap-2"
+                        className="flex items-center gap-2 bg-[#073318] hover:bg-[#04200f] text-white px-6 h-[44px] rounded-[10px] text-[15px] font-semibold transition-all shadow-sm active:scale-[0.98]"
                     >
-                        <Plus size={18} />
                         {t('modules:add_account')}
                     </button>
                 </div>
@@ -601,20 +613,35 @@ const AccountMaster = () => {
                             </div>
                             <div className="space-y-2.5">
                                 <label className="text-[14px] font-medium text-[#4B5563]">{t('modules:group_name')}</label>
-                                <div className="relative">
-                                    <select
-                                        name="groupName"
-                                        value={filterInputs.groupName}
-                                        onChange={handleFilterChange}
-                                        className="w-full h-[46px] border border-[#E5E7EB] rounded-[10px] pl-4 pr-10 text-[14px] text-[#111827] outline-none focus:border-[#073318] appearance-none bg-white font-medium"
-                                    >
-                                        <option value="">{t('common:all')}</option>
-                                        <option value="Sundry Creditors (Vendor)">{t('modules:sundry_creditors')}</option>
-                                        <option value="Sundry Debtors (Customer)">{t('modules:sundry_debtors')}</option>
-                                    </select>
-                                    <div className="absolute top-1/2 right-4 -translate-y-1/2 pointer-events-none text-gray-400">
-                                        <ChevronsUpDown size={14} />
-                                    </div>
+                                <div className="flex flex-col gap-3 mt-1">
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <div className="relative flex items-center">
+                                            <input
+                                                type="checkbox"
+                                                name="groupName"
+                                                value="SUNDRY_DEBTORS"
+                                                checked={filterInputs.groupName?.includes('SUNDRY_DEBTORS')}
+                                                onChange={handleFilterChange}
+                                                className="peer appearance-none w-5 h-5 border-2 border-[#E5E7EB] rounded-md checked:bg-[#073318] checked:border-[#073318] transition-all cursor-pointer"
+                                            />
+                                            <Check className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" size={14} />
+                                        </div>
+                                        <span className="text-[14px] text-[#4B5563] group-hover:text-[#111827] transition-colors">{t('modules:sundry_debtors')}</span>
+                                    </label>
+                                    <label className="flex items-center gap-3 cursor-pointer group">
+                                        <div className="relative flex items-center">
+                                            <input
+                                                type="checkbox"
+                                                name="groupName"
+                                                value="SUNDRY_CREDITORS"
+                                                checked={filterInputs.groupName?.includes('SUNDRY_CREDITORS')}
+                                                onChange={handleFilterChange}
+                                                className="peer appearance-none w-5 h-5 border-2 border-[#E5E7EB] rounded-md checked:bg-[#073318] checked:border-[#073318] transition-all cursor-pointer"
+                                            />
+                                            <Check className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" size={14} />
+                                        </div>
+                                        <span className="text-[14px] text-[#4B5563] group-hover:text-[#111827] transition-colors">{t('modules:sundry_creditors')}</span>
+                                    </label>
                                 </div>
                             </div>
                             <div className="space-y-2.5">

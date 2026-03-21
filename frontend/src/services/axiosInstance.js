@@ -3,9 +3,7 @@ import { BASE_URL, AUTH_ENDPOINTS } from '../constants/apiConstants';
 
 const axiosInstance = axios.create({
     baseURL: BASE_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
+    headers: {},
 });
 
 axiosInstance.interceptors.request.use(

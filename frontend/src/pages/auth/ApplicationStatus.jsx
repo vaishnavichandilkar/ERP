@@ -34,6 +34,17 @@ const ApplicationStatus = () => {
     const [rejectionReason, setRejectionReason] = useState(initialReason || null);
     const [isLoading, setIsLoading] = useState(true);
 
+    const handleBack = () => {
+        // Clear all session-specific data
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        localStorage.removeItem('sessionId');
+        
+        // Navigate to landing page
+        navigate('/landing', { replace: true });
+    };
+
     useEffect(() => {
         const fetchStatus = async () => {
             try {
@@ -68,6 +79,17 @@ const ApplicationStatus = () => {
         };
 
         fetchStatus();
+
+        // Handle browser back button: Use handleBack to clear session and go to Landing
+        const handlePopState = (event) => {
+            handleBack();
+        };
+
+        window.addEventListener('popstate', handlePopState);
+
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+        };
     }, [navigate]);
 
     const handleStartUsing = async () => {
@@ -97,7 +119,7 @@ const ApplicationStatus = () => {
     const renderPendingState = () => (
         <div className="flex flex-col items-center justify-start text-center w-full max-w-[420px] mx-auto animate-in fade-in zoom-in duration-500 pt-2 pb-10 relative">
             <button
-                onClick={() => navigate('/landing')}
+                onClick={handleBack}
                 className="self-start p-2 -ml-2 mb-2 text-gray-900 rounded-full hover:bg-gray-100 transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center focus:outline-none"
             >
                 <ArrowLeft size={20} />
@@ -173,7 +195,7 @@ const ApplicationStatus = () => {
     const renderRejectedState = () => (
         <div className="flex flex-col items-center justify-start text-center w-full max-w-[420px] mx-auto animate-in fade-in zoom-in duration-500 pt-2 pb-10 relative">
             <button
-                onClick={() => navigate('/landing')}
+                onClick={handleBack}
                 className="self-start p-2 -ml-2 mb-2 text-gray-900 rounded-full hover:bg-gray-100 transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center focus:outline-none"
             >
                 <ArrowLeft size={20} />
@@ -211,7 +233,7 @@ const ApplicationStatus = () => {
     const renderApprovedState = () => (
         <div className="flex flex-col items-center justify-start text-center w-full max-w-[420px] mx-auto animate-in fade-in zoom-in duration-500 pt-2 relative">
             <button
-                onClick={() => navigate('/landing')}
+                onClick={handleBack}
                 className="self-start p-2 -ml-2 mb-2 text-gray-900 rounded-full hover:bg-gray-100 transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center focus:outline-none"
             >
                 <ArrowLeft size={20} />

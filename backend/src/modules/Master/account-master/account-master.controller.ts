@@ -15,7 +15,8 @@ import {
   UseGuards,
   UploadedFiles, 
   UseInterceptors, 
-  BadRequestException 
+  BadRequestException,
+  Req
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery, ApiParam, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { AccountMasterService } from './account-master.service';
@@ -102,8 +103,17 @@ export class AccountMasterController {
   ], multerConfig))
   async create(
     @Body() body: any,
-    @UploadedFiles() files: { msmeCertificate?: Express.Multer.File[], otherDocuments?: Express.Multer.File[] }
+    @UploadedFiles() files: { msmeCertificate?: Express.Multer.File[], otherDocuments?: Express.Multer.File[] },
+    @Req() req: any
   ) {
+    console.log('--- AccountMasterController.create ---');
+    console.log('Content-Type:', req.headers['content-type']);
+    console.log('Files received:', Object.keys(files || {}));
+    if (files?.otherDocuments) {
+        console.log('Other Documents count:', files.otherDocuments.length);
+        files.otherDocuments.forEach((f, i) => console.log(`  File ${i}: ${f.originalname} (${f.size} bytes)`));
+    }
+    console.log('Body keys:', Object.keys(body));
     body = body || {};
     // Parse nested objects that come as strings in form-data
     if (typeof body.groupName === 'string') {
@@ -157,13 +167,14 @@ export class AccountMasterController {
     }
 
     const dto = plainToInstance(CreateAccountMasterDto, body);
+    console.log('Mapped DTO msmeCertificateUrl:', dto.msmeCertificateUrl);
     const errors = await validate(dto);
     
     if (errors.length > 0) {
       throw new BadRequestException(flattenErrors(errors));
     }
 
-    return this.accountMasterService.create(dto, files);
+    return this.accountMasterService.create(dto, req.user.id, files);
   }
 
   @Get()
@@ -322,7 +333,8 @@ export class AccountMasterController {
   async update(
     @Param('id', ParseIntPipe) id: number, 
     @Body() body: any,
-    @UploadedFiles() files: { msmeCertificate?: Express.Multer.File[], otherDocuments?: Express.Multer.File[] }
+    @UploadedFiles() files: { msmeCertificate?: Express.Multer.File[], otherDocuments?: Express.Multer.File[] },
+    @Req() req: any
   ) {
     if (typeof body.groupName === 'string') {
       try { body.groupName = JSON.parse(body.groupName); } catch (e) {

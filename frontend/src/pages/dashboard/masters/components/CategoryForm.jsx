@@ -201,9 +201,6 @@ const CategoryForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) =
                     {/* Form Section Header */}
                     <div className="px-8 py-6 border-b border-[#F3F4F6] bg-gray-50/50">
                         <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-[#073318]/5 flex items-center justify-center">
-                                <Plus size={18} className="text-[#073318]" />
-                            </div>
                             <h2 className="text-[16px] font-bold text-[#111827]">{t('modules:category_information')}</h2>
                         </div>
                     </div>
@@ -253,7 +250,7 @@ const CategoryForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) =
                             disabled={isSubmitting}
                             className="px-10 h-[46px] bg-[#073318] text-white font-bold rounded-[10px] hover:bg-[#04200f] transition-all text-[14px] shadow-md shadow-[#073318]/20 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
-                            {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
+                            {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : null}
                             {mode === 'add' ? t('common:add') : t('common:save_changes')}
                         </button>
                     </div>

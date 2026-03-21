@@ -42,10 +42,15 @@ const InitialRedirect = () => {
     const refreshToken = localStorage.getItem('refreshToken');
     const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-    // If already logged in (have access or refresh token), go straight to their dashboard
+    // If already logged in, go to correct dashboard or status page
     if ((token || refreshToken) && user.role) {
         const role = user.role.toUpperCase();
         if (role === 'SUPERADMIN') return <Navigate to="/superadmin/dashboard" replace />;
+        
+        if (role === 'SELLER' && (user.approvalStatus !== 'APPROVED' || user.isFirstApprovalLogin)) {
+            return <Navigate to="/application-status" replace />;
+        }
+        
         return <Navigate to="/seller/dashboard" replace />;
     }
 
@@ -61,10 +66,16 @@ const AuthGuard = () => {
     const refreshToken = localStorage.getItem('refreshToken');
     const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-    // If already have a session, go to their dashboard
+    // If already have a session, go to their dashboard or status page
     if ((token || refreshToken) && user.role) {
         const role = user.role.toUpperCase();
         if (role === 'SUPERADMIN') return <Navigate to="/superadmin/dashboard" replace />;
+        
+        // Strictly block sellers from Auth flow if they are in PENDING, REJECTED, or first-time APPROVED
+        if (role === 'SELLER' && (user.approvalStatus !== 'APPROVED' || user.isFirstApprovalLogin)) {
+            return <Navigate to="/application-status" replace />;
+        }
+        
         return <Navigate to="/seller/dashboard" replace />;
     }
     return <Outlet />;

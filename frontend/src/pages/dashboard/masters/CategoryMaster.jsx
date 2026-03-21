@@ -249,7 +249,6 @@ const CategoryMaster = () => {
                         onClick={() => setCurrentView({ type: 'add', data: null })}
                         className="px-6 h-[44px] bg-[#073318] text-white rounded-[10px] text-[15px] font-bold hover:bg-[#04200f] transition-all shadow-sm flex items-center justify-center gap-2"
                     >
-                        <Plus size={18} />
                         {t('modules:add_category')}
                     </button>
                 </div>

@@ -40,6 +40,7 @@ model User {
   categories            Category[]
   subCategories         SubCategory[]
   products              Product[]
+  accounts              AccountMaster[]
   @@map("User")
 }
 
@@ -317,6 +318,10 @@ model AccountMaster {
   msmeCertificateUrl String?
 
   otherDocuments Json?
+
+  // Ownership
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
 
   // Metadata
   status    MasterStatus @default(ACTIVE)

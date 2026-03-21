@@ -56,59 +56,99 @@ export class AccountMasterService {
 
   private async handleFileUploads(account: any, files?: { msmeCertificate?: Express.Multer.File[], otherDocuments?: Express.Multer.File[] }) {
     if (!files || (!files.msmeCertificate && !files.otherDocuments)) return;
-    
-    // Create specific folder: uploads/account_upload/{id}_{accountName}
-    const safeAccountName = account.accountName.replace(/[^a-zA-Z0-9]/g, '_');
-    const folderName = `${account.id}_${safeAccountName}`;
-    const uploadPath = path.join('./uploads', 'account_upload', folderName);
-    
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
+    try {
+      console.log('--- handleFileUploads STARTED ---');
+      console.log('Account ID:', account.id);
+      console.log('Account Name:', account.accountName);
+      console.log('User ID:', account.userId);
+      console.log('Files provided:', Object.keys(files || {}));
 
-    const updates: any = {};
-    const baseUrl = `account_upload/${folderName}`;
-    const randomNumber = () => Math.floor(100000 + Math.random() * 900000);
-
-    if (files?.msmeCertificate?.[0]) {
-      const file = files.msmeCertificate[0];
-      const extension = path.extname(file.originalname);
-      const randomName = `${randomNumber()}_MSME${extension}`;
-      const newPath = path.join(uploadPath, randomName);
+      // Create specific folder: uploads/account_upload/{userId}_{accountName}
+      const safeAccountName = account.accountName.replace(/[^a-zA-Z0-9]/g, '_');
+      const folderName = `${account.userId}_${safeAccountName}`;
+      const uploadPath = path.resolve(process.cwd(), 'uploads', 'account_upload', folderName);
       
-      if (fs.existsSync(file.path)) {
-        fs.renameSync(file.path, newPath);
-        updates.msmeCertificateUrl = `${baseUrl}/${randomName}`;
-      }
-    }
+      console.log('Target uploadPath (absolute):', uploadPath);
 
-    if (files?.otherDocuments && files.otherDocuments.length > 0) {
-      const docUrls = files.otherDocuments.map((file) => {
-         const extension = path.extname(file.originalname);
-         const randomName = `${randomNumber()}_DOC${extension}`;
-         const newPath = path.join(uploadPath, randomName);
-         
-         if (fs.existsSync(file.path)) {
-           fs.renameSync(file.path, newPath);
-           return `${baseUrl}/${randomName}`;
-         }
-         return null;
-      }).filter(url => url !== null);
-      
-      if (docUrls.length > 0) {
-        updates.otherDocuments = docUrls;
+      if (!fs.existsSync(uploadPath)) {
+        console.log('Creating directory:', uploadPath);
+        fs.mkdirSync(uploadPath, { recursive: true });
+      } else {
+        console.log('Directory already exists:', uploadPath);
       }
-    }
 
-    if (Object.keys(updates).length > 0) {
-      await this.prisma.accountMaster.update({
-        where: { id: account.id },
-        data: updates
-      });
+      const updates: any = {};
+      const baseUrl = `account_upload/${folderName}`;
+      const generateRandomNumber = () => Math.floor(100000 + Math.random() * 900000);
+
+      if (files?.msmeCertificate?.[0]) {
+        const file = files.msmeCertificate[0];
+        console.log('Processing MSME Certificate:', file.originalname);
+        console.log('Multer file path:', file.path);
+        const sourcePath = path.resolve(process.cwd(), file.path);
+        console.log('Source path (absolute):', sourcePath);
+
+        const extension = path.extname(file.originalname);
+        const randomName = `${generateRandomNumber()}_MSME${extension}`;
+        const newPath = path.join(uploadPath, randomName);
+        
+        if (fs.existsSync(sourcePath)) {
+          console.log('Renaming file to:', randomName);
+          fs.renameSync(sourcePath, newPath);
+          updates.msmeCertificateUrl = `${baseUrl}/${randomName}`;
+        } else {
+          console.log('Source file NOT found at:', sourcePath);
+        }
+      }
+
+      if (files?.otherDocuments && files.otherDocuments.length > 0) {
+        console.log('Processing otherDocuments:', files.otherDocuments.length);
+        const docUrls = files.otherDocuments.map((file) => {
+           console.log('Processing doc:', file.originalname, 'at', file.path);
+           const sourcePath = path.resolve(process.cwd(), file.path);
+           const extension = path.extname(file.originalname);
+           const randomNumber = Math.floor(100000 + Math.random() * 900000);
+           const randomName = `${randomNumber}_DOC${extension}`;
+           const newPath = path.join(uploadPath, randomName);
+           
+           if (fs.existsSync(sourcePath)) {
+             console.log('Moving doc to:', newPath);
+             fs.renameSync(sourcePath, newPath);
+             return `${baseUrl}/${randomName}`;
+           }
+           console.log('Source doc NOT found at:', sourcePath);
+           return null;
+        }).filter(url => url !== null);
+        
+        console.log('Generated docUrls:', docUrls);
+        if (docUrls.length > 0) {
+          updates.otherDocuments = docUrls;
+          console.log('updates.otherDocuments set to:', updates.otherDocuments);
+        } else {
+          console.log('docUrls is empty after processing');
+        }
+      } else {
+        console.log('files.otherDocuments is empty or missing');
+      }
+
+      if (Object.keys(updates).length > 0) {
+        console.log('Updating DB with:', updates);
+        await this.prisma.accountMaster.update({
+          where: { id: account.id },
+          data: updates
+        });
+        console.log('DB Update SUCCESSFUL');
+      } else {
+        console.log('No updates to perform (no files successfully moved)');
+      }
+      console.log('--- handleFileUploads ENDED ---');
+    } catch (error) {
+      console.error('--- handleFileUploads FAILED ---');
+      console.error(error);
     }
   }
 
-  async create(createDto: CreateAccountMasterDto, files?: any) {
+  async create(createDto: CreateAccountMasterDto, userId: number, files?: any) {
     let { subDistrict, district, country, state } = createDto;
 
     let supplierCode = null;
@@ -150,6 +190,8 @@ export class AccountMasterService {
         contactPersonName: createDto.contactPersonName,
         emailId: createDto.emailId,
         mobileNo: createDto.mobileNo,
+
+        userId: userId,
 
         supplierCode,
         supplierCreditDays: createDto.supplierCreditDays,
@@ -200,8 +242,10 @@ export class AccountMasterService {
     const where: Prisma.AccountMasterWhereInput = {};
     
     if (filter.groupName) {
-      const upperGroup = filter.groupName.toUpperCase();
-      where.groupName = { has: upperGroup };
+      const groups = filter.groupName.split(',').map(g => g.trim().toUpperCase()).filter(g => g !== '');
+      if (groups.length > 0) {
+        where.groupName = { hasSome: groups };
+      }
     }
     
     if (filter.gstNo) {
@@ -490,9 +534,13 @@ export class AccountMasterService {
         { header: 'Customer Code', key: 'customerCode', width: 15 },
         { header: 'Supplier Code', key: 'supplierCode', width: 15 },
         { header: 'Account Name', key: 'accountName', width: 30 },
-        { header: 'Groups', key: 'groupName', width: 20 },
-        { header: 'GST No', key: 'gstNo', width: 20 },
-        { header: 'PAN No', key: 'panNo', width: 15 },
+        { header: 'Group Name', key: 'groupName', width: 25 },
+        { header: 'Customer Credit Day', key: 'customerCreditDays', width: 18 },
+        { header: 'Supplier Credit Day', key: 'supplierCreditDays', width: 18 },
+        { header: 'GST NO', key: 'gstNo', width: 20 },
+        { header: 'PAN NO', key: 'panNo', width: 15 },
+        { header: 'Customer Op Balance', key: 'customerOpeningBalance', width: 18 },
+        { header: 'Supplier Op Balance', key: 'supplierOpeningBalance', width: 18 },
         { header: 'Address', key: 'address', width: 40 },
         { header: 'Status', key: 'status', width: 12 },
       ];
@@ -505,8 +553,12 @@ export class AccountMasterService {
           supplierCode: acc.supplierCode || '-',
           accountName: acc.accountName,
           groupName: acc.groupName.join(', '),
+          customerCreditDays: acc.customerCreditDays || 0,
+          supplierCreditDays: acc.supplierCreditDays || 0,
           gstNo: acc.gstNo || '-',
           panNo: acc.panNo,
+          customerOpeningBalance: acc.customerOpeningBalance ? `${acc.customerOpeningBalance} ${acc.customerBalanceType || 'Dr'}` : '0',
+          supplierOpeningBalance: acc.supplierOpeningBalance ? `${acc.supplierOpeningBalance} ${acc.supplierBalanceType || 'Dr'}` : '0',
           address: fullAddress,
           status: acc.status === MasterStatus.ACTIVE ? 'Active' : 'Inactive',
         });
@@ -515,17 +567,17 @@ export class AccountMasterService {
       // Shift rows to make room for titles
       worksheet.spliceRows(1, 0, [], [], [], []);
 
-      worksheet.mergeCells('A1:H1');
+      worksheet.mergeCells('A1:L1');
       worksheet.getCell('A1').value = 'ERP';
       worksheet.getCell('A1').font = { size: 18, bold: true };
       worksheet.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle' };
 
-      worksheet.mergeCells('A2:H2');
+      worksheet.mergeCells('A2:L2');
       worksheet.getCell('A2').value = 'Account Master Report';
       worksheet.getCell('A2').font = { size: 14 };
       worksheet.getCell('A2').alignment = { horizontal: 'center', vertical: 'middle' };
 
-      worksheet.mergeCells('A3:H3');
+      worksheet.mergeCells('A3:L3');
       worksheet.getCell('A3').value = `Exported on: ${timestamp}`;
       worksheet.getCell('A3').font = { size: 10 };
       worksheet.getCell('A3').alignment = { horizontal: 'right', vertical: 'middle' };
@@ -543,7 +595,7 @@ export class AccountMasterService {
       // Add Autofilter
       worksheet.autoFilter = {
         from: { row: 5, column: 1 },
-        to: { row: 5, column: 8 },
+        to: { row: 5, column: 12 },
       };
       
       const buffer = await workbook.xlsx.writeBuffer();
@@ -579,10 +631,10 @@ export class AccountMasterService {
 
         // Table Constants
         const tableTop = 100;
-        const colX = [20, 75, 130, 245, 345, 415, 470, 750];
+        const colX = [20, 65, 110, 190, 260, 310, 360, 430, 495, 555, 615, 785];
         const headers = [
-          'Cust Code', 'Supp Code', 'Account Name', 'Groups', 'GST No', 
-          'PAN', 'Address', 'Status'
+          'Cust Code', 'Supp Code', 'Acc Name', 'Groups', 'C.Cr Day', 'S.Cr Day',
+          'GST NO', 'PAN NO', 'C.Op Bal', 'S.Op Bal', 'Address', 'Status'
         ];
 
         // Draw Header row
@@ -618,16 +670,20 @@ export class AccountMasterService {
           const fullAddress = `${acc.addressLine1}${acc.area ? ', ' + acc.area : ''}, ${acc.district}`;
 
           doc.fontSize(7);
-          doc.text(acc.customerCode || '-', colX[0], y, { width: 50, lineBreak: true });
-          doc.text(acc.supplierCode || '-', colX[1], y, { width: 50, lineBreak: true });
-          doc.text(acc.accountName.substring(0, 30), colX[2], y, { width: 110, lineBreak: true });
-          doc.text(acc.groupName.join(', '), colX[3], y, { width: 95, lineBreak: false });
-          doc.text(acc.gstNo || '-', colX[4], y, { width: 65, lineBreak: true });
-          doc.text(acc.panNo, colX[5], y, { width: 50, lineBreak: true });
-          doc.text(fullAddress.substring(0, 90), colX[6], y, { width: 275, lineBreak: true });
-          doc.text(acc.status === MasterStatus.ACTIVE ? 'Active' : 'Inactive', colX[7], y, { width: 50, lineBreak: false });
+          doc.text(acc.customerCode || '-', colX[0], y, { width: 45, lineBreak: true });
+          doc.text(acc.supplierCode || '-', colX[1], y, { width: 45, lineBreak: true });
+          doc.text(acc.accountName.substring(0, 30), colX[2], y, { width: 85, lineBreak: true });
+          doc.text(acc.groupName.join(', ').replace('_', ' '), colX[3], y, { width: 75, lineBreak: true });
+          doc.text(String(acc.customerCreditDays || 0), colX[4], y, { width: 50, lineBreak: false });
+          doc.text(String(acc.supplierCreditDays || 0), colX[5], y, { width: 50, lineBreak: false });
+          doc.text(acc.gstNo || '-', colX[6], y, { width: 70, lineBreak: true });
+          doc.text(acc.panNo, colX[7], y, { width: 65, lineBreak: true });
+          doc.text(acc.customerOpeningBalance ? `${acc.customerOpeningBalance} ${acc.customerBalanceType || 'Dr'}` : '0', colX[8], y, { width: 60, lineBreak: false });
+          doc.text(acc.supplierOpeningBalance ? `${acc.supplierOpeningBalance} ${acc.supplierBalanceType || 'Dr'}` : '0', colX[9], y, { width: 60, lineBreak: false });
+          doc.text(fullAddress.substring(0, 90), colX[10], y, { width: 170, lineBreak: true });
+          doc.text(acc.status === MasterStatus.ACTIVE ? 'Active' : 'Inactive', colX[11], y, { width: 40, lineBreak: false });
           
-          y += 18;
+          y += 20;
         });
 
         doc.end();
