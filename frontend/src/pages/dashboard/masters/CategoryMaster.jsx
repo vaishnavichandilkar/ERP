@@ -3,6 +3,8 @@ import { Search, Download, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Mi
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import CategoryForm from './components/CategoryForm';
+import AddCategoryModal from './components/AddCategoryModal';
+import EditCategoryModal from './components/EditCategoryModal';
 import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
 import categoryService from '../../../services/masters/categoryService';
 
@@ -12,6 +14,9 @@ const CategoryMaster = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedGroups, setExpandedGroups] = useState({});
     const [isExportOpen, setIsExportOpen] = useState(false);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedCategoryData, setSelectedCategoryData] = useState(null);
     const [activeRowDropdown, setActiveRowDropdown] = useState(null);
     const exportRef = useRef(null);
 
@@ -226,19 +231,7 @@ const CategoryMaster = () => {
         return pages;
     };
 
-    if (currentView.type === 'add' || currentView.type === 'edit') {
-        return (
-            <CategoryForm
-                mode={currentView.type}
-                initialData={currentView.data}
-                onBack={() => setCurrentView({ type: 'list', data: null })}
-                onSuccess={() => {
-                    setCurrentView({ type: 'list', data: null });
-                    fetchCategories();
-                }}
-            />
-        );
-    }
+    // No edit/add view redirection needed as we use modals
 
     return (
         <div className="flex flex-col animate-in fade-in duration-500">
@@ -246,7 +239,7 @@ const CategoryMaster = () => {
                 <div className="flex items-center justify-between">
                     <h1 className="text-[28px] font-bold text-[#111827] tracking-tight">{t('modules:category_master')}</h1>
                     <button 
-                        onClick={() => setCurrentView({ type: 'add', data: null })}
+                        onClick={() => setIsAddModalOpen(true)}
                         className="px-6 h-[44px] bg-[#073318] text-white rounded-[10px] text-[15px] font-bold hover:bg-[#04200f] transition-all shadow-sm flex items-center justify-center gap-2"
                     >
                         {t('modules:add_category')}
@@ -363,12 +356,12 @@ const CategoryMaster = () => {
                                             <span className="text-[14px] font-bold text-[#111827]">
                                                 {section.name}
                                             </span>
+                                        </div>
+                                        <div className="relative flex items-center gap-4">
                                             <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-bold ${section.status === 'INACTIVE' ? 'bg-[#FEF2F2] text-[#DC2626]' : 'bg-[#ECFDF5] text-[#059669]'}`}>
                                                 <span className={`w-1.5 h-1.5 rounded-full ${section.status === 'INACTIVE' ? 'bg-[#DC2626]' : 'bg-[#059669]'}`}></span>
                                                 {section.status === 'INACTIVE' ? t('common:inactive') : t('common:active')}
                                             </div>
-                                        </div>
-                                        <div className="relative flex items-center">
                                             <button
                                                 data-dropdown-btn="true"
                                                 onClick={(e) => {
@@ -386,12 +379,14 @@ const CategoryMaster = () => {
                                                         data-dropdown-item="true"
                                                         onClick={(e) => { 
                                                             e.stopPropagation(); 
-                                                            setCurrentView({ type: 'edit', data: { id: section.id, name: section.name, under: 'None', type: 'category' } });
+                                                            setSelectedCategoryData({ id: section.id, name: section.name, under: 'None', type: 'category' });
+                                                            setIsEditModalOpen(true);
+                                                            setActiveRowDropdown(null);
                                                         }}
                                                         className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] font-bold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap"
                                                     >
                                                         <Edit size={18} className="text-[#073318]" />
-                                                        {t('common:edit_details', 'Edit Details')}
+                                                        {t('modules:edit_category', 'Edit Category')}
                                                     </button>
                                                     <button
                                                         data-dropdown-item="true"
@@ -426,12 +421,12 @@ const CategoryMaster = () => {
                                                             <span className="font-medium text-[#4B5563]">
                                                                 {itemIdx + 1}. {item.name}
                                                             </span>
+                                                        </div>
+
+                                                        <div className="relative flex items-center gap-4">
                                                             <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold ${item.status === 'INACTIVE' ? 'bg-[#FEF2F2] text-[#DC2626]' : 'bg-[#ECFDF5] text-[#059669]'}`}>
                                                                 {item.status === 'INACTIVE' ? t('common:inactive') : t('common:active')}
                                                             </div>
-                                                        </div>
-
-                                                        <div className="relative flex items-center">
                                                             <button
                                                                 data-dropdown-btn="true"
                                                                 onClick={(e) => {
@@ -449,12 +444,14 @@ const CategoryMaster = () => {
                                                                         data-dropdown-item="true"
                                                                         onClick={(e) => { 
                                                                             e.stopPropagation(); 
-                                                                            setCurrentView({ type: 'edit', data: { id: item.id, name: item.name, under: section.name, type: 'sub_category' } });
+                                                                            setSelectedCategoryData({ id: item.id, name: item.name, under: section.name, type: 'sub_category' });
+                                                                            setIsEditModalOpen(true);
+                                                                            setActiveRowDropdown(null);
                                                                         }}
                                                                         className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] font-bold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap"
                                                                     >
                                                                         <Edit size={18} className="text-[#073318]" />
-                                                                        {t('common:edit_details', 'Edit Details')}
+                                                                        {t('modules:edit_category', 'Edit Category')}
                                                                     </button>
                                                                     <button
                                                                         data-dropdown-item="true"
@@ -547,6 +544,19 @@ const CategoryMaster = () => {
                     </div>
                 </div>
             </div>
+
+            <AddCategoryModal 
+                isOpen={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+                onSuccess={fetchCategories}
+            />
+
+            <EditCategoryModal 
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                data={selectedCategoryData}
+                onSuccess={fetchCategories}
+            />
         </div>
     );
 };

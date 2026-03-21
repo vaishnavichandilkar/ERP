@@ -2,15 +2,20 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { translateDynamic } from '../../../../utils/i18nUtils';
+import productService from '../../../../services/productService';
+import toast from 'react-hot-toast';
 
-const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchable = false, disabled = false, showAsterisk = false }) => {
+const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchable = false, disabled = false, showAsterisk = false, getOptionLabel }) => {
     const { t } = useTranslation(['common']);
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const dropdownRef = useRef(null);
 
     const filteredOptions = isSearchable && searchTerm
-        ? options.filter(opt => opt?.toLowerCase().includes(searchTerm.toLowerCase()))
+        ? options.filter(opt => {
+            const label = getOptionLabel ? getOptionLabel(opt) : opt;
+            return label?.toLowerCase().includes(searchTerm.toLowerCase());
+        })
         : options;
 
     useEffect(() => {
@@ -24,20 +29,22 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    const displayValue = value ? (getOptionLabel ? getOptionLabel(value) : value) : '';
+
     return (
         <div className="flex flex-col gap-1.5 relative w-full" ref={dropdownRef}>
             <label className="text-[13px] font-semibold text-[#4B5563]">
                 {label} {showAsterisk && <span className="text-red-500">*</span>}
             </label>
             <div
-                className={`w-full h-[44px] flex items-center justify-between px-4 border rounded-[8px] bg-white transition-colors ${disabled ? 'cursor-default border-[#E5E7EB]' : isOpen ? 'border-[#014A36] ring-1 ring-[#014A36]/10 cursor-pointer' : 'border-[#E5E7EB] hover:border-gray-300 cursor-pointer'}`}
+                className={`w-full h-[44px] flex items-center justify-between px-4 border rounded-[8px] bg-white transition-colors ${disabled ? 'cursor-not-allowed border-[#E5E7EB] bg-gray-50' : isOpen ? 'border-[#014A36] ring-1 ring-[#014A36]/10 cursor-pointer' : 'border-[#E5E7EB] hover:border-gray-300 cursor-pointer'}`}
                 onClick={() => !disabled && setIsOpen(!isOpen)}
             >
                 {isSearchable && isOpen ? (
                     <input
                         type="text"
                         autoFocus
-                        placeholder={value || placeholder}
+                        placeholder={displayValue || placeholder}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full h-full bg-transparent outline-none text-[14px] text-[#111827] placeholder:text-gray-400"
@@ -45,7 +52,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                     />
                 ) : (
                     <span className={`text-[14px] truncate ${value ? 'text-[#111827]' : 'text-gray-500'}`}>
-                        {value ? translateDynamic(value, t) : placeholder}
+                        {value ? translateDynamic(displayValue, t) : placeholder}
                     </span>
                 )}
                 {!disabled && (isOpen ? <ChevronUp size={16} className="text-gray-500 shrink-0" /> : <ChevronDown size={16} className="text-gray-500 shrink-0" />)}
@@ -55,19 +62,23 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                 <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-white border border-gray-100 rounded-[8px] shadow-lg z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="max-h-[240px] overflow-y-auto w-full py-1 custom-scrollbar">
                         {filteredOptions.length > 0 ? (
-                            filteredOptions.map((opt, idx) => (
-                                <div
-                                    key={idx}
-                                    className={`px-4 py-2.5 text-[14px] cursor-pointer transition-colors ${value === opt ? 'bg-[#F9FAFB] text-[#014A36] font-medium' : 'text-[#4B5563] hover:bg-gray-50'}`}
-                                    onClick={() => {
-                                        onChange(opt);
-                                        setIsOpen(false);
-                                        setSearchTerm('');
-                                    }}
-                                >
-                                    {translateDynamic(opt, t)}
-                                </div>
-                            ))
+                            filteredOptions.map((opt, idx) => {
+                                const label = getOptionLabel ? getOptionLabel(opt) : opt;
+                                const isSelected = value === opt || (value && opt && value.id === opt.id);
+                                return (
+                                    <div
+                                        key={idx}
+                                        className={`px-4 py-2.5 text-[14px] cursor-pointer transition-colors ${isSelected ? 'bg-[#F9FAFB] text-[#014A36] font-medium' : 'text-[#4B5563] hover:bg-gray-50'}`}
+                                        onClick={() => {
+                                            onChange(opt);
+                                            setIsOpen(false);
+                                            setSearchTerm('');
+                                        }}
+                                    >
+                                        {translateDynamic(label, t)}
+                                    </div>
+                                );
+                            })
                         ) : (
                             <div className="px-4 py-3 text-[14px] text-gray-500 text-center">{t('no_options_found')}</div>
                         )}
@@ -78,28 +89,71 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
     );
 };
 
+
 const ProductForm = ({ mode = 'add', initialData = null, onBack, onEdit, onSuccess }) => {
     const { t } = useTranslation(['modules', 'common']);
     const [loading, setLoading] = useState(false);
 
+    const [uomList, setUomList] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [subCategories, setSubCategories] = useState([]);
+    const PRODUCT_TYPES = ['GOODS', 'SERVICES'];
+
     const initialFormData = {
-        productName: initialData?.name || '',
-        productCode: initialData?.code || '',
-        uom: initialData?.uom || '',
-        productType: initialData?.type || '',
-        category: initialData?.category || '',
-        subcategory: initialData?.subcategory || '',
-        hsnCode: initialData?.hsn || '',
-        tax: initialData?.tax || '',
-        description: initialData?.name || ''
+        productName: initialData?.product_name || '',
+        productCode: initialData?.product_code || t('modules:auto_generated'),
+        uom: initialData?.uom || null,
+        productType: initialData?.product_type || '',
+        category: initialData?.category || null,
+        subcategory: initialData?.sub_category || null,
+        hsnCode: initialData?.hsn_code || '',
+        tax: initialData?.tax_rate ? initialData.tax_rate + '%' : '',
+        description: initialData?.description || ''
     };
 
     const [formData, setFormData] = useState(initialFormData);
 
-    const UOM_LIST = ['KGS', 'NOS', 'BAG', 'BOX', 'PCS'];
-    const PRODUCT_TYPES = ['Goods', 'Service'];
-    const CATEGORIES = ['Silage', 'Animal Feed', 'Fertilizers', 'Seeds'];
-    const SUBCATEGORIES = ['Maize Silage', 'Cattle Feed', 'Wheat Seeds'];
+    useEffect(() => {
+        const fetchInitialData = async () => {
+            try {
+                const [uoms, cats] = await Promise.all([
+                    productService.getUomsDropdown(),
+                    productService.getCategoriesDropdown()
+                ]);
+                setUomList(uoms);
+                setCategories(cats);
+
+                if (mode === 'add') {
+                    const codeRes = await productService.generateProductCode();
+                    handleInputChange('productCode', codeRes.product_code);
+                }
+
+                if (initialData?.category_id) {
+                    const subs = await productService.getSubCategoriesDropdown(initialData.category_id);
+                    setSubCategories(subs);
+                }
+            } catch (error) {
+                console.error('Error fetching initial form data:', error);
+                toast.error(t('common:error_fetching_data'));
+            }
+        };
+
+        fetchInitialData();
+    }, []);
+
+    const handleCategoryChange = async (val) => {
+        handleInputChange('category', val);
+        handleInputChange('subcategory', null);
+        setSubCategories([]);
+        if (val?.id) {
+            try {
+                const subs = await productService.getSubCategoriesDropdown(val.id);
+                setSubCategories(subs);
+            } catch (error) {
+                console.error('Error fetching subcategories:', error);
+            }
+        }
+    };
 
     const handleInputChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -122,11 +176,30 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack, onEdit, onSucce
 
     const handleSubmit = async () => {
         setLoading(true);
-        // Simulate API call
-        setTimeout(() => {
-            setLoading(false);
+        try {
+            const payload = {
+                product_name: formData.productName,
+                uom_id: formData.uom?.id,
+                product_type: formData.productType,
+                category_id: formData.category?.id,
+                sub_category_id: formData.subcategory?.id,
+                hsn_code: formData.hsnCode,
+                description: formData.description
+            };
+
+            if (mode === 'add') {
+                await productService.createProduct(payload);
+            } else {
+                await productService.updateProduct(initialData.id, payload);
+            }
             onSuccess();
-        }, 800);
+        } catch (error) {
+            console.error('Error saving product:', error);
+            const errorMsg = error.response?.data?.message || t('common:error_saving_data');
+            toast.error(errorMsg);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const renderInput = (label, field, placeholder, showAsterisk = true) => (
@@ -139,7 +212,7 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack, onEdit, onSucce
                 placeholder={placeholder}
                 disabled={isView}
                 className={`w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none transition-all bg-white 
-                    ${isView ? 'cursor-default' : 'focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 hover:border-gray-300'}`}
+                    ${isView ? 'cursor-not-allowed bg-gray-50' : 'focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 hover:border-gray-300'}`}
                 value={formData[field]}
                 onChange={(e) => handleInputChange(field, e.target.value)}
             />
@@ -165,10 +238,10 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack, onEdit, onSucce
                 {[
                     { label: t('modules:product_name'), value: formData.productName },
                     { label: t('modules:product_code'), value: formData.productCode },
-                    { label: t('modules:uom'), value: formData.uom },
+                    { label: t('modules:uom'), value: formData.uom?.unit_name },
                     { label: t('modules:product_type'), value: formData.productType },
-                    { label: t('modules:category'), value: formData.category },
-                    { label: t('modules:sub_category'), value: formData.subcategory },
+                    { label: t('modules:category'), value: formData.category?.name },
+                    { label: t('modules:sub_category'), value: formData.subcategory?.name },
                     { label: t('modules:hsn_code'), value: formData.hsnCode },
                     { label: t('modules:tax_percent'), value: formData.tax },
                     { label: t('modules:product_desc'), value: formData.description || '-' }
@@ -230,11 +303,13 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack, onEdit, onSucce
                         <CustomSelect
                             label={t('modules:uom')}
                             placeholder={t('common:select') + ' ' + t('modules:uom')}
-                            options={UOM_LIST}
+                            options={uomList}
                             value={formData.uom}
                             onChange={(val) => handleInputChange('uom', val)}
+                            getOptionLabel={(opt) => opt.unit_name}
                             isSearchable={true}
                             showAsterisk={true}
+                            disabled={isView}
                         />
 
                         <CustomSelect
@@ -244,28 +319,45 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack, onEdit, onSucce
                             value={formData.productType}
                             onChange={(val) => handleInputChange('productType', val)}
                             showAsterisk={true}
+                            disabled={isView}
                         />
 
                         <CustomSelect
                             label={t('modules:category')}
                             placeholder={t('common:select') + ' ' + t('modules:category')}
-                            options={CATEGORIES}
+                            options={categories}
                             value={formData.category}
-                            onChange={(val) => handleInputChange('category', val)}
+                            onChange={(val) => handleCategoryChange(val)}
+                            getOptionLabel={(opt) => opt.name}
                             showAsterisk={true}
+                            disabled={isView}
                         />
 
                         <CustomSelect
                             label={t('modules:sub_category')}
                             placeholder={t('common:select') + ' ' + t('modules:sub_category')}
-                            options={SUBCATEGORIES}
+                            options={subCategories}
                             value={formData.subcategory}
                             onChange={(val) => handleInputChange('subcategory', val)}
+                            getOptionLabel={(opt) => opt.name}
                             showAsterisk={true}
+                            disabled={isView || !formData.category}
                         />
 
                         {renderInput(t('modules:hsn_code'), 'hsnCode', t('common:enter') + ' ' + t('modules:hsn_code'))}
-                        {renderInput(t('modules:tax_percent'), 'tax', t('modules:tax_auto'))}
+                        <div className="flex flex-col gap-1.5 w-full">
+                            <label className="text-[13px] font-semibold text-[#4B5563]">
+                                {t('modules:tax_percent')}
+                            </label>
+                            <input
+                                type="text"
+                                readOnly
+                                disabled={true}
+                                placeholder={t('modules:tax_auto')}
+                                className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-gray-500 outline-none transition-all bg-gray-50"
+                                value={formData.tax}
+                            />
+                        </div>
                         <div className="md:col-span-2">
                             {renderInput(t('modules:product_desc'), 'description', t('modules:enter_product_desc'))}
                         </div>

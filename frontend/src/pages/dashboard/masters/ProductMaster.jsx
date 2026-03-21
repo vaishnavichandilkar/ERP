@@ -2,9 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Search, Download, Filter, MoreVertical, X, FileText, FileSpreadsheet, Eye, FileEdit, ArrowLeft, ArrowRight, ChevronsUpDown, CheckCircle2, XCircle, RefreshCw, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import ProductForm from './components/ProductForm';
-import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
+import ViewProduct from './components/ViewProduct';
 import { translateDynamic } from '../../../utils/i18nUtils';
 import SuccessToast from './components/SuccessToast';
+import productService from '../../../services/productService';
+import toast from 'react-hot-toast';
 
 const ProductMaster = () => {
     const { t } = useTranslation(['modules', 'common']);
@@ -21,27 +23,10 @@ const ProductMaster = () => {
     const exportRef = useRef(null);
     const dropdownRef = useRef(null);
 
-    // Generate 100 items for testing pagination (gives 20 pages at 5/page)
-    const generateInitialData = () => {
-        const data = [];
-        for (let i = 1; i <= 100; i++) {
-            data.push({
-                id: i,
-                code: `PRD${i.toString().padStart(3, '0')}`,
-                name: i % 2 === 0 ? `Premium Maize Silage ${i}` : `Dairy Cattle Feed ${i}`,
-                uom: i % 3 === 0 ? 'Pieces' : 'KG',
-                type: 'Goods',
-                category: i % 2 === 0 ? 'Silage' : 'Animal Feed',
-                subcategory: i % 2 === 0 ? 'Maize Silage' : 'Cattle Feed',
-                hsn: `230990${i.toString().padStart(2, '0')}`,
-                tax: '5%',
-                status: i % 4 === 0 ? 'Inactive' : 'Active'
-            });
-        }
-        return data;
-    };
-    const [tableData, setTableData] = useState(generateInitialData());
+    const [tableData, setTableData] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [totalItems, setTotalItems] = useState(0);
+    const [uomOptions, setUomOptions] = useState([]);
 
     // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
@@ -61,19 +46,80 @@ const ProductMaster = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    const fetchProducts = async () => {
+        setLoading(true);
+        try {
+            const params = {
+                page: currentPage,
+                limit: itemsPerPage,
+                search: searchQuery || undefined,
+                uom_id: appliedFilters.uom || undefined,
+                product_type: appliedFilters.productType || undefined,
+                status: appliedFilters.status || undefined
+            };
+            const response = await productService.getProducts(params);
+            setTableData(response.products || []);
+            setTotalItems(response.total || 0);
+        } catch (error) {
+            console.error('Error fetching products:', error);
+            toast.error(t('common:error_fetching_data'));
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchUoms = async () => {
+        try {
+            const data = await productService.getUomsDropdown();
+            setUomOptions(data);
+        } catch (error) {
+            console.error('Error fetching UOMs:', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchProducts();
+    }, [currentPage, itemsPerPage, searchQuery, appliedFilters]);
+
+    useEffect(() => {
+        fetchUoms();
+    }, []);
+
     const toggleDropdown = (id, e) => {
         e.stopPropagation();
         setActiveDropdown(activeDropdown === id ? null : id);
     };
 
-    const handleToggleStatus = (id) => {
-        setTableData(prev => prev.map(item => {
-            if (item.id === id) {
-                return { ...item, status: item.status === 'Active' ? 'Inactive' : 'Active' };
-            }
-            return item;
-        }));
-        setActiveDropdown(null);
+    const handleToggleStatus = async (id, currentStatus) => {
+        setLoading(true);
+        try {
+            const newStatus = currentStatus.toUpperCase() === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+            await productService.toggleStatus(id, newStatus);
+            toast.success(t('common:status_updated'));
+            fetchProducts();
+        } catch (error) {
+            console.error('Error toggling status:', error);
+            toast.error(t('common:error_updating_status'));
+        } finally {
+            setLoading(false);
+            setActiveDropdown(null);
+        }
+    };
+
+    const handleDeleteProduct = async (id) => {
+        if (!window.confirm(t('common:confirm_delete'))) return;
+        setLoading(true);
+        try {
+            await productService.deleteProduct(id);
+            toast.success(t('common:deleted_successfully'));
+            fetchProducts();
+        } catch (error) {
+            console.error('Error deleting product:', error);
+            toast.error(t('common:error_deleting_data'));
+        } finally {
+            setLoading(false);
+            setActiveDropdown(null);
+        }
     };
 
     const handleApplyFilter = () => {
@@ -89,23 +135,10 @@ const ProductMaster = () => {
         setCurrentPage(1);
     };
 
-    const filteredData = tableData.filter(row => {
-        const searchString = `${row.code} ${row.name} ${row.uom} ${row.type} ${row.category} ${row.subcategory} ${row.hsn} ${row.tax} ${row.status}`.toLowerCase();
-        const matchesSearch = searchString.includes(searchQuery.toLowerCase());
-
-        const matchesUOM = appliedFilters.uom ? row.uom.toLowerCase() === appliedFilters.uom.toLowerCase() : true;
-        const matchesStatus = appliedFilters.status ? row.status.toLowerCase() === appliedFilters.status.toLowerCase() : true;
-        const matchesType = appliedFilters.productType ? row.type.toLowerCase() === appliedFilters.productType.toLowerCase() : true;
-
-        return matchesSearch && matchesUOM && matchesStatus && matchesType;
-    });
-
-    // Pagination Calculations
-    const totalItems = filteredData.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
-    const currentData = filteredData.slice(startIndex, endIndex);
+    const currentData = tableData;
 
     const handlePageChange = (page) => {
         if (page >= 1 && page <= totalPages) {
@@ -114,12 +147,7 @@ const ProductMaster = () => {
     };
 
     const handleRefresh = async () => {
-        setLoading(true);
-        // Simulation of fetching data
-        setTimeout(() => {
-            setTableData(generateInitialData());
-            setLoading(false);
-        }, 600);
+        fetchProducts();
     };
 
     // Calculate which page numbers to show in the pagination bar (up to 4 pages as requested)
@@ -142,43 +170,40 @@ const ProductMaster = () => {
         return pages;
     };
 
-    const handleExportPDF = () => {
-        const tableRows = filteredData.map((row, index) => [
-            index + 1,
-            row.code,
-            translateDynamic(row.name, t),
-            translateDynamic(row.uom, t),
-            translateDynamic(row.type, t),
-            translateDynamic(row.category, t),
-            row.hsn,
-            row.tax,
-            row.status.toUpperCase() === 'ACTIVE' ? t('common:active') : t('common:inactive')
-        ]);
-
-        exportToPDF(
-            'Product Master Report',
-            ['#', 'Code', 'Name', 'UOM', 'Type', 'Category', 'HSN Code', 'Tax %', 'Status'],
-            tableRows,
-            'product-master.pdf'
-        );
+    const handleExportPDF = async () => {
         setIsExportOpen(false);
+        try {
+            const params = { format: 'pdf', search: searchQuery || undefined, ...appliedFilters };
+            const response = await productService.exportProducts(params);
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'product-master.pdf');
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+        } catch (e) {
+            console.error('Export failed', e);
+            toast.error(t('common:export_failed'));
+        }
     };
 
-    const handleExportExcel = () => {
-        const excelData = filteredData.map(row => ({
-            [t('product_code')]: row.code,
-            [t('product_name')]: translateDynamic(row.name, t),
-            [t('uom')]: translateDynamic(row.uom, t),
-            [t('product_type')]: translateDynamic(row.type, t),
-            [t('category')]: translateDynamic(row.category, t),
-            [t('sub_category')]: translateDynamic(row.subcategory, t),
-            [t('hsn_code')]: row.hsn,
-            [t('tax_percent')]: row.tax,
-            [t('common:status')]: row.status.toUpperCase() === 'ACTIVE' ? t('common:active') : t('common:inactive')
-        }));
-
-        exportToExcel(excelData, 'Product Master', 'product-master.xlsx');
+    const handleExportExcel = async () => {
         setIsExportOpen(false);
+        try {
+            const params = { format: 'xlsx', search: searchQuery || undefined, ...appliedFilters };
+            const response = await productService.exportProducts(params);
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'product-master.xlsx');
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+        } catch (e) {
+            console.error('Export failed', e);
+            toast.error(t('common:export_failed'));
+        }
     };
 
 
@@ -325,14 +350,14 @@ const ProductMaster = () => {
                                         </tr>
                                     ) : currentData.length > 0 ? currentData.map((row, index) => (
                                         <tr key={row.id} className="border-b border-[#F3F4F6] last:border-b-0 hover:bg-[#F9FAFB] transition-all group">
-                                            <td className="px-6 py-5 font-bold text-[#111827] border-r border-[#F3F4F6]">{row.code}</td>
-                                            <td className="px-6 py-5 font-bold text-[#111827] border-r border-[#F3F4F6]">{translateDynamic(row.name, t)}</td>
-                                            <td className="px-6 py-5 font-medium text-[#4B5563] border-r border-[#F3F4F6]">{translateDynamic(row.uom, t)}</td>
-                                            <td className="px-6 py-5 font-medium text-[#4B5563] border-r border-[#F3F4F6]">{translateDynamic(row.type, t)}</td>
-                                            <td className="px-6 py-5 font-medium text-[#4B5563] border-r border-[#F3F4F6]">{translateDynamic(row.category, t)}</td>
-                                            <td className="px-6 py-5 font-medium text-[#4B5563] border-r border-[#F3F4F6]">{translateDynamic(row.subcategory, t)}</td>
-                                            <td className="px-6 py-5 text-[#6B7280] border-r border-[#F3F4F6]">{row.hsn}</td>
-                                            <td className="px-6 py-5 text-[#6B7280] border-r border-[#F3F4F6]">{row.tax}</td>
+                                            <td className="px-6 py-5 font-bold text-[#111827] border-r border-[#F3F4F6]">{row.product_code}</td>
+                                            <td className="px-6 py-5 font-bold text-[#111827] border-r border-[#F3F4F6]">{translateDynamic(row.product_name, t)}</td>
+                                            <td className="px-6 py-5 font-medium text-[#4B5563] border-r border-[#F3F4F6]">{translateDynamic(row.uom?.unit_name, t)}</td>
+                                            <td className="px-6 py-5 font-medium text-[#4B5563] border-r border-[#F3F4F6]">{translateDynamic(row.product_type, t)}</td>
+                                            <td className="px-6 py-5 font-medium text-[#4B5563] border-r border-[#F3F4F6]">{translateDynamic(row.category?.name, t)}</td>
+                                            <td className="px-6 py-5 font-medium text-[#4B5563] border-r border-[#F3F4F6]">{translateDynamic(row.sub_category?.name, t)}</td>
+                                            <td className="px-6 py-5 text-[#6B7280] border-r border-[#F3F4F6]">{row.hsn_code}</td>
+                                            <td className="px-6 py-5 text-[#6B7280] border-r border-[#F3F4F6]">{row.tax_rate}%</td>
                                             <td className="px-6 py-5 border-r border-[#F3F4F6]">
                                                 <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-bold ${row.status.toUpperCase() === 'ACTIVE' ? 'bg-[#ECFDF5] text-[#059669]' : 'bg-[#FEF2F2] text-[#DC2626]'}`}>
                                                     <span className={`w-1.5 h-1.5 rounded-full ${row.status.toUpperCase() === 'ACTIVE' ? 'bg-[#059669]' : 'bg-[#DC2626]'}`}></span>
@@ -356,25 +381,29 @@ const ProductMaster = () => {
                                                             }`}
                                                     >
                                                         <button
-                                                            onClick={() => setCurrentView({ type: 'view', data: row })}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setCurrentView({ type: 'view', data: row });
+                                                                setActiveDropdown(null);
+                                                            }}
                                                             className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#0A3622] transition-colors whitespace-nowrap font-bold"
                                                         >
                                                             <Eye size={16} className="text-gray-400" />
-                                                            {t('view_product')}
+                                                            {t('modules:view_and_edit_product')}
                                                         </button>
                                                         <button
-                                                            onClick={() => setCurrentView({ type: 'edit', data: row })}
-                                                            className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#0A3622] transition-colors whitespace-nowrap font-bold"
-                                                        >
-                                                            <FileEdit size={16} className="text-gray-400" />
-                                                            {t('update_product')}
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleToggleStatus(row.id)}
+                                                            onClick={() => handleToggleStatus(row.id, row.status)}
                                                             className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#0A3622] transition-colors whitespace-nowrap font-bold border-t border-gray-100"
                                                         >
                                                             <CheckCircle2 size={16} className={row.status.toUpperCase() === 'ACTIVE' ? "text-gray-400" : "text-[#0A3622]"} />
                                                             {row.status.toUpperCase() === 'ACTIVE' ? t('common:inactive') : t('common:active')}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteProduct(row.id)}
+                                                            className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-red-600 hover:bg-[#FEF2F2] transition-colors whitespace-nowrap font-bold border-t border-gray-100"
+                                                        >
+                                                            <XCircle size={16} className="text-red-400" />
+                                                            {t('common:delete') || 'Delete'}
                                                         </button>
                                                     </div>
                                                 )}
@@ -488,10 +517,9 @@ const ProductMaster = () => {
                                         className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] pl-4 pr-10 text-[14px] text-[#111827] outline-none focus:border-[#073318] appearance-none bg-white"
                                     >
                                         <option value="">{t('common:all')}</option>
-                                        <option value="KG">KG</option>
-                                        <option value="Liters">Liters</option>
-                                        <option value="Pieces">Pieces</option>
-                                        <option value="Boxes">Boxes</option>
+                                        {uomOptions.map(uom => (
+                                            <option key={uom.id} value={uom.id}>{translateDynamic(uom.unit_name, t)}</option>
+                                        ))}
                                     </select>
                                     <div className="absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none text-gray-400">
                                         <ChevronsUpDown size={14} />
@@ -509,8 +537,8 @@ const ProductMaster = () => {
                                         className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] pl-4 pr-10 text-[14px] text-[#111827] outline-none focus:border-[#073318] appearance-none bg-white"
                                     >
                                         <option value="">{t('common:all')}</option>
-                                        <option value="Active">{t('common:active')}</option>
-                                        <option value="Inactive">{t('common:inactive')}</option>
+                                        <option value="ACTIVE">{t('common:active')}</option>
+                                        <option value="INACTIVE">{t('common:inactive')}</option>
                                     </select>
                                     <div className="absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none text-gray-400">
                                         <ChevronsUpDown size={14} />
@@ -521,15 +549,18 @@ const ProductMaster = () => {
                             {/* Product Type Filter */}
                             <div className="space-y-2">
                                 <label className="text-[13px] font-semibold text-[#4B5563]">{t('product_type')}</label>
-                                <div className="relative">
-                                    <input
-                                        type="text"
+                                    <select
                                         value={filterInputs.productType}
                                         onChange={(e) => setFilterInputs({ ...filterInputs, productType: e.target.value })}
-                                        placeholder={t('eg_goods')}
-                                        className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#073318] bg-white"
-                                    />
-                                </div>
+                                        className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] pl-4 pr-10 text-[14px] text-[#111827] outline-none focus:border-[#073318] appearance-none bg-white"
+                                    >
+                                        <option value="">{t('common:all')}</option>
+                                        <option value="GOODS">{t('modules:goods') || 'Goods'}</option>
+                                        <option value="SERVICES">{t('modules:services') || 'Services'}</option>
+                                    </select>
+                                    <div className="absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none text-gray-400">
+                                        <ChevronsUpDown size={14} />
+                                    </div>
                             </div>
                         </div>
 
@@ -550,6 +581,12 @@ const ProductMaster = () => {
                         </div>
                     </div>
                 </>
+            ) : currentView.type === 'view' ? (
+                <ViewProduct
+                    initialData={currentView.data}
+                    onBack={() => setCurrentView({ type: 'list', data: null })}
+                    onEdit={(data) => setCurrentView({ type: 'edit', data })}
+                />
             ) : (
                 <ProductForm
                     mode={currentView.type}
@@ -560,6 +597,7 @@ const ProductMaster = () => {
                         const msg = currentView.type === 'add' ? 'Product added successfully' : 'Product updated successfully';
                         setShowSuccessToast({ show: true, message: msg });
                         setCurrentView({ type: 'list', data: null });
+                        fetchProducts();
                     }}
                 />
             )}

@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Param, Patch, Post, Put, Delete, ParseIntPipe, UseGuards, Request, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Put, Delete, ParseIntPipe, UseGuards, Request, Query, Res } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { ProductMasterService } from '../services/product-master.service';
 import { CreateProductDto, UpdateProductDto, ToggleProductStatusDto } from '../dto/product.dto';
 import { JwtAuthGuard } from '../../../../common/guards/jwt-auth.guard';
+import { Response } from 'express';
 
 @ApiTags('Product Master')
 @Controller('products')
@@ -23,6 +24,34 @@ export class ProductMasterController {
     @ApiResponse({ status: 200, description: 'Product Code generated successfully' })
     async generateCode(@Request() req) {
         return this.service.generateCodeForUser(req.user.userId);
+    }
+
+    @Get('export')
+    @ApiOperation({ summary: 'Export products list to XLSX or PDF format' })
+    @ApiQuery({ name: 'format', required: true, enum: ['xlsx', 'pdf'], description: 'Export format' })
+    @ApiQuery({ name: 'search', required: false, type: String })
+    @ApiQuery({ name: 'uom_id', required: false, type: Number })
+    @ApiQuery({ name: 'product_type', required: false, type: String, enum: ['GOODS', 'SERVICES'] })
+    @ApiQuery({ name: 'status', required: false, type: String, enum: ['ACTIVE', 'INACTIVE'] })
+    async exportProducts(
+        @Request() req,
+        @Res() res: Response,
+        @Query('format') format: string,
+        @Query('search') search?: string,
+        @Query('uom_id') uom_id?: number,
+        @Query('product_type') product_type?: string,
+        @Query('status') status?: string,
+    ) {
+        const query = { search, uom_id, product_type, status };
+        const file = await this.service.exportProducts(format.toLowerCase(), query, req.user.userId);
+
+        res.set({
+            'Content-Type': file.mimetype,
+            'Content-Disposition': `attachment; filename="${file.filename}"`,
+            'Content-Length': file.buffer.length,
+        });
+
+        res.send(file.buffer);
     }
 
     @Get('dropdown/uoms')

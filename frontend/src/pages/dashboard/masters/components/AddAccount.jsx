@@ -405,6 +405,33 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
         }
     };
 
+    const translateBackendError = (err) => {
+        if (!err || typeof err !== 'string') return err;
+        const msg = err.toLowerCase();
+        
+        if (msg.includes('unique constraint') || msg.includes('already exists')) {
+            if (msg.includes('accountname')) return t('modules:error_account_name_exists');
+            if (msg.includes('gstno')) return t('modules:error_gst_no_exists');
+            if (msg.includes('panno')) return t('modules:error_pan_no_exists');
+            if (msg.includes('suppliercode')) return t('modules:error_supplier_code_exists');
+            if (msg.includes('customercode')) return t('modules:error_customer_code_exists');
+            if (msg.includes('emailid')) return t('modules:error_email_id_exists');
+            if (msg.includes('mobileno')) return t('modules:error_mobile_no_exists');
+            return t('common:error_saving_data');
+        }
+        
+        if (msg.includes('not found')) {
+            if (msg.includes('account')) return t('modules:error_account_not_found');
+            return t('common:error_fetching_data');
+        }
+
+        if (msg.includes('pincode') || msg.includes('postalpincode')) {
+            return t('modules:error_fetch_pincode');
+        }
+
+        return err;
+    };
+
     const handleSave = async () => {
         if (!validateAll()) return;
         
@@ -494,9 +521,9 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
         } catch (error) {
             const errorData = error?.response?.data;
             if (errorData?.errors && Array.isArray(errorData.errors) && errorData.errors.length > 0) {
-                errorData.errors.forEach(err => toast.error(err));
+                errorData.errors.forEach(err => toast.error(translateBackendError(err)));
             } else {
-                toast.error(errorData?.message || 'Failed to save account');
+                toast.error(translateBackendError(errorData?.message) || t('common:error_saving_data'));
             }
         } finally {
             setIsLoading(false);

@@ -1,0 +1,75 @@
+import axiosInstance from './axiosInstance';
+
+const API_PATH = '/products';
+
+export const getProducts = async (params) => {
+    const response = await axiosInstance.get(API_PATH, { params });
+    return response.data;
+};
+
+export const getProductById = async (id) => {
+    const response = await axiosInstance.get(`${API_PATH}/${id}`);
+    return response.data;
+};
+
+export const createProduct = async (data) => {
+    const response = await axiosInstance.post(API_PATH, data);
+    return response.data;
+};
+
+export const updateProduct = async (id, data) => {
+    const response = await axiosInstance.put(`${API_PATH}/${id}`, data);
+    return response.data;
+};
+
+export const deleteProduct = async (id) => {
+    const response = await axiosInstance.delete(`${API_PATH}/${id}`);
+    return response.data;
+};
+
+export const toggleStatus = async (id, status) => {
+    const response = await axiosInstance.patch(`${API_PATH}/${id}/status`, { status });
+    return response.data;
+};
+
+export const generateProductCode = async () => {
+    const response = await axiosInstance.get(`${API_PATH}/generate-code`);
+    return response.data;
+};
+
+export const getUomsDropdown = async () => {
+    const response = await axiosInstance.get(`${API_PATH}/dropdown/uoms`);
+    return response.data;
+};
+
+export const getCategoriesDropdown = async () => {
+    const response = await axiosInstance.get(`${API_PATH}/dropdown/categories`);
+    return response.data;
+};
+
+export const getSubCategoriesDropdown = async (categoryId) => {
+    const response = await axiosInstance.get(`${API_PATH}/dropdown/sub-categories/${categoryId}`);
+    return response.data;
+};
+
+export const exportProducts = async (params) => {
+    const response = await axiosInstance.get(`${API_PATH}/export`, {
+        params,
+        responseType: 'blob'
+    });
+    return response;
+};
+
+export default {
+    getProducts,
+    getProductById,
+    createProduct,
+    updateProduct,
+    deleteProduct,
+    toggleStatus,
+    generateProductCode,
+    getUomsDropdown,
+    getCategoriesDropdown,
+    getSubCategoriesDropdown,
+    exportProducts
+};

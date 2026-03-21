@@ -34,35 +34,61 @@ export class ProductMasterRepository {
         product_type?: ProductType;
         status?: MasterStatus;
         created_by: number;
+        isExport?: boolean;
     }) {
-        const { skip = 0, take = 10, searchTerm, uom_id, product_type, status, created_by } = params;
+        const { skip = 0, take = 10, searchTerm, uom_id, product_type, status, created_by, isExport } = params;
 
         const where: Prisma.ProductWhereInput = { is_deleted: false, created_by };
 
         if (searchTerm) {
-            where.OR = [
+            const or: Prisma.ProductWhereInput[] = [
                 { product_name: { contains: searchTerm, mode: 'insensitive' } },
                 { product_code: { contains: searchTerm, mode: 'insensitive' } },
                 { hsn_code: { contains: searchTerm, mode: 'insensitive' } },
+                { uom: { unit_name: { contains: searchTerm, mode: 'insensitive' } } },
+                { category: { name: { contains: searchTerm, mode: 'insensitive' } } },
+                { sub_category: { name: { contains: searchTerm, mode: 'insensitive' } } },
             ];
+
+            // Add enum searches
+            if (['GOODS', 'SERVICES'].some(type => type.includes(searchTerm.toUpperCase()))) {
+                or.push({ product_type: { in: ['GOODS', 'SERVICES'].filter(type => type.includes(searchTerm.toUpperCase())) as ProductType[] } });
+            }
+
+            if (['ACTIVE', 'INACTIVE'].some(s => s.includes(searchTerm.toUpperCase()))) {
+                or.push({ status: { in: ['ACTIVE', 'INACTIVE'].filter(s => s.includes(searchTerm.toUpperCase())) as MasterStatus[] } });
+            }
+
+            // Tax rate search
+            const taxNum = parseFloat(searchTerm);
+            if (!isNaN(taxNum)) {
+                or.push({ tax_rate: { equals: taxNum } });
+            }
+
+            where.OR = or;
         }
 
         if (uom_id) where.uom_id = uom_id;
         if (product_type) where.product_type = product_type;
         if (status) where.status = status;
 
+        const findOptions: Prisma.ProductFindManyArgs = {
+            where,
+            orderBy: { created_at: 'desc' },
+            include: { uom: true, category: true, sub_category: true, hsn: true }
+        };
+
+        if (!isExport) {
+            findOptions.skip = skip;
+            findOptions.take = take;
+        }
+
         const [products, total] = await Promise.all([
-            this.prisma.product.findMany({
-                where,
-                skip,
-                take,
-                orderBy: { created_at: 'desc' },
-                include: { uom: true, category: true, sub_category: true, hsn: true }
-            }),
+            this.prisma.product.findMany(findOptions),
             this.prisma.product.count({ where })
         ]);
 
-        return { products, total, totalPages: Math.ceil(total / take) };
+        return { products, total, totalPages: isExport ? 1 : Math.ceil(total / take) };
     }
 
     async updateProduct(id: number, data: Prisma.ProductUncheckedUpdateInput) {
