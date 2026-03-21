@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Check, ChevronDown, ChevronUp, Loader2, UploadCloud, ArrowLeft } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, Loader2, UploadCloud, ArrowLeft, HelpCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import accountService from '../../../../services/accountService';
@@ -248,6 +248,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
 
     const [msmeFile, setMsmeFile] = useState(null);
     const [otherDocs, setOtherDocs] = useState([]);
+    const [showPanTooltip, setShowPanTooltip] = useState(false);
     const [errors, setErrors] = useState({});
 
     const getFieldError = (name, value, currentFormData = formData) => {
@@ -590,18 +591,38 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                          onChange={(e) => handleInputChange('gstNo', e.target.value.toUpperCase())}
                                      />
                                  </div>
-                                 <div className="flex flex-col gap-1.5">
+                                 <div className="flex flex-col gap-1.5 overflow-visible relative group/pan">
                                      <label className="text-[13px] font-semibold text-[#4B5563]">
                                          {t('modules:pan_no')} <span className="text-red-500">*</span>
                                      </label>
-                                     <input
-                                         type="text"
-                                         placeholder={t('modules:enter_pan_number')}
-                                         className={`w-full h-[44px] border rounded-[8px] px-4 text-[14px] outline-none transition-colors ${errors.panNo ? 'border-red-500 focus:ring-1 focus:ring-red-500/10' : 'border-[#E5E7EB] focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10'}`}
-                                         value={formData.panNo}
-                                         onChange={(e) => handleInputChange('panNo', e.target.value.toUpperCase())}
-                                         onBlur={() => validateField('panNo', formData.panNo)}
-                                     />
+                                     <div className="relative overflow-visible">
+                                         <input
+                                             type="text"
+                                             maxLength={10}
+                                             placeholder={t('modules:enter_pan_number')}
+                                             className={`w-full h-[44px] border rounded-[8px] px-4 text-[14px] outline-none transition-colors ${errors.panNo ? 'border-red-500 focus:ring-1 focus:ring-red-500/10' : 'border-[#E5E7EB] focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10'}`}
+                                             value={formData.panNo}
+                                             onFocus={() => setShowPanTooltip(true)}
+                                             onBlur={() => { validateField('panNo', formData.panNo); setShowPanTooltip(false); }}
+                                             onChange={(e) => handleInputChange('panNo', e.target.value.toUpperCase())}
+                                         />
+                                         <div className={`absolute right-0 bottom-full mb-3 w-[260px] p-4 bg-white text-[#4B5563] text-[11px] rounded-[10px] shadow-xl z-[500] leading-loose pointer-events-none transition-all duration-300 border border-[#E5E7EB] ${formData.panNo ? 'opacity-0 invisible' : (showPanTooltip ? 'opacity-100 translate-y-0 visible' : 'opacity-0 translate-y-2 invisible group-hover/pan:opacity-100 group-hover/pan:translate-y-0 group-hover/pan:visible')}`}>
+                                             <div className="font-bold border-b border-gray-100 pb-1 mb-2 uppercase tracking-wide text-[#111827]">{t('modules:pan_info', 'Verification Guide')}</div>
+                                             <ul className="space-y-1.5 ml-0 list-none font-medium">
+                                                 <li className="flex gap-2"><span>•</span> <span>Must be exactly 10 characters</span></li>
+                                                 <li className="flex gap-2"><span>•</span> <span>Format: <span className="text-amber-600 font-bold tracking-widest">AAAAA 9999 A</span></span></li>
+                                                 <li className="pl-4 opacity-75">- 1st to 5th: Alphabets (A-Z)</li>
+                                                 <li className="pl-4 opacity-75">- 6th to 9th: Numbers (0-9)</li>
+                                                 <li className="pl-4 opacity-75">- 10th: Alphabet (A-Z)</li>
+                                                 <li className="mt-2 text-[#111827] font-bold border-t border-gray-50 pt-2">4th Character (Holder Type):</li>
+                                                 <li className="pl-4">P → Individual / Sole Proprietor</li>
+                                                 <li className="pl-4">C → Company</li>
+                                                 <li className="pl-4">F → Firm</li>
+                                             </ul>
+                                             {/* Tooltip Arrow */}
+                                             <div className="absolute top-full right-4 -mt-1 border-[6px] border-transparent border-t-white drop-shadow-[0_1px_0_rgba(229,231,235,1)]"></div>
+                                         </div>
+                                     </div>
                                      {errors.panNo && <p className="text-[12px] text-red-500 mt-0.5">{errors.panNo}</p>}
                                  </div>
 
@@ -638,11 +659,15 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                         {isFetchingPin && <Loader2 size={14} className="animate-spin text-[#014A36]" />}
                                     </label>
                                     <input
-                                        type="number"
+                                        type="text"
+                                        maxLength={6}
                                         placeholder={t('modules:enter_pin_code')}
-                                        className={`hide-spinner w-full h-[44px] border rounded-[8px] px-4 text-[14px] outline-none transition-colors ${errors.pinCode ? 'border-red-500 focus:ring-1 focus:ring-red-500/10' : 'border-[#E5E7EB] focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10'}`}
+                                        className={`w-full h-[44px] border rounded-[8px] px-4 text-[14px] outline-none transition-colors ${errors.pinCode ? 'border-red-500 focus:ring-1 focus:ring-red-500/10' : 'border-[#E5E7EB] focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10'}`}
                                         value={formData.pinCode}
-                                        onChange={(e) => handleInputChange('pinCode', e.target.value)}
+                                        onChange={(e) => {
+                                            const val = e.target.value.replace(/\D/g, '');
+                                            if (val.length <= 6) handleInputChange('pinCode', val);
+                                        }}
                                         onBlur={() => validateField('pinCode', formData.pinCode)}
                                     />
                                     {errors.pinCode && <p className="text-[12px] text-red-500 mt-0.5">{errors.pinCode}</p>}
@@ -719,11 +744,15 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                         {t('modules:mobile_no')} <span className="text-red-500">*</span>
                                     </label>
                                     <input
-                                        type="number"
+                                        type="text"
+                                        maxLength={10}
                                         placeholder={t('modules:enter_mobile_number')}
-                                        className={`hide-spinner w-full h-[44px] border rounded-[8px] px-4 text-[14px] outline-none transition-colors ${errors.mobileNo ? 'border-red-500 focus:ring-1 focus:ring-red-500/10' : 'border-[#E5E7EB] focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10'}`}
+                                        className={`w-full h-[44px] border rounded-[8px] px-4 text-[14px] outline-none transition-colors ${errors.mobileNo ? 'border-red-500 focus:ring-1 focus:ring-red-500/10' : 'border-[#E5E7EB] focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10'}`}
                                         value={formData.mobileNo}
-                                        onChange={(e) => handleInputChange('mobileNo', e.target.value)}
+                                        onChange={(e) => {
+                                            const val = e.target.value.replace(/\D/g, '');
+                                            if (val.length <= 10) handleInputChange('mobileNo', val);
+                                        }}
                                         onBlur={() => validateField('mobileNo', formData.mobileNo)}
                                     />
                                     {errors.mobileNo && <p className="text-[12px] text-red-500 mt-0.5">{errors.mobileNo}</p>}
