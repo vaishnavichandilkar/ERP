@@ -896,12 +896,11 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                          <button
                             onClick={handleSave}
                             disabled={isLoading || !isFormValid}
-                            className={`px-8 h-[40px] rounded-[8px] text-[14px] font-semibold transition-colors flex items-center justify-center gap-2 ${
+                            className={`px-8 h-[40px] rounded-[8px] text-[14px] font-semibold transition-colors flex items-center justify-center ${
                                 !isLoading && isFormValid ? 'bg-[#073318] hover:bg-[#04200f] text-white shadow-sm' : 'bg-[#D1D5DB] text-white cursor-not-allowed'
                             }`}
                         >
-                            {isLoading && <Loader2 size={16} className="animate-spin" />}
-                            {isEditMode ? t('modules:edit_account') : t('modules:add_account')}
+                            {t('common:save')}
                         </button>
                              <button
                                 onClick={onBack}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { ArrowLeft, Edit3 } from 'lucide-react';
 
 const InfoTableRow = ({ label1, value1, label2, value2, noBorder }) => (
     <div className={`flex flex-col sm:flex-row border-[#E5E7EB] ${noBorder ? '' : 'border-b'}`}>
@@ -49,14 +50,23 @@ const ViewAccount = ({ initialData, onBack, onEdit }) => {
                 {/* Header */}
                 <div className="flex justify-between items-center px-6 py-5 border-b border-[#E5E7EB]">
                     <h2 className="text-[18px] font-bold text-[#111827]">{t('view_account')}</h2>
-                    {onEdit && (
+                    <div className="flex items-center gap-3">
+                        {onEdit && (
+                            <button
+                                onClick={onEdit}
+                                className="px-6 h-[40px] bg-[#014A36] text-white rounded-[8px] text-[14px] font-semibold hover:bg-[#013b2b] transition-colors shadow-sm flex items-center justify-center gap-2"
+                            >
+                                <Edit3 size={16} />
+                                {t('edit_account')}
+                            </button>
+                        )}
                         <button
-                            onClick={onEdit}
-                            className="px-6 h-[36px] bg-[#014A36] text-white rounded-[8px] text-[13px] font-semibold hover:bg-[#013b2b] transition-colors shadow-sm flex items-center justify-center"
+                            onClick={onBack}
+                            className="px-6 h-[40px] bg-white border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors shadow-sm"
                         >
-                            {t('edit_account')}
+                            {t('common:back')}
                         </button>
-                    )}
+                    </div>
                 </div>
 
                 {/* Form Body */}
@@ -150,15 +160,6 @@ const ViewAccount = ({ initialData, onBack, onEdit }) => {
                         />
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex justify-end gap-3 mt-8">
-                        <button
-                            onClick={onBack}
-                            className="px-8 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors bg-white shadow-sm flex items-center justify-center"
-                        >
-                            {t('common:back')}
-                        </button>
-                    </div>
 
                 </div>
             </div>

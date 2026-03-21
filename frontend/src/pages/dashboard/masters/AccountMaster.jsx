@@ -43,6 +43,7 @@ const AccountMaster = () => {
         status: ''
     });
     const [currentView, setCurrentView] = useState('list');
+    const [previousView, setPreviousView] = useState(null);
     const [selectedAccount, setSelectedAccount] = useState(null);
 
     const [rowsPerPage, setRowsPerPage] = useState(5);
@@ -230,16 +231,31 @@ const AccountMaster = () => {
         setDropdownIndex(null);
     };
 
-    if (currentView === 'add') {
-        return <AddAccount onBack={() => setCurrentView('list')} onAddAccount={handleAddAccount} />;
-    }
-
-    if (currentView === 'edit') {
-        return <AddAccount onBack={() => { setCurrentView('list'); setSelectedAccount(null); }} initialData={selectedAccount} onUpdateAccount={handleUpdateAccount} />;
+    if (currentView === 'add' || currentView === 'edit') {
+        const handleBack = () => {
+            if (previousView === 'view') {
+                setCurrentView('view');
+            } else {
+                setCurrentView('list');
+                setSelectedAccount(null);
+            }
+            setPreviousView(null);
+        };
+        return <AddAccount 
+            initialData={selectedAccount} 
+            isEditMode={currentView === 'edit'} 
+            onBack={handleBack} 
+            onAddAccount={handleAddAccount}
+            onUpdateAccount={handleUpdateAccount}
+        />;
     }
 
     if (currentView === 'view') {
-        return <ViewAccount initialData={selectedAccount} onBack={() => { setCurrentView('list'); setSelectedAccount(null); }} onEdit={() => setCurrentView('edit')} />;
+        return <ViewAccount 
+            initialData={selectedAccount} 
+            onBack={() => { setCurrentView('list'); setSelectedAccount(null); setPreviousView(null); }} 
+            onEdit={() => { setPreviousView('view'); setCurrentView('edit'); }} 
+        />;
     }
 
     return (
@@ -248,7 +264,7 @@ const AccountMaster = () => {
                 <div className="flex items-center justify-between">
                     <h1 className="text-[28px] font-bold text-[#111827] tracking-tight">{t('modules:account_master')}</h1>
                     <button 
-                        onClick={() => setCurrentView('add')}
+                        onClick={() => { setPreviousView(null); setCurrentView('add'); }}
                         className="px-6 h-[44px] bg-[#073318] text-white rounded-[10px] text-[15px] font-bold hover:bg-[#04200f] transition-all shadow-sm flex items-center justify-center gap-2"
                     >
                         <Plus size={18} />
@@ -436,7 +452,7 @@ const AccountMaster = () => {
                                             {row.status === 'ACTIVE' ? t('common:active') : t('common:inactive')}
                                         </div>
                                     </td>
-                                    <td className={`px-6 py-5 text-center relative ${dropdownIndex === index ? 'z-[100]' : ''}`}>
+                                    <td className={`px-6 py-5 text-center relative ${dropdownIndex === index ? 'z-[100]' : ''}`} ref={dropdownIndex === index ? dropdownRef : null}>
                                         <button
                                             onClick={(e) => toggleDropdown(index, e)}
                                             className={`p-2 rounded-lg transition-all ${dropdownIndex === index ? 'bg-gray-100 text-[#111827]' : 'text-gray-400 hover:bg-gray-100 hover:text-[#111827]'}`}
@@ -446,7 +462,7 @@ const AccountMaster = () => {
 
                                         {dropdownIndex === index && (
                                             <div 
-                                                ref={dropdownRef} 
+                                                 
                                                 className={`absolute right-[80%] w-max min-w-[200px] bg-white border border-gray-100 rounded-[14px] shadow-[0_10px_40px_rgba(0,0,0,0.12)] z-[110] py-2 animate-in fade-in zoom-in-95 duration-200 text-left ${
                                                     index >= paginatedData.length - 2 && paginatedData.length > 2
                                                         ? 'bottom-0 mb-2'
@@ -458,14 +474,7 @@ const AccountMaster = () => {
                                                     className="w-full px-5 py-3 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap font-bold"
                                                 >
                                                     <Eye size={18} className="text-gray-400" />
-                                                    {t('modules:view_account')}
-                                                </button>
-                                                <button 
-                                                    onClick={(e) => { e.stopPropagation(); setSelectedAccount(row); setCurrentView('edit'); setDropdownIndex(null); }} 
-                                                    className="w-full px-5 py-3 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap font-bold"
-                                                >
-                                                    <Edit3 size={18} className="text-gray-400" />
-                                                    {t('modules:update_account')}
+                                                    {t('modules:view_and_edit_account')}
                                                 </button>
                                                 <div className="h-[1px] bg-[#F3F4F6] mx-2 my-1" />
                                                 <button 
