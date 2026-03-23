@@ -187,9 +187,16 @@ export class ProductMasterService {
     async generateProductCode(userId: number): Promise<string> {
         const lastCode = await this.repository.getLastProductCode(userId);
         if (!lastCode) {
-            return 'PRD001';
+            return 'PD00001';
         }
-        const numericPart = parseInt(lastCode.replace('PD', ''), 10);
+
+        // Extract numeric part using regex to be robust
+        const match = lastCode.match(/\d+/);
+        if (!match) {
+            return 'PD00001';
+        }
+
+        const numericPart = parseInt(match[0], 10);
         const nextNumeric = numericPart + 1;
         return `PD${nextNumeric.toString().padStart(5, '0')}`;
     }

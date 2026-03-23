@@ -202,7 +202,7 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack, onEdit, onSucce
         }
     };
 
-    const renderInput = (label, field, placeholder, showAsterisk = true) => (
+    const renderInput = (label, field, placeholder, showAsterisk = true, readOnly = false) => (
         <div className="flex flex-col gap-1.5 w-full">
             <label className="text-[13px] font-semibold text-[#4B5563]">
                 {label} {showAsterisk && <span className="text-red-500">*</span>}
@@ -210,9 +210,10 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack, onEdit, onSucce
             <input
                 type="text"
                 placeholder={placeholder}
+                readOnly={readOnly}
                 disabled={isView}
                 className={`w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none transition-all bg-white 
-                    ${isView ? 'cursor-not-allowed bg-gray-50' : 'focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 hover:border-gray-300'}`}
+                    ${isView || readOnly ? 'cursor-not-allowed bg-gray-50' : 'focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 hover:border-gray-300'}`}
                 value={formData[field]}
                 onChange={(e) => handleInputChange(field, e.target.value)}
             />
@@ -298,7 +299,7 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack, onEdit, onSucce
                 <div className="p-8 md:p-10 flex flex-col gap-8 w-full">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8 w-full">
                         {renderInput(t('modules:product_name'), 'productName', t('modules:enter_product_name'))}
-                        {renderInput(t('modules:product_code'), 'productCode', t('modules:product_code_auto'))}
+                        {renderInput(t('modules:product_code'), 'productCode', t('modules:product_code_auto'), true, true)}
 
                         <CustomSelect
                             label={t('modules:uom')}

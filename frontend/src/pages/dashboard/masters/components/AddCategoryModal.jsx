@@ -105,7 +105,7 @@ const AddCategoryModal = ({ isOpen, onClose, onSuccess }) => {
             />
             
             {/* Modal */}
-            <div className={`relative bg-white rounded-[20px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] w-full max-w-[440px] overflow-hidden transform transition-all duration-500 ease-in-out animate-in zoom-in-95`}>
+            <div className={`relative bg-white rounded-[20px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] w-full max-w-[440px] transform transition-all duration-500 ease-in-out animate-in zoom-in-95`}>
                 {/* Header */}
                 <div className="flex items-center justify-between px-8 py-5 border-b border-[#F3F4F6]">
                     <h2 className="text-[18px] font-bold text-[#111827] tracking-tight">{t('modules:add_category')}</h2>
@@ -134,24 +134,48 @@ const AddCategoryModal = ({ isOpen, onClose, onSuccess }) => {
 
                         {isDropdownOpen && (
                             <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-white border border-[#E5E7EB] rounded-[12px] shadow-xl z-[110] py-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                                {['Category', 'Sub category'].map((opt) => (
-                                    <div 
-                                        key={opt}
-                                        className={`px-4 py-3 text-[14px] cursor-pointer transition-colors ${type === opt ? 'bg-[#F9FAFB] text-[#073318] font-bold' : 'text-[#4B5563] hover:bg-gray-50'}`}
-                                        onClick={() => {
-                                            setType(opt);
-                                            setIsDropdownOpen(false);
-                                        }}
-                                    >
-                                        {opt === 'Category' ? t('modules:category') : t('modules:sub_category')}
-                                    </div>
-                                ))}
+                                {['Category', 'Sub category'].map((opt) => {
+                                    const isDisabled = opt === 'Sub category' && dropdownCategories.length === 0;
+                                    return (
+                                        <div 
+                                            key={opt}
+                                            className={`px-4 py-3 text-[14px] transition-colors ${
+                                                isDisabled 
+                                                    ? 'text-gray-300 cursor-not-allowed' 
+                                                    : type === opt 
+                                                        ? 'bg-[#F9FAFB] text-[#073318] font-bold cursor-pointer' 
+                                                        : 'text-[#4B5563] hover:bg-gray-50 cursor-pointer'
+                                            }`}
+                                            onClick={() => {
+                                                if (!isDisabled) {
+                                                    setType(opt);
+                                                    setIsDropdownOpen(false);
+                                                }
+                                            }}
+                                        >
+                                            {opt === 'Category' ? t('modules:category') : t('modules:sub_category')}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
 
                     {/* Step 2 Content: smooth transition expansion */}
-                    <div className={`space-y-6 overflow-hidden transition-all duration-500 ease-in-out ${step === 2 ? 'max-height-expanded opacity-100 mb-6' : 'max-h-0 opacity-0 invisible -mt-6'}`}>
+                    <div className={`space-y-6 transition-all duration-500 ease-in-out ${step === 2 ? 'max-height-expanded opacity-100 mb-6 overflow-visible' : 'max-h-0 opacity-0 invisible -mt-6 overflow-hidden'}`}>
+                        <div className="space-y-2">
+                            <label className="text-[13px] font-semibold text-[#4B5563]">
+                                {type === 'Category' ? t('modules:category_name') : t('modules:sub_category_name', 'Sub category name')}
+                            </label>
+                            <input
+                                type="text"
+                                value={categoryName}
+                                onChange={(e) => setCategoryName(e.target.value)}
+                                placeholder={type === 'Category' ? t('modules:enter_category_name') : t('modules:enter_sub_category_name', 'Enter sub category name')}
+                                className="w-full h-[46px] border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] font-medium outline-none focus:border-[#073318] focus:ring-4 focus:ring-[#073318]/5 transition-all placeholder:text-gray-400"
+                            />
+                        </div>
+
                         {type === 'Sub category' && (
                             <div className="space-y-2 relative" ref={parentDropdownRef}>
                                 <label className="text-[13px] font-semibold text-[#4B5563]">{t('modules:category_under')}</label>
@@ -183,19 +207,6 @@ const AddCategoryModal = ({ isOpen, onClose, onSuccess }) => {
                                 )}
                             </div>
                         )}
-
-                        <div className="space-y-2">
-                            <label className="text-[13px] font-semibold text-[#4B5563]">
-                                {type === 'Category' ? t('modules:category_name') : t('modules:sub_category_name', 'Sub category name')}
-                            </label>
-                            <input
-                                type="text"
-                                value={categoryName}
-                                onChange={(e) => setCategoryName(e.target.value)}
-                                placeholder={type === 'Category' ? t('modules:enter_category_name') : t('modules:enter_sub_category_name', 'Enter sub category name')}
-                                className="w-full h-[46px] border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] font-medium outline-none focus:border-[#073318] focus:ring-4 focus:ring-[#073318]/5 transition-all placeholder:text-gray-400"
-                            />
-                        </div>
                     </div>
 
                     {/* Footer Buttons */}
