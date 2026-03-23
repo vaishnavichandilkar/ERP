@@ -32,14 +32,16 @@ const AccountMaster = () => {
         gstNo: '',
         panNo: '',
         groupName: '',
-        creditDays: '',
+        supplierCreditDays: '',
+        customerCreditDays: '',
         status: ''
     });
     const [appliedFilters, setAppliedFilters] = useState({
         gstNo: '',
         panNo: '',
         groupName: '',
-        creditDays: '',
+        supplierCreditDays: '',
+        customerCreditDays: '',
         status: ''
     });
     const [currentView, setCurrentView] = useState('list');
@@ -143,7 +145,7 @@ const AccountMaster = () => {
 
     const applyFilters = () => {
         setAppliedFilters(filterInputs);
-        const hasFilters = filterInputs.gstNo || filterInputs.panNo || filterInputs.groupName || filterInputs.creditDays || filterInputs.status;
+        const hasFilters = filterInputs.gstNo || filterInputs.panNo || filterInputs.groupName || filterInputs.supplierCreditDays || filterInputs.customerCreditDays || filterInputs.status;
         setIsFilterApplied(!!hasFilters);
         setIsFilterOpen(false);
     };
@@ -153,7 +155,8 @@ const AccountMaster = () => {
             gstNo: '',
             panNo: '',
             groupName: '',
-            creditDays: '',
+            supplierCreditDays: '',
+            customerCreditDays: '',
             status: ''
         };
         setFilterInputs(emptyFilters);
@@ -293,7 +296,7 @@ const AccountMaster = () => {
                             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                             <input
                                 type="text"
-                                placeholder={t('common:search_placeholder', 'Search by anything...')}
+                                placeholder={t('common:search_placeholder', 'Search By Anything...')}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full h-[42px] bg-white border border-[#E5E7EB] rounded-[10px] pl-10 pr-10 text-[14px] outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/10 transition-all placeholder:text-gray-400 shadow-sm"
@@ -315,7 +318,7 @@ const AccountMaster = () => {
                                     : 'bg-white border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
                         >
                             <Filter size={18} className={isFilterApplied ? "text-red-500" : "text-gray-400"} />
-                            {isFilterApplied ? t('common:clear') : t('common:filter')}
+                            {isFilterApplied ? t('common:clear', 'Clear') : t('common:filter', 'Filter')}
                         </button>
                         <button
                             onClick={handleRefresh}
@@ -582,7 +585,7 @@ const AccountMaster = () => {
                     <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setIsFilterOpen(false)} />
                     <div className="relative w-full max-w-[480px] h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
                         <div className="flex items-center justify-between px-6 py-5 border-b border-[#E5E7EB]">
-                            <h2 className="text-[20px] font-bold text-[#111827]">{t('common:apply_filters')}</h2>
+                            <h2 className="text-[20px] font-bold text-[#111827]">{t('common:apply_filters', 'Apply Filters')}</h2>
                             <button onClick={() => setIsFilterOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors p-1">
                                 <X size={20} strokeWidth={1.5} />
                             </button>
@@ -612,7 +615,7 @@ const AccountMaster = () => {
                                 />
                             </div>
                             <div className="space-y-2.5">
-                                <label className="text-[14px] font-medium text-[#4B5563]">{t('modules:group_name')}</label>
+                                <label className="text-[14px] font-medium text-[#4B5563]">{t('modules:group_name', 'Group Name')}</label>
                                 <div className="flex flex-col gap-3 mt-1">
                                     <label className="flex items-center gap-3 cursor-pointer group">
                                         <div className="relative flex items-center">
@@ -645,13 +648,24 @@ const AccountMaster = () => {
                                 </div>
                             </div>
                             <div className="space-y-2.5">
-                                <label className="text-[14px] font-medium text-[#4B5563]">{t('modules:credit_days')}</label>
+                                <label className="text-[14px] font-medium text-[#4B5563]">{t('modules:customer_credit_days')}</label>
                                 <input
                                     type="text"
-                                    name="creditDays"
-                                    value={filterInputs.creditDays}
+                                    name="customerCreditDays"
+                                    value={filterInputs.customerCreditDays}
                                     onChange={handleFilterChange}
-                                    placeholder={t('modules:enter_credit_days')}
+                                    placeholder={t('modules:enter_credit_days', 'Enter credit days')}
+                                    className="w-full h-[46px] border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#073318] bg-white font-medium transition-all"
+                                />
+                            </div>
+                            <div className="space-y-2.5">
+                                <label className="text-[14px] font-medium text-[#4B5563]">{t('modules:supplier_credit_days')}</label>
+                                <input
+                                    type="text"
+                                    name="supplierCreditDays"
+                                    value={filterInputs.supplierCreditDays}
+                                    onChange={handleFilterChange}
+                                    placeholder={t('modules:enter_credit_days', 'Enter credit days')}
                                     className="w-full h-[46px] border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#073318] bg-white font-medium transition-all"
                                 />
                             </div>
@@ -680,7 +694,7 @@ const AccountMaster = () => {
                                 onClick={handleClearFilter}
                                 className="flex-1 h-[46px] bg-white border border-[#E5E7EB] text-[#374151] text-[15px] font-semibold rounded-[10px] hover:bg-gray-50 transition-colors shadow-sm"
                             >
-                                {t('common:clear')}
+                                {t('common:clear', 'Clear')}
                             </button>
                             <button
                                 onClick={applyFilters}

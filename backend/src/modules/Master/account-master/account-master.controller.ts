@@ -150,6 +150,13 @@ export class AccountMasterController {
     if (body.regUnder) body.regUnder = capitalize(body.regUnder);
     if (body.regType) body.regType = capitalize(body.regType);
 
+    // Convert any empty strings to null so validations pass
+    for (const key in body) {
+        if (body[key] === '') {
+            body[key] = null;
+        }
+    }
+
     // Ensure nested dtos are initialized
     if (files?.msmeCertificate?.[0]) {
        body.msmeCertificateUrl = "temp-" + files.msmeCertificate[0].filename; 
@@ -182,7 +189,8 @@ export class AccountMasterController {
   @ApiQuery({ name: 'groupName', required: false, type: String })
   @ApiQuery({ name: 'gstNo', required: false, type: String })
   @ApiQuery({ name: 'panNo', required: false, type: String })
-  @ApiQuery({ name: 'creditDays', required: false, type: Number })
+  @ApiQuery({ name: 'customerCreditDays', required: false, type: Number })
+  @ApiQuery({ name: 'supplierCreditDays', required: false, type: Number })
   @ApiQuery({ name: 'status', required: false, enum: MasterStatus })
   @ApiQuery({ name: 'search', required: false, type: String })
   @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number' })
@@ -191,7 +199,8 @@ export class AccountMasterController {
     @Query('groupName') groupName?: string,
     @Query('gstNo') gstNo?: string,
     @Query('panNo') panNo?: string,
-    @Query('creditDays') creditDays?: number,
+    @Query('customerCreditDays') customerCreditDays?: number,
+    @Query('supplierCreditDays') supplierCreditDays?: number,
     @Query('status') status?: MasterStatus,
     @Query('search') search?: string,
     @Query('page') page?: string,
@@ -201,7 +210,8 @@ export class AccountMasterController {
       groupName, 
       gstNo, 
       panNo, 
-      creditDays: creditDays ? Number(creditDays) : undefined, 
+      customerCreditDays: customerCreditDays ? Number(customerCreditDays) : undefined, 
+      supplierCreditDays: supplierCreditDays ? Number(supplierCreditDays) : undefined, 
       status, 
       search,
       page: page ? parseInt(page, 10) : undefined,
@@ -215,7 +225,8 @@ export class AccountMasterController {
   @ApiQuery({ name: 'groupName', required: false, type: String })
   @ApiQuery({ name: 'gstNo', required: false, type: String })
   @ApiQuery({ name: 'panNo', required: false, type: String })
-  @ApiQuery({ name: 'creditDays', required: false, type: Number })
+  @ApiQuery({ name: 'customerCreditDays', required: false, type: Number })
+  @ApiQuery({ name: 'supplierCreditDays', required: false, type: Number })
   @ApiQuery({ name: 'status', required: false, enum: MasterStatus })
   @ApiQuery({ name: 'search', required: false, type: String })
   async exportAccounts(
@@ -224,7 +235,8 @@ export class AccountMasterController {
     @Query('groupName') groupName?: string,
     @Query('gstNo') gstNo?: string,
     @Query('panNo') panNo?: string,
-    @Query('creditDays') creditDays?: number,
+    @Query('customerCreditDays') customerCreditDays?: number,
+    @Query('supplierCreditDays') supplierCreditDays?: number,
     @Query('status') status?: MasterStatus,
     @Query('search') search?: string,
   ) {
@@ -232,7 +244,8 @@ export class AccountMasterController {
       groupName, 
       gstNo, 
       panNo, 
-      creditDays: creditDays ? Number(creditDays) : undefined, 
+      customerCreditDays: customerCreditDays ? Number(customerCreditDays) : undefined,
+      supplierCreditDays: supplierCreditDays ? Number(supplierCreditDays) : undefined, 
       status, 
       search 
     };
@@ -250,23 +263,23 @@ export class AccountMasterController {
 
   @Get('generate-customer-code')
   @ApiOperation({ summary: 'Generate next available customer code' })
-  async generateCustomerCode() {
-    const customerCode = await this.accountMasterService.generateCustomerCode();
+  async generateCustomerCode(@Req() req: any) {
+    const customerCode = await this.accountMasterService.generateCustomerCode(req.user.id);
     return { customerCode };
   }
 
   @Get('generate-supplier-code')
   @ApiOperation({ summary: 'Generate next available supplier code' })
-  async generateSupplierCode() {
-    const supplierCode = await this.accountMasterService.generateSupplierCode();
+  async generateSupplierCode(@Req() req: any) {
+    const supplierCode = await this.accountMasterService.generateSupplierCode(req.user.id);
     return { supplierCode };
   }
 
   @Get('generate-code')
   @ApiOperation({ summary: 'Generate next available code for a given group Name (Legacy)' })
   @ApiQuery({ name: 'group', required: true, type: String })
-  async generateCode(@Query('group') group: string) {
-    const code = await this.accountMasterService.generateCode(group);
+  async generateCode(@Query('group') group: string, @Req() req: any) {
+    const code = await this.accountMasterService.generateCode(group, req.user.id);
     return { code };
   }
 
@@ -369,6 +382,13 @@ export class AccountMasterController {
     if (body.customerBalanceType) body.customerBalanceType = capitalize(body.customerBalanceType);
     if (body.regUnder) body.regUnder = capitalize(body.regUnder);
     if (body.regType) body.regType = capitalize(body.regType);
+
+    // Convert any empty strings to null so validations pass and Prisma clears them
+    for (const key in body) {
+        if (body[key] === '') {
+            body[key] = null;
+        }
+    }
 
     if (files?.msmeCertificate?.[0]) {
        body.msmeCertificateUrl = "temp-" + files.msmeCertificate[0].filename;

@@ -298,13 +298,13 @@ model AccountMaster {
   mobileNo          String
 
   // Supplier Details
-  supplierCode           String?  @unique
+  supplierCode           String?
   supplierCreditDays     Int?
   supplierOpeningBalance Decimal?
   supplierBalanceType    BalanceType?
 
   // Customer Details
-  customerCode           String?  @unique
+  customerCode           String?
   customerCreditDays     Int?
   customerOpeningBalance Decimal?
   customerBalanceType    BalanceType?
@@ -328,6 +328,9 @@ model AccountMaster {
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 
+  @@unique([accountName, userId])
+  @@unique([customerCode, userId])
+  @@unique([supplierCode, userId])
   @@map("account_master")
 }
 

@@ -458,36 +458,34 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
         if (formData.isCustomer) groups.push('SUNDRY_DEBTORS');
         fData.append('groupName', JSON.stringify(groups));
 
-        if (formData.gstNo) fData.append('gstNo', formData.gstNo);
-        fData.append('panNo', formData.panNo);
-        fData.append('addressLine1', formData.address1);
-        if (formData.address2) fData.append('addressLine2', formData.address2);
-        fData.append('pincode', formData.pinCode);
-        if (formData.area) fData.append('area', formData.area);
+        fData.append('gstNo', formData.gstNo || '');
+        fData.append('panNo', formData.panNo || '');
+        fData.append('addressLine1', formData.address1 || '');
+        fData.append('addressLine2', formData.address2 || '');
+        fData.append('pincode', formData.pinCode || '');
+        fData.append('area', formData.area || '');
         fData.append('subDistrict', formData.subDistrict || '');
         fData.append('district', formData.district || formData.city || '');
         fData.append('state', formData.state || '');
         fData.append('country', formData.country || 'India');
 
-        fData.append('prefix', formData.prefix);
-        fData.append('contactPersonName', formData.contactPersonName);
-        if (formData.emailId) fData.append('emailId', formData.emailId);
-        fData.append('mobileNo', formData.mobileNo);
+        fData.append('prefix', formData.prefix || '');
+        fData.append('contactPersonName', formData.contactPersonName || '');
+        fData.append('emailId', formData.emailId || '');
+        fData.append('mobileNo', formData.mobileNo || '');
 
-        if (formData.isVendor) {
-            if (formData.supplierCode) fData.append('supplierCode', formData.supplierCode);
-            if (formData.vendorCreditDays) fData.append('supplierCreditDays', formData.vendorCreditDays);
-            if (formData.vendorOpBalance) fData.append('supplierOpeningBalance', formData.vendorOpBalance);
-            fData.append('supplierBalanceType', formData.vendorBalanceType || 'Cr');
-        }
+        // Always append vendor fields so they can be cleared
+        fData.append('supplierCode', formData.isVendor ? (formData.supplierCode || '') : '');
+        fData.append('supplierCreditDays', formData.isVendor ? (formData.vendorCreditDays || '') : '');
+        fData.append('supplierOpeningBalance', formData.isVendor ? (formData.vendorOpBalance || '') : '');
+        fData.append('supplierBalanceType', formData.isVendor ? (formData.vendorBalanceType || 'Cr') : 'Cr');
 
-        if (formData.isCustomer) {
-            if (formData.customerCode) fData.append('customerCode', formData.customerCode);
-            if (formData.customerCreditDays) fData.append('customerCreditDays', formData.customerCreditDays);
-            if (formData.customerOpBalance) fData.append('customerOpeningBalance', formData.customerOpBalance);
-            fData.append('customerBalanceType', formData.customerBalanceType || 'Dr');
-            if (formData.customerType) fData.append('customerType', formData.customerType);
-        }
+        // Always append customer fields so they can be cleared
+        fData.append('customerCode', formData.isCustomer ? (formData.customerCode || '') : '');
+        fData.append('customerCreditDays', formData.isCustomer ? (formData.customerCreditDays || '') : '');
+        fData.append('customerOpeningBalance', formData.isCustomer ? (formData.customerOpBalance || '') : '');
+        fData.append('customerBalanceType', formData.isCustomer ? (formData.customerBalanceType || 'Dr') : 'Dr');
+        fData.append('customerType', formData.isCustomer ? (formData.customerType || '') : '');
 
         if (otherDocs.length > 0) {
              console.log('--- Appending otherDocuments to FormData ---');
@@ -804,7 +802,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
                                         <div className="flex flex-col gap-1.5">
                                             <label className="text-[13px] font-semibold text-[#4B5563]">{t('modules:credit_days')}</label>
-                                            <input type="number" placeholder={t('modules:enter_credit_days')} value={formData.vendorCreditDays} onChange={e => handleInputChange('vendorCreditDays', e.target.value)} className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10" />
+                                            <input type="number" min="0" onKeyDown={(e) => { if (['-', '+', 'e', 'E', '.'].includes(e.key)) e.preventDefault(); }} placeholder={t('modules:enter_credit_days')} value={formData.vendorCreditDays} onChange={e => handleInputChange('vendorCreditDays', e.target.value)} className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10" />
                                         </div>
                                         <div className="flex flex-col gap-1.5">
                                             <label className="text-[13px] font-semibold text-[#4B5563]">{t('modules:opening_balance')}</label>
@@ -844,7 +842,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
                                         <div className="flex flex-col gap-1.5">
                                             <label className="text-[13px] font-semibold text-[#4B5563]">{t('modules:credit_days')}</label>
-                                            <input type="number" placeholder={t('modules:enter_credit_days')} value={formData.customerCreditDays} onChange={e => handleInputChange('customerCreditDays', e.target.value)} className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10" />
+                                            <input type="number" min="0" onKeyDown={(e) => { if (['-', '+', 'e', 'E', '.'].includes(e.key)) e.preventDefault(); }} placeholder={t('modules:enter_credit_days')} value={formData.customerCreditDays} onChange={e => handleInputChange('customerCreditDays', e.target.value)} className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10" />
                                         </div>
                                         <div className="flex flex-col gap-1.5">
                                             <label className="text-[13px] font-semibold text-[#4B5563]">{t('modules:opening_balance')}</label>

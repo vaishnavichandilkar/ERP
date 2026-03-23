@@ -11,10 +11,10 @@ import * as path from 'path';
 export class AccountMasterService {
   constructor(private prisma: PrismaService) {}
 
-  async generateCustomerCode(): Promise<string> {
+  async generateCustomerCode(userId: number): Promise<string> {
     const prefix = 'CT';
     const lastAccount = await this.prisma.accountMaster.findFirst({
-      where: { customerCode: { startsWith: prefix } },
+      where: { customerCode: { startsWith: prefix }, userId },
       orderBy: { id: 'desc' },
     });
 
@@ -29,10 +29,10 @@ export class AccountMasterService {
     return `${prefix}${seq.toString().padStart(5, '0')}`;
   }
 
-  async generateSupplierCode(): Promise<string> {
+  async generateSupplierCode(userId: number): Promise<string> {
     const prefix = 'SP';
     const lastAccount = await this.prisma.accountMaster.findFirst({
-      where: { supplierCode: { startsWith: prefix } },
+      where: { supplierCode: { startsWith: prefix }, userId },
       orderBy: { id: 'desc' },
     });
 
@@ -47,11 +47,11 @@ export class AccountMasterService {
     return `${prefix}${seq.toString().padStart(5, '0')}`;
   }
 
-  async generateCode(groupName: string): Promise<string> {
+  async generateCode(groupName: string, userId: number): Promise<string> {
     if (groupName === GroupNameEnum.SUNDRY_CREDITORS || groupName === 'SUPPLIER') {
-      return this.generateSupplierCode();
+      return this.generateSupplierCode(userId);
     }
-    return this.generateCustomerCode();
+    return this.generateCustomerCode(userId);
   }
 
   private async handleFileUploads(account: any, files?: { msmeCertificate?: Express.Multer.File[], otherDocuments?: Express.Multer.File[] }) {
@@ -63,9 +63,9 @@ export class AccountMasterService {
       console.log('User ID:', account.userId);
       console.log('Files provided:', Object.keys(files || {}));
 
-      // Create specific folder: uploads/account_upload/{userId}_{accountName}
+      // Create specific folder: uploads/account_upload/{id}_{accountName}
       const safeAccountName = account.accountName.replace(/[^a-zA-Z0-9]/g, '_');
-      const folderName = `${account.userId}_${safeAccountName}`;
+      const folderName = `${account.id}_${safeAccountName}`;
       const uploadPath = path.resolve(process.cwd(), 'uploads', 'account_upload', folderName);
       
       console.log('Target uploadPath (absolute):', uploadPath);
@@ -149,17 +149,28 @@ export class AccountMasterService {
   }
 
   async create(createDto: CreateAccountMasterDto, userId: number, files?: any) {
+    const existingAccount = await this.prisma.accountMaster.findFirst({
+      where: {
+        accountName: { equals: createDto.accountName, mode: 'insensitive' },
+        userId: userId
+      }
+    });
+
+    if (existingAccount) {
+      throw new BadRequestException('account name should be unique');
+    }
+
     let { subDistrict, district, country, state } = createDto;
 
     let supplierCode = null;
     let customerCode = null;
 
     if (createDto.groupName.includes(GroupNameEnum.SUNDRY_CREDITORS)) {
-      supplierCode = createDto.supplierCode || await this.generateSupplierCode();
+      supplierCode = createDto.supplierCode || await this.generateSupplierCode(userId);
     }
     
     if (createDto.groupName.includes(GroupNameEnum.SUNDRY_DEBTORS)) {
-      customerCode = createDto.customerCode || await this.generateCustomerCode();
+      customerCode = createDto.customerCode || await this.generateCustomerCode(userId);
     }
 
     if ((!district || !state) && createDto.pincode) {
@@ -232,7 +243,8 @@ export class AccountMasterService {
     groupName?: string; 
     gstNo?: string; 
     panNo?: string; 
-    creditDays?: number | string; 
+    customerCreditDays?: number | string; 
+    supplierCreditDays?: number | string; 
     status?: MasterStatus | string; 
     search?: string; 
     page?: number;
@@ -256,13 +268,17 @@ export class AccountMasterService {
       where.panNo = { contains: filter.panNo, mode: 'insensitive' };
     }
 
-    if (filter.creditDays !== undefined && filter.creditDays !== '') {
-      const days = Number(filter.creditDays);
+    if (filter.customerCreditDays !== undefined && filter.customerCreditDays !== '') {
+      const days = Number(filter.customerCreditDays);
       if (!isNaN(days)) {
-        where.OR = [
-          { supplierCreditDays: days },
-          { customerCreditDays: days }
-        ];
+        where.customerCreditDays = days;
+      }
+    }
+
+    if (filter.supplierCreditDays !== undefined && filter.supplierCreditDays !== '') {
+      const days = Number(filter.supplierCreditDays);
+      if (!isNaN(days)) {
+        where.supplierCreditDays = days;
       }
     }
 
@@ -373,7 +389,21 @@ export class AccountMasterService {
   }
 
   async update(id: number, updateDto: UpdateAccountMasterDto, files?: any) {
-    await this.findOne(id);
+    const existingOriginal = await this.findOne(id);
+    
+    if (updateDto.accountName) {
+      const duplicateAccount = await this.prisma.accountMaster.findFirst({
+        where: {
+          accountName: { equals: updateDto.accountName, mode: 'insensitive' },
+          userId: existingOriginal.userId,
+          id: { not: id }
+        }
+      });
+
+      if (duplicateAccount) {
+        throw new BadRequestException('account name should be unique');
+      }
+    }
     
     // Convert nested properties back for update if needed. We'll simplify Update strategy.
     const data: Prisma.AccountMasterUpdateInput = {
@@ -423,6 +453,9 @@ export class AccountMasterService {
 
     // Clean undefined
     Object.keys(data).forEach(key => data[key as keyof typeof data] === undefined && delete data[key as keyof typeof data]);
+
+    console.log('Update Account Edit - Passed DTO:', updateDto);
+    console.log('Update Account Edit - Cleaned Data sent to Prisma:', data);
 
     const updated = await this.prisma.accountMaster.update({
       where: { id },
