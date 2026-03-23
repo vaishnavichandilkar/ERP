@@ -52,6 +52,11 @@ export const getSubCategoriesDropdown = async (categoryId) => {
     return response.data;
 };
 
+export const getTaxByHsn = async (hsnCode) => {
+    const response = await axiosInstance.get(`${API_PATH}/tax-by-hsn`, { params: { hsnCode } });
+    return response.data;
+};
+
 export const exportProducts = async (params) => {
     const response = await axiosInstance.get(`${API_PATH}/export`, {
         params,
@@ -71,5 +76,6 @@ export default {
     getUomsDropdown,
     getCategoriesDropdown,
     getSubCategoriesDropdown,
+    getTaxByHsn,
     exportProducts
 };

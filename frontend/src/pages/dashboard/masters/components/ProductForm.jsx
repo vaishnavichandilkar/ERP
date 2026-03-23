@@ -113,6 +113,21 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack, onEdit, onSucce
 
     const [formData, setFormData] = useState(initialFormData);
 
+    const isView = mode === 'view';
+    const isFilled = !!(formData.productName && formData.productCode && formData.uom && formData.productType && formData.category);
+
+    const isDirty = mode === 'edit' ? (
+        formData.productName !== initialFormData.productName ||
+        formData.productCode !== initialFormData.productCode ||
+        formData.uom !== initialFormData.uom ||
+        formData.productType !== initialFormData.productType ||
+        formData.category !== initialFormData.category ||
+        formData.subcategory !== initialFormData.subcategory ||
+        formData.hsnCode !== initialFormData.hsnCode ||
+        formData.tax !== initialFormData.tax ||
+        formData.description !== initialFormData.description
+    ) : true;
+
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
@@ -141,6 +156,31 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack, onEdit, onSucce
         fetchInitialData();
     }, []);
 
+    useEffect(() => {
+        if (isView) return;
+
+        if (!formData.hsnCode) {
+            handleInputChange('tax', '');
+            return;
+        }
+
+        const timer = setTimeout(async () => {
+            try {
+                const res = await productService.getTaxByHsn(formData.hsnCode);
+                handleInputChange('tax', res.tax_rate + '%');
+            } catch (error) {
+                handleInputChange('tax', '');
+                if (error.response?.status === 404) {
+                    toast.error(t('modules:invalid_hsn_code', 'Invalid HSN Code'));
+                } else {
+                    toast.error(t('common:error_fetching_data'));
+                }
+            }
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [formData.hsnCode, isView]);
+
     const handleCategoryChange = async (val) => {
         handleInputChange('category', val);
         handleInputChange('subcategory', null);
@@ -159,20 +199,6 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack, onEdit, onSucce
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
-    const isView = mode === 'view';
-    const isFilled = !!(formData.productName && formData.productCode && formData.uom && formData.productType && formData.category);
-
-    const isDirty = mode === 'edit' ? (
-        formData.productName !== initialFormData.productName ||
-        formData.productCode !== initialFormData.productCode ||
-        formData.uom !== initialFormData.uom ||
-        formData.productType !== initialFormData.productType ||
-        formData.category !== initialFormData.category ||
-        formData.subcategory !== initialFormData.subcategory ||
-        formData.hsnCode !== initialFormData.hsnCode ||
-        formData.tax !== initialFormData.tax ||
-        formData.description !== initialFormData.description
-    ) : true;
 
     const handleSubmit = async () => {
         setLoading(true);
@@ -212,8 +238,8 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack, onEdit, onSucce
                 placeholder={placeholder}
                 readOnly={readOnly}
                 disabled={isView}
-                className={`w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-[#111827] outline-none transition-all bg-white 
-                    ${isView || readOnly ? 'cursor-not-allowed bg-gray-50' : 'focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 hover:border-gray-300'}`}
+                className={`w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] outline-none transition-all 
+                    ${isView || readOnly ? 'cursor-not-allowed bg-gray-50 text-gray-500' : 'bg-white text-[#111827] focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 hover:border-gray-300'}`}
                 value={formData[field]}
                 onChange={(e) => handleInputChange(field, e.target.value)}
             />

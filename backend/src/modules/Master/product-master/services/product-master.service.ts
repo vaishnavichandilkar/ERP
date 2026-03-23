@@ -210,6 +210,12 @@ export class ProductMasterService {
         return this.repository.getActiveUomsForDropdown(userId);
     }
 
+    async getTaxByHsn(hsnCode: string) {
+        const hsn = await this.repository.getHsnByCode(hsnCode);
+        if (!hsn) throw new NotFoundException('HSN Code not found');
+        return { tax_rate: Number(hsn.gst_rate) };
+    }
+
     async getCategoryDropdown(userId: number) {
         return this.repository.getActiveCategoriesForDropdown(userId);
     }
