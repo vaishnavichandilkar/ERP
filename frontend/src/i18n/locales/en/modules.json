@@ -254,5 +254,6 @@
     "cr": "Cr",
     "dr": "Dr",
     "india": "India",
-    "view_and_edit_account": "View and Edit Account"
+    "view_and_edit_account": "View and Edit Account",
+    "invalid_hsn_code": "Invalid HSN Code"
 }

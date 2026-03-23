@@ -187,9 +187,16 @@ export class ProductMasterService {
     async generateProductCode(userId: number): Promise<string> {
         const lastCode = await this.repository.getLastProductCode(userId);
         if (!lastCode) {
-            return 'PRD001';
+            return 'PD00001';
         }
-        const numericPart = parseInt(lastCode.replace('PD', ''), 10);
+
+        // Extract numeric part using regex to be robust
+        const match = lastCode.match(/\d+/);
+        if (!match) {
+            return 'PD00001';
+        }
+
+        const numericPart = parseInt(match[0], 10);
         const nextNumeric = numericPart + 1;
         return `PD${nextNumeric.toString().padStart(5, '0')}`;
     }
@@ -201,6 +208,12 @@ export class ProductMasterService {
 
     async getUomDropdown(userId: number) {
         return this.repository.getActiveUomsForDropdown(userId);
+    }
+
+    async getTaxByHsn(hsnCode: string) {
+        const hsn = await this.repository.getHsnByCode(hsnCode);
+        if (!hsn) throw new NotFoundException('HSN Code not found');
+        return { tax_rate: Number(hsn.gst_rate) };
     }
 
     async getCategoryDropdown(userId: number) {

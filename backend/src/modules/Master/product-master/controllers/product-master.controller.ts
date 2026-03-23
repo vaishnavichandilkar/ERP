@@ -91,6 +91,14 @@ export class ProductMasterController {
         return this.service.getProducts(query, req.user.userId);
     }
 
+    @Get('tax-by-hsn')
+    @ApiOperation({ summary: 'Get Tax rate by HSN Code' })
+    @ApiQuery({ name: 'hsnCode', required: true, type: String })
+    @ApiResponse({ status: 200, description: 'Tax rate found' })
+    async getTaxByHsn(@Query('hsnCode') hsnCode: string) {
+        return this.service.getTaxByHsn(hsnCode);
+    }
+
     @Get(':id')
     @ApiOperation({ summary: 'Get single Product by ID' })
     @ApiResponse({ status: 200, description: 'Product details' })
