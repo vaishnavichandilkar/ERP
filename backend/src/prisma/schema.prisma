@@ -180,13 +180,16 @@ model SellerStepReview {
 }
 
 model Pincode {
-  id        Int      @id @default(autoincrement())
-  pincode   String   @unique
-  state     String
-  district  String
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          Int      @id @default(autoincrement())
+  pincode     String   @unique
+  state       String
+  district    String
+  subDistrict String?
+  country     String?
+  areas       String[]
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@map("Pincode")
 }

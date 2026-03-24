@@ -202,6 +202,10 @@ export class CreateAccountMasterDto {
   @IsOptional()
   otherDocuments?: string[];
 
+  @ApiPropertyOptional()
+  @IsOptional()
+  otherDocumentNames?: string | string[];
+
   @ApiPropertyOptional({ enum: MasterStatus })
   @IsEnum(MasterStatus)
   @IsOptional()

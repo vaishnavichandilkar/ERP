@@ -173,6 +173,10 @@ export class AccountMasterController {
        delete body.otherDocuments;
     }
 
+    if (body.otherDocumentNames && typeof body.otherDocumentNames === 'string') {
+       body.otherDocumentNames = [body.otherDocumentNames];
+    }
+
     const dto = plainToInstance(CreateAccountMasterDto, body);
     console.log('Mapped DTO msmeCertificateUrl:', dto.msmeCertificateUrl);
     const errors = await validate(dto);
@@ -402,6 +406,10 @@ export class AccountMasterController {
     }
     if (!Array.isArray(body.otherDocuments)) {
        delete body.otherDocuments;
+    }
+
+    if (body.otherDocumentNames && typeof body.otherDocumentNames === 'string') {
+       body.otherDocumentNames = [body.otherDocumentNames];
     }
 
     const dto = plainToInstance(UpdateAccountMasterDto, body);

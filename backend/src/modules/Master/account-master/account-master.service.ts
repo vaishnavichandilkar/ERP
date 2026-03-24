@@ -54,7 +54,11 @@ export class AccountMasterService {
     return this.generateCustomerCode(userId);
   }
 
-  private async handleFileUploads(account: any, files?: { msmeCertificate?: Express.Multer.File[], otherDocuments?: Express.Multer.File[] }) {
+  private async handleFileUploads(
+    account: any, 
+    files?: { msmeCertificate?: Express.Multer.File[], otherDocuments?: Express.Multer.File[] },
+    otherDocumentNames?: string[] | string
+  ) {
     if (!files || (!files.msmeCertificate && !files.otherDocuments)) return;
     try {
       console.log('--- handleFileUploads STARTED ---');
@@ -103,18 +107,31 @@ export class AccountMasterService {
 
       if (files?.otherDocuments && files.otherDocuments.length > 0) {
         console.log('Processing otherDocuments:', files.otherDocuments.length);
-        const docUrls = files.otherDocuments.map((file) => {
+        
+        let docNamesArray: string[] = [];
+        if (Array.isArray(otherDocumentNames)) {
+          docNamesArray = otherDocumentNames as string[];
+        } else if (typeof otherDocumentNames === 'string') {
+          docNamesArray = [otherDocumentNames];
+        }
+
+        const docUrls = files.otherDocuments.map((file, idx) => {
            console.log('Processing doc:', file.originalname, 'at', file.path);
            const sourcePath = path.resolve(process.cwd(), file.path);
            const extension = path.extname(file.originalname);
-           const randomNumber = Math.floor(100000 + Math.random() * 900000);
-           const randomName = `${randomNumber}_DOC${extension}`;
-           const newPath = path.join(uploadPath, randomName);
+           
+           let baseDocName = `${Math.floor(100000 + Math.random() * 900000)}_DOC`;
+           if (docNamesArray && docNamesArray[idx]) {
+               baseDocName = docNamesArray[idx].replace(/[^a-zA-Z0-9_\-]/g, '_');
+           }
+           
+           const targetName = `${baseDocName}${extension}`;
+           const newPath = path.join(uploadPath, targetName);
            
            if (fs.existsSync(sourcePath)) {
              console.log('Moving doc to:', newPath);
              fs.renameSync(sourcePath, newPath);
-             return `${baseUrl}/${randomName}`;
+             return `${baseUrl}/${targetName}`;
            }
            console.log('Source doc NOT found at:', sourcePath);
            return null;
@@ -226,7 +243,7 @@ export class AccountMasterService {
       },
     });
 
-    await this.handleFileUploads(account, files);
+    await this.handleFileUploads(account, files, createDto.otherDocumentNames as string[]);
     
     return {
       success: true,
@@ -462,7 +479,7 @@ export class AccountMasterService {
       data,
     });
     
-    await this.handleFileUploads(updated, files);
+    await this.handleFileUploads(updated, files, updateDto.otherDocumentNames as string[]);
     
     return {
       success: true,
@@ -481,6 +498,22 @@ export class AccountMasterService {
 
   async getPincodeDetails(pincode: string) {
     try {
+      // Check local DB first
+      const localPincode = await this.prisma.pincode.findUnique({
+        where: { pincode },
+      });
+
+      if (localPincode && localPincode.areas && localPincode.areas.length > 0) {
+        return {
+          areas: localPincode.areas, 
+          district: localPincode.district,
+          state: localPincode.state,
+          subDistrict: localPincode.subDistrict || '',
+          country: localPincode.country || 'India',
+        };
+      }
+
+      // If not in DB, fetch from API
       const response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
       const data = await response.json();
 
@@ -490,19 +523,28 @@ export class AccountMasterService {
           postOffices
             .map((po: any) => po.Name)
             .filter((name: any) => typeof name === 'string' && name.trim() !== '')
-        )).sort();
+        )).sort() as string[];
+        
         const postOffice = postOffices[0];
+        const subDistrict = postOffice.Block || postOffice.District || '';
+        const country = postOffice.Country || 'India';
         
         await this.prisma.pincode.upsert({
           where: { pincode },
           update: {
             state: postOffice.State,
             district: postOffice.District,
+            subDistrict: subDistrict,
+            country: country,
+            areas: areas,
           },
           create: {
             pincode: pincode,
             state: postOffice.State,
             district: postOffice.District,
+            subDistrict: subDistrict,
+            country: country,
+            areas: areas,
           }
         }).catch(() => { /* Ignore on conflict */ });
         
@@ -510,26 +552,11 @@ export class AccountMasterService {
           areas: areas,
           district: postOffice.District || '', 
           state: postOffice.State,
-          subDistrict: postOffice.Block || postOffice.District || '',
-          country: postOffice.Country || 'India',
+          subDistrict: subDistrict,
+          country: country,
         };
       } else {
-        // Fallback to local DB if available
-        const localPincode = await this.prisma.pincode.findUnique({
-          where: { pincode },
-        });
-
-        if (localPincode) {
-          return {
-            areas: [], // Cannot provide dropdown options from local generic cache without area DB
-            district: localPincode.district,
-            state: localPincode.state,
-            subDistrict: '',
-            country: 'India',
-          };
-        }
-
-        throw new NotFoundException('Pincode details not found in external API');
+        throw new NotFoundException('Pincode details not found in external API and local DB');
       }
     } catch (error) {
        if (error instanceof NotFoundException) throw error;
@@ -568,6 +595,7 @@ export class AccountMasterService {
         { header: 'Supplier Code', key: 'supplierCode', width: 15 },
         { header: 'Account Name', key: 'accountName', width: 30 },
         { header: 'Group Name', key: 'groupName', width: 25 },
+        { header: 'Customer Type', key: 'customerType', width: 15 },
         { header: 'Customer Credit Day', key: 'customerCreditDays', width: 18 },
         { header: 'Supplier Credit Day', key: 'supplierCreditDays', width: 18 },
         { header: 'GST NO', key: 'gstNo', width: 20 },
@@ -586,6 +614,7 @@ export class AccountMasterService {
           supplierCode: acc.supplierCode || '-',
           accountName: acc.accountName,
           groupName: acc.groupName.join(', '),
+          customerType: acc.customerType ? (acc.customerType.charAt(0).toUpperCase() + acc.customerType.slice(1)) : '-',
           customerCreditDays: acc.customerCreditDays || 0,
           supplierCreditDays: acc.supplierCreditDays || 0,
           gstNo: acc.gstNo || '-',
@@ -600,17 +629,17 @@ export class AccountMasterService {
       // Shift rows to make room for titles
       worksheet.spliceRows(1, 0, [], [], [], []);
 
-      worksheet.mergeCells('A1:L1');
+      worksheet.mergeCells('A1:M1');
       worksheet.getCell('A1').value = 'ERP';
       worksheet.getCell('A1').font = { size: 18, bold: true };
       worksheet.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle' };
 
-      worksheet.mergeCells('A2:L2');
+      worksheet.mergeCells('A2:M2');
       worksheet.getCell('A2').value = 'Account Master Report';
       worksheet.getCell('A2').font = { size: 14 };
       worksheet.getCell('A2').alignment = { horizontal: 'center', vertical: 'middle' };
 
-      worksheet.mergeCells('A3:L3');
+      worksheet.mergeCells('A3:M3');
       worksheet.getCell('A3').value = `Exported on: ${timestamp}`;
       worksheet.getCell('A3').font = { size: 10 };
       worksheet.getCell('A3').alignment = { horizontal: 'right', vertical: 'middle' };
@@ -628,7 +657,7 @@ export class AccountMasterService {
       // Add Autofilter
       worksheet.autoFilter = {
         from: { row: 5, column: 1 },
-        to: { row: 5, column: 12 },
+        to: { row: 5, column: 13 },
       };
       
       const buffer = await workbook.xlsx.writeBuffer();
@@ -664,9 +693,9 @@ export class AccountMasterService {
 
         // Table Constants
         const tableTop = 100;
-        const colX = [20, 65, 110, 190, 260, 310, 360, 430, 495, 555, 615, 785];
+        const colX = [20, 60, 100, 180, 240, 285, 325, 365, 430, 485, 540, 595, 760];
         const headers = [
-          'Cust Code', 'Supp Code', 'Acc Name', 'Groups', 'C.Cr Day', 'S.Cr Day',
+          'Cust Code', 'Supp Code', 'Acc Name', 'Groups', 'C. Type', 'C.Cr Day', 'S.Cr Day',
           'GST NO', 'PAN NO', 'C.Op Bal', 'S.Op Bal', 'Address', 'Status'
         ];
 
@@ -703,18 +732,19 @@ export class AccountMasterService {
           const fullAddress = `${acc.addressLine1}${acc.area ? ', ' + acc.area : ''}, ${acc.district}`;
 
           doc.fontSize(7);
-          doc.text(acc.customerCode || '-', colX[0], y, { width: 45, lineBreak: true });
-          doc.text(acc.supplierCode || '-', colX[1], y, { width: 45, lineBreak: true });
-          doc.text(acc.accountName.substring(0, 30), colX[2], y, { width: 85, lineBreak: true });
-          doc.text(acc.groupName.join(', ').replace('_', ' '), colX[3], y, { width: 75, lineBreak: true });
-          doc.text(String(acc.customerCreditDays || 0), colX[4], y, { width: 50, lineBreak: false });
-          doc.text(String(acc.supplierCreditDays || 0), colX[5], y, { width: 50, lineBreak: false });
-          doc.text(acc.gstNo || '-', colX[6], y, { width: 70, lineBreak: true });
-          doc.text(acc.panNo, colX[7], y, { width: 65, lineBreak: true });
-          doc.text(acc.customerOpeningBalance ? `${acc.customerOpeningBalance} ${acc.customerBalanceType || 'Dr'}` : '0', colX[8], y, { width: 60, lineBreak: false });
-          doc.text(acc.supplierOpeningBalance ? `${acc.supplierOpeningBalance} ${acc.supplierBalanceType || 'Dr'}` : '0', colX[9], y, { width: 60, lineBreak: false });
-          doc.text(fullAddress.substring(0, 90), colX[10], y, { width: 170, lineBreak: true });
-          doc.text(acc.status === MasterStatus.ACTIVE ? 'Active' : 'Inactive', colX[11], y, { width: 40, lineBreak: false });
+          doc.text(acc.customerCode || '-', colX[0], y, { width: 40, lineBreak: true });
+          doc.text(acc.supplierCode || '-', colX[1], y, { width: 40, lineBreak: true });
+          doc.text(acc.accountName.substring(0, 30), colX[2], y, { width: 80, lineBreak: true });
+          doc.text(acc.groupName.join(', ').replace('_', ' '), colX[3], y, { width: 60, lineBreak: true });
+          doc.text(acc.customerType ? (acc.customerType.charAt(0).toUpperCase() + acc.customerType.slice(1)) : '-', colX[4], y, { width: 45, lineBreak: true });
+          doc.text(String(acc.customerCreditDays || 0), colX[5], y, { width: 40, lineBreak: false });
+          doc.text(String(acc.supplierCreditDays || 0), colX[6], y, { width: 40, lineBreak: false });
+          doc.text(acc.gstNo || '-', colX[7], y, { width: 65, lineBreak: true });
+          doc.text(acc.panNo, colX[8], y, { width: 55, lineBreak: true });
+          doc.text(acc.customerOpeningBalance ? `${acc.customerOpeningBalance} ${acc.customerBalanceType || 'Dr'}` : '0', colX[9], y, { width: 55, lineBreak: false });
+          doc.text(acc.supplierOpeningBalance ? `${acc.supplierOpeningBalance} ${acc.supplierBalanceType || 'Dr'}` : '0', colX[10], y, { width: 55, lineBreak: false });
+          doc.text(fullAddress.substring(0, 90), colX[11], y, { width: 165, lineBreak: true });
+          doc.text(acc.status === MasterStatus.ACTIVE ? 'Active' : 'Inactive', colX[12], y, { width: 40, lineBreak: false });
           
           y += 20;
         });

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Check, ChevronDown, ChevronUp, Loader2, UploadCloud, ArrowLeft, HelpCircle } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, Loader2, UploadCloud, ArrowLeft, HelpCircle, Trash2, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import accountService from '../../../../services/accountService';
@@ -155,10 +155,32 @@ const FileUploadField = ({ label, onFileSelect, accept, maxMb, multiple = false 
                 <p className="text-[12px] text-gray-400 mt-1">{t('common:file_limit_info', { max: maxMb })}</p>
 
                 {files.length > 0 && (
-                    <div className="mt-4 w-full text-left">
+                    <div className="mt-4 w-full flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
                         {files.map((file, idx) => (
-                            <div key={idx} className="text-[12px] text-gray-600 truncate bg-white px-2 py-1 rounded border mb-1">
-                                {file.name}
+                            <div key={idx} className="flex justify-between items-center bg-white px-3 py-2 rounded-[6px] border border-[#E5E7EB] shadow-sm">
+                                <span className="text-[13px] text-gray-700 truncate font-medium flex-1 mr-2">{file.name}</span>
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        setFiles(prev => {
+                                            const newFiles = [...prev];
+                                            newFiles.splice(idx, 1);
+                                            // Handle multiple vs single mode correctly
+                                            if (multiple) {
+                                                onFileSelect(newFiles);
+                                            } else {
+                                                onFileSelect(newFiles.length > 0 ? newFiles[0] : null);
+                                            }
+                                            return newFiles;
+                                        });
+                                        if (fileInputRef.current) fileInputRef.current.value = "";
+                                    }}
+                                    className="text-red-500 hover:bg-red-50 p-1.5 rounded-md transition-colors border border-transparent hover:border-red-100 flex-shrink-0"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
                             </div>
                         ))}
                     </div>
@@ -247,7 +269,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
     const [isFetchingPin, setIsFetchingPin] = useState(false);
 
     const [msmeFile, setMsmeFile] = useState(null);
-    const [otherDocs, setOtherDocs] = useState([]);
+    const [otherDocs, setOtherDocs] = useState([{ name: '', file: null }]);
     const [showPanTooltip, setShowPanTooltip] = useState(false);
     const [errors, setErrors] = useState({});
 
@@ -259,6 +281,16 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                 break;
             case 'groupName':
                 if (!currentFormData.isCustomer && !currentFormData.isVendor) return t('modules:error_group_name');
+                break;
+            case 'emailId':
+                if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                    return t('modules:error_invalid_email', 'Invalid email address format');
+                }
+                break;
+            case 'gstNo':
+                if (value && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(value.trim().toUpperCase())) {
+                    return t('modules:error_gst_no', 'Invalid GST Number format');
+                }
                 break;
             case 'panNo':
                 if (!value?.trim() || !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(value.trim().toUpperCase())) {
@@ -316,8 +348,8 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
     const validateAll = () => {
         const newErrors = {};
         const fieldsToValidate = [
-            'accountName', 'groupName', 'panNo', 'address1', 'pinCode', 
-            'mobileNo', 'prefix', 'contactPersonName', 'vendorOpBalance', 'customerOpBalance'
+            'accountName', 'groupName', 'panNo', 'gstNo', 'address1', 'pinCode', 
+            'mobileNo', 'emailId', 'prefix', 'contactPersonName', 'vendorOpBalance', 'customerOpBalance'
         ];
         
         if (msmeEnabled) {
@@ -336,6 +368,23 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
 
     const handleInputChange = async (field, value) => {
         const newFormData = { ...formData, [field]: value };
+        
+        // Auto fetch PAN from GST No
+        if (field === 'gstNo') {
+            const gstPattern = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+            if (value && gstPattern.test(value.trim().toUpperCase())) {
+                newFormData.panNo = value.trim().substring(2, 12).toUpperCase();
+                
+                if (errors.panNo) {
+                    setErrors(prev => {
+                        const newErrs = { ...prev };
+                        delete newErrs.panNo;
+                        return newErrs;
+                    });
+                }
+            }
+        }
+
         setFormData(newFormData);
 
         // Remove error automatically when corrected
@@ -440,6 +489,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
             if (!formData.accountName?.trim() || formData.accountName.trim().length < 3) return toast.error("Missing valid Account Name");
             if (!formData.isCustomer && !formData.isVendor) return toast.error("Please select at least one Account Type");
             if (!formData.panNo?.trim() || !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.panNo.trim().toUpperCase())) return toast.error("Missing valid PAN Number");
+            if (formData.gstNo && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(formData.gstNo.trim().toUpperCase())) return toast.error("Invalid GST Number format");
             if (!formData.address1?.trim()) return toast.error("Missing Address Line 1");
             if (!String(formData.pinCode || '').trim() || String(formData.pinCode).trim().length !== 6) return toast.error("Missing 6-digit Pincode");
             if (!formData.prefix?.trim()) return toast.error("Missing Name Prefix");
@@ -447,6 +497,12 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
             if (!String(formData.mobileNo || '').trim() || String(formData.mobileNo).trim().length !== 10) return toast.error("Missing 10-digit Mobile Number");
             if (msmeEnabled && (!formData.msmeId?.trim() || !/^UDYAM-[A-Z]{2}-\d{2}-\d{7}$/.test(formData.msmeId.trim().toUpperCase()))) return toast.error("Missing valid MSME ID");
             return;
+        }
+
+        const validOtherDocsCheck = otherDocs.filter(d => d.name?.trim() || d.file);
+        if (validOtherDocsCheck.some(d => !d.name?.trim() || !d.file)) {
+             toast.error("Please provide both document name and file for all added Other Documents, or delete empty rows.");
+             return;
         }
 
         setIsLoading(true);
@@ -487,15 +543,12 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
         fData.append('customerBalanceType', formData.isCustomer ? (formData.customerBalanceType || 'Dr') : 'Dr');
         fData.append('customerType', formData.isCustomer ? (formData.customerType || '') : '');
 
-        if (otherDocs.length > 0) {
-             console.log('--- Appending otherDocuments to FormData ---');
-             console.log('Found documents:', otherDocs.length);
-             otherDocs.forEach((d, i) => {
-                 console.log(`Document ${i}:`, d.name, d.size);
-                 fData.append('otherDocuments', d);
+        const validOtherDocs = otherDocs.filter(d => d.name?.trim() && d.file);
+        if (validOtherDocs.length > 0) {
+             validOtherDocs.forEach((d) => {
+                 fData.append('otherDocuments', d.file);
+                 fData.append('otherDocumentNames', d.name);
              });
-        } else {
-             console.log('--- No otherDocuments to append ---');
         }
 
         fData.append('msmeEnabled', msmeEnabled ? 'true' : 'false');
@@ -539,6 +592,8 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
         if (!formData.contactPersonName?.trim()) return false;
         if (!String(formData.mobileNo || '').trim() || String(formData.mobileNo).trim().length !== 10) return false;
         
+        if (formData.emailId && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.emailId)) return false;
+
         if (msmeEnabled) {
             if (!formData.msmeId?.trim() || !/^UDYAM-[A-Z]{2}-\d{2}-\d{7}$/.test(formData.msmeId.trim().toUpperCase())) return false;
             if (!formData.regUnder?.trim()) return false;
@@ -610,11 +665,14 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                      <label className="text-[13px] font-semibold text-[#4B5563]">{t('modules:gst_no')} ({t('common:optional')})</label>
                                      <input
                                          type="text"
+                                         maxLength={15}
                                          placeholder={t('modules:enter_gst_number')}
-                                         className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10"
+                                         className={`w-full h-[44px] border rounded-[8px] px-4 text-[14px] outline-none transition-colors ${errors.gstNo ? 'border-red-500 focus:ring-1 focus:ring-red-500/10' : 'border-[#E5E7EB] focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10'}`}
                                          value={formData.gstNo}
                                          onChange={(e) => handleInputChange('gstNo', e.target.value.toUpperCase())}
+                                         onBlur={() => validateField('gstNo', formData.gstNo)}
                                      />
+                                     {errors.gstNo && <p className="text-[12px] text-red-500 mt-0.5">{errors.gstNo}</p>}
                                  </div>
                                  <div className="flex flex-col gap-1.5 overflow-visible relative group/pan">
                                      <label className="text-[13px] font-semibold text-[#4B5563]">
@@ -759,10 +817,12 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                     <input
                                         type="email"
                                         placeholder={t('modules:enter_email_id')}
-                                        className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10"
+                                        className={`w-full h-[44px] border rounded-[8px] px-4 text-[14px] outline-none transition-colors ${errors.emailId ? 'border-red-500 focus:ring-1 focus:ring-red-500/10' : 'border-[#E5E7EB] focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10'}`}
                                         value={formData.emailId}
                                         onChange={(e) => handleInputChange('emailId', e.target.value)}
+                                        onBlur={() => validateField('emailId', formData.emailId)}
                                     />
+                                    {errors.emailId && <p className="text-[12px] text-red-500 mt-0.5">{errors.emailId}</p>}
                                 </div>
                                  <div className="flex flex-col gap-1.5">
                                     <label className="text-[13px] font-semibold text-[#4B5563]">
@@ -880,14 +940,73 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                         </div>
 
                         {/* 4. Other Documents */}
-                         <div className="flex flex-col gap-6 w-full md:w-1/2">
-                            <FileUploadField 
-                                label={t('modules:other_documents')} 
-                                accept=".pdf, .jpg, .jpeg, .png" 
-                                maxMb={10} 
-                                multiple={true}
-                                onFileSelect={setOtherDocs} 
-                            />
+                         <div className="flex flex-col gap-4 w-full md:w-3/4">
+                            <div className="flex items-center justify-between border-b border-[#E5E7EB] pb-2">
+                                <h3 className="text-[16px] font-bold text-[#111827]">
+                                    {t('modules:other_documents')} ({t('common:optional')})
+                                </h3>
+                                <button
+                                    type="button"
+                                    onClick={() => setOtherDocs(prev => [...prev, { name: '', file: null }])}
+                                    className="text-[13px] font-bold text-[#0A3622] hover:bg-[#0A3622]/10 px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5"
+                                >
+                                    <Plus size={16} /> Add Document
+                                </button>
+                            </div>
+
+                            {otherDocs.length === 0 ? (
+                                <div className="text-[13px] text-[#6B7280] italic py-4 bg-gray-50/50 rounded-lg text-center border border-dashed border-gray-200">No other documents added.</div>
+                            ) : (
+                                <div className="flex flex-col gap-3">
+                                    {otherDocs.map((doc, idx) => (
+                                        <div key={idx} className="flex flex-wrap md:flex-nowrap gap-6 items-end bg-white p-5 rounded-[8px] border border-[#E5E7EB] shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+                                            <div className="flex-1 flex flex-col gap-2 min-w-[200px]">
+                                                <label className="text-[13px] font-semibold text-[#4B5563]">Document Name <span className="text-red-500">*</span></label>
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="e.g. Aadhar Card" 
+                                                    className="w-full h-[40px] border border-[#E5E7EB] rounded-[6px] px-3 text-[14px] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10" 
+                                                    value={doc.name}
+                                                    onChange={e => {
+                                                        const newDocs = [...otherDocs];
+                                                        newDocs[idx].name = e.target.value;
+                                                        setOtherDocs(newDocs);
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="flex-1 flex flex-col gap-2 min-w-[200px]">
+                                                <label className="text-[13px] font-semibold text-[#4B5563]">Upload File <span className="text-red-500">*</span></label>
+                                                <div className="flex items-center">
+                                                    <input 
+                                                        type="file" 
+                                                        accept=".pdf, .jpg, .jpeg, .png" 
+                                                        className="w-full text-[14px] text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-[13px] file:font-semibold file:bg-[#E5F0ED] file:text-[#0A3622] hover:file:bg-[#d6e7e2] cursor-pointer" 
+                                                        onChange={e => {
+                                                            const file = e.target.files[0];
+                                                            if(file && file.size > 10 * 1024 * 1024) return toast.error("File size exceeds 10MB");
+                                                            const newDocs = [...otherDocs];
+                                                            newDocs[idx].file = file;
+                                                            setOtherDocs(newDocs);
+                                                        }}
+                                                    />
+                                                </div>
+                                                {/* Replaced implicit filename showing with the native file input which handles string generation automatically alongside chosen file */}
+                                            </div>
+                                            <button 
+                                                type="button" 
+                                                onClick={() => {
+                                                    const newDocs = [...otherDocs];
+                                                    newDocs.splice(idx, 1);
+                                                    setOtherDocs(newDocs);
+                                                }}
+                                                className="mb-1.5 text-red-500 hover:bg-red-50 p-2 rounded-[6px] transition-colors border border-transparent hover:border-red-100 flex-shrink-0 flex items-center justify-center"
+                                            >
+                                                <Trash2 size={20} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                          {/* 5. MSME Details */}

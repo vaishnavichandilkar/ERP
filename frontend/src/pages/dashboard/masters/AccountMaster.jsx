@@ -385,7 +385,7 @@ const AccountMaster = () => {
                                 <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB] uppercase tracking-tight">
                                     {t('modules:supplier_code')}
                                 </th>
-                                <th className="px-6 py-5 border-r border-[#E5E7EB]">
+                                <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB]">
                                     <div className="flex items-center gap-1.5 cursor-pointer hover:text-[#073318] transition-colors uppercase tracking-tight text-left">
                                         {t('modules:account')}
                                         <ChevronsUpDown size={14} className="text-gray-300" />
@@ -393,6 +393,9 @@ const AccountMaster = () => {
                                 </th>
                                 <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB] uppercase tracking-tight">
                                     {t('modules:account_type')}
+                                </th>
+                                <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB] uppercase tracking-tight">
+                                    {t('modules:customer_type', 'Customer Type')}
                                 </th>
                                 <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB] uppercase tracking-tight">
                                     {t('modules:customer_credit_days')}
@@ -436,7 +439,7 @@ const AccountMaster = () => {
                         <tbody className="text-[14px] text-[#111827]">
                             {loading ? (
                                 <tr>
-                                    <td colSpan="11" className="px-6 py-20 text-center text-gray-400">
+                                    <td colSpan="12" className="px-6 py-20 text-center text-gray-400">
                                         <div className="flex flex-col items-center gap-3">
                                             <div className="w-10 h-10 border-4 border-[#0A3622]/10 border-t-[#0A3622] rounded-full animate-spin"></div>
                                             <span className="font-medium">{t('common:loading')}...</span>
@@ -453,6 +456,9 @@ const AccountMaster = () => {
                                             {row.groupName?.includes('SUNDRY_DEBTORS') && <span className="px-2 py-0.5 bg-[#073318]/10 text-[#073318] rounded text-[11px] font-bold uppercase tracking-wider">{t('modules:customer')}</span>}
                                             {row.groupName?.includes('SUNDRY_CREDITORS') && <span className="px-2 py-0.5 bg-[#4B5563]/10 text-[#4B5563] rounded text-[11px] font-bold uppercase tracking-wider">{t('modules:vendor')}</span>}
                                         </div>
+                                    </td>
+                                    <td className="px-6 py-5 text-[#4B5563] font-medium border-r border-[#F3F4F6] capitalize">
+                                        {row.customerType ? row.customerType.toLowerCase() : '-'}
                                     </td>
                                     <td className="px-6 py-5 text-[#4B5563] font-medium border-r border-[#F3F4F6]">{row.customerCreditDays || 0}</td>
                                     <td className="px-6 py-5 text-[#4B5563] font-medium border-r border-[#F3F4F6]">{row.supplierCreditDays || 0}</td>
@@ -505,7 +511,7 @@ const AccountMaster = () => {
                                 </tr>
                             )) : (
                                 <tr>
-                                    <td colSpan="11" className="px-6 py-20 text-center">
+                                    <td colSpan="12" className="px-6 py-20 text-center">
                                         <div className="flex flex-col items-center gap-2">
                                             <div className="p-4 bg-gray-50 rounded-full">
                                                 <Database size={32} className="text-gray-300" />
