@@ -6,15 +6,15 @@ import { translateDynamic } from '../../../../utils/i18nUtils';
 import productService from '../../../../services/productService';
 import toast from 'react-hot-toast';
 
-const CustomSelect = ({ 
-    label, 
-    options, 
-    value, 
-    onChange, 
-    placeholder, 
-    isSearchable = false, 
-    disabled = false, 
-    showAsterisk = false, 
+const CustomSelect = ({
+    label,
+    options,
+    value,
+    onChange,
+    placeholder,
+    isSearchable = false,
+    disabled = false,
+    showAsterisk = false,
     getOptionLabel,
     footerLabel = '',
     onFooterClick = null
@@ -141,8 +141,23 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack, onEdit, onSucce
 
     const [formData, setFormData] = useState(initialFormData);
 
+    const [suggestions, setSuggestions] = useState([]);
+    const [nameError, setNameError] = useState('');
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const suggestionsRef = useRef(null);
+
     const isView = mode === 'view';
-    const isFilled = !!(formData.productName && formData.productCode && formData.uom && formData.productType && formData.category);
+    const isFilled = !!(formData.productName && formData.productCode && formData.uom && formData.productType && formData.category && !nameError);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (suggestionsRef.current && !suggestionsRef.current.contains(event.target)) {
+                setShowSuggestions(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const isDirty = mode === 'edit' ? (
         formData.productName !== initialFormData.productName ||
@@ -256,23 +271,89 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack, onEdit, onSucce
         }
     };
 
-    const renderInput = (label, field, placeholder, showAsterisk = true, readOnly = false) => (
-        <div className="flex flex-col gap-1.5 w-full">
-            <label className="text-[13px] font-semibold text-[#4B5563]">
-                {label} {showAsterisk && <span className="text-red-500">*</span>}
-            </label>
-            <input
-                type="text"
-                placeholder={placeholder}
-                readOnly={readOnly}
-                disabled={isView}
-                className={`w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] outline-none transition-all 
-                    ${isView || readOnly ? 'cursor-not-allowed bg-gray-50 text-gray-500' : 'bg-white text-[#111827] focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 hover:border-gray-300'}`}
-                value={formData[field]}
-                onChange={(e) => handleInputChange(field, e.target.value)}
-            />
-        </div>
-    );
+    useEffect(() => {
+        if (isView || !formData.productName || formData.productName.length < 1) {
+            setSuggestions([]);
+            setShowSuggestions(false);
+            setNameError('');
+            return;
+        }
+
+        const timer = setTimeout(async () => {
+            try {
+                // Fetch suggestions
+                const suggestRes = await productService.getSuggestions(formData.productName);
+                setSuggestions(suggestRes);
+                setShowSuggestions(suggestRes.length > 0);
+
+                // Check uniqueness
+                const checkRes = await productService.checkProductName(formData.productName, initialData?.id);
+                if (!checkRes.isUnique) {
+                    setNameError(t('modules:duplicate_product_name', 'Product name already exists'));
+                } else {
+                    setNameError('');
+                }
+            } catch (error) {
+                console.error('Error in product name checks:', error);
+            }
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [formData.productName, isView, initialData?.id]);
+
+    const renderInput = (label, field, placeholder, showAsterisk = true, readOnly = false) => {
+        const isProductName = field === 'productName';
+
+        return (
+            <div className="flex flex-col gap-1.5 w-full relative" ref={isProductName ? suggestionsRef : null}>
+                <label className="text-[13px] font-semibold text-[#4B5563]">
+                    {label} {showAsterisk && <span className="text-red-500">*</span>}
+                </label>
+                <div className="relative">
+                    <input
+                        type="text"
+                        placeholder={placeholder}
+                        readOnly={readOnly}
+                        disabled={isView}
+                        autoComplete="off"
+                        className={`w-full h-[44px] border rounded-[8px] px-4 text-[14px] outline-none transition-all 
+                            ${nameError && !readOnly ? 'border-red-500 bg-red-50/10' : 'border-[#E5E7EB]'}
+                            ${isView || readOnly ? 'cursor-not-allowed bg-gray-50 text-gray-500' : 'bg-white text-[#111827] focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 hover:border-gray-300'}`}
+                        value={formData[field]}
+                        onFocus={() => isProductName && suggestions.length > 0 && setShowSuggestions(true)}
+                        onChange={(e) => {
+                            handleInputChange(field, e.target.value);
+                            if (isProductName && nameError) setNameError('');
+                        }}
+                    />
+
+                    {isProductName && showSuggestions && !isView && suggestions.length > 0 && (
+                        <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-white border border-gray-100 rounded-[8px] shadow-lg z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                            <div className="max-h-[200px] overflow-y-auto w-full py-1 custom-scrollbar">
+                                {suggestions.map((suggestion, idx) => (
+                                    <div
+                                        key={idx}
+                                        className="px-4 py-2.5 text-[14px] text-[#4B5563] hover:bg-gray-50 cursor-pointer transition-colors"
+                                        onClick={() => {
+                                            handleInputChange('productName', suggestion);
+                                            setShowSuggestions(false);
+                                            // Uniqueness check for selected suggestion (should show error since it exists)
+                                            setNameError(t('modules:duplicate_product_name', 'Product name already exists'));
+                                        }}
+                                    >
+                                        {suggestion}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+                {isProductName && nameError && (
+                    <span className="text-red-500 text-[11px] font-medium absolute top-[calc(100%+2px)]">{nameError}</span>
+                )}
+            </div>
+        );
+    };
 
     const renderViewMode = () => (
         <div className="bg-white rounded-[16px] border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col w-full overflow-hidden mb-12 animate-in fade-in duration-300">

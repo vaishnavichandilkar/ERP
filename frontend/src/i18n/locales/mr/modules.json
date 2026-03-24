@@ -239,5 +239,7 @@
     "cr": "जमा",
     "dr": "नावे",
     "india": "भारत",
-    "view_and_edit_account": "खाते पहा आणि संपादित करा"
+    "view_and_edit_account": "खाते पहा आणि संपादित करा",
+    "duplicate_product_name": "उत्पादनाचे नाव आधीच अस्तित्वात आहे",
+    "invalid_hsn_code": "अवैध एचएसएन कोड"
 }

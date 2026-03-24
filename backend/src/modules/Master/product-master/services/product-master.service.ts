@@ -225,6 +225,12 @@ export class ProductMasterService {
     }
 
     async createProduct(dto: CreateProductDto, userId: number) {
+        // Uniqueness check
+        const existing = await this.repository.findByProductName(dto.product_name, userId);
+        if (existing) {
+            throw new BadRequestException('Product name already exists');
+        }
+
         const uom = await this.repository.getUomById(dto.uom_id);
         if (!uom || uom.user_id !== userId) throw new BadRequestException('No units found for this user');
 
@@ -253,6 +259,56 @@ export class ProductMasterService {
             description: dto.description,
             created_by: userId
         });
+    }
+
+    async updateProduct(id: number, dto: UpdateProductDto, userId: number) {
+        const product = await this.repository.findProductById(id);
+        if (!product || product.created_by !== userId) throw new NotFoundException('Product not found');
+
+        if (dto.product_name && dto.product_name !== product.product_name) {
+            const existing = await this.repository.findByProductName(dto.product_name, userId);
+            if (existing && existing.id !== id) {
+                throw new BadRequestException('Product name already exists');
+            }
+        }
+
+        const updateData: any = { ...dto };
+
+        if (dto.uom_id) {
+            const uom = await this.repository.getUomById(dto.uom_id);
+            if (!uom || uom.user_id !== userId) throw new BadRequestException('No units found for this user');
+        }
+
+        if (dto.category_id || dto.sub_category_id) {
+            const catId = dto.category_id || product.category_id;
+            const subCatId = dto.sub_category_id || product.sub_category_id;
+            const subCategory = await this.repository.getSubCategoryById(subCatId);
+            if (!subCategory || subCategory.category_id !== catId) {
+                throw new BadRequestException('Invalid Category/Sub Category relation');
+            }
+        }
+
+        if (dto.hsn_code) {
+            const hsn = await this.repository.getHsnByCode(dto.hsn_code);
+            if (!hsn) throw new BadRequestException('HSN Code not found in master');
+            updateData.tax_rate = Number(hsn.gst_rate);
+        }
+
+        return this.repository.updateProduct(id, updateData);
+    }
+
+    async getProductNameSuggestions(name: string, userId: number) {
+        if (!name || name.length < 2) return [];
+        const products = await this.repository.getProductNameSuggestions(name, userId);
+        return products.map(p => p.product_name);
+    }
+
+    async checkProductNameUnique(name: string, userId: number, excludeId?: number) {
+        const existing = await this.repository.findByProductName(name, userId);
+        if (existing && (!excludeId || existing.id !== excludeId)) {
+            return { isUnique: false };
+        }
+        return { isUnique: true };
     }
 
     async getProducts(query: GetProductsQuery, userId: number) {
@@ -286,35 +342,6 @@ export class ProductMasterService {
         const product = await this.repository.findProductById(id);
         if (!product || product.created_by !== userId) throw new NotFoundException('Product not found');
         return product;
-    }
-
-    async updateProduct(id: number, dto: UpdateProductDto, userId: number) {
-        const product = await this.repository.findProductById(id);
-        if (!product || product.created_by !== userId) throw new NotFoundException('Product not found');
-
-        const updateData: any = { ...dto };
-
-        if (dto.uom_id) {
-            const uom = await this.repository.getUomById(dto.uom_id);
-            if (!uom || uom.user_id !== userId) throw new BadRequestException('No units found for this user');
-        }
-
-        if (dto.category_id || dto.sub_category_id) {
-            const catId = dto.category_id || product.category_id;
-            const subCatId = dto.sub_category_id || product.sub_category_id;
-            const subCategory = await this.repository.getSubCategoryById(subCatId);
-            if (!subCategory || subCategory.category_id !== catId) {
-                throw new BadRequestException('Invalid Category/Sub Category relation');
-            }
-        }
-
-        if (dto.hsn_code) {
-            const hsn = await this.repository.getHsnByCode(dto.hsn_code);
-            if (!hsn) throw new BadRequestException('HSN Code not found in master');
-            updateData.tax_rate = Number(hsn.gst_rate);
-        }
-
-        return this.repository.updateProduct(id, updateData);
     }
 
     async toggleStatus(id: number, dto: ToggleProductStatusDto, userId: number) {

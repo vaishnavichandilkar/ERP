@@ -128,6 +128,28 @@ export class ProductMasterController {
         return this.service.toggleStatus(id, dto, req.user.userId);
     }
 
+    @Get('suggestions')
+    @ApiOperation({ summary: 'Get product name suggestions' })
+    @ApiQuery({ name: 'name', required: true, type: String })
+    @ApiResponse({ status: 200, description: 'List of product name suggestions' })
+    async getSuggestions(@Request() req, @Query('name') name: string) {
+        return this.service.getProductNameSuggestions(name, req.user.userId);
+    }
+
+    @Get('check-name')
+    @ApiOperation({ summary: 'Check if product name is unique' })
+    @ApiQuery({ name: 'name', required: true, type: String })
+    @ApiQuery({ name: 'excludeId', required: false, type: Number })
+    @ApiResponse({ status: 200, description: 'Uniqueness status' })
+    async checkNameUnique(
+        @Request() req,
+        @Query('name') name: string,
+        @Query('excludeId') excludeId?: string
+    ) {
+        const id = excludeId ? parseInt(excludeId, 10) : undefined;
+        return this.service.checkProductNameUnique(name, req.user.userId, id);
+    }
+
     @Delete(':id')
     @ApiOperation({ summary: 'Soft delete a Product' })
     @ApiResponse({ status: 200, description: 'Product deleted' })
