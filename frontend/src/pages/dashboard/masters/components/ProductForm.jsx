@@ -1,11 +1,24 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronDown, ChevronUp, ArrowLeft, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { translateDynamic } from '../../../../utils/i18nUtils';
 import productService from '../../../../services/productService';
 import toast from 'react-hot-toast';
 
-const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchable = false, disabled = false, showAsterisk = false, getOptionLabel }) => {
+const CustomSelect = ({ 
+    label, 
+    options, 
+    value, 
+    onChange, 
+    placeholder, 
+    isSearchable = false, 
+    disabled = false, 
+    showAsterisk = false, 
+    getOptionLabel,
+    footerLabel = '',
+    onFooterClick = null
+}) => {
     const { t } = useTranslation(['common']);
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -83,6 +96,20 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                             <div className="px-4 py-3 text-[14px] text-gray-500 text-center">{t('no_options_found')}</div>
                         )}
                     </div>
+                    {footerLabel && onFooterClick && (
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setIsOpen(false);
+                                setSearchTerm('');
+                                onFooterClick();
+                            }}
+                            className="w-full py-3.5 border-t border-gray-100 text-[#014A36] text-[14px] font-bold hover:bg-gray-50 transition-colors flex items-center justify-center gap-1.5"
+                        >
+                            <span className="text-[18px]">+</span> {footerLabel}
+                        </button>
+                    )}
                 </div>
             )}
         </div>
@@ -92,6 +119,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
 
 const ProductForm = ({ mode = 'add', initialData = null, onBack, onEdit, onSuccess }) => {
     const { t } = useTranslation(['modules', 'common']);
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
 
     const [uomList, setUomList] = useState([]);
@@ -159,7 +187,7 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack, onEdit, onSucce
     useEffect(() => {
         if (isView) return;
 
-        if (!formData.hsnCode) {
+        if (!formData.hsnCode || formData.hsnCode.length < 4) {
             handleInputChange('tax', '');
             return;
         }
@@ -337,6 +365,8 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack, onEdit, onSucce
                             isSearchable={true}
                             showAsterisk={true}
                             disabled={isView}
+                            footerLabel="+ Add UOM"
+                            onFooterClick={() => navigate('/seller/masters/unit-master')}
                         />
 
                         <CustomSelect
@@ -358,6 +388,8 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack, onEdit, onSucce
                             getOptionLabel={(opt) => opt.name}
                             showAsterisk={true}
                             disabled={isView}
+                            footerLabel="+ Add Category"
+                            onFooterClick={() => navigate('/seller/masters/category')}
                         />
 
                         <CustomSelect
@@ -369,6 +401,8 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack, onEdit, onSucce
                             getOptionLabel={(opt) => opt.name}
                             showAsterisk={true}
                             disabled={isView || !formData.category}
+                            footerLabel="+ Add Sub Category"
+                            onFooterClick={() => navigate('/seller/masters/category')}
                         />
 
                         {renderInput(t('modules:hsn_code'), 'hsnCode', t('common:enter') + ' ' + t('modules:hsn_code'))}
@@ -381,7 +415,7 @@ const ProductForm = ({ mode = 'add', initialData = null, onBack, onEdit, onSucce
                                 readOnly
                                 disabled={true}
                                 placeholder={t('modules:tax_auto')}
-                                className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-gray-500 outline-none transition-all bg-gray-50"
+                                className="w-full h-[44px] border border-[#E5E7EB] rounded-[8px] px-4 text-[14px] text-gray-500 outline-none transition-all bg-gray-50 cursor-not-allowed"
                                 value={formData.tax}
                             />
                         </div>

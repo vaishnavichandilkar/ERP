@@ -394,6 +394,13 @@ const GroupMaster = () => {
                 </div>
 
                 <div className="min-w-full overflow-x-auto overflow-y-hidden">
+                    <div className="flex items-stretch justify-between bg-emerald-900 border-b border-emerald-950 text-[13px] font-bold text-white uppercase tracking-wider">
+                        <div className="flex-1 border-r border-white/50 pr-6 py-4 pl-9 flex items-center">{t('modules:group_master')}</div>
+                        <div className="flex items-stretch shrink-0">
+                            <div className="w-[120px] border-r border-white/50 flex items-center justify-center px-4">{t('common:status')}</div>
+                            <div className="w-20 flex items-center justify-center px-4">{t('common:action')}</div>
+                        </div>
+                    </div>
                     <div className="flex flex-col divide-y divide-[#F3F4F6]">
                         {isLoading ? (
                             <div className="p-16 text-center">

@@ -46,12 +46,12 @@ const EditCategoryModal = ({ isOpen, onClose, data, onSuccess }) => {
 
     const handleSave = async () => {
         if (!categoryName.trim()) {
-            toast.error(t('modules:category_name_required', 'Category name is required'));
+            toast.error(t('modules:category_name_required'));
             return;
         }
 
         if (data?.type === 'sub_category' && !parentCategory) {
-            toast.error(t('modules:parent_category_required', 'Parent category is required'));
+            toast.error(t('modules:parent_category_required'));
             return;
         }
 
@@ -59,13 +59,13 @@ const EditCategoryModal = ({ isOpen, onClose, data, onSuccess }) => {
         try {
             if (data.type === 'category') {
                 await categoryService.updateCategory(data.id, { name: categoryName });
-                toast.success(t('modules:category_updated_successfully', 'Category updated successfully'));
+                toast.success(t('modules:category_updated_successfully'));
             } else {
                 await categoryService.updateSubCategory(data.id, { 
                     name: categoryName, 
                     category_id: parentCategory.id 
                 });
-                toast.success(t('modules:sub_category_updated_successfully', 'Sub Category updated successfully'));
+                toast.success(t('modules:sub_category_updated_successfully'));
             }
             onSuccess();
             onClose();
@@ -114,13 +114,13 @@ const EditCategoryModal = ({ isOpen, onClose, data, onSuccess }) => {
                     {/* Category/Subcategory Name Input */}
                     <div className="space-y-2">
                         <label className="text-[13px] font-semibold text-[#4B5563]">
-                            {data?.type === 'category' ? t('modules:category_name') : t('modules:sub_category_name', 'Sub category name')}
+                            {data?.type === 'category' ? t('modules:category_name') : t('modules:sub_category_name')}
                         </label>
                         <input
                             type="text"
                             value={categoryName}
                             onChange={(e) => setCategoryName(e.target.value)}
-                            placeholder={data?.type === 'category' ? t('modules:enter_category_name') : t('modules:enter_sub_category_name', 'Enter sub category name')}
+                            placeholder={data?.type === 'category' ? t('modules:enter_category_name') : t('modules:enter_sub_category_name')}
                             className="w-full h-[46px] border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] font-medium outline-none focus:border-[#073318] focus:ring-4 focus:ring-[#073318]/5 transition-all placeholder:text-gray-400"
                         />
                     </div>
@@ -134,7 +134,7 @@ const EditCategoryModal = ({ isOpen, onClose, data, onSuccess }) => {
                                 onClick={() => setIsParentDropdownOpen(!isParentDropdownOpen)}
                             >
                                 <span className={`text-[14px] ${parentCategory ? 'text-[#111827] font-medium' : 'text-gray-400'}`}>
-                                    {parentCategory ? parentCategory.name : t('modules:select_category', 'Select Category')}
+                                    {parentCategory ? parentCategory.name : t('modules:select_category')}
                                 </span>
                                 <ChevronDown size={18} className={`text-gray-400 transition-transform duration-200 ${isParentDropdownOpen ? 'rotate-180' : ''}`} />
                             </div>

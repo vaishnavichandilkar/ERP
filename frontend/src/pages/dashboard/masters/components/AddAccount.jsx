@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import accountService from '../../../../services/accountService';
 
-const CustomSelect = ({ label, options, value, onChange, onBlur, placeholder, isSearchable = false, required = false, widthClass = "w-full", error = "" }) => {
+const CustomSelect = ({ label, options, value, onChange, onBlur, placeholder, isSearchable = false, required = false, disabled = false, widthClass = "w-full", error = "" }) => {
     const { t } = useTranslation(['common']);
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -35,13 +35,14 @@ const CustomSelect = ({ label, options, value, onChange, onBlur, placeholder, is
                 </label>
             )}
             <div
-                className={`w-full h-[44px] flex items-center justify-between px-4 border rounded-[8px] bg-white transition-colors ${error ? 'border-red-500 focus:ring-1 focus:ring-red-500/10' : isOpen ? 'border-[#014A36] ring-1 ring-[#014A36]/10' : 'border-[#E5E7EB] hover:border-gray-300'} ${!isSearchable ? 'cursor-pointer' : ''}`}
-                onClick={() => !isSearchable && setIsOpen(!isOpen)}
+                className={`w-full h-[44px] flex items-center justify-between px-4 border rounded-[8px] transition-colors ${disabled ? 'cursor-not-allowed border-[#E5E7EB] bg-gray-50' : error ? 'border-red-500 focus:ring-1 focus:ring-red-500/10' : isOpen ? 'border-[#014A36] ring-1 ring-[#014A36]/10' : 'border-[#E5E7EB] hover:border-gray-300 bg-white'} ${!isSearchable && !disabled ? 'cursor-pointer' : ''}`}
+                onClick={() => !isSearchable && !disabled && setIsOpen(!isOpen)}
             >
                 {isSearchable ? (
                     <input
                         type="text"
-                        className="w-full h-full text-[14px] text-[#111827] outline-none bg-transparent placeholder:text-gray-500"
+                        disabled={disabled}
+                        className={`w-full h-full text-[14px] text-[#111827] outline-none bg-transparent placeholder:text-gray-500 ${disabled ? 'cursor-not-allowed' : ''}`}
                         placeholder={placeholder}
                         value={isOpen ? searchTerm : (value || '')}
                         onChange={(e) => {
@@ -49,8 +50,10 @@ const CustomSelect = ({ label, options, value, onChange, onBlur, placeholder, is
                             if (!isOpen) setIsOpen(true);
                         }}
                         onFocus={() => {
-                            setIsOpen(true);
-                            setSearchTerm(value || '');
+                            if (!disabled) {
+                                setIsOpen(true);
+                                setSearchTerm(value || '');
+                            }
                         }}
                         onBlur={onBlur}
                     />
@@ -59,7 +62,8 @@ const CustomSelect = ({ label, options, value, onChange, onBlur, placeholder, is
                         {value || placeholder}
                     </span>
                 )}
-                <div className="cursor-pointer" onClick={(e) => {
+                <div className={`${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`} onClick={(e) => {
+                    if (disabled) return;
                     if (isSearchable) {
                         e.stopPropagation();
                         setIsOpen(!isOpen);
@@ -762,24 +766,25 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                     value={formData.area}
                                     onChange={(val) => handleInputChange('area', val)}
                                     isSearchable={true}
+                                    disabled={areaOptions.length === 0}
                                 />
 
                                  {/* Auto fetched details */}
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-[13px] font-semibold text-[#4B5563]">{t('modules:sub_district')}</label>
-                                    <input type="text" readOnly placeholder={`${t('modules:sub_district')} ${t('modules:fetched_automatically')}`} className="w-full h-[44px] border border-[#E5E7EB] bg-gray-50 text-gray-500 rounded-[8px] px-4 text-[14px] outline-none" value={formData.subDistrict} />
+                                    <input type="text" readOnly placeholder={`${t('modules:sub_district')} ${t('modules:fetched_automatically')}`} className="w-full h-[44px] border border-[#E5E7EB] bg-gray-50 text-gray-500 rounded-[8px] px-4 text-[14px] outline-none cursor-not-allowed" value={formData.subDistrict} />
                                 </div>
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-[13px] font-semibold text-[#4B5563]">{t('modules:district')} ({t('common:optional')})</label>
-                                    <input type="text" readOnly placeholder={`${t('modules:district')} ${t('modules:fetched_automatically')}`} className="w-full h-[44px] border border-[#E5E7EB] bg-gray-50 text-gray-500 rounded-[8px] px-4 text-[14px] outline-none" value={formData.district} />
+                                    <input type="text" readOnly placeholder={`${t('modules:district')} ${t('modules:fetched_automatically')}`} className="w-full h-[44px] border border-[#E5E7EB] bg-gray-50 text-gray-500 rounded-[8px] px-4 text-[14px] outline-none cursor-not-allowed" value={formData.district} />
                                 </div>
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-[13px] font-semibold text-[#4B5563]">{t('modules:state')} ({t('common:optional')})</label>
-                                    <input type="text" readOnly placeholder={`${t('modules:state')} ${t('modules:fetched_automatically')}`} className="w-full h-[44px] border border-[#E5E7EB] bg-gray-50 text-gray-500 rounded-[8px] px-4 text-[14px] outline-none" value={formData.state} />
+                                    <input type="text" readOnly placeholder={`${t('modules:state')} ${t('modules:fetched_automatically')}`} className="w-full h-[44px] border border-[#E5E7EB] bg-gray-50 text-gray-500 rounded-[8px] px-4 text-[14px] outline-none cursor-not-allowed" value={formData.state} />
                                 </div>
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-[13px] font-semibold text-[#4B5563]">{t('modules:country')} ({t('common:optional')})</label>
-                                    <input type="text" readOnly placeholder={`${t('modules:country')} ${t('modules:fetched_automatically')}`} className="w-full h-[44px] border border-[#E5E7EB] bg-gray-50 text-gray-500 rounded-[8px] px-4 text-[14px] outline-none" value={formData.country} />
+                                    <input type="text" readOnly placeholder={`${t('modules:country')} ${t('modules:fetched_automatically')}`} className="w-full h-[44px] border border-[#E5E7EB] bg-gray-50 text-gray-500 rounded-[8px] px-4 text-[14px] outline-none cursor-not-allowed" value={formData.country} />
                                 </div>
                             </div>
                         </div>
@@ -857,7 +862,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                             <span>{t('modules:supplier_code')}</span>
                                             {isGeneratingSupplierCode && <Loader2 size={12} className="animate-spin text-[#014A36]" />}
                                         </label>
-                                        <input type="text" readOnly placeholder={t('modules:code_auto_generated')} value={formData.supplierCode} className="w-full h-[44px] border border-[#E5E7EB] bg-gray-50 text-gray-600 rounded-[8px] px-4 text-[14px] outline-none" />
+                                        <input type="text" readOnly placeholder={t('modules:code_auto_generated')} value={formData.supplierCode} className="w-full h-[44px] border border-[#E5E7EB] bg-gray-50 text-gray-500 rounded-[8px] px-4 text-[14px] outline-none cursor-not-allowed" />
                                     </div>
                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
                                         <div className="flex flex-col gap-1.5">
@@ -897,7 +902,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                                             <span>{t('modules:customer_code')}</span>
                                             {isGeneratingCustomerCode && <Loader2 size={12} className="animate-spin text-[#014A36]" />}
                                         </label>
-                                        <input type="text" readOnly placeholder={t('modules:code_auto_generated')} value={formData.customerCode} className="w-full h-[44px] border border-[#E5E7EB] bg-gray-50 text-gray-600 rounded-[8px] px-4 text-[14px] outline-none" />
+                                        <input type="text" readOnly placeholder={t('modules:code_auto_generated')} value={formData.customerCode} className="w-full h-[44px] border border-[#E5E7EB] bg-gray-50 text-gray-500 rounded-[8px] px-4 text-[14px] outline-none cursor-not-allowed" />
                                     </div>
                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
                                         <div className="flex flex-col gap-1.5">
