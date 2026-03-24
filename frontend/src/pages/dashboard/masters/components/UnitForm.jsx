@@ -189,7 +189,8 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onEdit 
         const loadInitialData = async () => {
             try {
                 const response = await unitService.getUnitNames();
-                setUnitNameOptions(response.data || []);
+                const filteredNames = (response.data || []).filter(name => name && name.trim() !== '-');
+                setUnitNameOptions(filteredNames);
 
                 // If editing, load dependent options safely
                 if (mode === 'edit' && initialData) {
