@@ -323,8 +323,12 @@ const CategoryMaster = () => {
                     </div>
                 </div>
 
-                <div className="p-4 border-b border-[#E5E7EB] bg-white text-[16px] font-bold text-[#111827]">
-                    {t('category_sub_category')}
+                <div className="flex items-stretch justify-between border-b border-emerald-950 bg-emerald-900 text-[13px] font-bold text-white uppercase tracking-wider">
+                    <div className="flex-1 border-r border-white/50 px-6 py-4">{t('modules:category_sub_category')}</div>
+                    <div className="flex items-stretch shrink-0">
+                        <div className="w-[120px] border-r border-white/50 flex items-center justify-center px-4">{t('common:status')}</div>
+                        <div className="w-20 flex items-center justify-center px-4">{t('common:action')}</div>
+                    </div>
                 </div>
 
                 <div className="min-h-[300px]">

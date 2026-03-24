@@ -288,29 +288,29 @@ const UnitMaster = () => {
                         <div className="overflow-x-auto w-full min-h-[400px]">
                             <table className="w-full min-w-[1000px] text-left border-collapse">
                                 <thead>
-                                    <tr className="bg-[#F9FAFB] border-b border-[#F3F4F6] text-[14px] font-bold text-[#374151]">
-                                        <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB]">
+                                    <tr className="bg-emerald-900 border-b border-emerald-950 text-[14px] font-bold text-white">
+                                        <th className="px-6 py-5 whitespace-nowrap border-r border-white/50">
                                             <div className="flex items-center gap-1.5 uppercase tracking-tight">
                                                 {t('common:sr_no')}
                                             </div>
                                         </th>
-                                        <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB]">
+                                        <th className="px-6 py-5 whitespace-nowrap border-r border-white/50">
                                             <div className="flex items-center gap-1.5 cursor-pointer hover:text-[#073318] transition-colors uppercase tracking-tight">
                                                 {t('unit_name')}
-                                                <ChevronsUpDown size={14} className="text-gray-300" />
+                                                <ChevronsUpDown size={14} className="text-emerald-200/50" />
                                             </div>
                                         </th>
-                                        <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB]">
+                                        <th className="px-6 py-5 whitespace-nowrap border-r border-white/50">
                                             <div className="flex items-center gap-1.5 cursor-pointer hover:text-[#073318] transition-colors uppercase tracking-tight">
                                                 {t('gst_uom')}
-                                                <ChevronsUpDown size={14} className="text-gray-300" />
+                                                <ChevronsUpDown size={14} className="text-emerald-200/50" />
                                             </div>
                                         </th>
-                                        <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB] uppercase tracking-tight">Full Name of Measurement</th>
-                                        <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB] uppercase tracking-tight">
+                                        <th className="px-6 py-5 whitespace-nowrap border-r border-white/50 uppercase tracking-tight">Full Name of Measurement</th>
+                                        <th className="px-6 py-5 whitespace-nowrap border-r border-white/50 uppercase tracking-tight">
                                             <div className="flex items-center gap-1.5 cursor-pointer hover:text-[#073318] transition-colors">
                                                 {t('common:status')}
-                                                <ChevronsUpDown size={14} className="text-gray-300" />
+                                                <ChevronsUpDown size={14} className="text-emerald-200/50" />
                                             </div>
                                         </th>
                                         <th className="px-6 py-5 whitespace-nowrap text-center">ACTION</th>

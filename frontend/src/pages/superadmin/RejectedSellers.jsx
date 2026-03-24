@@ -55,14 +55,14 @@ const RejectedSellers = () => {
             <div className="flex-1 bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
                 <div className="overflow-x-auto flex-1 h-[calc(100vh-250px)]">
                     <table className="w-full text-left border-collapse">
-                        <thead className="bg-[#F8FAFC] border-b border-gray-200 sticky top-0 z-10 shadow-[0_1px_0_0_#e5e7eb]">
+                        <thead className="bg-emerald-900 border-b border-emerald-950 sticky top-0 z-10 shadow-[0_1px_0_0_rgba(6,78,59,0.5)] text-white">
                             <tr>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">ID</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Seller</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Contact</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Shop</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/50 last:border-r-0">ID</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/50 last:border-r-0">Seller</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/50 last:border-r-0">Contact</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/50 last:border-r-0">Shop</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-white uppercase tracking-wider border-r border-white/50 last:border-r-0">Location</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-white uppercase tracking-wider">Status</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 relative">
