@@ -142,4 +142,28 @@ export class ProductMasterRepository {
             orderBy: { name: 'asc' }
         });
     }
+
+    async findByProductName(name: string, userId: number) {
+        return this.prisma.product.findFirst({
+            where: {
+                product_name: { equals: name, mode: 'insensitive' },
+                created_by: userId,
+                is_deleted: false
+            }
+        });
+    }
+
+    async getProductNameSuggestions(searchTerm: string, userId: number) {
+        return this.prisma.product.findMany({
+            where: {
+                product_name: { contains: searchTerm, mode: 'insensitive' },
+                created_by: userId,
+                is_deleted: false
+            },
+            select: { product_name: true },
+            distinct: ['product_name'],
+            take: 10,
+            orderBy: { product_name: 'asc' }
+        });
+    }
 }

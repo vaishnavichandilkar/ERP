@@ -65,6 +65,16 @@ export const exportProducts = async (params) => {
     return response;
 };
 
+export const getSuggestions = async (name) => {
+    const response = await axiosInstance.get(`${API_PATH}/suggestions`, { params: { name } });
+    return response.data;
+};
+
+export const checkProductName = async (name, excludeId) => {
+    const response = await axiosInstance.get(`${API_PATH}/check-name`, { params: { name, excludeId } });
+    return response.data;
+};
+
 export default {
     getProducts,
     getProductById,
@@ -77,5 +87,7 @@ export default {
     getCategoriesDropdown,
     getSubCategoriesDropdown,
     getTaxByHsn,
-    exportProducts
+    exportProducts,
+    getSuggestions,
+    checkProductName
 };

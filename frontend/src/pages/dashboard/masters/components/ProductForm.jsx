@@ -164,6 +164,60 @@ const ProductForm = ({
 
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
+  const [suggestions, setSuggestions] = useState([]);
+  const [nameError, setNameError] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestionsRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (isView || !formData.productName || formData.productName.length < 1) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      setNameError("");
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        // Fetch suggestions
+        const suggestRes = await productService.getSuggestions(
+          formData.productName,
+        );
+        setSuggestions(suggestRes);
+        setShowSuggestions(suggestRes.length > 0);
+
+        // Check uniqueness
+        const checkRes = await productService.checkProductName(
+          formData.productName,
+          initialData?.id,
+        );
+        if (!checkRes.isUnique) {
+          setNameError(
+            t("modules:duplicate_product_name", "Product name already exists"),
+          );
+        } else {
+          setNameError("");
+        }
+      } catch (error) {
+        console.error("Error in product name checks:", error);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [formData.productName, isView, initialData?.id]);
 
   const validateField = (field, value) => {
     let error = "";
@@ -335,33 +389,75 @@ const ProductForm = ({
     placeholder,
     showAsterisk = true,
     readOnly = false,
-  ) => (
-    <div className="flex flex-col gap-1.5 w-full">
-      <label className="text-[13px] font-semibold text-[#4B5563]">
-        {label} {showAsterisk && <span className="text-red-500">*</span>}
-      </label>
-      <input
-        type="text"
-        placeholder={placeholder}
-        readOnly={readOnly}
-        disabled={isView}
-        className={`w-full h-[44px] border rounded-[8px] px-4 text-[14px] outline-none transition-all 
-                    ${isView || readOnly ? "cursor-not-allowed bg-gray-50 text-gray-500 border-[#E5E7EB]" : errors[field] ? "border-red-500 focus:ring-1 focus:ring-red-500/10" : "bg-white text-[#111827] border-[#E5E7EB] focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 hover:border-gray-300"}`}
-        value={formData[field]}
-        onChange={(e) => {
-          let val = e.target.value;
-          if (field === "hsnCode") val = val.replace(/\D/g, "");
-          handleInputChange(field, val);
-        }}
-        onBlur={() => {
-          if (!isView && !readOnly) validateField(field, formData[field]);
-        }}
-      />
-      {errors[field] && (
-        <p className="text-[12px] text-red-500 mt-0.5">{errors[field]}</p>
-      )}
-    </div>
-  );
+  ) => {
+    const isProductName = field === "productName";
+
+    return (
+      <div
+        className="flex flex-col gap-1.5 w-full relative"
+        ref={isProductName ? suggestionsRef : null}
+      >
+        <label className="text-[13px] font-semibold text-[#4B5563]">
+          {label} {showAsterisk && <span className="text-red-500">*</span>}
+        </label>
+        <div className="relative">
+          <input
+            type="text"
+            placeholder={placeholder}
+            readOnly={readOnly}
+            disabled={isView}
+            autoComplete="off"
+            className={`w-full h-[44px] border rounded-[8px] px-4 text-[14px] outline-none transition-all 
+                            ${(errors[field] || (isProductName && nameError)) && !readOnly ? "border-red-500 bg-red-50/10" : "border-[#E5E7EB]"}
+                            ${isView || readOnly ? "cursor-not-allowed bg-gray-50 text-gray-500" : "bg-white text-[#111827] focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10 hover:border-gray-300"}`}
+            value={formData[field]}
+            onFocus={() =>
+              isProductName && suggestions.length > 0 && setShowSuggestions(true)
+            }
+            onChange={(e) => {
+              let val = e.target.value;
+              if (field === "hsnCode") val = val.replace(/\D/g, "");
+              handleInputChange(field, val);
+              if (isProductName && nameError) setNameError("");
+            }}
+            onBlur={() => {
+              if (!isView && !readOnly) validateField(field, formData[field]);
+            }}
+          />
+
+          {isProductName && showSuggestions && !isView && suggestions.length > 0 && (
+            <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-white border border-gray-100 rounded-[8px] shadow-lg z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="max-h-[200px] overflow-y-auto w-full py-1 custom-scrollbar">
+                {suggestions.map((suggestion, idx) => (
+                  <div
+                    key={idx}
+                    className="px-4 py-2.5 text-[14px] text-[#4B5563] hover:bg-gray-50 cursor-pointer transition-colors"
+                    onClick={() => {
+                      handleInputChange("productName", suggestion);
+                      setShowSuggestions(false);
+                      setNameError(
+                        t(
+                          "modules:duplicate_product_name",
+                          "Product name already exists",
+                        ),
+                      );
+                    }}
+                  >
+                    {suggestion}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+        {(errors[field] || (isProductName && nameError)) && (
+          <p className="text-[12px] text-red-500 mt-0.5">
+            {errors[field] || nameError}
+          </p>
+        )}
+      </div>
+    );
+  };
 
   const renderViewMode = () => (
     <div className="bg-white rounded-[16px] border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col w-full overflow-hidden mb-12 animate-in fade-in duration-300">

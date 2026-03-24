@@ -129,75 +129,6 @@ const ProductMaster = () => {
     }
   };
 
-<<<<<<< Updated upstream
-                        <div className="overflow-x-auto w-full min-h-[400px]">
-                            <table className="w-full min-w-[1200px] text-left border-collapse">
-                                <thead>
-                                    <tr className="bg-emerald-900 border-b border-emerald-950 text-[14px] font-bold text-white">
-                                        <th className="px-6 py-5 whitespace-nowrap border-r border-white/50">
-                                            <div className="flex items-center gap-2 uppercase tracking-tight">{t('product_code')} <ChevronsUpDown size={14} className="text-emerald-200/50" /></div>
-                                        </th>
-                                        <th className="px-6 py-5 whitespace-nowrap border-r border-white/50">
-                                            <div className="flex items-center gap-2 uppercase tracking-tight">{t('product_name')} <ChevronsUpDown size={14} className="text-emerald-200/50" /></div>
-                                        </th>
-                                        <th className="px-6 py-5 whitespace-nowrap border-r border-white/50">
-                                            <div className="flex items-center gap-2 uppercase tracking-tight">{t('uom')} <ChevronsUpDown size={14} className="text-emerald-200/50" /></div>
-                                        </th>
-                                        <th className="px-6 py-5 whitespace-nowrap border-r border-white/50">
-                                            <div className="flex items-center gap-2 uppercase tracking-tight">{t('product_type')} <ChevronsUpDown size={14} className="text-emerald-200/50" /></div>
-                                        </th>
-                                        <th className="px-6 py-5 whitespace-nowrap border-r border-white/50">
-                                            <div className="flex items-center gap-2 uppercase tracking-tight">{t('category')} <ChevronsUpDown size={14} className="text-emerald-200/50" /></div>
-                                        </th>
-                                        <th className="px-6 py-5 whitespace-nowrap border-r border-white/50">
-                                            <div className="flex items-center gap-2 uppercase tracking-tight">{t('sub_category')} <ChevronsUpDown size={14} className="text-emerald-200/50" /></div>
-                                        </th>
-                                        <th className="px-6 py-5 whitespace-nowrap border-r border-white/50">
-                                            <div className="flex items-center gap-2 uppercase tracking-tight">{t('hsn_code')} <ChevronsUpDown size={14} className="text-emerald-200/50" /></div>
-                                        </th>
-                                        <th className="px-6 py-5 whitespace-nowrap border-r border-white/50">
-                                            <div className="flex items-center gap-2 uppercase tracking-tight">{t('tax_percent')} <ChevronsUpDown size={14} className="text-emerald-200/50" /></div>
-                                        </th>
-                                        <th className="px-6 py-5 whitespace-nowrap border-r border-white/50">
-                                            <div className="flex items-center gap-2 uppercase tracking-tight">{t('common:status')} <ChevronsUpDown size={14} className="text-emerald-200/50" /></div>
-                                        </th>
-                                        <th className="px-6 py-5 whitespace-nowrap text-center uppercase tracking-tight">{t('common:action')}</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="text-[14px] text-[#111827]">
-                                    {loading ? (
-                                        <tr>
-                                            <td colSpan="10" className="px-6 py-20 text-center">
-                                                <div className="flex flex-col items-center gap-3">
-                                                    <div className="w-10 h-10 border-4 border-[#073318]/10 border-t-[#073318] rounded-full animate-spin"></div>
-                                                    <span className="text-gray-400 font-medium">{t('common:loading')}</span>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ) : currentData.length > 0 ? currentData.map((row, index) => (
-                                        <tr key={row.id} className="border-b border-[#F3F4F6] last:border-b-0 hover:bg-[#F9FAFB] transition-all group">
-                                            <td className="px-6 py-5 font-bold text-[#111827] border-r border-[#F3F4F6]">{row.product_code}</td>
-                                            <td className="px-6 py-5 font-bold text-[#111827] border-r border-[#F3F4F6]">{translateDynamic(row.product_name, t)}</td>
-                                            <td className="px-6 py-5 font-medium text-[#4B5563] border-r border-[#F3F4F6]">{translateDynamic(row.uom?.unit_name, t)}</td>
-                                            <td className="px-6 py-5 font-medium text-[#4B5563] border-r border-[#F3F4F6]">{translateDynamic(row.product_type, t)}</td>
-                                            <td className="px-6 py-5 font-medium text-[#4B5563] border-r border-[#F3F4F6]">{translateDynamic(row.category?.name, t)}</td>
-                                            <td className="px-6 py-5 font-medium text-[#4B5563] border-r border-[#F3F4F6]">{translateDynamic(row.sub_category?.name, t)}</td>
-                                            <td className="px-6 py-5 text-[#6B7280] border-r border-[#F3F4F6]">{row.hsn_code}</td>
-                                            <td className="px-6 py-5 text-[#6B7280] border-r border-[#F3F4F6]">{row.tax_rate}%</td>
-                                            <td className="px-6 py-5 border-r border-[#F3F4F6]">
-                                                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-bold ${row.status.toUpperCase() === 'ACTIVE' ? 'bg-[#ECFDF5] text-[#059669]' : 'bg-[#FEF2F2] text-[#DC2626]'}`}>
-                                                    <span className={`w-1.5 h-1.5 rounded-full ${row.status.toUpperCase() === 'ACTIVE' ? 'bg-[#059669]' : 'bg-[#DC2626]'}`}></span>
-                                                    {row.status.toUpperCase() === 'ACTIVE' ? t('common:active') : t('common:inactive')}
-                                                </div>
-                                            </td>
-                                            <td className={`px-6 py-5 text-center relative ${activeDropdown === row.id ? 'z-50' : ''}`}>
-                                                <button
-                                                    onClick={(e) => toggleDropdown(row.id, e)}
-                                                    className="p-1 hover:bg-gray-100 rounded-full transition-colors text-gray-500"
-                                                >
-                                                    <MoreVertical size={18} />
-                                                </button>
-=======
   const handleDeleteProduct = async (id) => {
     if (!window.confirm(t("common:confirm_delete"))) return;
     setLoading(true);
@@ -213,7 +144,6 @@ const ProductMaster = () => {
       setActiveDropdown(null);
     }
   };
->>>>>>> Stashed changes
 
   const handleApplyFilter = () => {
     setAppliedFilters(filterInputs);
