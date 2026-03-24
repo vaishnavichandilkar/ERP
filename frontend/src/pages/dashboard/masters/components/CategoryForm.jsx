@@ -30,7 +30,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                 {label} {showAsterisk && <span className="text-red-500">*</span>}
             </label>
             <div
-                className={`w-full h-[46px] flex items-center justify-between px-4 border rounded-[10px] bg-white transition-all ${disabled ? 'cursor-default border-[#E5E7EB] bg-[#F9FAFB]' : isOpen ? 'border-[#073318] ring-1 ring-[#073318]/10 cursor-pointer' : 'border-[#E5E7EB] hover:border-gray-300 cursor-pointer'}`}
+                className={`w-full h-[46px] flex items-center justify-between px-4 border rounded-[10px] bg-white transition-all ${disabled ? 'cursor-not-allowed border-[#E5E7EB] bg-[#F9FAFB]' : isOpen ? 'border-[#073318] ring-1 ring-[#073318]/10 cursor-pointer' : 'border-[#E5E7EB] hover:border-gray-300 cursor-pointer'}`}
                 onClick={() => !disabled && setIsOpen(!isOpen)}
             >
                 {isSearchable && isOpen ? (
@@ -99,7 +99,7 @@ const CategoryForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) =
                 const data = await categoryService.getCategoriesDropdown();
                 setDropdownCategories(data || []);
             } catch (err) {
-                toast.error(t('modules:error_fetching_categories', 'Failed to load categories'));
+                toast.error(t('modules:error_fetching_categories'));
             }
         };
         fetchDropdown();
@@ -118,7 +118,7 @@ const CategoryForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) =
 
     const validate = () => {
         const newErrors = {};
-        if (!formData.category_name.trim()) newErrors.category_name = t('modules:category_name_required', 'Category name is required');
+        if (!formData.category_name.trim()) newErrors.category_name = t('modules:category_name_required');
         
         if (mode === 'edit' && initialData) {
             if (initialData.type === 'category' && formData.category_under !== 'None') {
@@ -143,23 +143,23 @@ const CategoryForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) =
                 if (formData.category_under === 'None') {
                     // Create Category
                     await categoryService.createCategory({ name: formData.category_name });
-                    toast.success(t('modules:category_added_successfully', 'Category added successfully'));
+                    toast.success(t('modules:category_added_successfully'));
                 } else {
                     // Create SubCategory
                     const cat = dropdownCategories.find(c => c.name === formData.category_under);
                     if (!cat) throw new Error('Selected parent category not found');
                     await categoryService.createSubCategory({ name: formData.category_name, category_id: cat.id });
-                    toast.success(t('modules:sub_category_added_successfully', 'Sub Category added successfully'));
+                    toast.success(t('modules:sub_category_added_successfully'));
                 }
             } else if (mode === 'edit') {
                 if (initialData.type === 'category') {
                     await categoryService.updateCategory(initialData.id, { name: formData.category_name });
-                    toast.success(t('modules:category_updated_successfully', 'Category updated successfully'));
+                    toast.success(t('modules:category_updated_successfully'));
                 } else {
                     const cat = dropdownCategories.find(c => c.name === formData.category_under);
                     if (!cat) throw new Error('Selected parent category not found');
                     await categoryService.updateSubCategory(initialData.id, { name: formData.category_name, category_id: cat.id });
-                    toast.success(t('modules:sub_category_updated_successfully', 'Sub Category updated successfully'));
+                    toast.success(t('modules:sub_category_updated_successfully'));
                 }
             }
             onSuccess && onSuccess();
@@ -224,15 +224,15 @@ const CategoryForm = ({ mode = 'add', initialData = null, onBack, onSuccess }) =
                             </div>
 
                             {/* Category Under */}
-                            <CustomSelect
-                                label={t('modules:category_under')}
-                                options={categories}
-                                value={formData.category_under}
-                                onChange={(val) => setFormData({ ...formData, category_under: val })}
-                                placeholder={t('common:select_category_under')}
-                                isSearchable={true}
-                                showAsterisk={true}
-                            />
+                                <CustomSelect
+                                    label={t('modules:category_under')}
+                                    options={categories}
+                                    value={formData.category_under}
+                                    onChange={(val) => setFormData({ ...formData, category_under: val })}
+                                    placeholder={t('modules:select_category')}
+                                    isSearchable={true}
+                                    showAsterisk={true}
+                                />
                         </div>
                     </div>
 

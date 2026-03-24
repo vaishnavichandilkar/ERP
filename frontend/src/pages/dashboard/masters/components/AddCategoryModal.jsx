@@ -68,8 +68,8 @@ const AddCategoryModal = ({ isOpen, onClose, onSuccess }) => {
             return;
         }
 
-        if (type === 'Sub category' && !parentCategory) {
-            toast.error(t('modules:parent_category_required', 'Parent category is required'));
+        if (type === 'Sub Category' && !parentCategory) {
+            toast.error(t('modules:parent_category_required'));
             return;
         }
 
@@ -77,13 +77,13 @@ const AddCategoryModal = ({ isOpen, onClose, onSuccess }) => {
         try {
             if (type === 'Category') {
                 await categoryService.createCategory({ name: categoryName });
-                toast.success(t('modules:category_added_successfully', 'Category added successfully'));
+                toast.success(t('modules:category_added_successfully'));
             } else {
                 await categoryService.createSubCategory({ 
                     name: categoryName, 
                     category_id: parentCategory.id 
                 });
-                toast.success(t('modules:sub_category_added_successfully', 'Sub Category added successfully'));
+                toast.success(t('modules:sub_category_added_successfully'));
             }
             onSuccess();
             onClose();
@@ -127,15 +127,15 @@ const AddCategoryModal = ({ isOpen, onClose, onSuccess }) => {
                             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                         >
                             <span className={`text-[14px] ${type ? 'text-[#111827] font-medium' : 'text-gray-400'}`}>
-                                {type ? (type === 'Category' ? t('modules:category') : t('modules:sub_category')) : t('modules:select_type', 'Select Type')}
+                                {type ? (type === 'Category' ? t('modules:category') : t('modules:sub_category')) : t('modules:select_type')}
                             </span>
                             <ChevronDown size={18} className={`text-gray-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                         </div>
 
                         {isDropdownOpen && (
                             <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-white border border-[#E5E7EB] rounded-[12px] shadow-xl z-[110] py-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                                {['Category', 'Sub category'].map((opt) => {
-                                    const isDisabled = opt === 'Sub category' && dropdownCategories.length === 0;
+                                {['Category', 'Sub Category'].map((opt) => {
+                                    const isDisabled = opt === 'Sub Category' && dropdownCategories.length === 0;
                                     return (
                                         <div 
                                             key={opt}
@@ -165,18 +165,18 @@ const AddCategoryModal = ({ isOpen, onClose, onSuccess }) => {
                     <div className={`space-y-6 transition-all duration-500 ease-in-out ${step === 2 ? 'max-height-expanded opacity-100 mb-6 overflow-visible' : 'max-h-0 opacity-0 invisible -mt-6 overflow-hidden'}`}>
                         <div className="space-y-2">
                             <label className="text-[13px] font-semibold text-[#4B5563]">
-                                {type === 'Category' ? t('modules:category_name') : t('modules:sub_category_name', 'Sub category name')}
+                                {type === 'Category' ? t('modules:category_name') : t('modules:sub_category_name')}
                             </label>
                             <input
                                 type="text"
                                 value={categoryName}
                                 onChange={(e) => setCategoryName(e.target.value)}
-                                placeholder={type === 'Category' ? t('modules:enter_category_name') : t('modules:enter_sub_category_name', 'Enter sub category name')}
+                                placeholder={type === 'Category' ? t('modules:enter_category_name') : t('modules:enter_sub_category_name')}
                                 className="w-full h-[46px] border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] font-medium outline-none focus:border-[#073318] focus:ring-4 focus:ring-[#073318]/5 transition-all placeholder:text-gray-400"
                             />
                         </div>
 
-                        {type === 'Sub category' && (
+                        {type === 'Sub Category' && (
                             <div className="space-y-2 relative" ref={parentDropdownRef}>
                                 <label className="text-[13px] font-semibold text-[#4B5563]">{t('modules:category_under')}</label>
                                 <div 
@@ -184,7 +184,7 @@ const AddCategoryModal = ({ isOpen, onClose, onSuccess }) => {
                                     onClick={() => setIsParentDropdownOpen(!isParentDropdownOpen)}
                                 >
                                     <span className={`text-[14px] ${parentCategory ? 'text-[#111827] font-medium' : 'text-gray-400'}`}>
-                                        {parentCategory ? parentCategory.name : t('modules:select_category', 'Select Category')}
+                                        {parentCategory ? parentCategory.name : t('modules:select_category')}
                                     </span>
                                     <ChevronDown size={18} className={`text-gray-400 transition-transform duration-200 ${isParentDropdownOpen ? 'rotate-180' : ''}`} />
                                 </div>

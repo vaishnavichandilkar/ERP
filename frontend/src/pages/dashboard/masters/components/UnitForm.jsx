@@ -51,7 +51,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                 {label} {showAsterisk && <span className="text-red-500">*</span>}
             </label>
             <div
-                className={`w-full h-[46px] flex items-center justify-between px-4 border rounded-[10px] bg-white transition-all ${disabled ? 'cursor-default border-[#E5E7EB] bg-[#F9FAFB]' : isOpen ? 'border-[#073318] ring-1 ring-[#073318]/10 cursor-pointer' : 'border-[#E5E7EB] hover:border-gray-300 cursor-pointer'}`}
+                className={`w-full h-[46px] flex items-center justify-between px-4 border rounded-[10px] bg-white transition-all ${disabled ? 'cursor-not-allowed border-[#E5E7EB] bg-[#F9FAFB]' : isOpen ? 'border-[#073318] ring-1 ring-[#073318]/10 cursor-pointer' : 'border-[#E5E7EB] hover:border-gray-300 cursor-pointer'}`}
                 onClick={() => !disabled && setIsOpen(!isOpen)}
             >
                 {isSearchable && isOpen ? (
@@ -98,7 +98,7 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                     )}
 
                     {actionLabel && onAction && (
-                        <div className="border-t border-gray-100 p-2 bg-gray-50/50">
+                        <div className="border-t border-gray-100 p-3 bg-gray-50/50">
                             {isAddingNew ? (
                                 <div className="flex flex-col gap-2 p-1">
                                     <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -140,9 +140,9 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                                         e.stopPropagation();
                                         setIsAddingNew(true);
                                     }}
-                                    className="w-full py-3 text-[14px] text-[#073318] font-bold hover:bg-[#073318]/5 transition-all flex items-center justify-center gap-2 rounded-[8px]"
+                                    className="w-full h-[44px] bg-[#073318] text-white text-[14px] font-bold hover:bg-[#04200f] transition-all flex items-center justify-center gap-2 rounded-[10px] shadow-sm"
                                 >
-                                    <span className="text-[18px]">+</span> {actionLabel}
+                                    <Plus size={18} strokeWidth={3} /> {actionLabel}
                                 </button>
                             )}
                         </div>

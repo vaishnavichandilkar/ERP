@@ -245,7 +245,7 @@ const CategoryMaster = () => {
                         {t('modules:add_category')}
                     </button>
                 </div>
-                <p className="text-[#6B7280] text-[15px]">{t('modules:category_master_desc', 'Organize and manage your product categories and sub-categories')}</p>
+                <p className="text-[#6B7280] text-[15px]">{t('modules:category_master_desc')}</p>
             </div>
 
             <div className={`flex flex-col bg-white rounded-[16px] border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-8 ${activeRowDropdown ? '!overflow-visible' : 'overflow-hidden'}`}>
@@ -255,7 +255,7 @@ const CategoryMaster = () => {
                             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                             <input
                                 type="text"
-                                placeholder={t('common:search_placeholder', 'Search by anything...')}
+                                placeholder={t('common:search_placeholder', 'Search By Anything...')}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full h-[42px] bg-white border border-[#E5E7EB] rounded-[10px] pl-10 pr-10 text-[14px] text-[#111827] outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/10 transition-all placeholder:text-gray-400 shadow-sm"
@@ -386,7 +386,7 @@ const CategoryMaster = () => {
                                                         className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] font-bold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap"
                                                     >
                                                         <Edit size={18} className="text-[#073318]" />
-                                                        {t('modules:edit_category', 'Edit Category')}
+                                                        {t('modules:edit_category')}
                                                     </button>
                                                     <button
                                                         data-dropdown-item="true"
@@ -451,7 +451,7 @@ const CategoryMaster = () => {
                                                                         className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] font-bold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap"
                                                                     >
                                                                         <Edit size={18} className="text-[#073318]" />
-                                                                        {t('modules:edit_category', 'Edit Category')}
+                                                                        {t('modules:edit_category')}
                                                                     </button>
                                                                     <button
                                                                         data-dropdown-item="true"
