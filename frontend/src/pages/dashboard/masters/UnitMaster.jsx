@@ -30,11 +30,11 @@ const UnitMaster = () => {
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
     const [gstUomOptions, setGstUomOptions] = useState([]);
-    const [showSuccessToast, setShowSuccessToast] = useState({ show: false, message: '' });
+    const [showSuccessToast, setShowSuccessToast] = useState({ show: false, message: '', type: 'success' });
     const [isFilterApplied, setIsFilterApplied] = useState(false);
 
-    const triggerSuccess = (message) => {
-        setShowSuccessToast({ show: true, message });
+    const showToast = (message, type = 'success') => {
+        setShowSuccessToast({ show: true, message, type });
     };
 
     const fetchUnits = async () => {
@@ -98,11 +98,11 @@ const UnitMaster = () => {
         try {
             const newStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
             await unitService.updateUnitStatus(id, newStatus);
-            triggerSuccess('Status updated successfully');
+            showToast(`Unit ${newStatus === 'ACTIVE' ? 'activated' : 'inactivated'} successfully`);
             fetchUnits();
         } catch (error) {
             console.error('Error updating status:', error);
-            toast.error(t('common:error_updating_status'));
+            showToast(error.response?.data?.message || t('common:error_updating_status'), 'error');
         }
         setActiveDropdown(null);
     };
@@ -194,7 +194,8 @@ const UnitMaster = () => {
             {showSuccessToast.show && (
                 <SuccessToast
                     message={showSuccessToast.message}
-                    onClose={() => setShowSuccessToast({ show: false, message: '' })}
+                    type={showSuccessToast.type}
+                    onClose={() => setShowSuccessToast({ ...showSuccessToast, show: false })}
                 />
             )}
 
@@ -363,18 +364,7 @@ const UnitMaster = () => {
                                                             className="w-full px-5 py-3 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#0A3622] transition-colors whitespace-nowrap font-bold"
                                                         >
                                                             <Eye size={18} className="text-gray-400" />
-                                                            {t('view_unit')}
-                                                        </button>
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setActiveDropdown(null);
-                                                                setCurrentView({ type: 'edit', data: row });
-                                                            }}
-                                                            className="w-full px-5 py-3 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#0A3622] transition-colors whitespace-nowrap font-bold"
-                                                        >
-                                                            <FileEdit size={18} className="text-gray-400" />
-                                                            {t('edit_unit') || t('common:edit')}
+                                                            {t('view_and_edit_unit', 'View and Edit Unit')}
                                                         </button>
                                                         <div className="h-[1px] bg-[#F3F4F6] mx-2 my-1" />
                                                         <button
@@ -473,9 +463,9 @@ const UnitMaster = () => {
                     )}
 
                     <div className={`fixed top-0 right-0 h-full w-full sm:w-[480px] bg-white shadow-2xl z-[70] transform transition-transform duration-300 ease-in-out flex flex-col ${isFilterOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-                        <div className="flex items-center justify-between px-6 py-5 border-b border-[#E5E7EB]">
-                            <h2 className="text-[20px] font-bold text-[#111827]">{t('apply_filters')}</h2>
-                            <button onClick={() => setIsFilterOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors p-1">
+                        <div className="flex items-center justify-between px-6 py-5 border-b border-[#04200f] bg-emerald-900">
+                            <h2 className="text-[20px] font-bold text-white tracking-tight">{t('apply_filters')}</h2>
+                            <button onClick={() => setIsFilterOpen(false)} className="text-emerald-100 hover:text-white transition-colors p-1">
                                 <X size={20} />
                             </button>
                         </div>
@@ -555,7 +545,7 @@ const UnitMaster = () => {
                     onSuccess={() => {
                         const message = currentView.type === 'add' ? 'Unit added successfully' : 'Unit edited successfully';
                         setCurrentView({ type: 'list', data: null });
-                        triggerSuccess(message);
+                        showToast(message);
                         fetchUnits();
                     }}
                 />

@@ -54,16 +54,16 @@ const ViewAccount = ({ initialData, onBack, onEdit }) => {
                         {onEdit && (
                             <button
                                 onClick={onEdit}
-                                className="px-6 h-[40px] bg-[#014A36] text-white rounded-[8px] text-[14px] font-semibold hover:bg-[#013b2b] transition-colors shadow-sm flex items-center justify-center gap-2"
+                                className="px-6 h-[40px] bg-[#014A36] text-white rounded-[8px] text-[14px] font-semibold hover:bg-[#013b2b] transition-colors shadow-sm flex items-center justify-center"
                             >
-                                <Edit3 size={16} />
                                 {t('edit_account')}
                             </button>
                         )}
                         <button
                             onClick={onBack}
-                            className="px-6 h-[40px] bg-white border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors shadow-sm"
+                            className="px-6 h-[40px] bg-white border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center gap-2"
                         >
+                            <ArrowLeft size={16} />
                             {t('common:back')}
                         </button>
                     </div>

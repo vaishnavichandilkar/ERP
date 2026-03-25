@@ -5,7 +5,7 @@ import { toast } from 'react-hot-toast';
 import categoryService from '../../../../services/masters/categoryService';
 import { translateDynamic } from '../../../../utils/i18nUtils';
 
-const AddCategoryModal = ({ isOpen, onClose, onSuccess }) => {
+const AddCategoryModal = ({ isOpen, onClose, onSuccess, onShowToast }) => {
     const { t } = useTranslation(['common', 'modules']);
     const [step, setStep] = useState(1);
     const [type, setType] = useState('');
@@ -77,18 +77,18 @@ const AddCategoryModal = ({ isOpen, onClose, onSuccess }) => {
         try {
             if (type === 'Category') {
                 await categoryService.createCategory({ name: categoryName });
-                toast.success(t('modules:category_added_successfully'));
+                onShowToast && onShowToast(t('modules:category_added_successfully'));
             } else {
                 await categoryService.createSubCategory({ 
                     name: categoryName, 
                     category_id: parentCategory.id 
                 });
-                toast.success(t('modules:sub_category_added_successfully'));
+                onShowToast && onShowToast(t('modules:sub_category_added_successfully'));
             }
             onSuccess();
             onClose();
         } catch (error) {
-            toast.error(error.response?.data?.message || 'Operation failed');
+            onShowToast && onShowToast(error.response?.data?.message || 'Operation failed', 'error');
         } finally {
             setIsLoading(false);
         }
@@ -107,11 +107,11 @@ const AddCategoryModal = ({ isOpen, onClose, onSuccess }) => {
             {/* Modal */}
             <div className={`relative bg-white rounded-[20px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] w-full max-w-[440px] transform transition-all duration-500 ease-in-out animate-in zoom-in-95`}>
                 {/* Header */}
-                <div className="flex items-center justify-between px-8 py-5 border-b border-[#F3F4F6]">
-                    <h2 className="text-[18px] font-bold text-[#111827] tracking-tight">{t('modules:add_category')}</h2>
+                <div className="flex items-center justify-between px-8 py-5 border-b border-[#04200f] bg-emerald-900 rounded-t-[20px]">
+                    <h2 className="text-[18px] font-bold text-white tracking-tight">{t('modules:add_category')}</h2>
                     <button 
                         onClick={onClose}
-                        className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                        className="p-1 text-emerald-100 hover:text-white transition-colors"
                     >
                         <X size={20} />
                     </button>

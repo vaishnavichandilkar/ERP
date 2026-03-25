@@ -1,23 +1,23 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Search, Download, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, CheckCircle2, XCircle, ArrowLeft, ArrowRight, ChevronDown, RefreshCw, X, Filter, Edit, Loader2, ArrowLeft as LeftIcon, ArrowRight as RightIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'react-hot-toast';
 import CategoryForm from './components/CategoryForm';
-import AddCategoryModal from './components/AddCategoryModal';
-import EditCategoryModal from './components/EditCategoryModal';
 import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
 import categoryService from '../../../services/masters/categoryService';
+import SuccessToast from './components/SuccessToast';
 
 const CategoryMaster = () => {
     const { t } = useTranslation(['modules', 'common']);
-    const [currentView, setCurrentView] = useState({ type: 'list', data: null });
+    const [currentView, setCurrentView] = useState({ type: 'list', data: null, mode: 'add' });
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedGroups, setExpandedGroups] = useState({});
     const [isExportOpen, setIsExportOpen] = useState(false);
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [selectedCategoryData, setSelectedCategoryData] = useState(null);
     const [activeRowDropdown, setActiveRowDropdown] = useState(null);
+    const [toastMessage, setToastMessage] = useState({ show: false, message: '', type: 'success' });
+
+    const showToast = (message, type = 'success') => {
+        setToastMessage({ show: true, message, type });
+    };
     const exportRef = useRef(null);
 
     // Pagination states
@@ -46,7 +46,7 @@ const CategoryMaster = () => {
             }));
             setMasterData(mappedData);
         } catch (error) {
-            toast.error(error.response?.data?.message || 'Failed to fetch categories');
+            showToast(error.response?.data?.message || 'Failed to fetch categories', 'error');
         } finally {
             setIsLoading(false);
         }
@@ -123,10 +123,10 @@ const CategoryMaster = () => {
             } else {
                 await categoryService.toggleSubCategoryStatus(id, newStatus);
             }
-            toast.success(newStatus === 'ACTIVE' ? 'Activated successfully' : 'Inactivated successfully');
+            showToast(`${type === 'category' ? 'Category' : 'Sub Category'} ${newStatus === 'ACTIVE' ? 'activated' : 'inactivated'} successfully`);
             fetchCategories(); // Final sync from DB
         } catch (error) {
-            toast.error(error.response?.data?.message || 'Failed to update status');
+            showToast(error.response?.data?.message || 'Failed to update status', 'error');
             fetchCategories(); // Revert if failed
         } finally {
             setActiveRowDropdown(null);
@@ -233,13 +233,28 @@ const CategoryMaster = () => {
 
     // No edit/add view redirection needed as we use modals
 
+    if (currentView.type === 'form') {
+        return (
+            <CategoryForm 
+                mode={currentView.mode}
+                initialData={currentView.data}
+                onBack={() => setCurrentView({ type: 'list', data: null, mode: 'add' })}
+                onSuccess={() => {
+                    fetchCategories();
+                    setCurrentView({ type: 'list', data: null, mode: 'add' });
+                }}
+                onShowToast={showToast}
+            />
+        );
+    }
+
     return (
         <div className="flex flex-col animate-in fade-in duration-500">
             <div className="flex flex-col gap-1 mb-8">
                 <div className="flex items-center justify-between">
                     <h1 className="text-[28px] font-bold text-[#111827] tracking-tight">{t('modules:category_master')}</h1>
                     <button 
-                        onClick={() => setIsAddModalOpen(true)}
+                        onClick={() => setCurrentView({ type: 'form', mode: 'add', data: null })}
                         className="px-6 h-[44px] bg-[#073318] text-white rounded-[10px] text-[15px] font-bold hover:bg-[#04200f] transition-all shadow-sm flex items-center justify-center gap-2"
                     >
                         {t('modules:add_category')}
@@ -379,19 +394,22 @@ const CategoryMaster = () => {
 
                                             {activeRowDropdown === `group-${section.id}` && (
                                                 <div className="absolute right-full mr-2 min-w-[150px] bg-white border border-gray-100 rounded-[12px] shadow-[0_10px_30px_rgba(0,0,0,0.15)] z-[100] py-2 animate-in zoom-in-95 duration-200">
-                                                    <button
-                                                        data-dropdown-item="true"
-                                                        onClick={(e) => { 
-                                                            e.stopPropagation(); 
-                                                            setSelectedCategoryData({ id: section.id, name: section.name, under: 'None', type: 'category' });
-                                                            setIsEditModalOpen(true);
-                                                            setActiveRowDropdown(null);
-                                                        }}
-                                                        className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] font-bold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap"
-                                                    >
-                                                        <Edit size={18} className="text-[#073318]" />
-                                                        {t('modules:edit_category')}
-                                                    </button>
+                                                            <button
+                                                                data-dropdown-item="true"
+                                                                onClick={(e) => { 
+                                                                    e.stopPropagation(); 
+                                                                    setCurrentView({ 
+                                                                        type: 'form', 
+                                                                        mode: 'edit', 
+                                                                        data: { id: section.id, name: section.name, type: 'category' } 
+                                                                    });
+                                                                    setActiveRowDropdown(null);
+                                                                }}
+                                                            className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] font-bold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap"
+                                                        >
+                                                            <Edit size={18} className="text-[#073318]" />
+                                                            {t('modules:view_and_edit_category')}
+                                                        </button>
                                                     <button
                                                         data-dropdown-item="true"
                                                         onClick={(e) => { e.stopPropagation(); handleToggleStatus(section.id, section.status, 'category'); }}
@@ -448,14 +466,22 @@ const CategoryMaster = () => {
                                                                         data-dropdown-item="true"
                                                                         onClick={(e) => { 
                                                                             e.stopPropagation(); 
-                                                                            setSelectedCategoryData({ id: item.id, name: item.name, under: section.name, type: 'sub_category' });
-                                                                            setIsEditModalOpen(true);
+                                                                            setCurrentView({ 
+                                                                                type: 'form', 
+                                                                                mode: 'edit', 
+                                                                                data: { 
+                                                                                    id: item.id, 
+                                                                                    name: item.name, 
+                                                                                    type: 'sub_category',
+                                                                                    parentCategoryId: section.id 
+                                                                                } 
+                                                                            });
                                                                             setActiveRowDropdown(null);
                                                                         }}
                                                                         className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] font-bold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap"
                                                                     >
                                                                         <Edit size={18} className="text-[#073318]" />
-                                                                        {t('modules:edit_category')}
+                                                                        {t('modules:view_and_edit_category')}
                                                                     </button>
                                                                     <button
                                                                         data-dropdown-item="true"
@@ -549,18 +575,15 @@ const CategoryMaster = () => {
                 </div>
             </div>
 
-            <AddCategoryModal 
-                isOpen={isAddModalOpen}
-                onClose={() => setIsAddModalOpen(false)}
-                onSuccess={fetchCategories}
-            />
 
-            <EditCategoryModal 
-                isOpen={isEditModalOpen}
-                onClose={() => setIsEditModalOpen(false)}
-                data={selectedCategoryData}
-                onSuccess={fetchCategories}
-            />
+
+            {toastMessage.show && (
+                <SuccessToast 
+                    message={toastMessage.message} 
+                    type={toastMessage.type}
+                    onClose={() => setToastMessage({ ...toastMessage, show: false })} 
+                />
+            )}
         </div>
     );
 };

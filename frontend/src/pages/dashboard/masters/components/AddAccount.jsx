@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Check, ChevronDown, ChevronUp, Loader2, UploadCloud, ArrowLeft, HelpCircle, Trash2, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import toast from 'react-hot-toast';
 import accountService from '../../../../services/accountService';
 
 const CustomSelect = ({ label, options, value, onChange, onBlur, placeholder, isSearchable = false, required = false, disabled = false, widthClass = "w-full", error = "" }) => {
@@ -114,7 +113,7 @@ const FileUploadField = ({ label, onFileSelect, accept, maxMb, multiple = false 
         const validFiles = Array.from(selectedFiles).filter(f => f.size <= maxSize);
         
         if (validFiles.length < selectedFiles.length) {
-            toast.error(t('common:file_size_error', { max: maxMb }));
+            onShowToast && onShowToast(t('common:file_size_error', { max: maxMb }), 'error');
         }
 
         if (multiple) {
@@ -198,7 +197,7 @@ const PREFIX_OPTIONS = ['Mr', 'Mrs', 'Miss', 'Ms'];
 const REG_UNDER = ['Micro', 'Small', 'Medium'];
 const REG_TYPE = ['Manufacturing', 'Service', 'Trading'];
 
-const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
+const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount, onShowToast }) => {
     const { t } = useTranslation(['modules', 'common']);
     const isEditMode = !!initialData;
     const [formData, setFormData] = useState(initialData ? {
@@ -566,19 +565,19 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
         try {
             if (isEditMode) {
                 const response = await accountService.updateAccount(initialData.id, fData);
-                toast.success(t('modules:success_account_updated'));
+                onShowToast && onShowToast(t('modules:success_account_updated'));
                 if (onUpdateAccount) onUpdateAccount(response);
             } else {
                 const response = await accountService.createAccount(fData);
-                toast.success(t('modules:success_account_created'));
+                onShowToast && onShowToast(t('modules:success_account_created'));
                 if (onAddAccount) onAddAccount(response);
             }
         } catch (error) {
             const errorData = error?.response?.data;
             if (errorData?.errors && Array.isArray(errorData.errors) && errorData.errors.length > 0) {
-                errorData.errors.forEach(err => toast.error(translateBackendError(err)));
+                errorData.errors.forEach(err => onShowToast && onShowToast(translateBackendError(err), 'error'));
             } else {
-                toast.error(translateBackendError(errorData?.message) || t('common:error_saving_data'));
+                onShowToast && onShowToast(translateBackendError(errorData?.message) || t('common:error_saving_data'), 'error');
             }
         } finally {
             setIsLoading(false);
@@ -610,15 +609,28 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
     return (
         <div className="flex flex-col w-full animate-in fade-in duration-300">
             <div className="bg-white rounded-[12px] border border-[#E5E7EB] shadow-sm flex flex-col w-full relative">
-                <div className="flex border-b border-[#E5E7EB] px-6 py-4 items-center justify-between">
+                <div className="flex border-b border-[#E5E7EB] px-6 py-4 items-center justify-between bg-white rounded-t-[12px]">
                     <h2 className="text-[18px] font-bold text-[#111827]">{isEditMode ? t('modules:edit_account') : t('modules:add_account')}</h2>
-                    <button
-                        onClick={onBack}
-                        className="flex items-center gap-2 px-6 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-bold hover:bg-gray-50 transition-all bg-white shadow-sm"
-                    >
-                        <ArrowLeft size={18} />
-                        {t('common:back')}
-                    </button>
+                    <div className="flex items-center gap-3">
+                        {isEditMode && (
+                            <button
+                                onClick={handleSave}
+                                disabled={isLoading}
+                                className={`px-6 h-[40px] text-white rounded-[8px] text-[14px] font-bold transition-all shadow-sm flex items-center justify-center min-w-[120px] ${
+                                    isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#014A36] hover:bg-[#013b2b]'
+                                }`}
+                            >
+                                {isLoading ? <Loader2 size={18} className="animate-spin" /> : "Edit Account"}
+                            </button>
+                        )}
+                        <button
+                            onClick={onBack}
+                            className="flex items-center gap-2 px-6 h-[40px] border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-bold hover:bg-gray-50 transition-all bg-white shadow-sm"
+                        >
+                            <ArrowLeft size={16} />
+                            {t('common:back')}
+                        </button>
+                    </div>
                 </div>
                 <div className="p-6 md:p-8">
                     <div className="flex flex-col gap-10">
@@ -1090,24 +1102,30 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount }) => {
                         </div>
                     </div>
                     
-                    {/* Action buttons at bottom */}
-                    <div className="mt-10 flex justify-end gap-4 py-4 border-t">
-                         <button
-                            onClick={handleSave}
-                            disabled={isLoading || !isFormValid}
-                            className={`px-8 h-[40px] rounded-[8px] text-[14px] font-semibold transition-colors flex items-center justify-center ${
-                                !isLoading && isFormValid ? 'bg-[#073318] hover:bg-[#04200f] text-white shadow-sm' : 'bg-[#D1D5DB] text-white cursor-not-allowed'
-                            }`}
-                        >
-                            {t('common:save')}
-                        </button>
-                             <button
+                    {/* Action buttons at bottom - Hide in edit mode as they're now at top */}
+                    {!isEditMode && (
+                        <div className="mt-10 flex justify-end gap-4 py-4 border-t">
+                            <button
+                                onClick={handleSave}
+                                disabled={isLoading}
+                                className={`px-8 h-[40px] text-white rounded-[8px] text-[14px] font-bold transition-all shadow-md flex items-center justify-center min-w-[160px] ${
+                                    isLoading ? 'bg-gray-400 cursor-not-allowed shadow-none' : 'bg-[#014A36] hover:bg-[#013b2b]'
+                                }`}
+                            >
+                                {isLoading ? (
+                                    <Loader2 size={18} className="animate-spin" />
+                                ) : (
+                                    "Save Account"
+                                )}
+                            </button>
+                            <button
                                 onClick={onBack}
-                                className="px-8 h-[40px] bg-white border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors"
+                                className="px-8 h-[40px] bg-white border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors flex items-center justify-center"
                             >
                                 {t('common:cancel')}
                             </button>
-                    </div>
+                        </div>
+                    )}
                 </div>
             </div>
 

@@ -41,16 +41,16 @@ const ViewProduct = ({ initialData, onBack, onEdit }) => {
                         {onEdit && (
                             <button
                                 onClick={() => onEdit(data)}
-                                className="px-6 h-[40px] bg-[#073318] text-white rounded-[8px] text-[14px] font-semibold hover:bg-[#04200f] transition-colors shadow-sm flex items-center justify-center gap-2"
+                                className="px-6 h-[40px] bg-[#073318] text-white rounded-[8px] text-[14px] font-semibold hover:bg-[#04200f] transition-colors shadow-sm flex items-center justify-center"
                             >
-                                <Edit3 size={16} />
                                 {t('edit_product')}
                             </button>
                         )}
                         <button
                             onClick={onBack}
-                            className="px-6 h-[40px] bg-white border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors shadow-sm"
+                            className="px-6 h-[40px] bg-white border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-semibold hover:bg-gray-50 transition-colors shadow-sm flex items-center justify-center gap-2"
                         >
+                            <ArrowLeft size={16} />
                             {t('common:back')}
                         </button>
                     </div>

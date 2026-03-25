@@ -270,6 +270,10 @@
     "dr": "Dr",
     "india": "India",
     "view_and_edit_account": "View and Edit Account",
+    "view_and_edit_unit": "View and Edit Unit",
+    "view_and_edit_group": "View and Edit Group",
+    "view_and_edit_category": "View and Edit Category",
+    "view_and_edit_product": "View and Edit Product",
     "invalid_hsn_code": "Invalid HSN Code",
     "duplicate_product_name": "Product name already exists"
 }

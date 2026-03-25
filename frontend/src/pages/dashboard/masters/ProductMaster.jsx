@@ -23,7 +23,6 @@ import ViewProduct from "./components/ViewProduct";
 import { translateDynamic } from "../../../utils/i18nUtils";
 import SuccessToast from "./components/SuccessToast";
 import productService from "../../../services/productService";
-import toast from "react-hot-toast";
 
 const ProductMaster = () => {
   const { t } = useTranslation(["modules", "common"]);
@@ -41,7 +40,12 @@ const ProductMaster = () => {
   const [showSuccessToast, setShowSuccessToast] = useState({
     show: false,
     message: "",
+    type: "success",
   });
+
+  const showToast = (message, type = "success") => {
+    setShowSuccessToast({ show: true, message, type });
+  };
   const exportRef = useRef(null);
   const dropdownRef = useRef(null);
 
@@ -84,7 +88,7 @@ const ProductMaster = () => {
       setTotalItems(response.total || 0);
     } catch (error) {
       console.error("Error fetching products:", error);
-      toast.error(t("common:error_fetching_data"));
+      showToast(t("common:error_fetching_data"), "error");
     } finally {
       setLoading(false);
     }
@@ -118,11 +122,11 @@ const ProductMaster = () => {
       const newStatus =
         currentStatus.toUpperCase() === "ACTIVE" ? "INACTIVE" : "ACTIVE";
       await productService.toggleStatus(id, newStatus);
-      toast.success(t("common:status_updated"));
+      showToast(`Product ${newStatus === "ACTIVE" ? "activated" : "inactivated"} successfully`);
       fetchProducts();
     } catch (error) {
       console.error("Error toggling status:", error);
-      toast.error(t("common:error_updating_status"));
+      showToast(error.response?.data?.message || t("common:error_updating_status"), "error");
     } finally {
       setLoading(false);
       setActiveDropdown(null);
@@ -134,11 +138,11 @@ const ProductMaster = () => {
     setLoading(true);
     try {
       await productService.deleteProduct(id);
-      toast.success(t("common:deleted_successfully"));
+      showToast(t("common:deleted_successfully"));
       fetchProducts();
     } catch (error) {
       console.error("Error deleting product:", error);
-      toast.error(t("common:error_deleting_data"));
+      showToast(error.response?.data?.message || t("common:error_deleting_data"), "error");
     } finally {
       setLoading(false);
       setActiveDropdown(null);
@@ -196,7 +200,7 @@ const ProductMaster = () => {
   const handleExportPDF = async () => {
     setIsExportOpen(false);
     if (totalItems === 0) {
-      toast.error("No data available to export");
+      showToast("No data available to export", "error");
       return;
     }
     try {
@@ -221,13 +225,13 @@ const ProductMaster = () => {
         e.response.data.text().then((text) => {
           try {
             const errObj = JSON.parse(text);
-            toast.error(errObj.message || t("common:export_failed"));
+            showToast(errObj.message || t("common:export_failed"), "error");
           } catch {
-            toast.error(t("common:export_failed"));
+            showToast(t("common:export_failed"), "error");
           }
         });
       } else {
-        toast.error(e.response?.data?.message || t("common:export_failed"));
+        showToast(e.response?.data?.message || t("common:export_failed"), "error");
       }
     }
   };
@@ -235,7 +239,7 @@ const ProductMaster = () => {
   const handleExportExcel = async () => {
     setIsExportOpen(false);
     if (totalItems === 0) {
-      toast.error("No data available to export");
+      showToast("No data available to export", "error");
       return;
     }
     try {
@@ -262,13 +266,13 @@ const ProductMaster = () => {
         e.response.data.text().then((text) => {
           try {
             const errObj = JSON.parse(text);
-            toast.error(errObj.message || t("common:export_failed"));
+            showToast(errObj.message || t("common:export_failed"), "error");
           } catch {
-            toast.error(t("common:export_failed"));
+            showToast(t("common:export_failed"), "error");
           }
         });
       } else {
-        toast.error(e.response?.data?.message || t("common:export_failed"));
+        showToast(e.response?.data?.message || t("common:export_failed"), "error");
       }
     }
   };
@@ -278,7 +282,8 @@ const ProductMaster = () => {
       {showSuccessToast.show && (
         <SuccessToast
           message={showSuccessToast.message}
-          onClose={() => setShowSuccessToast({ show: false, message: "" })}
+          type={showSuccessToast.type}
+          onClose={() => setShowSuccessToast({ ...showSuccessToast, show: false })}
         />
       )}
       {/* Conditional Content: Table or Form */}
@@ -545,7 +550,7 @@ const ProductMaster = () => {
                                 className="w-full px-5 py-3 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap font-bold"
                               >
                                 <Eye size={18} className="text-gray-400" />
-                                {t("View And Edit Product")}
+                                {t("modules:view_and_edit_product")}
                               </button>
                               <div className="h-[1px] bg-[#F3F4F6] mx-2 my-1" />
                               <button
@@ -682,13 +687,13 @@ const ProductMaster = () => {
             className={`fixed top-0 right-0 h-full w-full sm:w-[480px] bg-white shadow-2xl z-[70] transform transition-transform duration-300 ease-in-out flex flex-col ${isFilterOpen ? "translate-x-0" : "translate-x-full"}`}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-[#E5E7EB]">
-              <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-[#04200f] bg-emerald-900">
+              <h2 className="text-[20px] font-bold text-white tracking-tight">
                 {t("apply_filters")}
               </h2>
               <button
                 onClick={() => setIsFilterOpen(false)}
-                className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-[#111827] hover:bg-gray-100 rounded-full transition-all"
+                className="w-8 h-8 flex items-center justify-center text-emerald-100 hover:text-white rounded-full transition-all"
               >
                 <X size={20} />
               </button>
@@ -817,7 +822,7 @@ const ProductMaster = () => {
               currentView.type === "add"
                 ? "Product added successfully"
                 : "Product updated successfully";
-            setShowSuccessToast({ show: true, message: msg });
+            showToast(msg);
             setCurrentView({ type: "list", data: null });
             fetchProducts();
           }}

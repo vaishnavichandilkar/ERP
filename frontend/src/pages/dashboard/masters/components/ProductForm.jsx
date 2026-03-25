@@ -18,6 +18,7 @@ const CustomSelect = ({
   getOptionLabel,
   footerLabel = "",
   onFooterClick = null,
+  error = "",
 }) => {
   const { t } = useTranslation(["common"]);
   const [isOpen, setIsOpen] = useState(false);
@@ -55,7 +56,7 @@ const CustomSelect = ({
         {label} {showAsterisk && <span className="text-red-500">*</span>}
       </label>
       <div
-        className={`w-full h-[44px] flex items-center justify-between px-4 border rounded-[8px] bg-white transition-colors ${disabled ? "cursor-not-allowed border-[#E5E7EB] bg-gray-50" : isOpen ? "border-[#014A36] ring-1 ring-[#014A36]/10 cursor-pointer" : "border-[#E5E7EB] hover:border-gray-300 cursor-pointer"}`}
+        className={`w-full h-[44px] flex items-center justify-between px-4 border rounded-[8px] bg-white transition-colors ${disabled ? "cursor-not-allowed border-[#E5E7EB] bg-gray-50" : error ? "border-red-500 ring-1 ring-red-500/10 cursor-pointer" : isOpen ? "border-[#014A36] ring-1 ring-[#014A36]/10 cursor-pointer" : "border-[#E5E7EB] hover:border-gray-300 cursor-pointer"}`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
       >
         {isSearchable && isOpen ? (
@@ -130,6 +131,7 @@ const CustomSelect = ({
           )}
         </div>
       )}
+      {error && <p className="text-[12px] text-red-500 mt-0.5">{error}</p>}
     </div>
   );
 };
@@ -168,6 +170,17 @@ const ProductForm = ({
   const [nameError, setNameError] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const suggestionsRef = useRef(null);
+  const isView = mode === "view";
+  const isFilled = !!(
+    formData.productName &&
+    formData.productCode &&
+    formData.uom &&
+    formData.productType &&
+    formData.category &&
+    formData.subcategory &&
+    formData.hsnCode &&
+    formData.description
+  );
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -233,6 +246,14 @@ const ProductForm = ({
       if (!value || !/^\d{4,}$/.test(value.trim())) {
         error = "Enter valid HSN Code (min 4 digits)";
       }
+    } else if (field === "uom") {
+      if (!value) error = "Please select UOM";
+    } else if (field === "productType") {
+      if (!value) error = "Please select Product Type";
+    } else if (field === "category") {
+      if (!value) error = "Please select Category";
+    } else if (field === "subcategory") {
+      if (!value) error = "Please select Sub Category";
     }
 
     setErrors((prev) => {
@@ -249,21 +270,21 @@ const ProductForm = ({
   };
 
   const validateAll = () => {
-    const nameErr = validateField("productName", formData.productName);
-    const descErr = validateField("description", formData.description);
-    const hsnErr = validateField("hsnCode", formData.hsnCode);
-    return !(nameErr || descErr || hsnErr);
+    const fields = [
+      "productName",
+      "description",
+      "hsnCode",
+      "uom",
+      "productType",
+      "category",
+      "subcategory",
+    ];
+    let isValid = true;
+    fields.forEach((f) => {
+      if (validateField(f, formData[f])) isValid = false;
+    });
+    return isValid;
   };
-
-  const isView = mode === "view";
-  const isFilled = !!(
-    formData.productName &&
-    formData.productCode &&
-    formData.uom &&
-    formData.productType &&
-    formData.category
-  );
-
   const isDirty =
     mode === "edit"
       ? formData.productName !== initialFormData.productName ||
@@ -354,6 +375,10 @@ const ProductForm = ({
   };
 
   const handleSubmit = async () => {
+    if (mode === "edit" && !isDirty) {
+      toast.error("Please make changes to save");
+      return;
+    }
     if (!validateAll()) return;
     setLoading(true);
     try {
@@ -539,18 +564,50 @@ const ProductForm = ({
       >
         {/* Header */}
         <div className="px-8 py-6 border-b border-[#F3F4F6] bg-white flex items-center justify-between">
-          <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">
-            {mode === "add"
-              ? t("modules:add_product")
-              : t("modules:update_product")}
-          </h2>
-          <button
-            onClick={onBack}
-            className="flex items-center gap-2 px-6 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-bold hover:bg-gray-50 transition-all bg-white shadow-sm"
-          >
-            <ArrowLeft size={18} />
-            {t("common:back")}
-          </button>
+          <div>
+            <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">
+              {mode === "add"
+                ? t("modules:add_new_product")
+                : mode === "edit"
+                  ? t("modules:edit_product_details")
+                  : t("modules:view_product_details")}
+            </h2>
+          </div>
+
+          {/* Header Actions */}
+          <div className="flex items-center gap-3">
+            {isView ? (
+              <button
+                type="button"
+                onClick={() => onEdit && onEdit(initialData)}
+                className="px-6 h-[40px] bg-[#073318] hover:bg-[#04200f] text-white rounded-[8px] text-[14px] font-bold transition-all shadow-sm flex items-center justify-center"
+              >
+                {t("modules:edit_product") || "Edit Product"}
+              </button>
+            ) : mode === "edit" ? (
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={loading}
+                className={`px-6 h-[40px] text-white rounded-[8px] text-[14px] font-bold transition-all shadow-sm flex items-center justify-center min-w-[140px] ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-[#073318] hover:bg-[#04200f]"}`}
+              >
+                {loading ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                ) : (
+                  t("modules:update_product") || "Update Product"
+                )}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={onBack}
+              disabled={loading}
+              className="px-6 h-[40px] bg-white border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-bold hover:bg-gray-50 transition-all shadow-sm flex items-center justify-center gap-2"
+            >
+              <ArrowLeft size={16} />
+              {t("common:back")}
+            </button>
+          </div>
         </div>
 
         {/* Form Body */}
@@ -581,6 +638,7 @@ const ProductForm = ({
               disabled={isView}
               footerLabel="+ Add UOM"
               onFooterClick={() => navigate("/seller/masters/unit-master")}
+              error={errors.uom}
             />
 
             <CustomSelect
@@ -591,6 +649,7 @@ const ProductForm = ({
               onChange={(val) => handleInputChange("productType", val)}
               showAsterisk={true}
               disabled={isView}
+              error={errors.productType}
             />
 
             <CustomSelect
@@ -604,6 +663,7 @@ const ProductForm = ({
               disabled={isView}
               footerLabel="+ Add Category"
               onFooterClick={() => navigate("/seller/masters/category")}
+              error={errors.category}
             />
 
             <CustomSelect
@@ -617,6 +677,7 @@ const ProductForm = ({
               disabled={isView || !formData.category}
               footerLabel="+ Add Sub Category"
               onFooterClick={() => navigate("/seller/masters/category")}
+              error={errors.subcategory}
             />
 
             {renderInput(
@@ -647,33 +708,31 @@ const ProductForm = ({
           </div>
         </div>
 
-        {/* Footer Buttons */}
-        <div className="px-8 py-6 bg-[#F9FAFB]/50 flex justify-end gap-3 border-t border-[#F3F4F6]">
-          <button
-            type="button"
-            onClick={onBack}
-            disabled={loading}
-            className="px-8 h-[46px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-bold hover:bg-white transition-all bg-white"
-          >
-            {t("common:cancel")}
-          </button>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={loading || !isFilled || (mode === "edit" && !isDirty)}
-            className={`px-10 h-[46px] text-white rounded-[10px] text-[14px] font-bold transition-all shadow-md flex items-center justify-center min-w-[160px] ${loading || !isFilled || (mode === "edit" && !isDirty) ? "bg-gray-400 cursor-not-allowed shadow-none" : "bg-[#073318] hover:bg-[#04200f]"}`}
-          >
-            {loading ? (
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-            ) : (
-              <div className="flex items-center justify-center">
-                {mode === "add"
-                  ? t("modules:add_product")
-                  : t("modules:update_product")}
-              </div>
-            )}
-          </button>
-        </div>
+        {/* Footer Buttons - Only for Add mode */}
+        {mode === "add" && (
+          <div className="px-8 py-6 bg-[#F9FAFB]/50 flex justify-end gap-3 border-t border-[#F3F4F6]">
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={loading}
+              className={`px-10 h-[46px] text-white rounded-[10px] text-[14px] font-bold transition-all shadow-md flex items-center justify-center min-w-[160px] ${loading ? "bg-gray-400 cursor-not-allowed shadow-none" : "bg-[#073318] hover:bg-[#04200f]"}`}
+            >
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              ) : (
+                t("modules:add_product")
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={onBack}
+              disabled={loading}
+              className="px-10 h-[46px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-bold hover:bg-white transition-all bg-white shadow-sm flex items-center justify-center"
+            >
+              {t("common:cancel")}
+            </button>
+          </div>
+        )}
       </div>
 
       <style jsx global>{`

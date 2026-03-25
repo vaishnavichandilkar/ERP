@@ -1,10 +1,11 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Search, Download, Filter, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, CheckCircle2, XCircle, RefreshCw, ChevronDown, X } from 'lucide-react';
+import { Search, Download, Filter, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, CheckCircle2, XCircle, RefreshCw, ChevronDown, X, Eye } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import GroupForm from './components/GroupForm';
 import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
 import masterService from '../../../services/masterService';
 import { translateDynamic } from '../../../utils/i18nUtils';
+import SuccessToast from './components/SuccessToast';
 
 const GroupMaster = () => {
     const { t } = useTranslation(['modules', 'common']);
@@ -298,11 +299,11 @@ const GroupMaster = () => {
     return (
         <div className="flex flex-col animate-in fade-in duration-500 relative font-['Plus_Jakarta_Sans']">
             {toast && (
-                <div className={`fixed top-6 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.15)] flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300
-                    ${toast.type === 'error' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-[#073318] text-white'}`}>
-                    {toast.type === 'error' ? <XCircle size={18} /> : <CheckCircle2 size={18} />}
-                    <span className="text-[16px] font-medium">{toast.message}</span>
-                </div>
+                <SuccessToast 
+                    message={toast.message} 
+                    type={toast.type}
+                    onClose={() => setToast(null)} 
+                />
             )}
 
             <div className="flex flex-col gap-1 mb-8">

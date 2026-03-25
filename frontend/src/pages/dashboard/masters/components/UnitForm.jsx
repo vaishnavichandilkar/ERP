@@ -167,7 +167,6 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onEdit 
     });
     const [errors, setErrors] = useState({});
 
-    // Reset form when initialData changes or mode changes
     useEffect(() => {
         if ((mode === 'edit' || mode === 'view') && initialData) {
             setFormData({
@@ -184,7 +183,6 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onEdit 
         }
     }, [initialData, mode]);
 
-    // Initial Load - Fetch Unit Names
     useEffect(() => {
         const loadInitialData = async () => {
             try {
@@ -192,8 +190,7 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onEdit 
                 const filteredNames = (response.data || []).filter(name => name && name.trim() !== '-');
                 setUnitNameOptions(filteredNames);
 
-                // If editing, load dependent options safely
-                if (mode === 'edit' && initialData) {
+                if ((mode === 'edit' || mode === 'view') && initialData) {
                     if (initialData.unit_name) {
                         try {
                             const uomRes = await unitService.getUomByUnitName(initialData.unit_name);
@@ -249,20 +246,12 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onEdit 
             try {
                 const response = await unitService.getMeasurementByUom(value);
                 const measurementName = response.data || '';
-                
-                // Automatically fill measurement name
-                setFormData(prev => ({
-                    ...prev,
-                    full_name_of_measurement: measurementName
-                }));
-
-                // Ensure it exists in options if found in library
+                setFormData(prev => ({ ...prev, full_name_of_measurement: measurementName }));
                 if (measurementName) {
                     setFullNameOptions(prev => prev.includes(measurementName) ? prev : [...prev, measurementName]);
                 }
             } catch (error) {
                 console.error('Error loading measurement name:', error);
-                // If not found in library, keep measurement empty for user to fill
             }
         }
     };
@@ -288,8 +277,6 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onEdit 
         setFormData(prev => ({ ...prev, full_name_of_measurement: newValue }));
     };
 
-    const isFilled = !!(formData.unit_name && formData.gst_uom && formData.full_name_of_measurement);
-    
     const isDirty = mode === 'edit' && initialData ? (
         formData.unit_name !== initialData.unit_name ||
         formData.gst_uom !== initialData.gst_uom ||
@@ -324,79 +311,19 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onEdit 
                 await unitService.createUnit(payload);
             } else {
                 const updateId = initialData?.id;
-                if (!updateId) {
-                    throw new Error(t('common:error_invalid_id'));
-                }
+                if (!updateId) throw new Error(t('common:error_invalid_id'));
                 await unitService.updateUnit(updateId, payload);
             }
             onSuccess();
         } catch (error) {
             console.error('Error saving unit:', error);
-            const message = error.response?.data?.message || t('common:error_saving_data');
-            toast.error(message);
+            toast.error(error.response?.data?.message || t('common:error_saving_data'));
         } finally {
             setLoading(false);
         }
     };
 
     const isView = mode === 'view';
-
-    const renderViewMode = () => (
-        <div className="flex flex-col w-full bg-white border border-[#E5E7EB] rounded-[16px] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.03)] animate-in fade-in duration-300">
-            <div className="px-8 py-6 border-b border-[#F3F4F6] bg-white flex items-center justify-between">
-                <div>
-                    <h3 className="text-[20px] font-bold text-[#111827]">{t('modules:view_unit')}</h3>
-                </div>
-                <button
-                    onClick={onBack}
-                    className="flex items-center gap-2 px-6 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-bold hover:bg-gray-50 transition-all bg-white shadow-sm"
-                >
-                    <ArrowLeft size={18} />
-                    {t('common:back')}
-                </button>
-            </div>
-
-            <div className="flex flex-col">
-                {[
-                    { label: t('modules:unit_name'), value: formData.unit_name },
-                    { label: t('modules:gst_uom'), value: formData.gst_uom },
-                    { label: t('modules:full_name_of_measurement'), value: formData.full_name_of_measurement || '-' }
-                ].map((item, idx) => (
-                    <div key={idx} className="flex border-b border-[#F3F4F6] min-h-[56px] last:border-b-0 group">
-                        <div className="w-[240px] bg-[#F9FAFB] px-8 py-4 flex items-center border-r border-[#F3F4F6]">
-                            <span className="text-[14px] font-bold text-gray-500 uppercase tracking-tight">{item.label}:</span>
-                        </div>
-                        <div className="flex-1 px-8 py-4 flex items-center bg-white group-hover:bg-[#F9FAFB]/50 transition-colors">
-                            <span className="text-[16px] font-bold text-[#111827]">{item.value}</span>
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            <div className="px-8 py-6 bg-[#F9FAFB]/50 flex justify-end gap-3 border-t border-[#F3F4F6]">
-                <button
-                    onClick={onBack}
-                    className="px-8 h-[46px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-bold hover:bg-white transition-all bg-white"
-                >
-                    {t('common:cancel')}
-                </button>
-                <button
-                    onClick={() => initialData && onEdit && onEdit(initialData)}
-                    className="px-8 h-[46px] bg-[#073318] text-white rounded-[10px] text-[14px] font-bold hover:bg-[#04200f] transition-all shadow-sm flex items-center justify-center min-w-[140px]"
-                >
-                    {t('modules:edit_unit')}
-                </button>
-            </div>
-        </div>
-    );
-
-    if (isView) {
-        return (
-            <div className="flex flex-col w-full h-full p-2">
-                {renderViewMode()}
-            </div>
-        );
-    }
 
     return (
         <div className="flex flex-col w-full h-full animate-in fade-in duration-300 p-2">
@@ -405,92 +332,138 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onEdit 
                 <div className="px-8 py-6 border-b border-[#F3F4F6] bg-white flex items-center justify-between">
                     <div>
                         <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">
-                            {mode === 'add' ? t('modules:add_new_unit') : t('modules:edit_unit_details')}
+                            {mode === 'add' ? t('modules:add_new_unit') : (mode === 'edit' ? t('modules:edit_unit_details') : t('modules:view_unit_details'))}
                         </h2>
                     </div>
-                    <button
-                        onClick={onBack}
-                        className="flex items-center gap-2 px-6 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-bold hover:bg-gray-50 transition-all bg-white shadow-sm"
-                    >
-                        <ArrowLeft size={18} />
-                        {t('common:back')}
-                    </button>
-                </div>
-
-                {/* Form Body */}
-                <div className="p-8 md:p-10 flex flex-col gap-8 w-full">
-                    <div className="grid grid-cols-1 gap-8 w-full">
-                        <CustomSelect
-                            label={t('modules:unit_name')}
-                            placeholder={t('modules:select_unit_category')}
-                            options={unitNameOptions}
-                            value={formData.unit_name}
-                            onChange={handleUnitNameChange}
-                            showAsterisk={true}
-                            disabled={isView}
-                            actionLabel={t('modules:add_unit_name')}
-                            onAction={handleAddCustomUnitName}
-                            error={errors.unit_name}
-                        />
-
-                        <CustomSelect
-                            label={t('modules:gst_uom')}
-                            placeholder={t('modules:select_gst_uom')}
-                            options={gstUomOptions}
-                            value={formData.gst_uom}
-                            onChange={handleGstUomChange}
-                            isSearchable={true}
-                            disabled={isView || !formData.unit_name}
-                            showAsterisk={true}
-                            actionLabel={t('modules:add_gst_uom')}
-                            onAction={handleAddCustomGstUom}
-                            error={errors.gst_uom}
-                        />
-
-                        <CustomSelect
-                            label={t('modules:full_name_of_measurement')}
-                            placeholder={t('modules:select_or_enter_full_name')}
-                            options={fullNameOptions}
-                            value={formData.full_name_of_measurement}
-                            onChange={(val) => {
-                                setFormData(prev => ({ ...prev, full_name_of_measurement: val }));
-                                setErrors(prev => ({ ...prev, full_name_of_measurement: '' }));
-                            }}
-                            isSearchable={true}
-                            disabled={isView || !formData.gst_uom}
-                            showAsterisk={true}
-                            actionLabel={t('modules:add_full_name_of_measurement')}
-                            onAction={handleAddCustomFullName}
-                            error={errors.full_name_of_measurement}
-                        />
+                    
+                    {/* Header Actions */}
+                    <div className="flex items-center gap-3">
+                        {isView ? (
+                            <button
+                                type="button"
+                                onClick={() => onEdit && onEdit(initialData)}
+                                className="px-6 h-[40px] bg-[#073318] hover:bg-[#04200f] text-white rounded-[8px] text-[14px] font-bold transition-all shadow-sm flex items-center justify-center"
+                            >
+                                {t('modules:edit_unit') || 'Edit Unit'}
+                            </button>
+                        ) : (mode === 'edit') ? (
+                            <button
+                                type="button"
+                                onClick={handleSubmit}
+                                disabled={loading}
+                                className={`px-6 h-[40px] text-white rounded-[8px] text-[14px] font-bold transition-all shadow-sm flex items-center justify-center min-w-[120px] ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#073318] hover:bg-[#04200f]'}`}
+                            >
+                                {loading ? (
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                ) : (
+                                    t('modules:update_unit') || 'Update Unit'
+                                )}
+                            </button>
+                        ) : null}
+                        <button
+                            type="button"
+                            onClick={onBack}
+                            className="px-6 h-[40px] bg-white border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-bold hover:bg-gray-50 transition-all shadow-sm flex items-center justify-center gap-2"
+                        >
+                            <ArrowLeft size={16} />
+                            {t('common:back') || 'Back'}
+                        </button>
                     </div>
                 </div>
 
-                {/* Footer Buttons */}
-                <div className="px-8 py-6 bg-[#F9FAFB]/50 flex justify-end gap-3 border-t border-[#F3F4F6]">
-                    <button
-                        type="button"
-                        onClick={onBack}
-                        disabled={loading}
-                        className="px-8 h-[46px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-bold hover:bg-white transition-all bg-white shadow-sm"
-                    >
-                        {t('common:cancel')}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={handleSubmit}
-                        disabled={loading || !isFilled || (mode === 'edit' && !isDirty)}
-                        className={`px-8 h-[46px] text-white rounded-[10px] text-[14px] font-bold transition-all shadow-md flex items-center justify-center min-w-[160px] ${loading || !isFilled || (mode === 'edit' && !isDirty) ? 'bg-gray-400 cursor-not-allowed shadow-none' : 'bg-[#073318] hover:bg-[#04200f]'}`}
-                    >
-                        {loading ? (
-                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        ) : (
-                            <div className="flex items-center justify-center">
-                                {mode === 'add' ? (t('modules:save_unit') || 'Save Unit') : (t('modules:update_unit') || 'Update Unit')}
+                {/* Form Body - View Mode Styling */}
+                {isView ? (
+                    <div className="flex flex-col">
+                        {[
+                            { label: t('modules:unit_name'), value: formData.unit_name },
+                            { label: t('modules:gst_uom'), value: formData.gst_uom },
+                            { label: t('modules:full_name_of_measurement'), value: formData.full_name_of_measurement || '-' }
+                        ].map((item, idx) => (
+                            <div key={idx} className="flex border-b border-[#F3F4F6] min-h-[56px] last:border-b-0 group">
+                                <div className="w-[240px] bg-[#F9FAFB] px-8 py-4 flex items-center border-r border-[#F3F4F6]">
+                                    <span className="text-[14px] font-bold text-gray-500 uppercase tracking-tight">{item.label}:</span>
+                                </div>
+                                <div className="flex-1 px-8 py-4 flex items-center bg-white group-hover:bg-[#F9FAFB]/50 transition-colors">
+                                    <span className="text-[16px] font-bold text-[#111827]">{item.value}</span>
+                                </div>
                             </div>
-                        )}
-                    </button>
-                </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="p-8 md:p-10 flex flex-col gap-8 w-full">
+                        <div className="grid grid-cols-1 gap-8 w-full">
+                            <CustomSelect
+                                label={t('modules:unit_name')}
+                                placeholder={t('modules:select_unit_category')}
+                                options={unitNameOptions}
+                                value={formData.unit_name}
+                                onChange={handleUnitNameChange}
+                                showAsterisk={true}
+                                disabled={isView}
+                                actionLabel={t('modules:add_unit_name')}
+                                onAction={handleAddCustomUnitName}
+                                error={errors.unit_name}
+                            />
+
+                            <CustomSelect
+                                label={t('modules:gst_uom')}
+                                placeholder={t('modules:select_gst_uom')}
+                                options={gstUomOptions}
+                                value={formData.gst_uom}
+                                onChange={handleGstUomChange}
+                                isSearchable={true}
+                                disabled={isView || !formData.unit_name}
+                                showAsterisk={true}
+                                actionLabel={t('modules:add_gst_uom')}
+                                onAction={handleAddCustomGstUom}
+                                error={errors.gst_uom}
+                            />
+
+                            <CustomSelect
+                                label={t('modules:full_name_of_measurement')}
+                                placeholder={t('modules:select_or_enter_full_name')}
+                                options={fullNameOptions}
+                                value={formData.full_name_of_measurement}
+                                onChange={(val) => {
+                                    setFormData(prev => ({ ...prev, full_name_of_measurement: val }));
+                                    setErrors(prev => ({ ...prev, full_name_of_measurement: '' }));
+                                }}
+                                isSearchable={true}
+                                disabled={isView || !formData.gst_uom}
+                                showAsterisk={true}
+                                actionLabel={t('modules:add_full_name_of_measurement')}
+                                onAction={handleAddCustomFullName}
+                                error={errors.full_name_of_measurement}
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {/* Footer Buttons - Only for Add Mode */}
+                {mode === 'add' && (
+                    <div className="px-8 py-6 bg-[#F9FAFB]/50 flex justify-end gap-3 border-t border-[#F3F4F6]">
+                        <button
+                            type="button"
+                            onClick={handleSubmit}
+                            disabled={loading}
+                            className={`px-8 h-[46px] text-white rounded-[10px] text-[14px] font-bold transition-all shadow-md flex items-center justify-center min-w-[160px] ${loading ? 'bg-gray-400 cursor-not-allowed shadow-none' : 'bg-[#073318] hover:bg-[#04200f]'}`}
+                        >
+                            {loading ? (
+                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            ) : (
+                                t('modules:add_unit') || 'Add Unit'
+                            )}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={onBack}
+                            disabled={loading}
+                            className="px-8 h-[46px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-bold hover:bg-white transition-all bg-white shadow-sm flex items-center justify-center"
+                        >
+                            {t('common:cancel')}
+                        </button>
+                    </div>
+                )}
             </div>
 
             <style jsx global>{`

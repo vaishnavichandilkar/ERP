@@ -6,16 +6,7 @@ import { useTranslation } from 'react-i18next';
 import accountService from '../../../services/accountService';
 import AddAccount from './components/AddAccount';
 import ViewAccount from './components/ViewAccount';
-import toast from 'react-hot-toast';
-
-const SuccessToast = ({ message }) => (
-    <div className="flex items-center gap-2 bg-[#0A3622] text-white px-4 py-2 rounded-lg shadow-lg border border-[#0D442B] animate-in fade-in slide-in-from-top-4 duration-300">
-        <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
-            <CheckCircle2 size={14} className="text-white" />
-        </div>
-        <span className="text-[14px] font-bold tracking-tight">{message}</span>
-    </div>
-);
+import SuccessToast from './components/SuccessToast';
 
 const AccountMaster = () => {
     const { t } = useTranslation(['common', 'modules']);
@@ -47,6 +38,13 @@ const AccountMaster = () => {
     const [currentView, setCurrentView] = useState('list');
     const [previousView, setPreviousView] = useState(null);
     const [selectedAccount, setSelectedAccount] = useState(null);
+    const [toastMessage, setToastMessage] = useState({ show: false, message: '', type: 'success' });
+
+    const showToast = (message, type = 'success') => {
+        setToastMessage({ show: true, message, type });
+        // Auto-close is handled inside SuccessToast component itself though, 
+        // but we need onBack to reset it in some cases maybe.
+    };
 
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [currentPage, setCurrentPage] = useState(1);
@@ -183,9 +181,7 @@ const AccountMaster = () => {
         });
         
         dispatch(fetchAllAccounts(params));
-        toast.custom(() => (
-            <SuccessToast message="Data refreshed successfully" />
-        ), { duration: 2000, position: 'top-right' });
+        showToast("Data refreshed successfully");
     };
 
     const handleExportPDF = async () => {
@@ -244,6 +240,7 @@ const AccountMaster = () => {
         const newStatus = account.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
         await dispatch(toggleAccountStatus({ id: account.id, status: newStatus }));
         dispatch(fetchAllAccounts({ page: currentPage, limit: rowsPerPage, search: searchQuery, ...appliedFilters }));
+        showToast(`Account ${newStatus === 'ACTIVE' ? 'activated' : 'inactivated'} successfully`);
         setDropdownIndex(null);
     };
 
@@ -263,6 +260,7 @@ const AccountMaster = () => {
             onBack={handleBack} 
             onAddAccount={handleAddAccount}
             onUpdateAccount={handleUpdateAccount}
+            onShowToast={showToast}
         />;
     }
 
@@ -590,9 +588,9 @@ const AccountMaster = () => {
                 <div className="fixed inset-0 z-[100] flex justify-end">
                     <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setIsFilterOpen(false)} />
                     <div className="relative w-full max-w-[480px] h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
-                        <div className="flex items-center justify-between px-6 py-5 border-b border-[#E5E7EB]">
-                            <h2 className="text-[20px] font-bold text-[#111827]">{t('common:apply_filters', 'Apply Filters')}</h2>
-                            <button onClick={() => setIsFilterOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors p-1">
+                        <div className="flex items-center justify-between px-6 py-5 border-b border-[#04200f] bg-emerald-900">
+                            <h2 className="text-[20px] font-bold text-white tracking-tight">{t('common:apply_filters', 'Apply Filters')}</h2>
+                            <button onClick={() => setIsFilterOpen(false)} className="text-emerald-100 hover:text-white transition-colors p-1">
                                 <X size={20} strokeWidth={1.5} />
                             </button>
                         </div>
@@ -711,6 +709,13 @@ const AccountMaster = () => {
                         </div>
                     </div>
                 </div>
+            )}
+            {toastMessage.show && (
+                <SuccessToast 
+                    message={toastMessage.message} 
+                    type={toastMessage.type}
+                    onClose={() => setToastMessage({ ...toastMessage, show: false })} 
+                />
             )}
         </div>
     );
