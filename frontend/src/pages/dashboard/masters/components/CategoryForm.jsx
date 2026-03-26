@@ -123,7 +123,7 @@ const CategoryForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onS
                 <div className="px-8 py-6 border-b border-[#F3F4F6] bg-white flex items-center justify-between">
                     <div>
                         <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">
-                            {mode === 'add' ? 'Add New Category' : (mode === 'edit' ? t('modules:edit_category_details') : t('modules:view_category_details'))}
+                            {mode === 'add' ? 'Add New Category' : (mode === 'edit' ? 'Edit Category' : 'View Category')}
                         </h2>
                     </div>
                     
@@ -139,7 +139,7 @@ const CategoryForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onS
                                 {isLoading ? (
                                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                                 ) : (
-                                    t('modules:update_category') || 'Update Category'
+                                    'Save Category'
                                 )}
                             </button>
                         )}

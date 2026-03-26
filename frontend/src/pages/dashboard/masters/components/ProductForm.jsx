@@ -539,7 +539,7 @@ const ProductForm = ({
           onClick={() => onEdit && onEdit(initialData)}
           className="px-8 h-[46px] bg-[#073318] text-white rounded-[10px] text-[14px] font-bold hover:bg-[#04200f] transition-all shadow-sm flex items-center justify-center min-w-[140px]"
         >
-          {t("modules:update_product")}
+          Save Product
         </button>
       </div>
     </div>
@@ -557,10 +557,10 @@ const ProductForm = ({
           <div>
             <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">
               {mode === "add"
-                ? t("modules:add_new_product")
+                ? "Add New Product"
                 : mode === "edit"
-                  ? t("modules:edit_product_details")
-                  : t("modules:view_product_details")}
+                  ? "Edit Product"
+                  : "View Product"}
             </h2>
           </div>
 
@@ -583,9 +583,7 @@ const ProductForm = ({
               >
                 {loading ? (
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                ) : (
-                  t("modules:update_product") || "Update Product"
-                )}
+                ) : 'Save Product'}
               </button>
             ) : null}
             <button
@@ -709,9 +707,7 @@ const ProductForm = ({
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-              ) : (
-                t("modules:add_product")
-              )}
+              ) : 'Save Product'}
             </button>
             <button
               type="button"
