@@ -620,7 +620,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount, onShow
                                     isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#014A36] hover:bg-[#013b2b]'
                                 }`}
                             >
-                                {isLoading ? <Loader2 size={18} className="animate-spin" /> : "Edit Account"}
+                                {isLoading ? <Loader2 size={18} className="animate-spin" /> : "Save Account"}
                             </button>
                         )}
                         <button

@@ -355,9 +355,7 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onEdit 
                             >
                                 {loading ? (
                                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                ) : (
-                                    t('modules:update_unit') || 'Update Unit'
-                                )}
+                                ) : 'Save Unit'}
                             </button>
                         ) : null}
                         <button
@@ -450,9 +448,7 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onEdit 
                         >
                             {loading ? (
                                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                            ) : (
-                                t('modules:add_unit') || 'Add Unit'
-                            )}
+                            ) : 'Save Unit'}
                         </button>
                         <button
                             type="button"
