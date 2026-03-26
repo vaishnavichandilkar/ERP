@@ -240,5 +240,14 @@
     "cr": "जमा",
     "dr": "बनाम",
     "india": "भारत",
-    "view_and_edit_account": "खाता देखें और संपादित करें"
+    "view_and_edit_account": "खाता देखें और संपादित करें",
+    "pan_card": "पैन कार्ड",
+    "gst_certificate": "जीएसटी प्रमाणपत्र",
+    "food_license": "खाद्य लाइसेंस",
+    "shop_act_license": "शॉप एक्ट लाइसेंस",
+    "cancelled_cheque_bank_passbook_copy": "रद्द चेक/बैंक पासबुक कॉपी",
+    "agreement_copy": "अनुबंध की प्रति",
+    "medicine_license": "दवा लाइसेंस",
+    "pesticide_license": "कीटनाशक लाइसेंस",
+    "other": "अन्य"
 }

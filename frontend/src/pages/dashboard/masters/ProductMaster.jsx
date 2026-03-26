@@ -158,7 +158,6 @@ const ProductMaster = () => {
   const handleClearFilter = () => {
     setFilterInputs(defaultFilters);
     setAppliedFilters(defaultFilters);
-    setIsFilterOpen(false);
     setCurrentPage(1);
   };
 
@@ -307,7 +306,7 @@ const ProductMaster = () => {
           </div>
 
           {/* Table Area */}
-          <div className="flex flex-col bg-white rounded-[16px] border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.03)] w-full overflow-hidden mb-8">
+          <div className="master-table-container">
             {/* Table Header Section */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 border-b border-[#F3F4F6]">
               <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
@@ -404,65 +403,65 @@ const ProductMaster = () => {
               </div>
             </div>
 
-            <div className="overflow-x-auto w-full min-h-[400px]">
-              <table className="w-full min-w-[1200px] text-left border-collapse">
+            <div className="master-table-wrapper">
+              <table className="master-table min-w-[1200px]">
                 <thead>
-                  <tr className="bg-[#F9FAFB] border-b border-[#F3F4F6] text-[14px] font-bold text-[#374151]">
-                    <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB]">
+                  <tr>
+                    <th className="border-r border-white/10">
                       <div className="flex items-center gap-2 uppercase tracking-tight">
                         {t("product_code")}{" "}
                         <ChevronsUpDown size={14} className="text-gray-300" />
                       </div>
                     </th>
-                    <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB]">
+                    <th className="border-r border-white/10">
                       <div className="flex items-center gap-2 uppercase tracking-tight">
                         {t("product_name")}{" "}
                         <ChevronsUpDown size={14} className="text-gray-300" />
                       </div>
                     </th>
-                    <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB]">
+                    <th className="border-r border-white/10">
                       <div className="flex items-center gap-2 uppercase tracking-tight">
                         {t("modules:gst_uom", "GST UOM")}{" "}
                         <ChevronsUpDown size={14} className="text-gray-300" />
                       </div>
                     </th>
-                    <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB]">
+                    <th className="border-r border-white/10">
                       <div className="flex items-center gap-2 uppercase tracking-tight">
                         {t("product_type")}{" "}
                         <ChevronsUpDown size={14} className="text-gray-300" />
                       </div>
                     </th>
-                    <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB]">
+                    <th className="border-r border-white/10">
                       <div className="flex items-center gap-2 uppercase tracking-tight">
                         {t("category")}{" "}
                         <ChevronsUpDown size={14} className="text-gray-300" />
                       </div>
                     </th>
-                    <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB]">
+                    <th className="border-r border-white/10">
                       <div className="flex items-center gap-2 uppercase tracking-tight">
                         {t("sub_category")}{" "}
                         <ChevronsUpDown size={14} className="text-gray-300" />
                       </div>
                     </th>
-                    <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB]">
+                    <th className="border-r border-white/10">
                       <div className="flex items-center gap-2 uppercase tracking-tight">
                         {t("hsn_code")}{" "}
                         <ChevronsUpDown size={14} className="text-gray-300" />
                       </div>
                     </th>
-                    <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB]">
+                    <th className="border-r border-white/10">
                       <div className="flex items-center gap-2 uppercase tracking-tight">
                         {t("tax_percent")}{" "}
                         <ChevronsUpDown size={14} className="text-gray-300" />
                       </div>
                     </th>
-                    <th className="px-6 py-5 whitespace-nowrap border-r border-[#E5E7EB]">
+                    <th className="border-r border-white/10">
                       <div className="flex items-center gap-2 uppercase tracking-tight">
                         {t("common:status")}{" "}
                         <ChevronsUpDown size={14} className="text-gray-300" />
                       </div>
                     </th>
-                    <th className="px-6 py-5 whitespace-nowrap text-center uppercase tracking-tight">
+                    <th className="text-center uppercase tracking-tight">
                       {t("common:action")}
                     </th>
                   </tr>

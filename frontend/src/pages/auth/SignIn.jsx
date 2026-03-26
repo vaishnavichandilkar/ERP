@@ -9,6 +9,57 @@ import { ChevronDown, ArrowLeft } from 'lucide-react';
 import { sendLoginOtpApi } from '../../services/authService';
 import { useTranslation } from 'react-i18next';
 
+const CustomInput = ({ label, type = 'text', value, onChange, onBlur, placeholder, name, select, children, className = '', prefix, error, info, optional, onKeyDown, ...rest }) => {
+    const { t } = useTranslation(['auth', 'common']);
+    return (
+        <div className={`flex flex-col w-full ${className}`}>
+            {label && (
+                <label className="text-[14px] text-[#374151] mb-2 font-['Plus_Jakarta_Sans'] font-medium block">
+                    {label}{' '}{optional ? <span className="text-[#9CA3AF] font-normal">{t('auth:optional')}</span> : <span className="text-red-500">*</span>}
+                </label>
+            )}
+            <div className="relative w-full">
+                {prefix ? (
+                    <div className={`relative flex items-center w-full h-[56px] border ${error ? 'border-red-500 hover:border-red-500 focus-within:border-red-500 focus-within:ring-red-500/20' : 'border-[#D1D5DB] focus-within:border-[#0F3D2E] focus-within:ring-[#0F3D2E]'} rounded-[8px] bg-[#FFFFFF] transition-all duration-300 focus-within:ring-1 overflow-hidden`}>
+                        <div className="absolute left-0 top-0 bottom-0 pl-4 pr-3 flex items-center pointer-events-none text-[#111827]">
+                            {prefix}
+                        </div>
+                        <input
+                            type={type}
+                            name={name}
+                            id={name || 'phone-input'}
+                            value={value}
+                            onChange={onChange}
+                            onBlur={onBlur}
+                            onKeyDown={onKeyDown}
+                            placeholder={placeholder}
+                            className="w-full h-full font-['Plus_Jakarta_Sans'] placeholder:text-[#9CA3AF] text-[#111827] outline-none bg-transparent pl-[64px] pr-[16px] text-[15px]"
+                            {...rest}
+                        />
+                    </div>
+                ) : (
+                    <input
+                        type={type}
+                        name={name}
+                        value={value}
+                        onChange={onChange}
+                        onBlur={onBlur}
+                        onKeyDown={onKeyDown}
+                        placeholder={placeholder}
+                        className={`w-full h-[56px] px-[16px] text-[15px] border ${error ? 'border-red-500 hover:border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-[#D1D5DB] focus:border-[#0F3D2E] focus:ring-[#0F3D2E]'} rounded-[8px] outline-none bg-[#FFFFFF] font-['Plus_Jakarta_Sans'] transition-all duration-300 focus:ring-1 placeholder:text-[#9CA3AF] text-[#111827] ${rest.readOnly ? 'bg-gray-100 cursor-not-allowed opacity-80' : ''}`}
+                        {...rest}
+                    />
+                )}
+            </div>
+            {error && (
+                <div className="mt-1.5 text-red-500 text-[13px] font-medium animate-in fade-in slide-in-from-top-1 duration-300">
+                    {error}
+                </div>
+            )}
+        </div>
+    );
+};
+
 const SignIn = () => {
     const { t } = useTranslation('auth');
     const [phone, setPhone] = useState('');
@@ -54,6 +105,15 @@ const SignIn = () => {
         }
     };
 
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (phone && agreed && !isLoading && phone.length >= 10 && !error) {
+                handleGetOTP();
+            }
+        }
+    };
+
     return (
         <AuthLayout hideLeftPanel={true}>
             <div className="relative text-left w-full box-border flex flex-col pt-0">
@@ -81,12 +141,15 @@ const SignIn = () => {
                 </p>
 
                 <div className="flex flex-col gap-4 w-full">
-                    <div className="flex flex-col">
-                        <Input
+                    <div className="flex flex-col border-none">
+                        <CustomInput
                             label={t('phone_number')}
                             placeholder={t('enter_number')}
+                            name="phone"
+                            autoComplete="tel"
                             value={phone}
                             onBlur={handlePhoneBlur}
+                            onKeyDown={handleKeyDown}
                             onChange={(e) => {
                                 const val = e.target.value.replace(/\D/g, '').slice(0, 10);
                                 setPhone(val);
@@ -98,42 +161,38 @@ const SignIn = () => {
                                 }
                             }}
                             type="tel"
-                            invalid={!!error}
+                            error={error}
                             prefix={
-                                <div className="flex items-center gap-1.5 cursor-pointer hover:bg-gray-50 rounded-l-[8px] h-full">
-                                    <span className="text-[15px] font-medium text-gray-900">{t('in')}</span>
-                                    <ChevronDown size={14} className="text-gray-500" strokeWidth={2} />
+                                <div className="flex items-center gap-1.5 pr-2">
+                                    <span className="text-[15px] font-medium text-[#111827]">IN</span>
+                                    <ChevronDown size={16} className="text-[#6B7280]" strokeWidth={2} />
                                 </div>
                             }
                         />
-                        {error && (
-                            <div className="mt-1.5 text-red-500 text-[13px] font-medium animate-in fade-in slide-in-from-top-1 duration-300">
-                                {error}
-                            </div>
-                        )}
                     </div>
 
-                    <div className="flex items-start">
-                        <label className="flex items-start cursor-pointer">
+                    <div className="flex items-center">
+                        <label className="flex items-start cursor-pointer group">
                             <input
                                 type="checkbox"
+                                name="agreed"
+                                className="mt-[3px] shrink-0 mr-3 peer accent-[#0F3D2E] text-[#0F3D2E] w-[18px] h-[18px] rounded-[4px] border-[#D1D5DB] cursor-pointer"
                                 checked={agreed}
                                 onChange={(e) => setAgreed(e.target.checked)}
-                                className="mt-1 mr-2 px-0 text-[#0B3D2E] rounded border-gray-300 focus:ring-[#0B3D2E]"
                             />
-                            <span className="text-[14px] font-['Plus_Jakarta_Sans'] text-gray-500">
-                                {t('agree_prefix')} <a href="#" className="text-green-900 underline font-semibold hover:text-[#073318] transition-colors">{t('tc')}</a> {t('and')} <a href="#" className="text-green-900 underline font-semibold hover:text-[#073318] transition-colors">{t('privacy_policy')}</a> {t('agree_suffix')}
+                            <span className="text-[14px] font-['Plus_Jakarta_Sans'] text-gray-500 mt-1 cursor-pointer">
+                                {t('agree_prefix')} <a href="#" className="text-green-900 underline font-semibold hover:text-[#073318] transition-colors">{t('tc')}</a> {t('and')} <a href="#" className="text-green-900 underline font-semibold hover:text-[#0F3D2E] transition-colors">{t('privacy_policy')}</a> {t('agree_suffix')}
                             </span>
                         </label>
                     </div>
 
-                    <Button
+                    <button
                         disabled={!phone || !agreed || isLoading || phone.length < 10 || !!error}
                         onClick={handleGetOTP}
-                        className="text-[16px] font-['Plus_Jakarta_Sans'] py-3 mt-2"
+                        className="w-full text-center items-center justify-center h-[56px] bg-[#0F3D2E] text-white text-[16px] font-['Plus_Jakarta_Sans'] font-medium rounded-[8px] hover:bg-[#0a291f] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                     >
                         {isLoading ? t('sending') : t('get_otp')}
-                    </Button>
+                    </button>
                 </div>
             </div>
         </AuthLayout>

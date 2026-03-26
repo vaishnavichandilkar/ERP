@@ -161,7 +161,6 @@ const AccountMaster = () => {
         setAppliedFilters(emptyFilters);
         setSearchQuery('');
         setIsFilterApplied(false);
-        setIsFilterOpen(false);
     };
 
     const handleRefresh = () => {
@@ -287,7 +286,7 @@ const AccountMaster = () => {
                 <p className="text-[#6B7280] text-[15px]">{t('modules:account_master_desc', 'View, search, and manage all accounts in your system')}</p>
             </div>
 
-            <div className="bg-white rounded-[16px] border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.03)] w-full overflow-hidden mb-8">
+            <div className="master-table-container">
                 <div className="flex flex-col sm:flex-row items-center justify-between p-6 border-b border-[#F3F4F6] gap-4">
                     <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
                         <div className="relative w-full sm:w-[320px]">
@@ -358,80 +357,65 @@ const AccountMaster = () => {
                     </div>
                 </div>
 
-                <div className="overflow-x-auto custom-scrollbar relative min-h-[400px]">
-                    <style>{`
-                        .custom-scrollbar::-webkit-scrollbar {
-                            height: 6px;
-                        }
-                        .custom-scrollbar::-webkit-scrollbar-track {
-                            background: #E5E7EB;
-                        }
-                        .custom-scrollbar::-webkit-scrollbar-thumb {
-                            background: #A7C0B8;
-                            border-radius: 4px;
-                        }
-                        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                            background: #014A36;
-                        }
-                    `}</style>
-                    <table className="w-full min-w-[1200px] text-left border-collapse">
+                <div className="master-table-wrapper">
+                    <table className="master-table min-w-[1200px]">
                         <thead>
-                            <tr className="bg-emerald-900 border-b border-emerald-950 text-[14px] font-bold text-white">
-                                <th className="px-6 py-5 whitespace-nowrap border-r border-white/10 uppercase tracking-tight">
+                            <tr>
+                                <th className="border-r border-white/10 uppercase tracking-tight">
                                     {t('modules:customer_code')}
                                 </th>
-                                <th className="px-6 py-5 whitespace-nowrap border-r border-white/50 uppercase tracking-tight">
+                                <th className="border-r border-white/10 uppercase tracking-tight">
                                     {t('modules:supplier_code')}
                                 </th>
-                                <th className="px-6 py-5 whitespace-nowrap border-r border-white/50">
+                                <th className="border-r border-white/10">
                                     <div className="flex items-center gap-1.5 cursor-pointer hover:text-[#073318] transition-colors uppercase tracking-tight text-left">
                                         {t('modules:account')}
                                         <ChevronsUpDown size={14} className="text-emerald-200/50" />
                                     </div>
                                 </th>
-                                <th className="px-6 py-5 whitespace-nowrap border-r border-white/50 uppercase tracking-tight">
+                                <th className="border-r border-white/10 uppercase tracking-tight">
                                     {t('modules:account_type')}
                                 </th>
-                                <th className="px-6 py-5 whitespace-nowrap border-r border-white/50 uppercase tracking-tight">
+                                <th className="border-r border-white/10 uppercase tracking-tight">
                                     {t('modules:customer_type', 'Customer Type')}
                                 </th>
-                                <th className="px-6 py-5 whitespace-nowrap border-r border-white/50 uppercase tracking-tight">
+                                <th className="border-r border-white/10 uppercase tracking-tight">
                                     {t('modules:customer_credit_days')}
                                 </th>
-                                <th className="px-6 py-5 whitespace-nowrap border-r border-white/50 uppercase tracking-tight">
+                                <th className="border-r border-white/10 uppercase tracking-tight">
                                     {t('modules:supplier_credit_days')}
                                 </th>
-                                <th className="px-6 py-5 whitespace-nowrap border-r border-white/50">
+                                <th className="border-r border-white/10">
                                     <div className="flex items-center gap-1.5 cursor-pointer hover:text-[#073318] transition-colors uppercase tracking-tight">
                                         {t('modules:gst_no')}
                                         <ChevronsUpDown size={14} className="text-emerald-200/50" />
                                     </div>
                                 </th>
-                                <th className="px-6 py-5 whitespace-nowrap border-r border-white/50">
+                                <th className="border-r border-white/10">
                                     <div className="flex items-center gap-1.5 cursor-pointer hover:text-[#073318] transition-colors uppercase tracking-tight">
                                         {t('modules:pan_no')}
                                         <ChevronsUpDown size={14} className="text-emerald-200/50" />
                                     </div>
                                 </th>
-                                <th className="px-6 py-5 whitespace-nowrap border-r border-white/50 uppercase tracking-tight">
+                                <th className="border-r border-white/10 uppercase tracking-tight">
                                     {t('modules:customer_op_balance')}
                                 </th>
-                                <th className="px-6 py-5 whitespace-nowrap border-r border-white/50 uppercase tracking-tight">
+                                <th className="border-r border-white/10 uppercase tracking-tight">
                                     {t('modules:supplier_op_balance')}
                                 </th>
-                                <th className="px-6 py-5 whitespace-nowrap border-r border-white/50">
+                                <th className="border-r border-white/10">
                                     <div className="flex items-center gap-1.5 cursor-pointer hover:text-[#073318] transition-colors uppercase tracking-tight">
                                         {t('common:address')}
                                         <ChevronsUpDown size={14} className="text-emerald-200/50" />
                                     </div>
                                 </th>
-                                <th className="px-6 py-5 whitespace-nowrap border-r border-white/50">
+                                <th className="border-r border-white/10">
                                     <div className="flex items-center gap-1.5 cursor-pointer hover:text-[#073318] transition-colors uppercase tracking-tight">
                                         {t('common:status')}
                                         <ChevronsUpDown size={14} className="text-emerald-200/50" />
                                     </div>
                                 </th>
-                                <th className="px-6 py-5 whitespace-nowrap text-center uppercase tracking-tight">{t('common:action')}</th>
+                                <th className="text-center uppercase tracking-tight">{t('common:action')}</th>
                             </tr>
                         </thead>
                         <tbody className="text-[14px] text-[#111827]">

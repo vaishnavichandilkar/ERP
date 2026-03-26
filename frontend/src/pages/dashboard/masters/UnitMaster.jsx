@@ -121,7 +121,6 @@ const UnitMaster = () => {
         setAppliedFilters(defaultFilters);
         setSearchQuery('');
         setIsFilterApplied(false);
-        setIsFilterOpen(false);
         setCurrentPage(1);
     };
 
@@ -214,7 +213,7 @@ const UnitMaster = () => {
                         <p className="text-[#6B7280] text-[15px]">{t('unit_master_desc')}</p>
                     </div>
 
-                    <div className="flex flex-col bg-white rounded-[16px] border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.03)] w-full overflow-hidden mb-8">
+                    <div className="master-table-container">
                         {/* Table Header Section */}
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 border-b border-[#F3F4F6]">
                             <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
@@ -286,35 +285,35 @@ const UnitMaster = () => {
                             </div>
                         </div>
 
-                        <div className="overflow-x-auto w-full min-h-[400px]">
-                            <table className="w-full min-w-[1000px] text-left border-collapse">
+                        <div className="master-table-wrapper">
+                            <table className="master-table min-w-[1000px]">
                                 <thead>
-                                    <tr className="bg-emerald-900 border-b border-emerald-950 text-[14px] font-bold text-white">
-                                        <th className="px-6 py-5 whitespace-nowrap border-r border-white/50">
+                                    <tr>
+                                        <th className="border-r border-white/10">
                                             <div className="flex items-center gap-1.5 uppercase tracking-tight">
                                                 {t('common:sr_no')}
                                             </div>
                                         </th>
-                                        <th className="px-6 py-5 whitespace-nowrap border-r border-white/50">
+                                        <th className="border-r border-white/10">
                                             <div className="flex items-center gap-1.5 cursor-pointer hover:text-[#073318] transition-colors uppercase tracking-tight">
                                                 {t('unit_name')}
                                                 <ChevronsUpDown size={14} className="text-emerald-200/50" />
                                             </div>
                                         </th>
-                                        <th className="px-6 py-5 whitespace-nowrap border-r border-white/50">
+                                        <th className="border-r border-white/10">
                                             <div className="flex items-center gap-1.5 cursor-pointer hover:text-[#073318] transition-colors uppercase tracking-tight">
                                                 {t('gst_uom')}
                                                 <ChevronsUpDown size={14} className="text-emerald-200/50" />
                                             </div>
                                         </th>
-                                        <th className="px-6 py-5 whitespace-nowrap border-r border-white/50 uppercase tracking-tight">Full Name of Measurement</th>
-                                        <th className="px-6 py-5 whitespace-nowrap border-r border-white/50 uppercase tracking-tight">
+                                        <th className="border-r border-white/10 uppercase tracking-tight">Full Name of Measurement</th>
+                                        <th className="border-r border-white/10 uppercase tracking-tight">
                                             <div className="flex items-center gap-1.5 cursor-pointer hover:text-[#073318] transition-colors">
                                                 {t('common:status')}
                                                 <ChevronsUpDown size={14} className="text-emerald-200/50" />
                                             </div>
                                         </th>
-                                        <th className="px-6 py-5 whitespace-nowrap text-center">ACTION</th>
+                                        <th className="text-center">ACTION</th>
                                     </tr>
                                 </thead>
                                 <tbody className="text-[14px] text-[#111827]">

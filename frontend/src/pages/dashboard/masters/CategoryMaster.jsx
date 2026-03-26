@@ -164,7 +164,6 @@ const CategoryMaster = () => {
     const handleClearFilter = () => {
         setFilterInputs(defaultFilters);
         setAppliedFilters(defaultFilters);
-        setIsFilterOpen(false);
     };
 
     // Export Logic
@@ -263,7 +262,7 @@ const CategoryMaster = () => {
                 <p className="text-[#6B7280] text-[15px]">{t('modules:category_master_desc')}</p>
             </div>
 
-            <div className={`flex flex-col bg-white rounded-[16px] border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-8 ${activeRowDropdown ? '!overflow-visible' : 'overflow-hidden'}`}>
+            <div className={`master-table-container ${activeRowDropdown ? '!overflow-visible' : ''}`}>
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 border-b border-[#F3F4F6] bg-white">
                     <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
                         <div className="relative w-full sm:w-[320px]">

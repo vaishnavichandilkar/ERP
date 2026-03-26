@@ -146,6 +146,7 @@ const ProductForm = ({
   const { t } = useTranslation(["modules", "common"]);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const isView = mode === "view";
 
   const [uomList, setUomList] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -170,17 +171,6 @@ const ProductForm = ({
   const [nameError, setNameError] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const suggestionsRef = useRef(null);
-  const isView = mode === "view";
-  const isFilled = !!(
-    formData.productName &&
-    formData.productCode &&
-    formData.uom &&
-    formData.productType &&
-    formData.category &&
-    formData.subcategory &&
-    formData.hsnCode &&
-    formData.description
-  );
 
   useEffect(() => {
     const handleClickOutside = (event) => {

@@ -68,7 +68,9 @@ const GroupMaster = () => {
     };
 
     const hasMatchingChild = (group, query) => {
-        if (group.group_name.toLowerCase().includes(query.toLowerCase())) return true;
+        const q = query.toLowerCase();
+        if (group.group_name.toLowerCase().includes(q)) return true;
+        if (group.status && group.status.toLowerCase().includes(q)) return true;
         if (group.children && group.children.length > 0) {
             return group.children.some(child => hasMatchingChild(child, query));
         }
@@ -320,7 +322,7 @@ const GroupMaster = () => {
             </div>
 
             {/* Content Container */}
-            <div className={`flex flex-col bg-white rounded-[16px] border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-8 ${activeRowDropdown ? '!overflow-visible' : 'overflow-hidden'}`}>
+            <div className={`master-table-container ${activeRowDropdown ? '!overflow-visible' : ''}`}>
                 {/* Action Bar */}
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 border-b border-[#F3F4F6] bg-white text-[#111827]">
                     <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">

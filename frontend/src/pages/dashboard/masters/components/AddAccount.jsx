@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Check, ChevronDown, ChevronUp, Loader2, UploadCloud, ArrowLeft, HelpCircle, Trash2, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import accountService from '../../../../services/accountService';
+import toast from 'react-hot-toast';
 
 const CustomSelect = ({ label, options, value, onChange, onBlur, placeholder, isSearchable = false, required = false, disabled = false, widthClass = "w-full", error = "" }) => {
     const { t } = useTranslation(['common']);
@@ -196,6 +197,17 @@ const FileUploadField = ({ label, onFileSelect, accept, maxMb, multiple = false 
 const PREFIX_OPTIONS = ['Mr', 'Mrs', 'Miss', 'Ms'];
 const REG_UNDER = ['Micro', 'Small', 'Medium'];
 const REG_TYPE = ['Manufacturing', 'Service', 'Trading'];
+const OTHER_DOC_OPTIONS = [
+    'pan_card', 
+    'gst_certificate', 
+    'food_license', 
+    'shop_act_license', 
+    'cancelled_cheque_bank_passbook_copy', 
+    'agreement_copy', 
+    'medicine_license', 
+    'pesticide_license',
+    'other'
+];
 
 const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount, onShowToast }) => {
     const { t } = useTranslation(['modules', 'common']);
@@ -272,7 +284,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount, onShow
     const [isFetchingPin, setIsFetchingPin] = useState(false);
 
     const [msmeFile, setMsmeFile] = useState(null);
-    const [otherDocs, setOtherDocs] = useState([{ name: '', file: null }]);
+    const [otherDocs, setOtherDocs] = useState([{ type: '', name: '', file: null }]);
     const [showPanTooltip, setShowPanTooltip] = useState(false);
     const [errors, setErrors] = useState({});
 
@@ -485,26 +497,14 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount, onShow
     };
 
     const handleSave = async () => {
-        if (!validateAll()) return;
-        
-        if (!isFormValid) {
-            // Find which field is missing
-            if (!formData.accountName?.trim() || formData.accountName.trim().length < 3) return toast.error("Missing valid Account Name");
-            if (!formData.isCustomer && !formData.isVendor) return toast.error("Please select at least one Account Type");
-            if (!formData.panNo?.trim() || !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.panNo.trim().toUpperCase())) return toast.error("Missing valid PAN Number");
-            if (formData.gstNo && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(formData.gstNo.trim().toUpperCase())) return toast.error("Invalid GST Number format");
-            if (!formData.address1?.trim()) return toast.error("Missing Address Line 1");
-            if (!String(formData.pinCode || '').trim() || String(formData.pinCode).trim().length !== 6) return toast.error("Missing 6-digit Pincode");
-            if (!formData.prefix?.trim()) return toast.error("Missing Name Prefix");
-            if (!formData.contactPersonName?.trim()) return toast.error("Missing Contact Person Name");
-            if (!String(formData.mobileNo || '').trim() || String(formData.mobileNo).trim().length !== 10) return toast.error("Missing 10-digit Mobile Number");
-            if (msmeEnabled && (!formData.msmeId?.trim() || !/^UDYAM-[A-Z]{2}-\d{2}-\d{7}$/.test(formData.msmeId.trim().toUpperCase()))) return toast.error("Missing valid MSME ID");
+        if (!validateAll()) {
+            toast.error(t('common:fill_required_fields', 'Please fill all required fields correctly.'));
             return;
         }
 
-        const validOtherDocsCheck = otherDocs.filter(d => d.name?.trim() || d.file);
-        if (validOtherDocsCheck.some(d => !d.name?.trim() || !d.file)) {
-             toast.error("Please provide both document name and file for all added Other Documents, or delete empty rows.");
+        const validOtherDocsCheck = otherDocs.filter(d => d.type || d.name?.trim() || d.file);
+        if (validOtherDocsCheck.some(d => !d.type || (!d.name?.trim() && d.type === 'other') || !d.file)) {
+             toast.error("Please provide both document type/name and file for all added Other Documents, or delete empty rows.");
              return;
         }
 
@@ -546,7 +546,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount, onShow
         fData.append('customerBalanceType', formData.isCustomer ? (formData.customerBalanceType || 'Dr') : 'Dr');
         fData.append('customerType', formData.isCustomer ? (formData.customerType || '') : '');
 
-        const validOtherDocs = otherDocs.filter(d => d.name?.trim() && d.file);
+        const validOtherDocs = otherDocs.filter(d => d.type && d.file);
         if (validOtherDocs.length > 0) {
              validOtherDocs.forEach((d) => {
                  fData.append('otherDocuments', d.file);
@@ -964,7 +964,7 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount, onShow
                                 </h3>
                                 <button
                                     type="button"
-                                    onClick={() => setOtherDocs(prev => [...prev, { name: '', file: null }])}
+                                    onClick={() => setOtherDocs(prev => [...prev, { type: '', name: '', file: null }])}
                                     className="text-[13px] font-bold text-[#0A3622] hover:bg-[#0A3622]/10 px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5"
                                 >
                                     <Plus size={16} /> Add Document
@@ -975,21 +975,48 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount, onShow
                                 <div className="text-[13px] text-[#6B7280] italic py-4 bg-gray-50/50 rounded-lg text-center border border-dashed border-gray-200">No other documents added.</div>
                             ) : (
                                 <div className="flex flex-col gap-3">
-                                    {otherDocs.map((doc, idx) => (
-                                        <div key={idx} className="flex flex-wrap md:flex-nowrap gap-6 items-end bg-white p-5 rounded-[8px] border border-[#E5E7EB] shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
-                                            <div className="flex-1 flex flex-col gap-2 min-w-[200px]">
-                                                <label className="text-[13px] font-semibold text-[#4B5563]">Document Name <span className="text-red-500">*</span></label>
-                                                <input 
-                                                    type="text" 
-                                                    placeholder="e.g. Aadhar Card" 
-                                                    className="w-full h-[40px] border border-[#E5E7EB] rounded-[6px] px-3 text-[14px] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10" 
-                                                    value={doc.name}
-                                                    onChange={e => {
-                                                        const newDocs = [...otherDocs];
-                                                        newDocs[idx].name = e.target.value;
-                                                        setOtherDocs(newDocs);
-                                                    }}
-                                                />
+                                    {otherDocs.map((doc, idx) => {
+                                        const selectedTypes = otherDocs.map(d => d.type).filter(t => t && t !== 'other');
+                                        const availableOptions = OTHER_DOC_OPTIONS.filter(opt => opt === 'other' || opt === doc.type || !selectedTypes.includes(opt));
+                                        
+                                        return (
+                                        <div key={idx} className="flex flex-wrap md:flex-nowrap gap-6 items-start bg-white p-5 rounded-[8px] border border-[#E5E7EB] shadow-[0_1px_3px_rgba(0,0,0,0.02)]">
+                                            <div className="flex-1 flex flex-col gap-4 min-w-[200px]">
+                                                <div className="flex flex-col gap-2">
+                                                    <label className="text-[13px] font-semibold text-[#4B5563]">Document Type <span className="text-red-500">*</span></label>
+                                                    <CustomSelect
+                                                        options={availableOptions}
+                                                        value={doc.type || ''}
+                                                        renderValue={(val) => t(`modules:${val}`)}
+                                                        onChange={val => {
+                                                            const newDocs = [...otherDocs];
+                                                            newDocs[idx].type = val;
+                                                            if (val !== 'other') {
+                                                                newDocs[idx].name = val;
+                                                            } else {
+                                                                newDocs[idx].name = '';
+                                                            }
+                                                            setOtherDocs(newDocs);
+                                                        }}
+                                                        placeholder="Select Document"
+                                                    />
+                                                </div>
+                                                {doc.type === 'other' && (
+                                                <div className="flex flex-col gap-2">
+                                                    <label className="text-[13px] font-semibold text-[#4B5563]">Document Name <span className="text-red-500">*</span></label>
+                                                    <input 
+                                                        type="text" 
+                                                        placeholder="e.g. Aadhar Card" 
+                                                        className="w-full h-[40px] border border-[#E5E7EB] rounded-[6px] px-3 text-[14px] outline-none focus:border-[#014A36] focus:ring-1 focus:ring-[#014A36]/10" 
+                                                        value={doc.name}
+                                                        onChange={e => {
+                                                            const newDocs = [...otherDocs];
+                                                            newDocs[idx].name = e.target.value;
+                                                            setOtherDocs(newDocs);
+                                                        }}
+                                                    />
+                                                </div>
+                                                )}
                                             </div>
                                             <div className="flex-1 flex flex-col gap-2 min-w-[200px]">
                                                 <label className="text-[13px] font-semibold text-[#4B5563]">Upload File <span className="text-red-500">*</span></label>
@@ -1021,7 +1048,8 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount, onShow
                                                 <Trash2 size={20} />
                                             </button>
                                         </div>
-                                    ))}
+                                        )
+                                    })}
                                 </div>
                             )}
                         </div>
@@ -1102,21 +1130,17 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount, onShow
                         </div>
                     </div>
                     
-                    {/* Action buttons at bottom - Hide in edit mode as they're now at top */}
                     {!isEditMode && (
                         <div className="mt-10 flex justify-end gap-4 py-4 border-t">
-                            <button
+                             <button
                                 onClick={handleSave}
                                 disabled={isLoading}
-                                className={`px-8 h-[40px] text-white rounded-[8px] text-[14px] font-bold transition-all shadow-md flex items-center justify-center min-w-[160px] ${
-                                    isLoading ? 'bg-gray-400 cursor-not-allowed shadow-none' : 'bg-[#014A36] hover:bg-[#013b2b]'
+                                className={`px-8 h-[40px] rounded-[8px] text-[14px] font-semibold transition-colors flex items-center justify-center min-w-[160px] ${
+                                    !isLoading ? 'bg-[#073318] hover:bg-[#04200f] text-white shadow-md' : 'bg-gray-400 text-white cursor-wait'
                                 }`}
                             >
-                                {isLoading ? (
-                                    <Loader2 size={18} className="animate-spin" />
-                                ) : (
-                                    "Save Account"
-                                )}
+                                {isLoading ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
+                                {t('common:save')}
                             </button>
                             <button
                                 onClick={onBack}
@@ -1126,8 +1150,6 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount, onShow
                             </button>
                         </div>
                     )}
-                </div>
-            </div>
 
             <style jsx global>{`
                 .custom-scrollbar::-webkit-scrollbar {
@@ -1153,6 +1175,8 @@ const AddAccount = ({ onBack, onAddAccount, initialData, onUpdateAccount, onShow
                 }
             `}</style>
         </div>
+    </div>
+</div>
     );
 };
 

@@ -275,5 +275,14 @@
     "view_and_edit_category": "View and Edit Category",
     "view_and_edit_product": "View and Edit Product",
     "invalid_hsn_code": "Invalid HSN Code",
-    "duplicate_product_name": "Product name already exists"
+    "duplicate_product_name": "Product name already exists",
+    "pan_card": "PAN Card",
+    "gst_certificate": "GST Certificate",
+    "food_license": "Food License",
+    "shop_act_license": "Shop Act License",
+    "cancelled_cheque_bank_passbook_copy": "Cancelled Cheque/Bank Passbook Copy",
+    "agreement_copy": "Agreement Copy",
+    "medicine_license": "Medicine License",
+    "pesticide_license": "Pesticide License",
+    "other": "Other"
 }

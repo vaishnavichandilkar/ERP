@@ -241,5 +241,14 @@
     "india": "भारत",
     "view_and_edit_account": "खाते पहा आणि संपादित करा",
     "duplicate_product_name": "उत्पादनाचे नाव आधीच अस्तित्वात आहे",
-    "invalid_hsn_code": "अवैध एचएसएन कोड"
+    "invalid_hsn_code": "अवैध एचएसएन कोड",
+    "pan_card": "पॅन कार्ड",
+    "gst_certificate": "जीएसटी प्रमाणपत्र",
+    "food_license": "अन्न परवाना",
+    "shop_act_license": "शॉप अ‍ॅक्ट परवाना",
+    "cancelled_cheque_bank_passbook_copy": "रद्द केलेला धनादेश/बँक पासबुक प्रत",
+    "agreement_copy": "कराराची प्रत",
+    "medicine_license": "औषध परवाना",
+    "pesticide_license": "कीटकनाशक परवाना",
+    "other": "इतर"
 }
