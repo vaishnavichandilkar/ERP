@@ -53,6 +53,10 @@ const categoryService = {
     promoteSubCategory: async (id) => {
         const response = await axiosInstance.post(`/category-master/sub-category/${id}/promote`);
         return response.data;
+    },
+    demoteCategory: async (id, newParentId) => {
+        const response = await axiosInstance.post(`/category-master/category/${id}/demote?newParentId=${newParentId}`);
+        return response.data;
     }
 };
 

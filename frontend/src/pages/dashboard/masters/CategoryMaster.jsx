@@ -683,6 +683,7 @@ const CategoryMaster = () => {
                 isOpen={isAddModalOpen}
                 onClose={() => setIsAddModalOpen(false)}
                 onSuccess={fetchCategories}
+                onShowToast={showToast}
             />
 
             <EditCategoryModal
@@ -690,6 +691,7 @@ const CategoryMaster = () => {
                 onClose={() => setIsEditModalOpen(false)}
                 data={selectedCategoryData}
                 onSuccess={fetchCategories}
+                onShowToast={showToast}
             />
         </div>
     );

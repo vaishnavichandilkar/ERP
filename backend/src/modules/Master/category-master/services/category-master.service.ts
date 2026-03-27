@@ -245,4 +245,20 @@ export class CategoryMasterService {
             errors: failed > 0 ? errors : undefined,
         };
     }
+
+    async promoteSubCategory(id: number, userId: number) {
+        try {
+            return await this.repository.promoteSubCategory(id, userId);
+        } catch (error) {
+            throw new BadRequestException(error.message);
+        }
+    }
+
+    async demoteCategory(id: number, newParentId: number, userId: number) {
+        try {
+            return await this.repository.demoteCategoryToSubCategory(id, newParentId, userId);
+        } catch (error) {
+            throw new BadRequestException(error.message);
+        }
+    }
 }

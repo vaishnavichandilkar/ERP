@@ -114,4 +114,23 @@ export class CategoryMasterController {
         }
         return this.service.importCategories(file.buffer, req.user.userId);
     }
+
+    @Post('sub-category/:id/promote')
+    @ApiOperation({ summary: 'Promote Sub Category to main Category' })
+    async promoteSubCategory(
+        @Request() req,
+        @Param('id', ParseIntPipe) id: number,
+    ) {
+        return this.service.promoteSubCategory(id, req.user.userId);
+    }
+
+    @Post('category/:id/demote')
+    @ApiOperation({ summary: 'Demote Category to Sub Category' })
+    async demoteCategory(
+        @Request() req,
+        @Param('id', ParseIntPipe) id: number,
+        @Query('newParentId', ParseIntPipe) newParentId: number,
+    ) {
+        return this.service.demoteCategory(id, newParentId, req.user.userId);
+    }
 }

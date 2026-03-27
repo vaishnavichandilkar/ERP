@@ -137,10 +137,20 @@ export class CategoryMasterRepository {
         return this.prisma.$transaction(async (tx) => {
             const subCategory = await tx.subCategory.findUnique({
                 where: { id: subCategoryId },
+                include: { products: true },
             });
 
             if (!subCategory || subCategory.user_id !== userId) {
-                throw new Error('Sub Category not found or unauthorized');
+                throw new Error('Sub-category not found.');
+            }
+
+            // Check if name already exists as a major Category
+            const existingCategory = await tx.category.findFirst({
+                where: { name: subCategory.name, user_id: userId }
+            });
+
+            if (existingCategory) {
+                throw new Error('Category name already exists.');
             }
 
             // 1. Create the new Category
@@ -152,34 +162,90 @@ export class CategoryMasterRepository {
                 },
             });
 
-            // 2. Update Products to point to the new Category
-            // Since sub_category_id is required, we might need a default subcategory OR 
-            // just clear it if we make it nullable. But since it's NOT nullable, we'll
-            // have to create a "General" subcategory for the new category to move products into.
+            // 2. Re-link Products (if any)
+            if (subCategory.products && subCategory.products.length > 0) {
+                // Create a "General" sub-category for the new category to house orphaned products
+                const defaultSub = await tx.subCategory.create({
+                    data: {
+                        name: 'General',
+                        category_id: newCategory.id,
+                        user_id: userId,
+                        status: 'ACTIVE',
+                    },
+                });
 
-            const defaultSub = await tx.subCategory.create({
-                data: {
-                    name: 'General',
-                    user_id: userId,
-                    category_id: newCategory.id,
-                    status: subCategory.status
-                }
-            });
+                await tx.product.updateMany({
+                    where: { sub_category_id: subCategoryId },
+                    data: {
+                        category_id: newCategory.id,
+                        sub_category_id: defaultSub.id,
+                    },
+                });
+            }
 
-            await tx.product.updateMany({
-                where: { sub_category_id: subCategoryId },
-                data: {
-                    category_id: newCategory.id,
-                    sub_category_id: defaultSub.id
-                },
-            });
-
-            // 3. Delete the old SubCategory
+            // 3. Delete old SubCategory
             await tx.subCategory.delete({
                 where: { id: subCategoryId },
             });
 
             return newCategory;
+        });
+    }
+
+    async demoteCategoryToSubCategory(categoryId: number, newParentCategoryId: number, userId: number) {
+        return this.prisma.$transaction(async (tx) => {
+            const category = await tx.category.findUnique({
+                where: { id: categoryId },
+                include: { sub_categories: true },
+            });
+
+            if (!category || category.user_id !== userId) {
+                throw new Error('Category not found.');
+            }
+
+            if (category.id === newParentCategoryId) {
+                throw new Error('A category cannot be moved under itself.');
+            }
+
+            // BUSINESS RULE: A category can move to sub-category only if it has no sub-categories under it.
+            if (category.sub_categories && category.sub_categories.length > 0) {
+                throw new Error(`${category.name} has sub-categories. Cannot move to sub-category.`);
+            }
+
+            // Check if sub-category name already exists under new parent
+            const existingSub = await tx.subCategory.findFirst({
+                where: { name: category.name, category_id: newParentCategoryId, user_id: userId },
+            });
+
+            if (existingSub) {
+                throw new Error(`${category.name} sub-category already exists in target parent.`);
+            }
+
+            // 1. Create new SubCategory
+            const newSubCategory = await tx.subCategory.create({
+                data: {
+                    name: category.name,
+                    category_id: newParentCategoryId,
+                    user_id: userId,
+                    status: category.status,
+                },
+            });
+
+            // 2. Re-link Products
+            await tx.product.updateMany({
+                where: { category_id: categoryId },
+                data: {
+                    category_id: newParentCategoryId,
+                    sub_category_id: newSubCategory.id
+                }
+            });
+
+            // 3. Delete old Category
+            await tx.category.delete({
+                where: { id: categoryId },
+            });
+
+            return newSubCategory;
         });
     }
 }
