@@ -355,4 +355,221 @@ export class ProductMasterService {
         if (!product || product.created_by !== userId) throw new NotFoundException('Product not found');
         return this.repository.softDelete(id);
     }
+
+    async downloadSample() {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Sample Data');
+
+        const headers = ['Product Name*', 'UOM*', 'Product Type*', 'Category*', 'Sub Category*', 'HSN Code*', 'Product Description', 'Status'];
+        worksheet.addRow(headers);
+
+        const headerRow = worksheet.getRow(1);
+        headerRow.font = { bold: true };
+        headerRow.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFD3D3D3' }
+        };
+
+        // Adding Product Type Data Validation (dropdown) to 'C' column (3rd column)
+        // Adding Status Data Validation (dropdown) to 'H' column (8th column)
+        for (let i = 2; i <= 1000; i++) {
+            worksheet.getCell(`C${i}`).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: ['"GOODS,SERVICES"']
+            };
+            worksheet.getCell(`H${i}`).dataValidation = {
+                type: 'list',
+                allowBlank: true,
+                formulae: ['"ACTIVE,INACTIVE"']
+            };
+        }
+
+        worksheet.columns = headers.map(() => ({ width: 22 }));
+
+        const buffer = await workbook.xlsx.writeBuffer();
+        return {
+            buffer: Buffer.from(buffer),
+            filename: 'Product_Master_Sample.xlsx',
+            mimetype: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        };
+    }
+
+    async importProducts(buffer: Buffer, userId: number) {
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(buffer as any);
+        const worksheet = workbook.getWorksheet(1);
+
+        if (!worksheet) {
+            throw new BadRequestException('Invalid Excel file format');
+        }
+
+        const rowCount = worksheet.rowCount;
+        if (rowCount < 2) {
+            throw new BadRequestException('No data found to import');
+        }
+
+        let imported = 0;
+        let failed = 0;
+        const errors: string[] = [];
+        const prisma = (this.repository as any).prisma;
+
+        let headerRowIndex = -1;
+        const colMap: Record<string, number> = {};
+
+        for (let r = 1; r <= Math.min(rowCount, 10); r++) {
+            const row = worksheet.getRow(r);
+            let foundHeaders = false;
+            row.eachCell((cell, colNumber) => {
+                const val = String(cell.value || '').trim().toLowerCase();
+                if (val.includes('prod code') || val.includes('product code')) colMap['prodCode'] = colNumber;
+                if (val.includes('product name')) { colMap['prodName'] = colNumber; foundHeaders = true; }
+                if (val.includes('uom')) colMap['uom'] = colNumber;
+                if (val.includes('type') || val.includes('product type')) colMap['productType'] = colNumber;
+                if (val.includes('category')) colMap['category'] = colNumber;
+                if (val.includes('sub category')) colMap['subCategory'] = colNumber;
+                if (val.includes('hsn code') || val.includes('hsn')) colMap['hsn'] = colNumber;
+                if (val.includes('product description') || val.includes('description')) colMap['description'] = colNumber;
+                if (val === 'status') colMap['status'] = colNumber;
+            });
+
+            if (foundHeaders) {
+                headerRowIndex = r;
+                break;
+            }
+        }
+
+        if (headerRowIndex === -1) {
+            throw new BadRequestException('Could not find Product Name column in the provided Excel file.');
+        }
+
+        const getVal = (row: ExcelJS.Row, key: string, defaultVal: any = '') => {
+            const colIdx = colMap[key];
+            if (!colIdx) return defaultVal;
+            return row.getCell(colIdx).value;
+        };
+
+        for (let i = headerRowIndex + 1; i <= rowCount; i++) {
+            const row = worksheet.getRow(i);
+            
+            const prodCode = String(getVal(row, 'prodCode')).trim();
+            const prodName = String(getVal(row, 'prodName')).trim();
+            const description = String(getVal(row, 'description')).trim();
+            
+            if (!prodName || prodName === '-') continue; // Skip empty rows
+
+            try {
+                let uomName = String(getVal(row, 'uom')).trim();
+                let uom = uomName && uomName !== '-' ? await prisma.unitMaster.findFirst({ where: { user_id: userId, unit_name: uomName } }) : null;
+                if (!uom && uomName && uomName !== '-') {
+                    uom = await prisma.unitMaster.create({
+                        data: { user_id: userId, unit_name: uomName, gst_uom: 'OTH', full_name_of_measurement: uomName, source: 'USER' }
+                    });
+                }
+                if (!uom) uom = await prisma.unitMaster.findFirst({ where: { user_id: userId } });
+                if (!uom) {
+                    uom = await prisma.unitMaster.create({
+                        data: { user_id: userId, unit_name: 'NOS', gst_uom: 'NOS', full_name_of_measurement: 'Numbers', source: 'SYSTEM' }
+                    });
+                }
+                let uom_id: number = uom.id;
+
+                const productTypeRaw = String(getVal(row, 'productType')).trim().toUpperCase();
+                let productType: ProductType = productTypeRaw === 'SERVICES' ? ProductType.SERVICES : ProductType.GOODS;
+                
+                let catName = String(getVal(row, 'category')).trim();
+                let cat = catName && catName !== '-' ? await prisma.category.findFirst({ where: { user_id: userId, name: catName } }) : null;
+                if (!cat && catName && catName !== '-') {
+                    cat = await prisma.category.create({ data: { user_id: userId, name: catName } });
+                }
+                if (!cat) cat = await prisma.category.findFirst({ where: { user_id: userId } });
+                if (!cat) {
+                    cat = await prisma.category.create({ data: { user_id: userId, name: 'General' } });
+                }
+                let category_id: number = cat.id;
+
+                let subCatName = String(getVal(row, 'subCategory')).trim();
+                let subCat = subCatName && subCatName !== '-' ? await prisma.subCategory.findFirst({ where: { user_id: userId, category_id, name: subCatName } }) : null;
+                if (!subCat && subCatName && subCatName !== '-') {
+                    subCat = await prisma.subCategory.create({ data: { user_id: userId, category_id, name: subCatName } });
+                }
+                if (!subCat) subCat = await prisma.subCategory.findFirst({ where: { user_id: userId, category_id } });
+                if (!subCat) {
+                    subCat = await prisma.subCategory.create({ data: { user_id: userId, category_id, name: 'General Sub' } });
+                }
+                let sub_category_id: number = subCat.id;
+
+                let hsnCode = String(getVal(row, 'hsn')).trim();
+                let hsn = hsnCode && hsnCode !== '-' ? await prisma.hsnMaster.findUnique({ where: { hsn_code: hsnCode } }) : null;
+                if (!hsn && hsnCode && hsnCode !== '-') {
+                    hsn = await prisma.hsnMaster.create({ data: { hsn_code: hsnCode, description: 'Auto Created', gst_rate: 0, created_by: userId } });
+                }
+                if (!hsn) hsn = await prisma.hsnMaster.findFirst();
+                if (!hsn) {
+                    hsn = await prisma.hsnMaster.create({ data: { hsn_code: '0000', description: 'Default HSN', gst_rate: 0, created_by: userId } });
+                }
+
+                const statusStr = String(getVal(row, 'status')).trim().toUpperCase();
+                const status = statusStr === 'INACTIVE' ? MasterStatus.INACTIVE : MasterStatus.ACTIVE;
+
+                let codeToUse = prodCode;
+                if (!codeToUse || codeToUse === '-') {
+                    codeToUse = await this.generateProductCode(userId);
+                }
+
+                const existing = await prisma.product.findFirst({
+                    where: { created_by: userId, OR: [{ product_code: codeToUse }, { product_name: prodName }] },
+                });
+
+                if (existing) {
+                    await this.repository.updateProduct(existing.id, {
+                        product_name: prodName,
+                        product_code: codeToUse,
+                        uom_id,
+                        product_type: productType,
+                        category_id,
+                        sub_category_id,
+                        hsn_code: hsn.hsn_code,
+                        tax_rate: Number(hsn.gst_rate),
+                        description: description && description !== '-' ? description : undefined,
+                        status
+                    });
+                } else {
+                    await this.repository.createProduct({
+                        product_name: prodName,
+                        product_code: codeToUse,
+                        uom_id,
+                        product_type: productType,
+                        category_id,
+                        sub_category_id,
+                        hsn_code: hsn.hsn_code,
+                        tax_rate: Number(hsn.gst_rate),
+                        description: description && description !== '-' ? description : undefined,
+                        status,
+                        created_by: userId,
+                    });
+                }
+                imported++;
+
+            } catch (error) {
+                failed++;
+                errors.push(`Row ${i} (${prodName}): ${error.message}`);
+            }
+        }
+
+        if (imported === 0 && failed > 0) {
+            throw new BadRequestException(`Import failed: ${errors[0]}`);
+        }
+
+        if (imported === 0 && failed === 0) {
+            throw new BadRequestException('No data found to import');
+        }
+
+        return {
+            success: true,
+            message: `Imported ${imported} products. ${failed > 0 ? failed + ' rows failed.' : ''}`,
+            errors: failed > 0 ? errors : undefined,
+        };
+    }
 }

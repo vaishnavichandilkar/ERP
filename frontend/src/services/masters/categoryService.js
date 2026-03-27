@@ -9,6 +9,14 @@ const categoryService = {
         const response = await axiosInstance.get('/category-master/categories/dropdown');
         return response.data;
     },
+    importCategories: async (formData) => {
+        const response = await axiosInstance.post('/category-master/import', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        return response.data;
+    },
     createCategory: async (data) => {
         const response = await axiosInstance.post('/category-master/category', data);
         return response.data;

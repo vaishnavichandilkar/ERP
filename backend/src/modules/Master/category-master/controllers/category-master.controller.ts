@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Param, Patch, Post, ParseIntPipe, UseGuards, Request } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Patch, Post, ParseIntPipe, UseGuards, Request, UploadedFile, UseInterceptors, BadRequestException } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { CategoryMasterService } from '../services/category-master.service';
 import { CreateCategoryDto, CreateSubCategoryDto, ToggleStatusDto, UpdateCategoryDto, UpdateSubCategoryDto } from '../dto/category.dto';
 import { JwtAuthGuard } from '../../../../common/guards/jwt-auth.guard';
@@ -81,5 +82,30 @@ export class CategoryMasterController {
         @Body() dto: UpdateSubCategoryDto,
     ) {
         return this.service.updateSubCategory(id, dto, req.user.userId);
+    }
+
+    @Post('import')
+    @ApiOperation({ summary: 'Import categories from XLSX' })
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+      schema: {
+        type: 'object',
+        properties: {
+          file: {
+            type: 'string',
+            format: 'binary',
+          },
+        },
+      },
+    })
+    @UseInterceptors(FileInterceptor('file'))
+    async importCategories(
+      @UploadedFile() file: Express.Multer.File,
+      @Request() req,
+    ) {
+      if (!file) {
+        throw new BadRequestException('Excel file is required');
+      }
+      return this.service.importCategories(file.buffer, req.user.userId);
     }
 }

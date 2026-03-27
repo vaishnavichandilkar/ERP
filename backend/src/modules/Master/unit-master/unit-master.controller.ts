@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Body, Put, Patch, Param, Query, ParseIntPipe, UseGuards, Request } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Put, Patch, Param, Query, ParseIntPipe, UseGuards, Request, UploadedFile, UseInterceptors, BadRequestException } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { UnitMasterService } from './unit-master.service';
 import { CreateUnitDto, UpdateUnitDto, UnitQueryDto, UpdateUnitStatusDto } from './dto/unit-master.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
@@ -75,5 +76,30 @@ export class UnitMasterController {
     @ApiOperation({ summary: 'Change unit status' })
     changeStatus(@Request() req, @Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUnitStatusDto) {
         return this.service.toggleStatus(req.user.userId, id, dto);
+    }
+
+    @Post('unit/import')
+    @ApiOperation({ summary: 'Import units from XLSX' })
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                file: {
+                    type: 'string',
+                    format: 'binary',
+                },
+            },
+        },
+    })
+    @UseInterceptors(FileInterceptor('file'))
+    async importUnits(
+        @UploadedFile() file: Express.Multer.File,
+        @Request() req
+    ) {
+        if (!file) {
+            throw new BadRequestException('Excel file is required');
+        }
+        return this.service.importUnits(file.buffer, req.user.userId);
     }
 }

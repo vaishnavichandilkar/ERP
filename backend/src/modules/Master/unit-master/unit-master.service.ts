@@ -2,6 +2,7 @@ import { Injectable, ConflictException, NotFoundException, BadRequestException, 
 import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { CreateUnitDto, UpdateUnitDto, UnitQueryDto, UpdateUnitStatusDto } from './dto/unit-master.dto';
 import { UnitSource, UnitStatus } from '@prisma/client';
+import * as ExcelJS from 'exceljs';
 
 @Injectable()
 export class UnitMasterService {
@@ -230,4 +231,128 @@ export class UnitMasterService {
     }
 
     // deleteUnit removed as per request
+
+    async importUnits(buffer: Buffer, userId: number) {
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(buffer as any);
+        const worksheet = workbook.getWorksheet(1);
+
+        if (!worksheet) {
+            throw new BadRequestException('Invalid Excel file format');
+        }
+
+        const rowCount = worksheet.rowCount;
+        if (rowCount < 2) {
+            throw new BadRequestException('No data found to import');
+        }
+
+        let importedRows = 0;
+        let failed = 0;
+        const errors: string[] = [];
+
+        let headerRowIndex = -1;
+        const colMap: Record<string, number> = {};
+
+        for (let r = 1; r <= Math.min(rowCount, 10); r++) {
+            const row = worksheet.getRow(r);
+            let foundHeaders = false;
+            row.eachCell((cell, colNumber) => {
+                const val = String(cell.value || '').trim().toLowerCase();
+                if (val === 'unit' || val === 'unit name') { colMap['unitName'] = colNumber; foundHeaders = true; }
+                if (val === 'gst uom' || val === 'gst') colMap['gstUom'] = colNumber;
+                if (val === 'full name' || val === 'full name of measurement') colMap['fullName'] = colNumber;
+                if (val === 'status') colMap['status'] = colNumber;
+            });
+
+            if (foundHeaders) {
+                headerRowIndex = r;
+                break;
+            }
+        }
+
+        if (headerRowIndex === -1) {
+            throw new BadRequestException('Could not find Unit Name column in the provided Excel file.');
+        }
+
+        const getVal = (row: ExcelJS.Row, key: string, defaultVal: any = '') => {
+            const colIdx = colMap[key];
+            if (!colIdx) return defaultVal;
+            return row.getCell(colIdx).value;
+        };
+
+        for (let i = headerRowIndex + 1; i <= rowCount; i++) {
+            const row = worksheet.getRow(i);
+
+            const unitName = String(getVal(row, 'unitName')).trim();
+            if (!unitName || unitName === '-') continue;
+
+            const gstUom = String(getVal(row, 'gstUom')).trim();
+            const fullName = String(getVal(row, 'fullName')).trim();
+            const statusStr = String(getVal(row, 'status')).trim().toUpperCase();
+
+            if (!unitName || !gstUom) {
+                failed++;
+                errors.push(`Row ${i} missing required Unit Name or GST UOM.`);
+                continue;
+            }
+
+            try {
+                const status = statusStr === 'INACTIVE' ? UnitStatus.INACTIVE : UnitStatus.ACTIVE;
+                const finalFullName = fullName === '-' ? '' : fullName;
+
+                const existingForUser = await this.prisma.unitMaster.findFirst({
+                    where: {
+                        user_id: userId,
+                        gst_uom: gstUom
+                    }
+                });
+
+                if (existingForUser) {
+                    await this.prisma.unitMaster.update({
+                        where: { id: existingForUser.id },
+                        data: {
+                            unit_name: unitName,
+                            full_name_of_measurement: finalFullName,
+                            status: status
+                        }
+                    });
+                } else {
+                    const libraryMatch = await this.prisma.systemUomLibrary.findFirst({
+                        where: { uom_code: gstUom }
+                    });
+
+                    let source: UnitSource = libraryMatch ? UnitSource.SYSTEM : UnitSource.USER;
+
+                    await this.prisma.unitMaster.create({
+                        data: {
+                            user_id: userId,
+                            unit_name: unitName,
+                            gst_uom: gstUom,
+                            full_name_of_measurement: finalFullName,
+                            source: source,
+                            status: status
+                        }
+                    });
+                }
+                importedRows++;
+            } catch (error) {
+                failed++;
+                errors.push(`Row ${i} (${unitName}): ${error.message}`);
+            }
+        }
+
+        if (importedRows === 0 && failed > 0) {
+            throw new BadRequestException(`Import failed: ${errors[0]}`);
+        }
+
+        if (importedRows === 0 && failed === 0) {
+            throw new BadRequestException('No data found to import');
+        }
+
+        return {
+            success: true,
+            message: `Imported ${importedRows} units. ${failed > 0 ? failed + ' rows failed.' : ''}`,
+            errors: failed > 0 ? errors : undefined,
+        };
+    }
 }

@@ -2,6 +2,7 @@ import { Injectable, ConflictException, NotFoundException, BadRequestException }
 import { MasterStatus } from '@prisma/client';
 import { CategoryMasterRepository } from '../repositories/category-master.repository';
 import { CreateCategoryDto, CreateSubCategoryDto, ToggleStatusDto, UpdateCategoryDto, UpdateSubCategoryDto } from '../dto/category.dto';
+import * as ExcelJS from 'exceljs';
 
 @Injectable()
 export class CategoryMasterService {
@@ -137,5 +138,113 @@ export class CategoryMasterService {
         }
 
         return this.repository.updateSubCategoryContent(id, name, dto.category_id);
+    }
+
+    async importCategories(buffer: Buffer, userId: number) {
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(buffer as any);
+        const worksheet = workbook.getWorksheet(1);
+
+        if (!worksheet) {
+            throw new BadRequestException('Invalid Excel file format');
+        }
+
+        const rowCount = worksheet.rowCount;
+        if (rowCount < 2) {
+            throw new BadRequestException('No data found to import');
+        }
+
+        let importedCategories = 0;
+        let importedSubCategories = 0;
+        let failed = 0;
+        const errors: string[] = [];
+
+        let headerRowIndex = -1;
+        const colMap: Record<string, number> = {};
+
+        for (let r = 1; r <= Math.min(rowCount, 10); r++) {
+            const row = worksheet.getRow(r);
+            let foundHeaders = false;
+            row.eachCell((cell, colNumber) => {
+                const val = String(cell.value || '').trim().toLowerCase();
+                if (val === 'category' || val === 'category name') { colMap['categoryName'] = colNumber; foundHeaders = true; }
+                if (val === 'sub category' || val === 'sub category name') colMap['subCategoryName'] = colNumber;
+            });
+
+            if (foundHeaders) {
+                headerRowIndex = r;
+                break;
+            }
+        }
+
+        if (headerRowIndex === -1) {
+            throw new BadRequestException('Could not find Category name column in the provided Excel file.');
+        }
+
+        const getVal = (row: ExcelJS.Row, key: string, defaultVal: any = '') => {
+            const colIdx = colMap[key];
+            if (!colIdx) return defaultVal;
+            return row.getCell(colIdx).value;
+        };
+
+        let currentCategoryId: number | null = null;
+
+        for (let i = headerRowIndex + 1; i <= rowCount; i++) {
+            const row = worksheet.getRow(i);
+            const rawCategoryName = String(getVal(row, 'categoryName')).trim();
+            const rawSubCategoryName = String(getVal(row, 'subCategoryName')).trim();
+
+            if (!rawCategoryName && !rawSubCategoryName) continue; // Empty row
+            if (rawCategoryName === '-' && rawSubCategoryName === '-') continue;
+
+            try {
+                if (rawCategoryName) {
+                    // Try to find or create category
+                    let category = await this.repository.findCategoryByName(rawCategoryName, userId);
+                    if (!category) {
+                        category = await this.repository.createCategory({
+                            name: rawCategoryName,
+                            user_id: userId,
+                            status: MasterStatus.ACTIVE,
+                        });
+                        importedCategories++;
+                    }
+                    currentCategoryId = category.id;
+                }
+
+                if (rawSubCategoryName) {
+                    if (!currentCategoryId) {
+                        throw new BadRequestException('Sub category found without a parent category preceding it');
+                    }
+                    const existingSub = await this.repository.findSubCategoryByName(rawSubCategoryName, currentCategoryId, userId);
+                    if (!existingSub) {
+                        await this.repository.createSubCategory({
+                            name: rawSubCategoryName,
+                            category_id: currentCategoryId,
+                            user_id: userId,
+                            status: MasterStatus.ACTIVE,
+                        });
+                        importedSubCategories++;
+                    }
+                }
+            } catch (error) {
+                failed++;
+                errors.push(`Row ${i} (${rawCategoryName || rawSubCategoryName}): ${error.message}`);
+            }
+        }
+
+        if (importedCategories === 0 && importedSubCategories === 0 && failed > 0) {
+            throw new BadRequestException(`Import failed: ${errors[0]}`);
+        }
+
+        if (importedCategories === 0 && importedSubCategories === 0 && failed === 0) {
+            throw new BadRequestException('No data found to import');
+        }
+
+        return {
+            success: true,
+            message: `Imported ${importedCategories} categories and ${importedSubCategories} sub-categories. ${failed > 0 ? failed + ' rows failed.' : ''}`,
+            errors: failed > 0 ? errors : undefined,
+        };
     }
 }

@@ -13,6 +13,7 @@ import {
   HttpCode, 
   HttpStatus,
   UseGuards,
+  UploadedFile,
   UploadedFiles, 
   UseInterceptors, 
   BadRequestException,
@@ -24,7 +25,7 @@ import { CreateAccountMasterDto, UpdateAccountMasterDto, UpdateAccountStatusDto 
 import { Response } from 'express';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { MasterStatus } from '@prisma/client';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { multerConfig } from '../../../config/multer.config';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
@@ -263,6 +264,43 @@ export class AccountMasterController {
     });
 
     res.send(file.buffer);
+  }
+
+  @Get('sample')
+  @ApiOperation({ summary: 'Download Sample Excel file for Accounts' })
+  async downloadSample(@Res() res: Response) {
+      const file = await this.accountMasterService.downloadSample();
+      res.set({
+          'Content-Type': file.mimetype,
+          'Content-Disposition': `attachment; filename="${file.filename}"`,
+          'Content-Length': file.buffer.length,
+      });
+      res.send(file.buffer);
+  }
+
+  @Post('import')
+  @ApiOperation({ summary: 'Import accounts from XLSX' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @UseInterceptors(FileInterceptor('file'))
+  async importAccounts(
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: any,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Excel file is required');
+    }
+    return this.accountMasterService.importAccounts(file.buffer, req.user.id);
   }
 
   @Get('generate-customer-code')

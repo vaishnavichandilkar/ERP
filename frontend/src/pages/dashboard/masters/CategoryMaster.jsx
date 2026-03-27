@@ -1,7 +1,10 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Search, Download, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, CheckCircle2, XCircle, ArrowLeft, ArrowRight, ChevronDown, RefreshCw, X, Filter, Edit, Loader2, ArrowLeft as LeftIcon, ArrowRight as RightIcon } from 'lucide-react';
+import { Search, Download, Upload, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, CheckCircle2, XCircle, ArrowLeft, ArrowRight, ChevronDown, RefreshCw, X, Filter, Edit, Loader2, ArrowLeft as LeftIcon, ArrowRight as RightIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import CategoryForm from './components/CategoryForm';
+import AddCategoryModal from './components/AddCategoryModal';
+import EditCategoryModal from './components/EditCategoryModal';
+import ImportModal from './components/ImportModal';
 import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
 import categoryService from '../../../services/masters/categoryService';
 import SuccessToast from './components/SuccessToast';
@@ -12,6 +15,10 @@ const CategoryMaster = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedGroups, setExpandedGroups] = useState({});
     const [isExportOpen, setIsExportOpen] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedCategoryData, setSelectedCategoryData] = useState(null);
     const [activeRowDropdown, setActiveRowDropdown] = useState(null);
     const [toastMessage, setToastMessage] = useState({ show: false, message: '', type: 'success' });
 
@@ -203,6 +210,22 @@ const CategoryMaster = () => {
         setIsExportOpen(false);
     };
 
+    const handleImportExcel = async (formData) => {
+        const loadingToast = toast.loading(t('common:importing', 'Importing data...'));
+        
+        try {
+            await categoryService.importCategories(formData);
+            toast.dismiss(loadingToast);
+            toast.success(t('common:import_success', 'Data imported successfully'));
+            fetchCategories();
+            return Promise.resolve();
+        } catch (error) {
+            toast.dismiss(loadingToast);
+            toast.error(error?.response?.data?.message || t('common:import_failed', 'Failed to import data'));
+            return Promise.reject(error);
+        }
+    };
+
     const processedData = filteredData();
 
     // Pagination Calculations
@@ -308,6 +331,21 @@ const CategoryMaster = () => {
                     </div>
 
                     <div className="relative flex items-center gap-3" ref={exportRef}>
+                        <button
+                            onClick={() => setIsImportModalOpen(true)}
+                            className="flex items-center justify-center gap-2 px-4 h-[42px] border border-[#E5E7EB] rounded-[10px] text-[14px] font-bold text-[#4B5563] hover:bg-gray-50 transition-all duration-200 bg-white shadow-sm"
+                        >
+                            <Upload size={18} className="text-gray-400" />
+                            {t('common:import', 'Import')}
+                        </button>
+                        <ImportModal
+                            isOpen={isImportModalOpen}
+                            onClose={() => setIsImportModalOpen(false)}
+                            onImport={handleImportExcel}
+                            sampleFileName="Category_Master_Sample.xlsx"
+                            sampleHeaders={['Category Name', 'Sub Category']}
+                        />
+
                         <button
                             onClick={() => setIsExportOpen(!isExportOpen)}
                             className={`flex items-center justify-center gap-2 px-4 h-[42px] border rounded-[10px] text-[14px] font-bold transition-all duration-200 bg-white

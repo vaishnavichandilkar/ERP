@@ -1,21 +1,21 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Download, Plus, Filter, MoreVertical, X, FileText, FileSpreadsheet, Eye, FileEdit, ArrowLeft, ArrowRight, ChevronsUpDown, CheckCircle2, RefreshCw, ChevronDown, Database } from 'lucide-react';
+import { Search, Download, Upload, Plus, Filter, MoreVertical, X, FileText, FileSpreadsheet, Eye, FileEdit, ArrowLeft, ArrowRight, ChevronsUpDown, CheckCircle2, RefreshCw, ChevronDown, Database } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import UnitForm from './components/UnitForm';
 import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
 import unitService from '../../../services/masters/unitService';
-import { toast } from '../../../utils/toast-mock';
+import toast from 'react-hot-toast';
 
 import { translateDynamic } from '../../../utils/i18nUtils';
 import SuccessToast from './components/SuccessToast';
-
-
+import ImportModal from './components/ImportModal';
 
 const UnitMaster = () => {
     const { t } = useTranslation(['modules', 'common']);
     const defaultFilters = { gstUom: '', status: '', unitName: '' };
     const [searchQuery, setSearchQuery] = useState('');
     const [isExportOpen, setIsExportOpen] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [activeDropdown, setActiveDropdown] = useState(null);
     const [filterInputs, setFilterInputs] = useState(defaultFilters);
@@ -189,6 +189,21 @@ const UnitMaster = () => {
         setIsExportOpen(false);
     };
 
+    const handleImportExcel = async (formData) => {
+        try {
+            toast.loading(t('common:importing', 'Importing...'), { id: 'import-toast' });
+            await unitService.importUnits(formData);
+            toast.dismiss('import-toast');
+            toast.success(t('common:import_success', 'Data imported successfully'));
+            fetchUnits();
+            return Promise.resolve();
+        } catch (error) {
+            toast.dismiss('import-toast');
+            toast.error(error?.response?.data?.message || t('common:import_failed', 'Failed to import data'));
+            return Promise.reject(error);
+        }
+    };
+
     return (
         <div className="flex flex-col relative w-full h-full">
             {showSuccessToast.show && (
@@ -262,6 +277,21 @@ const UnitMaster = () => {
                             </div>
 
                             <div className="relative flex items-center gap-3" ref={exportRef}>
+                                <button
+                                    onClick={() => setIsImportModalOpen(true)}
+                                    className="flex items-center justify-center gap-2 px-4 h-[42px] border border-[#E5E7EB] rounded-[10px] text-[14px] font-bold text-[#4B5563] hover:bg-gray-50 transition-all duration-200 bg-white shadow-sm"
+                                >
+                                    <Upload size={18} className="text-gray-400" />
+                                    {t('common:import', 'Import')}
+                                </button>
+                                <ImportModal
+                                    isOpen={isImportModalOpen}
+                                    onClose={() => setIsImportModalOpen(false)}
+                                    onImport={handleImportExcel}
+                                    sampleFileName="Unit_Master_Sample.xlsx"
+                                    sampleHeaders={['Unit Name', 'GST UOM', 'Full Name Of Measurement', 'Status']}
+                                />
+
                                 <button
                                     onClick={() => setIsExportOpen(!isExportOpen)}
                                     className={`flex items-center justify-center gap-2 px-4 h-[42px] border rounded-[10px] text-[14px] font-semibold transition-all duration-200 bg-white

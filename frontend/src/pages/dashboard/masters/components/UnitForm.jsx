@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, ChevronUp, ArrowLeft, Plus, FileEdit } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import unitService from '../../../../services/masters/unitService';
-import { toast } from '../../../../utils/toast-mock';
+import toast from 'react-hot-toast';
 import { translateDynamic } from '../../../../utils/i18nUtils';
 
 const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchable = false, disabled = false, showAsterisk = false, actionLabel = '', onAction = null, error = '' }) => {

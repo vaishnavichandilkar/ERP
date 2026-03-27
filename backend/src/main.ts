@@ -11,6 +11,7 @@ import * as express from 'express';
     return this.toString();
 };
 
+// Start gracefully
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
 

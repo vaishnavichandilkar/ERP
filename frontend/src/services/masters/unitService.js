@@ -65,6 +65,15 @@ const unitService = {
         const response = await axiosInstance.patch(`/master/unit/${id}/status`, { status });
         return response.data;
     },
+
+    importUnits: async (formData) => {
+        const response = await axiosInstance.post('/master/unit/import', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        return response.data;
+    },
 };
 
 export default unitService;
