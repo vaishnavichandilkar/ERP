@@ -14,8 +14,8 @@ export class UnitMasterController {
 
     @Get('unit-library')
     @ApiOperation({ summary: 'Get all units from system library' })
-    getUnitLibrary(@Query('search') search?: string, @Query('gst_uom') gst_uom?: string) {
-        return this.service.getUnitLibrary({ search, gst_uom });
+    getUnitLibrary(@Query('search') search?: string, @Query('gst_uom') gst_uom?: string, @Query('unit_name') unit_name?: string) {
+        return this.service.getUnitLibrary({ search, gst_uom, unit_name });
     }
 
     @Get('unit-names')

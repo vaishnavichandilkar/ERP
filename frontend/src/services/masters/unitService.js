@@ -2,8 +2,8 @@ import axiosInstance from '../axiosInstance';
 
 const unitService = {
     // Get all units from the system library
-    getUnitLibrary: async () => {
-        const response = await axiosInstance.get('/master/unit-library');
+    getUnitLibrary: async (params) => {
+        const response = await axiosInstance.get('/master/unit-library', { params });
         return response.data;
     },
 

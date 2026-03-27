@@ -8,8 +8,11 @@ import * as ExcelJS from 'exceljs';
 export class UnitMasterService {
     constructor(private prisma: PrismaService) { }
 
-    async getUnitLibrary(query?: { search?: string; gst_uom?: string }) {
+    async getUnitLibrary(query?: { search?: string; gst_uom?: string; unit_name?: string }) {
         const where: any = {};
+        if (query?.unit_name) {
+            where.unit_name = query.unit_name;
+        }
         if (query?.search) {
             where.OR = [
                 { full_name_of_measurement: { contains: query.search, mode: 'insensitive' } },

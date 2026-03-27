@@ -56,8 +56,9 @@ export class CategoryMasterService {
         });
     }
 
-    async getCategoriesForDropdown(userId: number) {
-        return this.repository.getCategoriesForDropdown(userId);
+    async getCategoriesForDropdown(userId: number, excludeId?: number) {
+        // As per instructions, only Categories (from categories table) are shown
+        return this.repository.getCategoriesForDropdown(userId, excludeId);
     }
 
     async getCategoryListing(userId: number) {
@@ -81,8 +82,6 @@ export class CategoryMasterService {
     }
 
     async toggleSubCategoryStatus(id: number, dto: ToggleStatusDto, userId: number) {
-        // We could add more checks here if needed, but for status toggle, id should be enough if checked against userId
-        // Let's verify ownership first
         const subCategory = await this.repository.findSubCategoryById(id);
 
         if (!subCategory || subCategory.user_id !== userId) {
@@ -112,7 +111,7 @@ export class CategoryMasterService {
             throw new ConflictException('Category with this name already exists');
         }
 
-        return this.repository.updateCategoryName(id, name);
+        return this.repository.updateCategoryData(id, { name });
     }
 
     async updateSubCategory(id: number, dto: UpdateSubCategoryDto, userId: number) {
@@ -122,17 +121,16 @@ export class CategoryMasterService {
         const subCategory = await this.repository.findSubCategoryById(id);
         if (!subCategory || subCategory.user_id !== userId) throw new NotFoundException('Sub Category not found or does not belong to you');
 
-        let targetCategoryId = subCategory.category_id;
-        
-        if (dto.category_id && dto.category_id !== subCategory.category_id) {
-            const newParent = await this.repository.findCategoryById(dto.category_id);
-            if (!newParent || newParent.user_id !== userId || newParent.status === MasterStatus.INACTIVE) {
-                throw new BadRequestException('Selected parent category is invalid or inactive');
+        // Check if category_id is being changed
+        const newCategoryId = dto.category_id || subCategory.category_id;
+        if (newCategoryId !== subCategory.category_id) {
+            const newCategory = await this.repository.findCategoryById(newCategoryId);
+            if (!newCategory || newCategory.user_id !== userId) {
+                throw new BadRequestException('Selected category is invalid');
             }
-            targetCategoryId = dto.category_id;
         }
 
-        const existing = await this.repository.findSubCategoryByName(name, targetCategoryId, userId);
+        const existing = await this.repository.findSubCategoryByName(name, newCategoryId, userId);
         if (existing && existing.id !== id) {
             throw new ConflictException('Sub Category with this name already exists in this category');
         }

@@ -79,9 +79,9 @@ const AddCategoryModal = ({ isOpen, onClose, onSuccess, onShowToast }) => {
                 await categoryService.createCategory({ name: categoryName });
                 onShowToast && onShowToast(t('modules:category_added_successfully'));
             } else {
-                await categoryService.createSubCategory({ 
-                    name: categoryName, 
-                    category_id: parentCategory.id 
+                await categoryService.createSubCategory({
+                    name: categoryName,
+                    category_id: parentCategory.id
                 });
                 onShowToast && onShowToast(t('modules:sub_category_added_successfully'));
             }
@@ -99,17 +99,17 @@ const AddCategoryModal = ({ isOpen, onClose, onSuccess, onShowToast }) => {
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             {/* Overlay */}
-            <div 
-                className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] animate-in fade-in duration-300" 
+            <div
+                className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] animate-in fade-in duration-300"
                 onClick={onClose}
             />
-            
+
             {/* Modal */}
             <div className={`relative bg-white rounded-[20px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] w-full max-w-[440px] transform transition-all duration-500 ease-in-out animate-in zoom-in-95`}>
                 {/* Header */}
                 <div className="flex items-center justify-between px-8 py-5 border-b border-[#04200f] bg-emerald-900 rounded-t-[20px]">
                     <h2 className="text-[18px] font-bold text-white tracking-tight">{t('modules:add_category')}</h2>
-                    <button 
+                    <button
                         onClick={onClose}
                         className="p-1 text-emerald-100 hover:text-white transition-colors"
                     >
@@ -122,7 +122,7 @@ const AddCategoryModal = ({ isOpen, onClose, onSuccess, onShowToast }) => {
                     {/* Type Dropdown */}
                     <div className="space-y-2 relative" ref={dropdownRef}>
                         <label className="text-[13px] font-semibold text-[#4B5563]">{t('common:type')}</label>
-                        <div 
+                        <div
                             className={`w-full h-[46px] border rounded-[10px] flex items-center justify-between px-4 cursor-pointer transition-all ${isDropdownOpen ? 'border-[#073318] ring-4 ring-[#073318]/5' : 'border-[#E5E7EB] hover:border-gray-300 bg-white'}`}
                             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                         >
@@ -137,15 +137,14 @@ const AddCategoryModal = ({ isOpen, onClose, onSuccess, onShowToast }) => {
                                 {['Category', 'Sub Category'].map((opt) => {
                                     const isDisabled = opt === 'Sub Category' && dropdownCategories.length === 0;
                                     return (
-                                        <div 
+                                        <div
                                             key={opt}
-                                            className={`px-4 py-3 text-[14px] transition-colors ${
-                                                isDisabled 
-                                                    ? 'text-gray-300 cursor-not-allowed' 
-                                                    : type === opt 
-                                                        ? 'bg-[#F9FAFB] text-[#073318] font-bold cursor-pointer' 
-                                                        : 'text-[#4B5563] hover:bg-gray-50 cursor-pointer'
-                                            }`}
+                                            className={`px-4 py-3 text-[14px] transition-colors ${isDisabled
+                                                ? 'text-gray-300 cursor-not-allowed'
+                                                : type === opt
+                                                    ? 'bg-[#F9FAFB] text-[#073318] font-bold cursor-pointer'
+                                                    : 'text-[#4B5563] hover:bg-gray-50 cursor-pointer'
+                                                }`}
                                             onClick={() => {
                                                 if (!isDisabled) {
                                                     setType(opt);
@@ -179,7 +178,7 @@ const AddCategoryModal = ({ isOpen, onClose, onSuccess, onShowToast }) => {
                         {type === 'Sub Category' && (
                             <div className="space-y-2 relative" ref={parentDropdownRef}>
                                 <label className="text-[13px] font-semibold text-[#4B5563]">{t('modules:category_under')}</label>
-                                <div 
+                                <div
                                     className={`w-full h-[46px] border rounded-[10px] flex items-center justify-between px-4 cursor-pointer transition-all ${isParentDropdownOpen ? 'border-[#073318] ring-4 ring-[#073318]/5' : 'border-[#E5E7EB] hover:border-gray-300 bg-white'}`}
                                     onClick={() => setIsParentDropdownOpen(!isParentDropdownOpen)}
                                 >
@@ -192,7 +191,7 @@ const AddCategoryModal = ({ isOpen, onClose, onSuccess, onShowToast }) => {
                                 {isParentDropdownOpen && (
                                     <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-white border border-[#E5E7EB] rounded-[12px] shadow-xl z-[110] py-2 max-h-[160px] overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
                                         {dropdownCategories.map((cat) => (
-                                            <div 
+                                            <div
                                                 key={cat.id}
                                                 className={`px-4 py-3 text-[14px] cursor-pointer transition-colors ${parentCategory?.id === cat.id ? 'bg-[#F9FAFB] text-[#073318] font-bold' : 'text-[#4B5563] hover:bg-gray-50'}`}
                                                 onClick={() => {

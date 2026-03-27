@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Search, Download, Upload, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, CheckCircle2, XCircle, ArrowLeft, ArrowRight, ChevronDown, RefreshCw, X, Filter, Edit, Loader2, ArrowLeft as LeftIcon, ArrowRight as RightIcon } from 'lucide-react';
+import { Search, Download, Upload, Plus, Minus, Check, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, CheckCircle2, XCircle, ArrowLeft, ArrowRight, ChevronDown, RefreshCw, X, Filter, Edit, Loader2, ArrowLeft as LeftIcon, ArrowRight as RightIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import CategoryForm from './components/CategoryForm';
 import AddCategoryModal from './components/AddCategoryModal';
@@ -21,6 +21,7 @@ const CategoryMaster = () => {
     const [selectedCategoryData, setSelectedCategoryData] = useState(null);
     const [activeRowDropdown, setActiveRowDropdown] = useState(null);
     const [toastMessage, setToastMessage] = useState({ show: false, message: '', type: 'success' });
+    const [selectedItems, setSelectedItems] = useState([]);
 
     const showToast = (message, type = 'success') => {
         setToastMessage({ show: true, message, type });
@@ -52,6 +53,7 @@ const CategoryMaster = () => {
                 items: cat.sub_categories || []
             }));
             setMasterData(mappedData);
+            setSelectedItems([]);
         } catch (error) {
             showToast(error.response?.data?.message || 'Failed to fetch categories', 'error');
         } finally {
@@ -67,7 +69,7 @@ const CategoryMaster = () => {
             if (exportRef.current && !exportRef.current.contains(event.target)) {
                 setIsExportOpen(false);
             }
-            
+
             // Only clear dropdown if NOT clicking on a dropdown button or item
             if (!event.target.closest('[data-dropdown-item="true"]') && !event.target.closest('[data-dropdown-btn="true"]')) {
                 setActiveRowDropdown(null);
@@ -90,8 +92,8 @@ const CategoryMaster = () => {
         }));
     };
 
-    const isAllExpanded = masterData.length > 0 && 
-        Object.keys(expandedGroups).length === masterData.length && 
+    const isAllExpanded = masterData.length > 0 &&
+        Object.keys(expandedGroups).length === masterData.length &&
         Object.values(expandedGroups).every(Boolean);
 
     const toggleExpandAll = () => {
@@ -106,7 +108,7 @@ const CategoryMaster = () => {
 
     const handleToggleStatus = async (id, currentStatus, type) => {
         const newStatus = currentStatus === 'INACTIVE' ? 'ACTIVE' : 'INACTIVE';
-        
+
         // Optimistic UI update
         setMasterData(prev => prev.map(cat => {
             if (type === 'category' && Number(cat.id) === Number(id)) {
@@ -140,10 +142,39 @@ const CategoryMaster = () => {
         }
     };
 
+    const toggleSelectItem = (id) => {
+        setSelectedItems(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
+    const toggleSelectGroup = (items) => {
+        const itemIds = items.map(i => i.id);
+        const allSelected = itemIds.every(id => selectedItems.includes(id));
+
+        if (allSelected) {
+            setSelectedItems(prev => prev.filter(id => !itemIds.includes(id)));
+        } else {
+            setSelectedItems(prev => [...new Set([...prev, ...itemIds])]);
+        }
+    };
+
+    const handleBulkDeactivate = async () => {
+        if (selectedItems.length === 0) return;
+        try {
+            await Promise.all(selectedItems.map(id => categoryService.toggleSubCategoryStatus(id, 'INACTIVE')));
+            toast.success(t('modules:bulk_deactivate_success', 'Selected items deactivated successfully'));
+            setSelectedItems([]);
+            fetchCategories();
+        } catch (error) {
+            toast.error('Bulk operation failed');
+        }
+    };
+
     // Filter logic
     const filteredData = () => {
         let data = masterData;
-        
+
         if (searchQuery) {
             const q = searchQuery.toLowerCase();
             data = data.filter(section => {
@@ -212,7 +243,7 @@ const CategoryMaster = () => {
 
     const handleImportExcel = async (formData) => {
         const loadingToast = toast.loading(t('common:importing', 'Importing data...'));
-        
+
         try {
             await categoryService.importCategories(formData);
             toast.dismiss(loadingToast);
@@ -258,7 +289,7 @@ const CategoryMaster = () => {
 
     if (currentView.type === 'form') {
         return (
-            <CategoryForm 
+            <CategoryForm
                 mode={currentView.mode}
                 initialData={currentView.data}
                 onBack={() => setCurrentView({ type: 'list', data: null, mode: 'add' })}
@@ -276,8 +307,8 @@ const CategoryMaster = () => {
             <div className="flex flex-col gap-1 mb-8">
                 <div className="flex items-center justify-between">
                     <h1 className="text-[28px] font-bold text-[#111827] tracking-tight">{t('modules:category_master')}</h1>
-                    <button 
-                        onClick={() => setCurrentView({ type: 'form', mode: 'add', data: null })}
+                    <button
+                        onClick={() => setIsAddModalOpen(true)}
                         className="px-6 h-[44px] bg-[#073318] text-white rounded-[10px] text-[15px] font-bold hover:bg-[#04200f] transition-all shadow-sm flex items-center justify-center gap-2"
                     >
                         {t('modules:add_category')}
@@ -287,27 +318,45 @@ const CategoryMaster = () => {
             </div>
 
             <div className={`flex flex-col bg-white rounded-[16px] border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.03)] mb-8 ${activeRowDropdown ? '!overflow-visible' : 'overflow-hidden'}`}>
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 border-b border-[#F3F4F6] bg-white">
+                <div className="flex flex-col sm:flex-row items-center justify-between p-6 border-b border-[#F3F4F6] gap-4">
                     <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-                        <div className="relative w-full sm:w-[320px]">
-                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                            <input
-                                type="text"
-                                placeholder={t('common:search_placeholder', 'Search By Anything...')}
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full h-[42px] bg-white border border-[#E5E7EB] rounded-[10px] pl-10 pr-10 text-[14px] text-[#111827] outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/10 transition-all placeholder:text-gray-400 shadow-sm"
-                            />
-                            {searchQuery && (
-                                <button 
-                                    onClick={() => setSearchQuery('')}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                        {selectedItems.length > 0 ? (
+                            <div className="flex items-center gap-3 animate-in slide-in-from-left-4 duration-300 bg-[#073318]/5 px-4 py-2 rounded-[12px] border border-[#073318]/10">
+                                <span className="text-[14px] font-bold text-[#073318]">{selectedItems.length} {t('common:selected', 'Selected')}</span>
+                                <div className="w-[1px] h-4 bg-[#073318]/20 mx-1" />
+                                <button
+                                    onClick={handleBulkDeactivate}
+                                    className="text-[13px] font-bold text-amber-700 hover:text-amber-800 transition-colors"
                                 >
-                                    <X size={16} />
+                                    {t('common:deactivate_selected', 'Deactivate Selected')}
                                 </button>
-                            )}
-                        </div>
-
+                                <button
+                                    onClick={() => setSelectedItems([])}
+                                    className="text-[13px] font-bold text-gray-500 hover:text-gray-700 transition-colors"
+                                >
+                                    {t('common:cancel', 'Cancel')}
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="relative w-full sm:w-[320px]">
+                                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                <input
+                                    type="text"
+                                    placeholder={t('common:search_placeholder', 'Search By Name...')}
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full h-[42px] bg-white border border-[#E5E7EB] rounded-[10px] pl-10 pr-10 text-[14px] outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/10 transition-all placeholder:text-gray-400 shadow-sm"
+                                />
+                                {searchQuery && (
+                                    <button
+                                        onClick={() => setSearchQuery('')}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                )}
+                            </div>
+                        )}
                         <button
                             onClick={toggleExpandAll}
                             className="flex items-center gap-2 px-4 h-[42px] border border-[#E5E7EB] rounded-[10px] text-[14px] font-bold text-[#4B5563] hover:bg-gray-50 transition-all bg-white shadow-sm"
@@ -401,18 +450,30 @@ const CategoryMaster = () => {
                                     <div className="flex items-center justify-between p-4 bg-white hover:bg-gray-50/50 transition-colors group">
                                         <div
                                             className="flex items-center gap-3 cursor-pointer select-none"
-                                            onClick={() => toggleGroup(section.id)}
                                         >
-                                            <div className="flex items-center justify-center w-5 h-5">
-                                                {isExpanded ? (
-                                                    <Minus size={14} className="text-[#111827] stroke-[3px]" />
-                                                ) : (
-                                                    <Plus size={14} className="text-[#111827] stroke-[3px]" />
-                                                )}
+                                            <div
+                                                className="relative flex items-center cursor-pointer"
+                                                onClick={(e) => { e.stopPropagation(); toggleSelectGroup(section.items); }}
+                                            >
+                                                <div className={`w-4 h-4 border rounded transition-all flex items-center justify-center ${section.items?.length > 0 && section.items.every(item => selectedItems.includes(item.id)) ? 'bg-[#073318] border-[#073318]' : 'border-gray-300'}`}>
+                                                    {section.items?.length > 0 && section.items.every(item => selectedItems.includes(item.id)) && <Check size={12} className="text-white" />}
+                                                </div>
                                             </div>
-                                            <span className="text-[14px] font-bold text-[#111827]">
-                                                {section.name}
-                                            </span>
+                                            <div
+                                                className="flex items-center gap-2"
+                                                onClick={() => toggleGroup(section.id)}
+                                            >
+                                                <div className="flex items-center justify-center w-5 h-5">
+                                                    {isExpanded ? (
+                                                        <Minus size={14} className="text-[#111827] stroke-[3px]" />
+                                                    ) : (
+                                                        <Plus size={14} className="text-[#111827] stroke-[3px]" />
+                                                    )}
+                                                </div>
+                                                <span className="text-[14px] font-bold text-[#111827]">
+                                                    {section.name}
+                                                </span>
+                                            </div>
                                         </div>
                                         <div className="relative flex items-center gap-4">
                                             <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-bold ${section.status === 'INACTIVE' ? 'bg-[#FEF2F2] text-[#DC2626]' : 'bg-[#ECFDF5] text-[#059669]'}`}>
@@ -432,22 +493,19 @@ const CategoryMaster = () => {
 
                                             {activeRowDropdown === `group-${section.id}` && (
                                                 <div className="absolute right-full mr-2 min-w-[150px] bg-white border border-gray-100 rounded-[12px] shadow-[0_10px_30px_rgba(0,0,0,0.15)] z-[100] py-2 animate-in zoom-in-95 duration-200">
-                                                            <button
-                                                                data-dropdown-item="true"
-                                                                onClick={(e) => { 
-                                                                    e.stopPropagation(); 
-                                                                    setCurrentView({ 
-                                                                        type: 'form', 
-                                                                        mode: 'edit', 
-                                                                        data: { id: section.id, name: section.name, type: 'category' } 
-                                                                    });
-                                                                    setActiveRowDropdown(null);
-                                                                }}
-                                                            className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] font-bold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap"
-                                                        >
-                                                            <Edit size={18} className="text-[#073318]" />
-                                                            {t('modules:view_and_edit_category')}
-                                                        </button>
+                                                    <button
+                                                        data-dropdown-item="true"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setSelectedCategoryData({ ...section, type: 'category' });
+                                                            setIsEditModalOpen(true);
+                                                            setActiveRowDropdown(null);
+                                                        }}
+                                                        className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] font-bold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap"
+                                                    >
+                                                        <Edit size={18} className="text-[#073318]" />
+                                                        {t('modules:edit_category')}
+                                                    </button>
                                                     <button
                                                         data-dropdown-item="true"
                                                         onClick={(e) => { e.stopPropagation(); handleToggleStatus(section.id, section.status, 'category'); }}
@@ -478,6 +536,14 @@ const CategoryMaster = () => {
                                                         ${isHighlighted ? 'bg-yellow-50 text-[#073318]' : 'text-[#6B7280]'}`}
                                                     >
                                                         <div className="flex items-center gap-3">
+                                                            <div
+                                                                className="relative flex items-center cursor-pointer"
+                                                                onClick={(e) => { e.stopPropagation(); toggleSelectItem(item.id); }}
+                                                            >
+                                                                <div className={`w-4 h-4 border rounded transition-all flex items-center justify-center ${selectedItems.includes(item.id) ? 'bg-[#073318] border-[#073318]' : 'border-gray-300'}`}>
+                                                                    {selectedItems.includes(item.id) && <Check size={12} className="text-white" />}
+                                                                </div>
+                                                            </div>
                                                             <span className="font-medium text-[#4B5563]">
                                                                 {itemIdx + 1}. {item.name}
                                                             </span>
@@ -502,18 +568,10 @@ const CategoryMaster = () => {
                                                                 <div className="absolute right-full mr-2 min-w-[150px] bg-white border border-gray-100 rounded-[12px] shadow-[0_10px_30px_rgba(0,0,0,0.15)] z-[100] py-2 animate-in zoom-in-95 duration-200">
                                                                     <button
                                                                         data-dropdown-item="true"
-                                                                        onClick={(e) => { 
-                                                                            e.stopPropagation(); 
-                                                                            setCurrentView({ 
-                                                                                type: 'form', 
-                                                                                mode: 'edit', 
-                                                                                data: { 
-                                                                                    id: item.id, 
-                                                                                    name: item.name, 
-                                                                                    type: 'sub_category',
-                                                                                    parentCategoryId: section.id 
-                                                                                } 
-                                                                            });
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setSelectedCategoryData({ ...item, type: 'sub_category' });
+                                                                            setIsEditModalOpen(true);
                                                                             setActiveRowDropdown(null);
                                                                         }}
                                                                         className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] font-bold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap"
@@ -556,7 +614,7 @@ const CategoryMaster = () => {
                     <div className="flex items-center gap-3 text-[14px] text-[#6B7280] font-medium">
                         <span>{t('common:show')}</span>
                         <div className="relative group">
-                            <select 
+                            <select
                                 value={itemsPerPage}
                                 onChange={(e) => {
                                     setItemsPerPage(Number(e.target.value));
@@ -579,7 +637,7 @@ const CategoryMaster = () => {
                             {totalItems > 0 ? `${startIndex + 1}-${endIndex} of ${totalItems}` : `0-0 of 0`}
                         </span>
                         <div className="flex items-center gap-1.5">
-                            <button 
+                            <button
                                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                 disabled={currentPage === 1}
                                 className="w-10 h-10 flex items-center justify-center text-[#6B7280] hover:bg-gray-50 hover:text-[#111827] disabled:opacity-30 disabled:cursor-not-allowed transition-all rounded-[10px]"
@@ -588,7 +646,7 @@ const CategoryMaster = () => {
                             </button>
                             <div className="flex items-center gap-1.5">
                                 {getVisiblePages().map((page, index) => (
-                                    <button 
+                                    <button
                                         key={index}
                                         onClick={() => setCurrentPage(page)}
                                         className={`w-10 h-10 rounded-[10px] flex items-center justify-center transition-all text-[14px] font-bold
@@ -601,7 +659,7 @@ const CategoryMaster = () => {
                                     </button>
                                 ))}
                             </div>
-                            <button 
+                            <button
                                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                 disabled={currentPage === totalPages || totalPages === 0}
                                 className="w-10 h-10 flex items-center justify-center text-[#6B7280] hover:bg-gray-50 hover:text-[#111827] disabled:opacity-30 disabled:cursor-not-allowed transition-all rounded-[10px]"
@@ -613,15 +671,26 @@ const CategoryMaster = () => {
                 </div>
             </div>
 
-
-
             {toastMessage.show && (
-                <SuccessToast 
-                    message={toastMessage.message} 
+                <SuccessToast
+                    message={toastMessage.message}
                     type={toastMessage.type}
-                    onClose={() => setToastMessage({ ...toastMessage, show: false })} 
+                    onClose={() => setToastMessage({ ...toastMessage, show: false })}
                 />
             )}
+
+            <AddCategoryModal
+                isOpen={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+                onSuccess={fetchCategories}
+            />
+
+            <EditCategoryModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                data={selectedCategoryData}
+                onSuccess={fetchCategories}
+            />
         </div>
     );
 };

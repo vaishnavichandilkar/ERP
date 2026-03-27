@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, ChevronDown, Loader2 } from 'lucide-react';
+import { X, ChevronDown, Loader2, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import categoryService from '../../../../services/masters/categoryService';
 
@@ -9,23 +9,31 @@ const EditCategoryModal = ({ isOpen, onClose, data, onSuccess, onShowToast }) =>
     const [parentCategory, setParentCategory] = useState(null);
     const [isParentDropdownOpen, setIsParentDropdownOpen] = useState(false);
     const [dropdownCategories, setDropdownCategories] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [isPromotingToCategory, setIsPromotingToCategory] = useState(false);
     const parentDropdownRef = useRef(null);
+
+    const isSubCategory = data?.type === 'sub_category';
 
     useEffect(() => {
         if (isOpen && data) {
             setCategoryName(data.name || '');
-            fetchDropdownData();
+            setIsPromotingToCategory(false);
+            if (isSubCategory) {
+                fetchDropdownData();
+            }
         }
     }, [isOpen, data]);
 
     const fetchDropdownData = async () => {
         try {
-            const dropdownData = await categoryService.getCategoriesDropdown();
+            const dropdownData = await categoryService.getCategoriesDropdown(isSubCategory ? null : data.id);
             setDropdownCategories(dropdownData || []);
-            
-            if (data?.type === 'sub_category' && data.under) {
-                const parent = dropdownData?.find(c => c.name === data.under);
+
+            if (isSubCategory && (data.category_id || data.parent_id)) {
+                const pId = data.category_id || data.parent_id;
+                const parent = dropdownData?.find(c => c.id === pId);
                 if (parent) setParentCategory(parent);
             }
         } catch (err) {
@@ -37,34 +45,44 @@ const EditCategoryModal = ({ isOpen, onClose, data, onSuccess, onShowToast }) =>
         const handleClickOutside = (event) => {
             if (parentDropdownRef.current && !parentDropdownRef.current.contains(event.target)) {
                 setIsParentDropdownOpen(false);
+                setSearchTerm('');
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    const filteredCategories = searchTerm
+        ? dropdownCategories.filter(cat => cat.name.toLowerCase().includes(searchTerm.toLowerCase()))
+        : dropdownCategories;
+
     const handleSave = async () => {
         if (!categoryName.trim()) {
-            toast.error(t('modules:category_name_required'));
+            toast.error(isSubCategory ? t('modules:sub_category_name_required') : t('modules:category_name_required'));
             return;
         }
 
-        if (data?.type === 'sub_category' && !parentCategory) {
+        if (isSubCategory && !parentCategory && !isPromotingToCategory) {
             toast.error(t('modules:parent_category_required'));
             return;
         }
 
         setIsLoading(true);
         try {
-            if (data.type === 'category') {
+            if (isSubCategory) {
+                if (isPromotingToCategory) {
+                    await categoryService.promoteSubCategory(data.id);
+                    onShowToast && onShowToast(t('modules:sub_category_promoted_successfully', 'Sub Category moved to Main Category successfully'));
+                } else {
+                    await categoryService.updateSubCategory(data.id, {
+                        name: categoryName,
+                        category_id: parentCategory.id
+                    });
+                    onShowToast && onShowToast(t('modules:sub_category_updated_successfully'));
+                }
+            } else {
                 await categoryService.updateCategory(data.id, { name: categoryName });
                 onShowToast && onShowToast(t('modules:category_updated_successfully'));
-            } else {
-                await categoryService.updateSubCategory(data.id, { 
-                    name: categoryName, 
-                    category_id: parentCategory.id 
-                });
-                onShowToast && onShowToast(t('modules:sub_category_updated_successfully'));
             }
             onSuccess();
             onClose();
@@ -80,17 +98,19 @@ const EditCategoryModal = ({ isOpen, onClose, data, onSuccess, onShowToast }) =>
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             {/* Overlay */}
-            <div 
-                className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] animate-in fade-in duration-300" 
+            <div
+                className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] animate-in fade-in duration-300"
                 onClick={onClose}
             />
-            
+
             {/* Modal */}
             <div className="relative bg-white rounded-[20px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] w-full max-w-[440px] overflow-hidden transform transition-all duration-300 ease-in-out animate-in zoom-in-95">
                 {/* Header */}
-                <div className="flex items-center justify-between px-8 py-5 border-b border-[#04200f] bg-emerald-900">
-                    <h2 className="text-[18px] font-bold text-white tracking-tight">{t('modules:edit_category')}</h2>
-                    <button 
+                <div className="flex items-center justify-between px-8 py-5 border-b border-[#04200f] bg-emerald-900 rounded-t-[20px]">
+                    <h2 className="text-[18px] font-bold text-white tracking-tight">
+                        {isSubCategory ? t('modules:edit_sub_category', 'Edit Sub Category') : t('modules:edit_category')}
+                    </h2>
+                    <button
                         onClick={onClose}
                         className="p-1 text-emerald-100 hover:text-white transition-colors"
                     >
@@ -100,69 +120,106 @@ const EditCategoryModal = ({ isOpen, onClose, data, onSuccess, onShowToast }) =>
 
                 {/* Body */}
                 <div className="p-8 space-y-6">
-                    {/* Type Display (Read-only as per reference image design) */}
-                    <div className="space-y-2">
-                        <label className="text-[13px] font-semibold text-[#4B5563]">{t('common:type')}</label>
-                        <div className="w-full h-[46px] border border-[#E5E7EB] rounded-[10px] flex items-center px-4 bg-[#F9FAFB] cursor-not-allowed">
-                            <span className="text-[14px] text-[#111827] font-medium">
-                                {data?.type === 'category' ? t('modules:category') : t('modules:sub_category')}
-                            </span>
-                        </div>
-                    </div>
-
-                    {/* Category/Subcategory Name Input */}
+                    {/* Name Input */}
                     <div className="space-y-2">
                         <label className="text-[13px] font-semibold text-[#4B5563]">
-                            {data?.type === 'category' ? t('modules:category_name') : t('modules:sub_category_name')}
+                            {isSubCategory ? t('modules:sub_category_name') : t('modules:category_name')}
                         </label>
                         <input
                             type="text"
                             value={categoryName}
                             onChange={(e) => setCategoryName(e.target.value)}
-                            placeholder={data?.type === 'category' ? t('modules:enter_category_name') : t('modules:enter_sub_category_name')}
-                            className="w-full h-[46px] border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] font-medium outline-none focus:border-[#073318] focus:ring-4 focus:ring-[#073318]/5 transition-all placeholder:text-gray-400"
+                            disabled={isPromotingToCategory}
+                            placeholder={isSubCategory ? t('modules:enter_sub_category_name') : t('modules:enter_category_name')}
+                            className={`w-full h-[46px] border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] font-medium outline-none transition-all placeholder:text-gray-400 ${isPromotingToCategory ? 'bg-gray-50 text-gray-400' : 'focus:border-[#073318] focus:ring-4 focus:ring-[#073318]/5'}`}
                         />
                     </div>
 
-                    {/* Parent Category Dropdown (Only for Sub category) */}
-                    {data?.type === 'sub_category' && (
-                        <div className="space-y-2 relative" ref={parentDropdownRef}>
-                            <label className="text-[13px] font-semibold text-[#4B5563]">{t('modules:category_under')}</label>
-                            <div 
-                                className={`w-full h-[46px] border rounded-[10px] flex items-center justify-between px-4 cursor-pointer transition-all ${isParentDropdownOpen ? 'border-[#073318] ring-4 ring-[#073318]/5' : 'border-[#E5E7EB] hover:border-gray-300 bg-white'}`}
-                                onClick={() => setIsParentDropdownOpen(!isParentDropdownOpen)}
-                            >
-                                <span className={`text-[14px] ${parentCategory ? 'text-[#111827] font-medium' : 'text-gray-400'}`}>
-                                    {parentCategory ? parentCategory.name : t('modules:select_category')}
-                                </span>
-                                <ChevronDown size={18} className={`text-gray-400 transition-transform duration-200 ${isParentDropdownOpen ? 'rotate-180' : ''}`} />
+                    {isSubCategory && (
+                        <>
+                            {/* Parent Selection (Only for Sub Categories) */}
+                            <div className={`space-y-2 relative transition-all duration-300 ${isPromotingToCategory ? 'opacity-30 pointer-events-none grayscale' : ''}`} ref={parentDropdownRef}>
+                                <label className="text-[13px] font-semibold text-[#4B5563]">{t('modules:category_under')}</label>
+                                <div
+                                    className={`w-full h-[46px] border rounded-[10px] flex items-center justify-between px-4 cursor-pointer transition-all ${isParentDropdownOpen ? 'border-[#073318] ring-4 ring-[#073318]/5' : 'border-[#E5E7EB] hover:border-gray-300 bg-white'}`}
+                                    onClick={() => !isPromotingToCategory && setIsParentDropdownOpen(!isParentDropdownOpen)}
+                                >
+                                    {isParentDropdownOpen ? (
+                                        <input
+                                            type="text"
+                                            autoFocus
+                                            placeholder={parentCategory?.name || t('modules:select_category')}
+                                            className="w-full bg-transparent outline-none text-[14px] font-medium"
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                    ) : (
+                                        <span className={`text-[14px] ${parentCategory ? 'text-[#111827] font-medium' : 'text-gray-400 italic'}`}>
+                                            {parentCategory ? parentCategory.name : t('modules:select_category')}
+                                        </span>
+                                    )}
+                                    <ChevronDown size={18} className={`text-gray-400 transition-transform duration-200 ${isParentDropdownOpen ? 'rotate-180' : ''}`} />
+                                </div>
+
+                                {isParentDropdownOpen && (
+                                    <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-white border border-[#E5E7EB] rounded-[12px] shadow-xl z-[110] py-2 max-h-[180px] overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+                                        {filteredCategories.length > 0 ? (
+                                            filteredCategories.map((cat) => (
+                                                <div
+                                                    key={cat.id}
+                                                    className={`px-4 py-3 text-[14px] cursor-pointer transition-colors ${parentCategory?.id === cat.id ? 'bg-[#F9FAFB] text-[#073318] font-bold' : 'text-[#4B5563] hover:bg-gray-50'}`}
+                                                    onClick={() => {
+                                                        setParentCategory(cat);
+                                                        setIsParentDropdownOpen(false);
+                                                        setSearchTerm('');
+                                                    }}
+                                                >
+                                                    {cat.name}
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="px-4 py-3 text-[12px] text-gray-400 text-center italic">
+                                                {t('common:no_results_found')}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
-                            {isParentDropdownOpen && (
-                                <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-white border border-[#E5E7EB] rounded-[12px] shadow-xl z-[110] py-2 max-h-[160px] overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
-                                    {dropdownCategories.map((cat) => (
-                                        <div 
-                                            key={cat.id}
-                                            className={`px-4 py-3 text-[14px] cursor-pointer transition-colors ${parentCategory?.id === cat.id ? 'bg-[#F9FAFB] text-[#073318] font-bold' : 'text-[#4B5563] hover:bg-gray-50'}`}
-                                            onClick={() => {
-                                                setParentCategory(cat);
-                                                setIsParentDropdownOpen(false);
-                                            }}
-                                        >
-                                            {cat.name}
+                            {/* Promotion Checkbox */}
+                            <div className="pt-2">
+                                <label className={`flex items-center gap-3 cursor-pointer group p-3 rounded-[12px] border transition-all ${isPromotingToCategory ? 'bg-[#073318]/5 border-[#073318]/20 ring-4 ring-[#073318]/5' : 'border-[#E5E7EB] hover:border-gray-300'}`}>
+                                    <div className="relative flex items-center">
+                                        <input
+                                            type="checkbox"
+                                            className="peer sr-only"
+                                            checked={isPromotingToCategory}
+                                            onChange={(e) => setIsPromotingToCategory(e.target.checked)}
+                                        />
+                                        <div className={`w-5 h-5 border-2 rounded-md transition-all flex items-center justify-center ${isPromotingToCategory ? 'bg-[#073318] border-[#073318]' : 'border-gray-200 group-hover:border-gray-300 bg-white'}`}>
+                                            <Check size={14} className={`text-white transition-opacity ${isPromotingToCategory ? 'opacity-100' : 'opacity-0'}`} />
                                         </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className={`text-[13px] font-bold transition-colors ${isPromotingToCategory ? 'text-[#073318]' : 'text-gray-700'}`}>
+                                            {t('modules:do_you_want_to_move_to_category', 'Do you want to move to Category')}
+                                        </span>
+                                        <span className="text-[11px] text-gray-400 font-medium">
+                                            {isPromotingToCategory ? t('modules:promotion_warning', 'This will convert this sub-category into a main category.') : t('modules:promotion_hint', 'Check to promote to top-level category')}
+                                        </span>
+                                    </div>
+                                </label>
+                            </div>
+                        </>
                     )}
 
-                    {/* Footer Buttons */}
+                    {/* Footer Actions */}
                     <div className="flex items-center justify-center gap-3 pt-2">
                         <button
                             onClick={handleSave}
                             disabled={isLoading}
-                            className="flex-1 h-[48px] bg-[#073318] text-white rounded-[12px] text-[15px] font-bold hover:bg-[#04200f] transition-all flex items-center justify-center gap-2 shadow-md shadow-[#073318]/20 disabled:opacity-70"
+                            className={`flex-1 h-[48px] rounded-[12px] text-[15px] font-bold transition-all flex items-center justify-center gap-2 shadow-md ${isPromotingToCategory ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-600/20' : 'bg-[#073318] hover:bg-[#04200f] shadow-[#073318]/20'} text-white hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed`}
                         >
                             {isLoading ? <Loader2 size={18} className="animate-spin" /> : t('common:save')}
                         </button>
@@ -170,7 +227,7 @@ const EditCategoryModal = ({ isOpen, onClose, data, onSuccess, onShowToast }) =>
                             onClick={onClose}
                             className="w-[100px] h-[48px] border border-[#E5E7EB] text-[#4B5563] rounded-[12px] text-[15px] font-bold hover:bg-gray-50 transition-all bg-white"
                         >
-                            {t('common:exit', 'Exit')}
+                            {t('common:exit')}
                         </button>
                     </div>
                 </div>

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, ParseIntPipe, UseGuards, Request, UploadedFile, UseInterceptors, BadRequestException } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, ParseIntPipe, Query, UseGuards, Request, UploadedFile, UseInterceptors, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CategoryMasterService } from '../services/category-master.service';
@@ -29,8 +29,14 @@ export class CategoryMasterController {
     @Get('categories/dropdown')
     @ApiOperation({ summary: 'Get Categories for dropdown' })
     @ApiResponse({ status: 200, description: 'List of Categories' })
-    async getDropdown(@Request() req) {
-        return this.service.getCategoriesForDropdown(req.user.userId);
+    async getDropdown(
+        @Request() req,
+        @Query('excludeId') excludeId?: string,
+    ) {
+        return this.service.getCategoriesForDropdown(
+            req.user.userId,
+            excludeId ? parseInt(excludeId) : undefined,
+        );
     }
 
     @Get()
@@ -88,24 +94,24 @@ export class CategoryMasterController {
     @ApiOperation({ summary: 'Import categories from XLSX' })
     @ApiConsumes('multipart/form-data')
     @ApiBody({
-      schema: {
-        type: 'object',
-        properties: {
-          file: {
-            type: 'string',
-            format: 'binary',
-          },
+        schema: {
+            type: 'object',
+            properties: {
+                file: {
+                    type: 'string',
+                    format: 'binary',
+                },
+            },
         },
-      },
     })
     @UseInterceptors(FileInterceptor('file'))
     async importCategories(
-      @UploadedFile() file: Express.Multer.File,
-      @Request() req,
+        @UploadedFile() file: Express.Multer.File,
+        @Request() req,
     ) {
-      if (!file) {
-        throw new BadRequestException('Excel file is required');
-      }
-      return this.service.importCategories(file.buffer, req.user.userId);
+        if (!file) {
+            throw new BadRequestException('Excel file is required');
+        }
+        return this.service.importCategories(file.buffer, req.user.userId);
     }
 }

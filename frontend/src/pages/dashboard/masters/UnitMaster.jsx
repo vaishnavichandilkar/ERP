@@ -162,14 +162,14 @@ const UnitMaster = () => {
         const tableRows = tableData.map((row, index) => [
             startIndex + index + 1,
             row.unit_name,
-            row.gst_uom,
             row.full_name_of_measurement || '-',
+            row.gst_uom,
             row.status
         ]);
 
         exportToPDF(
             'Unit Master Report',
-            ['Sr.No', 'Unit Name', 'GST UOM', 'Full Name of Measurement', 'Status'],
+            ['Sr.No', 'Unit Name', 'Full Name of Measurement', 'GST UOM', 'Status'],
             tableRows,
             'unit-master.pdf'
         );
@@ -180,8 +180,8 @@ const UnitMaster = () => {
         const excelData = tableData.map((row, index) => ({
             'Sr.No': startIndex + index + 1,
             'Unit Name': row.unit_name,
-            'GST UOM': row.gst_uom,
             'Full Name of Measurement': row.full_name_of_measurement || '-',
+            'GST UOM': row.gst_uom,
             'Status': row.status
         }));
 
@@ -246,7 +246,7 @@ const UnitMaster = () => {
                                         className="w-full h-[42px] bg-white border border-[#E5E7EB] rounded-[10px] pl-10 pr-10 text-[14px] outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/10 transition-all placeholder:text-gray-400 shadow-sm"
                                     />
                                     {searchQuery && (
-                                        <button 
+                                        <button
                                             onClick={() => {
                                                 setSearchQuery('');
                                                 setCurrentPage(1);
@@ -331,13 +331,13 @@ const UnitMaster = () => {
                                                 <ChevronsUpDown size={14} className="text-emerald-200/50" />
                                             </div>
                                         </th>
+                                        <th className="px-6 py-5 whitespace-nowrap border-r border-white/50 uppercase tracking-tight">Full Name of Measurement</th>
                                         <th className="px-6 py-5 whitespace-nowrap border-r border-white/50">
                                             <div className="flex items-center gap-1.5 cursor-pointer hover:text-[#073318] transition-colors uppercase tracking-tight">
                                                 {t('gst_uom')}
                                                 <ChevronsUpDown size={14} className="text-emerald-200/50" />
                                             </div>
                                         </th>
-                                        <th className="px-6 py-5 whitespace-nowrap border-r border-white/50 uppercase tracking-tight">Full Name of Measurement</th>
                                         <th className="px-6 py-5 whitespace-nowrap border-r border-white/50 uppercase tracking-tight">
                                             <div className="flex items-center gap-1.5 cursor-pointer hover:text-[#073318] transition-colors">
                                                 {t('common:status')}
@@ -361,8 +361,8 @@ const UnitMaster = () => {
                                         <tr key={row.id} className="border-b border-[#F3F4F6] last:border-b-0 hover:bg-[#F9FAFB] transition-all group">
                                             <td className="px-6 py-5 text-gray-500 font-medium border-r border-[#F3F4F6]">{startIndex + index + 1}</td>
                                             <td className="px-6 py-5 font-bold text-[#111827] border-r border-[#F3F4F6]">{row.unit_name}</td>
-                                            <td className="px-6 py-5 font-medium text-[#4B5563] border-r border-[#F3F4F6]">{row.gst_uom}</td>
                                             <td className="px-6 py-5 text-[#6B7280] max-w-[300px] truncate border-r border-[#F3F4F6]">{row.full_name_of_measurement || '-'}</td>
+                                            <td className="px-6 py-5 font-medium text-[#4B5563] border-r border-[#F3F4F6]">{row.gst_uom}</td>
                                             <td className="px-6 py-5 border-r border-[#F3F4F6]">
                                                 <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-bold ${row.status === 'ACTIVE' ? 'bg-[#ECFDF5] text-[#059669]' : 'bg-[#FEF2F2] text-[#DC2626]'}`}>
                                                     <span className={`w-1.5 h-1.5 rounded-full ${row.status === 'ACTIVE' ? 'bg-[#059669]' : 'bg-[#DC2626]'}`}></span>

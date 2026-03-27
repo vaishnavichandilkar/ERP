@@ -5,8 +5,17 @@ const categoryService = {
         const response = await axiosInstance.get('/category-master');
         return response.data;
     },
-    getCategoriesDropdown: async () => {
-        const response = await axiosInstance.get('/category-master/categories/dropdown');
+    getCategoriesDropdown: async (excludeId, onlyParents) => {
+        let url = '/category-master/categories/dropdown';
+        const params = [];
+        if (excludeId) params.push(`excludeId=${excludeId}`);
+        if (onlyParents) params.push(`onlyParents=true`);
+
+        if (params.length > 0) {
+            url += '?' + params.join('&');
+        }
+
+        const response = await axiosInstance.get(url);
         return response.data;
     },
     importCategories: async (formData) => {
@@ -39,6 +48,10 @@ const categoryService = {
     },
     toggleSubCategoryStatus: async (id, status) => {
         const response = await axiosInstance.patch(`/category-master/sub-category/${id}/status`, { status });
+        return response.data;
+    },
+    promoteSubCategory: async (id) => {
+        const response = await axiosInstance.post(`/category-master/sub-category/${id}/promote`);
         return response.data;
     }
 };
