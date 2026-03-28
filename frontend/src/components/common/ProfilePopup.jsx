@@ -36,7 +36,7 @@ const ProfilePopup = ({ isOpen, activeTrigger, onClose, user, onMyProfile, onLog
     // Close on click outside or ESC
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (popupRef.current && !popupRef.current.contains(event.target)) {
+            if (popupRef.current && !popupRef.current.contains(event.target) && !event.target.closest('[data-profile-trigger="true"]')) {
                 onClose();
             }
         };

@@ -47,6 +47,11 @@ export class UnitQueryDto {
     @ApiProperty({ required: false })
     @IsOptional()
     @IsString()
+    format?: string;
+
+    @ApiProperty({ required: false })
+    @IsOptional()
+    @IsString()
     search?: string;
 
     @ApiProperty({ required: false })

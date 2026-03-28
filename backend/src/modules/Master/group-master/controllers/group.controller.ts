@@ -1,9 +1,15 @@
+<<<<<<< Updated upstream
 import { Body, Controller, Get, Param, Patch, Post, Put, ParseIntPipe, UseGuards, Request, UploadedFile, UseInterceptors, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
+=======
+import { Body, Controller, Get, Param, Patch, Post, Put, ParseIntPipe, UseGuards, Request, Res, Query } from '@nestjs/common';
+>>>>>>> Stashed changes
 import { GroupMasterService } from '../services/group.service';
 import { CreateGroupDto, UpdateGroupDto, UpdateGroupStatusDto } from '../dto/group-master.dto';
 import { JwtAuthGuard } from '../../../../common/guards/jwt-auth.guard';
+import { Response } from 'express';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 
 @ApiTags('Group Master')
 @Controller('group-master')
@@ -55,6 +61,7 @@ export class GroupMasterController {
         return this.groupService.updateStatus(id, dto, req.user.userId);
     }
 
+<<<<<<< Updated upstream
     @Post('import')
     @ApiOperation({ summary: 'Import groups from XLSX' })
     @ApiConsumes('multipart/form-data')
@@ -78,5 +85,24 @@ export class GroupMasterController {
         throw new BadRequestException('Excel file is required');
       }
       return this.groupService.importGroups(file.buffer, req.user.userId);
+=======
+    @Get('export')
+    @ApiOperation({ summary: 'Export groups to XLSX or PDF' })
+    @ApiQuery({ name: 'format', required: true, enum: ['xlsx', 'pdf'] })
+    async exportGroups(
+        @Request() req,
+        @Res() res: Response,
+        @Query('format') format: string,
+    ) {
+        const file = await this.groupService.exportGroups(format.toLowerCase(), req.user.userId);
+        
+        res.set({
+            'Content-Type': file.mimetype,
+            'Content-Disposition': `attachment; filename="${file.filename}"`,
+            'Content-Length': file.buffer.length,
+        });
+
+        res.send(file.buffer);
+>>>>>>> Stashed changes
     }
 }

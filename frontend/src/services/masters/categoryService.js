@@ -50,6 +50,7 @@ const categoryService = {
         const response = await axiosInstance.patch(`/category-master/sub-category/${id}/status`, { status });
         return response.data;
     },
+<<<<<<< Updated upstream
     promoteSubCategory: async (id) => {
         const response = await axiosInstance.post(`/category-master/sub-category/${id}/promote`);
         return response.data;
@@ -57,6 +58,14 @@ const categoryService = {
     demoteCategory: async (id, newParentId) => {
         const response = await axiosInstance.post(`/category-master/category/${id}/demote?newParentId=${newParentId}`);
         return response.data;
+=======
+    exportCategories: async (format) => {
+        const response = await axiosInstance.get('/category-master/export', {
+            params: { format },
+            responseType: 'blob'
+        });
+        return response;
+>>>>>>> Stashed changes
     }
 };
 

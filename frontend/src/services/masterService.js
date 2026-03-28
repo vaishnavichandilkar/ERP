@@ -71,6 +71,14 @@ const masterService = {
         return response.data;
     },
 
+    exportGroups: async (params) => {
+        const response = await axiosInstance.get('/group-master/export', {
+            params,
+            responseType: 'blob'
+        });
+        return response;
+    },
+
     // Aliases for transition
     createSubGroup: (data) => masterService.createGroup(data),
     updateSubGroup: (id, data) => masterService.updateGroup(id, data),

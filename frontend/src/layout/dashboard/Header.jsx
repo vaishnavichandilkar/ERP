@@ -60,7 +60,8 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
 
         if (pathSegments.length > 0) {
             const formattedSegments = pathSegments.map(segment => {
-                const key = segment.replace(/-/g, '_');
+                let key = segment.replace(/-/g, '_');
+                if (key === 'category') key = 'category_master';
                 const translated = t(`modules:${key}`, { defaultValue: '' }) || t(`common:${key}`, { defaultValue: '' });
                 if (translated) return translated;
                 return segment.split(/[_-]/).map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
@@ -80,7 +81,7 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
         }
 
         return (
-            <div className="flex items-center text-[#111827] text-[14px] lg:text-[16px] font-semibold uppercase tracking-tight">
+            <div className="flex items-center text-[#111827] text-[14px] lg:text-[16px] font-semibold tracking-tight">
                 {breadcrumbElements}
             </div>
         );
@@ -110,7 +111,8 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
 
                     {/* Globe specifically shown on mobile */}
                     <button
-                        onClick={() => setActivePopupType('status')}
+                        onClick={() => setActivePopupType(activePopupType === 'status' ? null : 'status')}
+                        data-status-trigger="true"
                         className={`lg:hidden flex items-center transition-colors p-1.5 rounded-full
                             ${activePopupType === 'status'
                                 ? 'text-[#166534] bg-[#166534]/10 z-[60] relative shadow-[0_0_15px_rgba(22,101,52,0.4)]'
@@ -126,7 +128,8 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
                     </button>
 
                     <button
-                        onClick={() => setActivePopupType('profile')}
+                        onClick={() => setActivePopupType(activePopupType === 'profile' ? null : 'profile')}
+                        data-profile-trigger="true"
                         className={`bg-[#65A30D] text-white w-[28px] h-[28px] lg:w-[38px] lg:h-[38px] rounded-full flex items-center justify-center font-semibold border border-white transition-all duration-200 ease-in-out overflow-hidden
                             ${activePopupType === 'profile'
                                 ? 'scale-110 shadow-[0_0_15px_rgba(22,101,52,0.6)] z-[60] relative'

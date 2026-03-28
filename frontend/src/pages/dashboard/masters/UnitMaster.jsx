@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Search, Download, Upload, Plus, Filter, MoreVertical, X, FileText, FileSpreadsheet, Eye, FileEdit, ArrowLeft, ArrowRight, ChevronsUpDown, CheckCircle2, RefreshCw, ChevronDown, Database } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import UnitForm from './components/UnitForm';
-import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
 import unitService from '../../../services/masters/unitService';
 import toast from 'react-hot-toast';
 
@@ -81,7 +80,7 @@ const UnitMaster = () => {
             if (exportRef.current && !exportRef.current.contains(event.target)) {
                 setIsExportOpen(false);
             }
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target) && !event.target.closest('[data-dropdown-btn="true"]')) {
                 setActiveDropdown(null);
             }
         };
@@ -126,6 +125,7 @@ const UnitMaster = () => {
 
     const handleRefresh = async () => {
         fetchUnits();
+        showToast("Data refreshed successfully");
     };
 
     const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -157,6 +157,7 @@ const UnitMaster = () => {
         return pages;
     };
 
+<<<<<<< Updated upstream
     const handleExportPDF = () => {
         const tableRows = tableData.map((row, index) => [
             startIndex + index + 1,
@@ -172,9 +173,44 @@ const UnitMaster = () => {
             tableRows,
             'unit-master.pdf'
         );
+=======
+    const handleExportPDF = async () => {
+>>>>>>> Stashed changes
         setIsExportOpen(false);
+        try {
+            const params = { 
+                format: 'pdf', 
+                search: searchQuery || undefined,
+                status: appliedFilters.status || undefined,
+                gst_uom: appliedFilters.gstUom || undefined,
+                unit_name: appliedFilters.unitName || undefined
+            };
+            const response = await unitService.exportUnits(params);
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `unit-master_${Date.now()}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+            showToast('PDF Exported Successfully');
+        } catch (e) {
+            console.error('Export failed', e);
+            let message = 'Export failed';
+            if (e.response && e.response.data instanceof Blob) {
+                const text = await e.response.data.text();
+                try {
+                    const errorData = JSON.parse(text);
+                    message = errorData.message || message;
+                } catch (err) {}
+            } else if (e.response?.data?.message) {
+                message = e.response.data.message;
+            }
+            showToast(message, 'error');
+        }
     };
 
+<<<<<<< Updated upstream
     const handleExportExcel = () => {
         const excelData = tableData.map((row, index) => ({
             'Sr.No': startIndex + index + 1,
@@ -185,7 +221,41 @@ const UnitMaster = () => {
         }));
 
         exportToExcel(excelData, 'Unit Master', 'unit-master.xlsx');
+=======
+    const handleExportExcel = async () => {
+>>>>>>> Stashed changes
         setIsExportOpen(false);
+        try {
+            const params = { 
+                format: 'xlsx', 
+                search: searchQuery || undefined,
+                status: appliedFilters.status || undefined,
+                gst_uom: appliedFilters.gstUom || undefined,
+                unit_name: appliedFilters.unitName || undefined
+            };
+            const response = await unitService.exportUnits(params);
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `unit-master_${Date.now()}.xlsx`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+            showToast('Excel Exported Successfully');
+        } catch (e) {
+            console.error('Export failed', e);
+            let message = 'Export failed';
+            if (e.response && e.response.data instanceof Blob) {
+                const text = await e.response.data.text();
+                try {
+                    const errorData = JSON.parse(text);
+                    message = errorData.message || message;
+                } catch (err) {}
+            } else if (e.response?.data?.message) {
+                message = e.response.data.message;
+            }
+            showToast(message, 'error');
+        }
     };
 
     const handleImportExcel = async (formData) => {
@@ -320,30 +390,49 @@ const UnitMaster = () => {
                                 <thead>
                                     <tr>
                                         <th className="border-r border-white/10">
-                                            <div className="flex items-center gap-1.5 uppercase tracking-tight">
+                                            <div className="flex items-center gap-2 uppercase tracking-tight">
                                                 {t('common:sr_no')}
+                                                <ChevronsUpDown size={14} className="text-gray-300" />
                                             </div>
                                         </th>
                                         <th className="border-r border-white/10">
-                                            <div className="flex items-center gap-1.5 cursor-pointer hover:text-[#073318] transition-colors uppercase tracking-tight">
+                                            <div className="flex items-center gap-2 uppercase tracking-tight">
                                                 {t('unit_name')}
-                                                <ChevronsUpDown size={14} className="text-emerald-200/50" />
+                                                <ChevronsUpDown size={14} className="text-gray-300" />
                                             </div>
                                         </th>
+<<<<<<< Updated upstream
                                         <th className="px-6 py-5 whitespace-nowrap border-r border-white/50 uppercase tracking-tight">Full Name of Measurement</th>
                                         <th className="px-6 py-5 whitespace-nowrap border-r border-white/50">
                                             <div className="flex items-center gap-1.5 cursor-pointer hover:text-[#073318] transition-colors uppercase tracking-tight">
+=======
+                                        <th className="border-r border-white/10">
+                                            <div className="flex items-center gap-2 uppercase tracking-tight">
+>>>>>>> Stashed changes
                                                 {t('gst_uom')}
-                                                <ChevronsUpDown size={14} className="text-emerald-200/50" />
+                                                <ChevronsUpDown size={14} className="text-gray-300" />
                                             </div>
                                         </th>
+<<<<<<< Updated upstream
                                         <th className="px-6 py-5 whitespace-nowrap border-r border-white/50 uppercase tracking-tight">
                                             <div className="flex items-center gap-1.5 cursor-pointer hover:text-[#073318] transition-colors">
                                                 {t('common:status')}
                                                 <ChevronsUpDown size={14} className="text-emerald-200/50" />
+=======
+                                        <th className="border-r border-white/10 uppercase tracking-tight">
+                                            <div className="flex items-center gap-2">
+                                                Full Name of Measurement
+                                                <ChevronsUpDown size={14} className="text-gray-300" />
+>>>>>>> Stashed changes
                                             </div>
                                         </th>
-                                        <th className="text-center">ACTION</th>
+                                        <th className="border-r border-white/10 uppercase tracking-tight">
+                                            <div className="flex items-center gap-2">
+                                                {t('common:status')}
+                                                <ChevronsUpDown size={14} className="text-gray-300" />
+                                            </div>
+                                        </th>
+                                        <th className="text-center uppercase tracking-tight">ACTION</th>
                                     </tr>
                                 </thead>
                                 <tbody className="text-[14px] text-[#111827]">
@@ -368,9 +457,10 @@ const UnitMaster = () => {
                                                     {row.status === 'ACTIVE' ? 'Active' : 'Inactive'}
                                                 </div>
                                             </td>
-                                            <td className={`px-6 py-5 text-center relative ${activeDropdown === row.id ? 'z-[100]' : ''}`}>
+                                            <td className={`px-6 py-5 text-center relative ${activeDropdown === row.id ? 'z-[100]' : ''}`} ref={activeDropdown === row.id ? dropdownRef : null}>
                                                 <button
                                                     onClick={(e) => toggleDropdown(row.id, e)}
+                                                    data-dropdown-btn="true"
                                                     className={`p-2 rounded-lg transition-all ${activeDropdown === row.id ? 'bg-gray-100 text-[#111827]' : 'text-gray-400 hover:bg-gray-100 hover:text-[#111827]'}`}
                                                 >
                                                     <MoreVertical size={20} />
@@ -378,7 +468,6 @@ const UnitMaster = () => {
 
                                                 {activeDropdown === row.id && (
                                                     <div
-                                                        ref={dropdownRef}
                                                         className={`absolute right-[80%] w-max min-w-[200px] bg-white border border-gray-100 rounded-[14px] shadow-[0_10px_40px_rgba(0,0,0,0.12)] z-[110] py-2 animate-in fade-in zoom-in-95 duration-200 text-left ${index >= tableData.length - 2 && tableData.length > 2
                                                             ? 'bottom-0 mb-2'
                                                             : 'top-0 mt-2'

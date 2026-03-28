@@ -278,7 +278,7 @@ const CategoryForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onS
                                 disabled={isLoading}
                                 className={`px-10 h-[46px] text-white rounded-[10px] text-[14px] font-bold transition-all shadow-md flex items-center justify-center min-w-[160px] ${isLoading ? 'bg-gray-400 cursor-not-allowed shadow-none' : 'bg-[#073318] hover:bg-[#04200f]'}`}
                             >
-                                {isLoading ? <Loader2 size={18} className="animate-spin" /> : t('common:save')}
+                                {isLoading ? <Loader2 size={18} className="animate-spin" /> : type === 'Category' ? 'Save Category' : 'Save SubCategory'}
                             </button>
                         )}
                         <button

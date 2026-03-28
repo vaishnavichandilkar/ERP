@@ -1,9 +1,15 @@
+<<<<<<< Updated upstream
 import { Body, Controller, Get, Param, Patch, Post, ParseIntPipe, Query, UseGuards, Request, UploadedFile, UseInterceptors, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
+=======
+import { Body, Controller, Get, Param, Patch, Post, ParseIntPipe, UseGuards, Request, Res, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+>>>>>>> Stashed changes
 import { CategoryMasterService } from '../services/category-master.service';
 import { CreateCategoryDto, CreateSubCategoryDto, ToggleStatusDto, UpdateCategoryDto, UpdateSubCategoryDto } from '../dto/category.dto';
 import { JwtAuthGuard } from '../../../../common/guards/jwt-auth.guard';
+import { Response } from 'express';
 
 @ApiTags('Category Master')
 @Controller('category-master')
@@ -90,6 +96,7 @@ export class CategoryMasterController {
         return this.service.updateSubCategory(id, dto, req.user.userId);
     }
 
+<<<<<<< Updated upstream
     @Post('import')
     @ApiOperation({ summary: 'Import categories from XLSX' })
     @ApiConsumes('multipart/form-data')
@@ -132,5 +139,24 @@ export class CategoryMasterController {
         @Query('newParentId', ParseIntPipe) newParentId: number,
     ) {
         return this.service.demoteCategory(id, newParentId, req.user.userId);
+=======
+    @Get('export')
+    @ApiOperation({ summary: 'Export categories to XLSX or PDF' })
+    @ApiQuery({ name: 'format', required: true, enum: ['xlsx', 'pdf'] })
+    async exportCategories(
+        @Request() req,
+        @Res() res: Response,
+        @Query('format') format: string,
+    ) {
+        const file = await this.service.exportCategories(format.toLowerCase(), req.user.userId);
+
+        res.set({
+            'Content-Type': file.mimetype,
+            'Content-Disposition': `attachment; filename="${file.filename}"`,
+            'Content-Length': file.buffer.length,
+        });
+
+        res.send(file.buffer);
+>>>>>>> Stashed changes
     }
 }
