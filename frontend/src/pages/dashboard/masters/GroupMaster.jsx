@@ -1,10 +1,12 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Search, Download, Filter, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, CheckCircle2, XCircle, RefreshCw, ChevronDown, X, Eye } from 'lucide-react';
+import { Search, Download, Upload, Filter, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, CheckCircle2, XCircle, RefreshCw, ChevronDown, X, Eye } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import GroupForm from './components/GroupForm';
+import ImportModal from './components/ImportModal';
 import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
 import masterService from '../../../services/masterService';
 import { translateDynamic } from '../../../utils/i18nUtils';
+import toast from 'react-hot-toast';
 import SuccessToast from './components/SuccessToast';
 
 const GroupMaster = () => {
@@ -13,6 +15,7 @@ const GroupMaster = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedGroups, setExpandedGroups] = useState({});
     const [isExportOpen, setIsExportOpen] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [filterInputs, setFilterInputs] = useState({ status: '' });
     const [appliedFilters, setAppliedFilters] = useState({ status: '' });
@@ -21,11 +24,11 @@ const GroupMaster = () => {
     const [isLoading, setIsLoading] = useState(true);
     const exportRef = useRef(null);
     const [activeRowDropdown, setActiveRowDropdown] = useState(null);
-    const [toast, setToast] = useState(null);
+    const [toastState, setToastState] = useState(null);
 
     const showToast = (message, type = 'success') => {
-        setToast({ message, type });
-        setTimeout(() => setToast(null), 3000);
+        setToastState({ message, type });
+        setTimeout(() => setToastState(null), 3000);
     };
 
     const fetchGroups = async () => {
@@ -180,6 +183,22 @@ const GroupMaster = () => {
         setIsExportOpen(false);
     };
 
+    const handleImportExcel = async (formData) => {
+        const loadingToast = toast.loading(t('common:importing', 'Importing data...'), { id: 'import-toast' });
+        
+        try {
+            await masterService.importGroups(formData);
+            toast.dismiss('import-toast');
+            showToast(t('common:import_success', 'Data imported successfully'), 'success');
+            fetchGroups();
+            return Promise.resolve();
+        } catch (error) {
+            toast.dismiss('import-toast');
+            showToast(error?.response?.data?.message || t('common:import_failed', 'Failed to import data'), 'error');
+            return Promise.reject(error);
+        }
+    };
+
     const renderGroupRow = (group, depth = 0) => {
         const hasChildren = group.children && group.children.length > 0;
         const isExpanded = expandedGroups[group.id] || (searchQuery && hasMatchingChild(group, searchQuery));
@@ -300,11 +319,11 @@ const GroupMaster = () => {
 
     return (
         <div className="flex flex-col animate-in fade-in duration-500 relative font-['Plus_Jakarta_Sans']">
-            {toast && (
+            {toastState && (
                 <SuccessToast 
-                    message={toast.message} 
-                    type={toast.type}
-                    onClose={() => setToast(null)} 
+                    message={toastState.message} 
+                    type={toastState.type}
+                    onClose={() => setToastState(null)} 
                 />
             )}
 
@@ -364,7 +383,22 @@ const GroupMaster = () => {
                         </button>
                     </div>
 
-                    <div className="relative" ref={exportRef}>
+                    <div className="relative flex items-center gap-3" ref={exportRef}>
+                        <button
+                            onClick={() => setIsImportModalOpen(true)}
+                            className="flex items-center justify-center gap-2 px-4 h-[42px] border border-[#E5E7EB] rounded-[10px] text-[14px] font-bold text-[#4B5563] hover:bg-gray-50 transition-all duration-200 bg-white shadow-sm"
+                        >
+                            <Upload size={18} className="text-gray-400" />
+                            {t('common:import', 'Import')}
+                        </button>
+                        <ImportModal
+                            isOpen={isImportModalOpen}
+                            onClose={() => setIsImportModalOpen(false)}
+                            onImport={handleImportExcel}
+                            sampleFileName="Group_Master_Sample.xlsx"
+                            sampleHeaders={['Level', 'Group Name', 'Under', 'Status']}
+                        />
+
                         <button
                             onClick={() => setIsExportOpen(!isExportOpen)}
                             className={`flex items-center justify-center gap-2 px-4 h-[42px] border rounded-[10px] text-[14px] font-bold transition-all duration-200 bg-white

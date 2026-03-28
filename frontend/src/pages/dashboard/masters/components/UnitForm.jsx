@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown, ChevronUp, ArrowLeft, Plus, FileEdit } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import unitService from '../../../../services/masters/unitService';
-import { toast } from '../../../../utils/toast-mock';
+import toast from 'react-hot-toast';
 import { translateDynamic } from '../../../../utils/i18nUtils';
 
 const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchable = false, disabled = false, showAsterisk = false, actionLabel = '', onAction = null, error = '' }) => {
@@ -51,7 +51,11 @@ const CustomSelect = ({ label, options, value, onChange, placeholder, isSearchab
                 {label} {showAsterisk && <span className="text-red-500">*</span>}
             </label>
             <div
-                className={`w-full h-[46px] flex items-center justify-between px-4 border rounded-[10px] bg-white transition-all ${disabled ? 'cursor-not-allowed border-[#E5E7EB] bg-[#F9FAFB]' : isOpen ? 'border-[#073318] ring-1 ring-[#073318]/10 cursor-pointer' : 'border-[#E5E7EB] hover:border-gray-300 cursor-pointer'}`}
+                className={`w-full h-[46px] flex items-center justify-between px-4 border rounded-[10px] bg-white transition-all 
+                    ${disabled ? 'cursor-not-allowed border-[#E5E7EB] bg-[#F9FAFB]' :
+                        error ? 'border-red-500 ring-1 ring-red-500/10' :
+                            isOpen ? 'border-[#073318] ring-1 ring-[#073318]/10 cursor-pointer' :
+                                'border-[#E5E7EB] hover:border-gray-300 cursor-pointer'}`}
                 onClick={() => !disabled && setIsOpen(!isOpen)}
             >
                 {isSearchable && isOpen ? (
@@ -159,6 +163,7 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onEdit 
     const [unitNameOptions, setUnitNameOptions] = useState([]);
     const [gstUomOptions, setGstUomOptions] = useState([]);
     const [fullNameOptions, setFullNameOptions] = useState([]);
+    const [unitLibrary, setUnitLibrary] = useState([]); // Store mapping of Full Name <-> GST UOM
 
     const [formData, setFormData] = useState({
         unit_name: '',
@@ -193,17 +198,12 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onEdit 
                 if ((mode === 'edit' || mode === 'view') && initialData) {
                     if (initialData.unit_name) {
                         try {
-                            const uomRes = await unitService.getUomByUnitName(initialData.unit_name);
-                            setGstUomOptions(uomRes.data || []);
-                        } catch (err) { console.error("Error loading UOMs:", err); }
-                    }
-                    if (initialData.gst_uom) {
-                        try {
-                            const measurementRes = await unitService.getMeasurementByUom(initialData.gst_uom);
-                            if (measurementRes.data) {
-                                setFullNameOptions([measurementRes.data]);
-                            }
-                        } catch (err) { console.error("Error loading Measurement:", err); }
+                            const libRes = await unitService.getUnitLibrary({ unit_name: initialData.unit_name });
+                            const library = libRes.data || [];
+                            setUnitLibrary(library);
+                            setGstUomOptions([...new Set(library.map(item => item.gst_uom))]);
+                            setFullNameOptions([...new Set(library.map(item => item.full_name_of_measurement))]);
+                        } catch (err) { console.error("Error loading library details:", err); }
                     }
                 }
             } catch (error) {
@@ -224,36 +224,51 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onEdit 
 
         if (value) {
             try {
-                const response = await unitService.getUomByUnitName(value);
-                setGstUomOptions(response.data || []);
+                // Fetch library mappings for this unit name
+                const response = await unitService.getUnitLibrary({ unit_name: value });
+                const library = response.data || [];
+                setUnitLibrary(library);
+
+                // Populate both dropdowns from the library
+                const uoms = [...new Set(library.map(item => item.gst_uom))];
+                const measurements = [...new Set(library.map(item => item.full_name_of_measurement))];
+
+                setGstUomOptions(uoms);
+                setFullNameOptions(measurements);
             } catch (error) {
-                console.error('Error loading UOMs:', error);
+                console.error('Error loading library for unit:', error);
             }
         } else {
             setGstUomOptions([]);
+            setFullNameOptions([]);
+            setUnitLibrary([]);
         }
     };
 
-    const handleGstUomChange = async (value) => {
+    const handleGstUomChange = (value) => {
+        // Find matching measurement from library
+        const match = unitLibrary.find(item => item.gst_uom === value);
+        const measurementName = match ? match.full_name_of_measurement : '';
+
         setFormData(prev => ({
             ...prev,
             gst_uom: value,
-            full_name_of_measurement: ''
+            full_name_of_measurement: measurementName || prev.full_name_of_measurement
         }));
-        setErrors(prev => ({ ...prev, gst_uom: '' }));
+        setErrors(prev => ({ ...prev, gst_uom: '', full_name_of_measurement: '' }));
+    };
 
-        if (value) {
-            try {
-                const response = await unitService.getMeasurementByUom(value);
-                const measurementName = response.data || '';
-                setFormData(prev => ({ ...prev, full_name_of_measurement: measurementName }));
-                if (measurementName) {
-                    setFullNameOptions(prev => prev.includes(measurementName) ? prev : [...prev, measurementName]);
-                }
-            } catch (error) {
-                console.error('Error loading measurement name:', error);
-            }
-        }
+    const handleFullNameChange = (value) => {
+        // Find matching GST UOM from library
+        const match = unitLibrary.find(item => item.full_name_of_measurement === value);
+        const uomCode = match ? match.gst_uom : '';
+
+        setFormData(prev => ({
+            ...prev,
+            full_name_of_measurement: value,
+            gst_uom: uomCode || prev.gst_uom
+        }));
+        setErrors(prev => ({ ...prev, full_name_of_measurement: '', gst_uom: '' }));
     };
 
     const handleAddCustomUnitName = (newValue) => {
@@ -268,6 +283,7 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onEdit 
             setGstUomOptions(prev => [...prev, newValue]);
         }
         setFormData(prev => ({ ...prev, gst_uom: newValue }));
+        setErrors(prev => ({ ...prev, gst_uom: '' }));
     };
 
     const handleAddCustomFullName = (newValue) => {
@@ -275,6 +291,7 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onEdit 
             setFullNameOptions(prev => [...prev, newValue]);
         }
         setFormData(prev => ({ ...prev, full_name_of_measurement: newValue }));
+        setErrors(prev => ({ ...prev, full_name_of_measurement: '' }));
     };
 
     const isDirty = mode === 'edit' && initialData ? (
@@ -325,6 +342,63 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onEdit 
 
     const isView = mode === 'view';
 
+    const renderViewMode = () => (
+        <div className="flex flex-col w-full bg-white border border-[#E5E7EB] rounded-[16px] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.03)] animate-in fade-in duration-300">
+            <div className="px-8 py-6 border-b border-[#F3F4F6] bg-white flex items-center justify-between">
+                <div>
+                    <h3 className="text-[20px] font-bold text-[#111827]">{t('modules:view_unit')}</h3>
+                </div>
+                <button
+                    onClick={onBack}
+                    className="flex items-center gap-2 px-6 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-bold hover:bg-gray-50 transition-all bg-white shadow-sm"
+                >
+                    <ArrowLeft size={18} />
+                    {t('common:back')}
+                </button>
+            </div>
+
+            <div className="flex flex-col">
+                {[
+                    { label: t('modules:unit_name'), value: formData.unit_name },
+                    { label: t('modules:full_name_of_measurement'), value: formData.full_name_of_measurement || '-' },
+                    { label: t('modules:gst_uom'), value: formData.gst_uom }
+                ].map((item, idx) => (
+                    <div key={idx} className="flex border-b border-[#F3F4F6] min-h-[56px] last:border-b-0 group">
+                        <div className="w-[240px] bg-[#F9FAFB] px-8 py-4 flex items-center border-r border-[#F3F4F6]">
+                            <span className="text-[14px] font-bold text-gray-500 uppercase tracking-tight">{item.label}:</span>
+                        </div>
+                        <div className="flex-1 px-8 py-4 flex items-center bg-white group-hover:bg-[#F9FAFB]/50 transition-colors">
+                            <span className="text-[16px] font-bold text-[#111827]">{item.value}</span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <div className="px-8 py-6 bg-[#F9FAFB]/50 flex justify-end gap-3 border-t border-[#F3F4F6]">
+                <button
+                    onClick={onBack}
+                    className="px-8 h-[46px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-bold hover:bg-white transition-all bg-white"
+                >
+                    {t('common:cancel')}
+                </button>
+                <button
+                    onClick={() => initialData && onEdit && onEdit(initialData)}
+                    className="px-8 h-[46px] bg-[#073318] text-white rounded-[10px] text-[14px] font-bold hover:bg-[#04200f] transition-all shadow-sm flex items-center justify-center min-w-[140px]"
+                >
+                    {t('modules:edit_unit')}
+                </button>
+            </div>
+        </div>
+    );
+
+    if (isView) {
+        return (
+            <div className="flex flex-col w-full h-full p-2">
+                {renderViewMode()}
+            </div>
+        );
+    }
+
     return (
         <div className="flex flex-col w-full h-full animate-in fade-in duration-300 p-2">
             <div className={`bg-white rounded-[16px] border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col w-full mb-12 transition-all duration-300 ${isView ? 'overflow-hidden' : 'overflow-visible'}`}>
@@ -335,110 +409,63 @@ const UnitForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onEdit 
                             {mode === 'add' ? t('modules:add_new_unit') : (mode === 'edit' ? t('modules:edit_unit_details') : t('modules:view_unit_details'))}
                         </h2>
                     </div>
-                    
-                    {/* Header Actions */}
-                    <div className="flex items-center gap-3">
-                        {isView ? (
-                            <button
-                                type="button"
-                                onClick={() => onEdit && onEdit(initialData)}
-                                className="px-6 h-[40px] bg-[#073318] hover:bg-[#04200f] text-white rounded-[8px] text-[14px] font-bold transition-all shadow-sm flex items-center justify-center"
-                            >
-                                {t('modules:edit_unit') || 'Edit Unit'}
-                            </button>
-                        ) : (mode === 'edit') ? (
-                            <button
-                                type="button"
-                                onClick={handleSubmit}
-                                disabled={loading}
-                                className={`px-6 h-[40px] text-white rounded-[8px] text-[14px] font-bold transition-all shadow-sm flex items-center justify-center min-w-[120px] ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#073318] hover:bg-[#04200f]'}`}
-                            >
-                                {loading ? (
-                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                ) : 'Save Unit'}
-                            </button>
-                        ) : null}
-                        <button
-                            type="button"
-                            onClick={onBack}
-                            className="px-6 h-[40px] bg-white border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-bold hover:bg-gray-50 transition-all shadow-sm flex items-center justify-center gap-2"
-                        >
-                            <ArrowLeft size={16} />
-                            {t('common:back') || 'Back'}
-                        </button>
+                    <button
+                        onClick={onBack}
+                        className="flex items-center gap-2 px-6 h-[44px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] text-[14px] font-bold hover:bg-gray-50 transition-all bg-white shadow-sm"
+                    >
+                        <ArrowLeft size={18} />
+                        {t('common:back')}
+                    </button>
+                </div>
+
+                {/* Form Body */}
+                <div className="p-8 md:p-10 flex flex-col gap-8 w-full">
+                    <div className="grid grid-cols-1 gap-8 w-full">
+                        <CustomSelect
+                            label={t('modules:unit_name')}
+                            placeholder={t('modules:select_unit_category')}
+                            options={unitNameOptions}
+                            value={formData.unit_name}
+                            onChange={handleUnitNameChange}
+                            showAsterisk={true}
+                            disabled={isView}
+                            actionLabel={t('modules:add_unit_name')}
+                            onAction={handleAddCustomUnitName}
+                            error={errors.unit_name}
+                        />
+
+                        <CustomSelect
+                            label={t('modules:full_name_of_measurement')}
+                            placeholder={t('modules:select_or_enter_full_name')}
+                            options={fullNameOptions}
+                            value={formData.full_name_of_measurement}
+                            onChange={handleFullNameChange}
+                            isSearchable={true}
+                            disabled={isView || !formData.unit_name}
+                            showAsterisk={true}
+                            actionLabel={t('modules:add_full_name_of_measurement')}
+                            onAction={handleAddCustomFullName}
+                            error={errors.full_name_of_measurement}
+                        />
+
+                        <CustomSelect
+                            label={t('modules:gst_uom')}
+                            placeholder={t('modules:select_gst_uom')}
+                            options={gstUomOptions}
+                            value={formData.gst_uom}
+                            onChange={handleGstUomChange}
+                            isSearchable={true}
+                            disabled={isView || !formData.unit_name}
+                            showAsterisk={true}
+                            actionLabel={t('modules:add_gst_uom')}
+                            onAction={handleAddCustomGstUom}
+                            error={errors.gst_uom}
+                        />
                     </div>
                 </div>
 
-                {/* Form Body - View Mode Styling */}
-                {isView ? (
-                    <div className="flex flex-col">
-                        {[
-                            { label: t('modules:unit_name'), value: formData.unit_name },
-                            { label: t('modules:gst_uom'), value: formData.gst_uom },
-                            { label: t('modules:full_name_of_measurement'), value: formData.full_name_of_measurement || '-' }
-                        ].map((item, idx) => (
-                            <div key={idx} className="flex border-b border-[#F3F4F6] min-h-[56px] last:border-b-0 group">
-                                <div className="w-[240px] bg-[#F9FAFB] px-8 py-4 flex items-center border-r border-[#F3F4F6]">
-                                    <span className="text-[14px] font-bold text-gray-500 uppercase tracking-tight">{item.label}:</span>
-                                </div>
-                                <div className="flex-1 px-8 py-4 flex items-center bg-white group-hover:bg-[#F9FAFB]/50 transition-colors">
-                                    <span className="text-[16px] font-bold text-[#111827]">{item.value}</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="p-8 md:p-10 flex flex-col gap-8 w-full">
-                        <div className="grid grid-cols-1 gap-8 w-full">
-                            <CustomSelect
-                                label={t('modules:unit_name')}
-                                placeholder={t('modules:select_unit_category')}
-                                options={unitNameOptions}
-                                value={formData.unit_name}
-                                onChange={handleUnitNameChange}
-                                showAsterisk={true}
-                                disabled={isView}
-                                actionLabel={t('modules:add_unit_name')}
-                                onAction={handleAddCustomUnitName}
-                                error={errors.unit_name}
-                            />
-
-                            <CustomSelect
-                                label={t('modules:gst_uom')}
-                                placeholder={t('modules:select_gst_uom')}
-                                options={gstUomOptions}
-                                value={formData.gst_uom}
-                                onChange={handleGstUomChange}
-                                isSearchable={true}
-                                disabled={isView || !formData.unit_name}
-                                showAsterisk={true}
-                                actionLabel={t('modules:add_gst_uom')}
-                                onAction={handleAddCustomGstUom}
-                                error={errors.gst_uom}
-                            />
-
-                            <CustomSelect
-                                label={t('modules:full_name_of_measurement')}
-                                placeholder={t('modules:select_or_enter_full_name')}
-                                options={fullNameOptions}
-                                value={formData.full_name_of_measurement}
-                                onChange={(val) => {
-                                    setFormData(prev => ({ ...prev, full_name_of_measurement: val }));
-                                    setErrors(prev => ({ ...prev, full_name_of_measurement: '' }));
-                                }}
-                                isSearchable={true}
-                                disabled={isView || !formData.gst_uom}
-                                showAsterisk={true}
-                                actionLabel={t('modules:add_full_name_of_measurement')}
-                                onAction={handleAddCustomFullName}
-                                error={errors.full_name_of_measurement}
-                            />
-                        </div>
-                    </div>
-                )}
-
-                {/* Footer Buttons - Only for Add Mode */}
-                {mode === 'add' && (
+                {/* Footer Buttons - Only for Add/Edit Mode */}
+                {!isView && (
                     <div className="px-8 py-6 bg-[#F9FAFB]/50 flex justify-end gap-3 border-t border-[#F3F4F6]">
                         <button
                             type="button"

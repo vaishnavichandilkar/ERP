@@ -19,13 +19,12 @@ const CategoryForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onS
 
     useEffect(() => {
         fetchDropdownData();
-        if (mode === 'edit' && initialData) {
+        if ((mode === 'edit' || mode === 'view') && initialData) {
             setStep(2);
             setType(initialData.type === 'category' ? 'Category' : 'Sub Category');
             setCategoryName(initialData.name);
-            if (initialData.parentCategory) {
-                setParentCategory(initialData.parentCategory);
-            }
+            // If it's a subcategory, it will have a category_id or parent_id
+            // We'll handle parent selection after dropdown data is fetched
         }
     }, [mode, initialData]);
 
@@ -33,11 +32,14 @@ const CategoryForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onS
         try {
             const data = await categoryService.getCategoriesDropdown();
             setDropdownCategories(data || []);
-            
+
             // If editing a subcategory, find its parent from the dropdown list
-            if (mode === 'edit' && initialData?.parentCategoryId) {
-                const parent = data.find(c => c.id === initialData.parentCategoryId);
-                if (parent) setParentCategory(parent);
+            if ((mode === 'edit' || mode === 'view') && initialData?.type === 'sub_category') {
+                const parentId = initialData.category_id || initialData.parent_id;
+                if (parentId) {
+                    const parent = data.find(c => c.id === parentId);
+                    if (parent) setParentCategory(parent);
+                }
             }
         } catch (err) {
             console.error('Error fetching categories:', err);
@@ -87,9 +89,9 @@ const CategoryForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onS
                     await categoryService.createCategory({ name: categoryName });
                     onShowToast && onShowToast(t('modules:category_added_successfully'));
                 } else {
-                    await categoryService.createSubCategory({ 
-                        name: categoryName, 
-                        category_id: parentCategory.id 
+                    await categoryService.createSubCategory({
+                        name: categoryName,
+                        category_id: parentCategory.id
                     });
                     onShowToast && onShowToast(t('modules:sub_category_added_successfully'));
                 }
@@ -99,9 +101,9 @@ const CategoryForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onS
                     await categoryService.updateCategory(initialData.id, { name: categoryName });
                     onShowToast && onShowToast(t('modules:category_updated_successfully'));
                 } else {
-                    await categoryService.updateSubCategory(initialData.id, { 
-                        name: categoryName, 
-                        category_id: parentCategory.id 
+                    await categoryService.updateSubCategory(initialData.id, {
+                        name: categoryName,
+                        category_id: parentCategory.id
                     });
                     onShowToast && onShowToast(t('modules:sub_category_updated_successfully'));
                 }
@@ -123,13 +125,12 @@ const CategoryForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onS
                 <div className="px-8 py-6 border-b border-[#F3F4F6] bg-white flex items-center justify-between">
                     <div>
                         <h2 className="text-[20px] font-bold text-[#111827] tracking-tight">
-                            {mode === 'add' ? 'Add New Category' : (mode === 'edit' ? 'Edit Category' : 'View Category')}
+                            {mode === 'add' ? t('modules:add_new_category') : (mode === 'edit' ? t('modules:edit_category') : t('modules:view_category'))}
                         </h2>
                     </div>
-                    
-                    {/* Header Actions */}
+
                     <div className="flex items-center gap-3">
-                        {mode === 'edit' && (
+                        {!isView && mode === 'edit' && (
                             <button
                                 type="button"
                                 onClick={handleSave}
@@ -139,7 +140,7 @@ const CategoryForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onS
                                 {isLoading ? (
                                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                                 ) : (
-                                    'Save Category'
+                                    t('common:save')
                                 )}
                             </button>
                         )}
@@ -149,7 +150,7 @@ const CategoryForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onS
                             className="px-6 h-[40px] bg-white border border-[#E5E7EB] text-[#4B5563] rounded-[8px] text-[14px] font-bold hover:bg-gray-50 transition-all shadow-sm flex items-center justify-center gap-2"
                         >
                             <ArrowLeft size={16} />
-                            {t('common:back') || 'Back'}
+                            {t('common:back')}
                         </button>
                     </div>
                 </div>
@@ -160,33 +161,32 @@ const CategoryForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onS
                         {/* Type Dropdown */}
                         <div className="space-y-2 relative" ref={dropdownRef}>
                             <label className="text-[14px] font-bold text-[#4B5563]">{t('common:type')} <span className="text-red-500">*</span></label>
-                            <div 
-                                className={`w-full h-[48px] border rounded-[10px] flex items-center justify-between px-4 cursor-pointer transition-all ${errors.type ? 'border-red-500 ring-2 ring-red-500/10' : ''} ${mode === 'edit' ? 'bg-gray-50 cursor-not-allowed border-[#E5E7EB]' : isDropdownOpen ? 'border-[#073318] ring-4 ring-[#073318]/5' : 'border-[#E5E7EB] hover:border-gray-300 bg-white'}`}
-                                onClick={() => mode === 'add' && setIsDropdownOpen(!isDropdownOpen)}
+                            <div
+                                className={`w-full h-[48px] border rounded-[10px] flex items-center justify-between px-4 cursor-pointer transition-all ${errors.type ? 'border-red-500 ring-2 ring-red-500/10' : ''} ${mode === 'edit' || isView ? 'bg-gray-50 cursor-not-allowed border-[#E5E7EB]' : isDropdownOpen ? 'border-[#073318] ring-4 ring-[#073318]/5' : 'border-[#E5E7EB] hover:border-gray-300 bg-white'}`}
+                                onClick={() => mode === 'add' && !isView && setIsDropdownOpen(!isDropdownOpen)}
                             >
                                 <span className={`text-[14px] ${type ? 'text-[#111827] font-medium' : 'text-gray-400'}`}>
                                     {type ? (type === 'Category' ? t('modules:category') : t('modules:sub_category')) : t('modules:select_type')}
                                 </span>
-                                {mode === 'add' && (
+                                {mode === 'add' && !isView && (
                                     <ChevronDown size={18} className={`text-gray-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
                                 )}
                             </div>
                             {errors.type && <p className="text-red-500 text-[12px] font-bold mt-1">{errors.type}</p>}
 
-                            {isDropdownOpen && mode === 'add' && (
+                            {isDropdownOpen && mode === 'add' && !isView && (
                                 <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-white border border-[#E5E7EB] rounded-[12px] shadow-xl z-[110] py-2 animate-in fade-in slide-in-from-top-2 duration-200">
                                     {['Category', 'Sub Category'].map((opt) => {
                                         const isDisabled = opt === 'Sub Category' && dropdownCategories.length === 0;
                                         return (
-                                            <div 
+                                            <div
                                                 key={opt}
-                                                className={`px-4 py-3 text-[14px] transition-colors ${
-                                                    isDisabled 
-                                                        ? 'text-gray-300 cursor-not-allowed' 
-                                                        : type === opt 
-                                                            ? 'bg-[#F9FAFB] text-[#073318] font-bold cursor-pointer' 
+                                                className={`px-4 py-3 text-[14px] transition-colors ${isDisabled
+                                                        ? 'text-gray-300 cursor-not-allowed'
+                                                        : type === opt
+                                                            ? 'bg-[#F9FAFB] text-[#073318] font-bold cursor-pointer'
                                                             : 'text-[#4B5563] hover:bg-gray-50 cursor-pointer'
-                                                }`}
+                                                    }`}
                                                 onClick={() => {
                                                     if (!isDisabled) {
                                                         setType(opt);
@@ -212,12 +212,13 @@ const CategoryForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onS
                                 <input
                                     type="text"
                                     value={categoryName}
+                                    disabled={isView}
                                     onChange={(e) => {
                                         setCategoryName(e.target.value);
                                         setErrors(prev => ({ ...prev, categoryName: '' }));
                                     }}
                                     placeholder={type === 'Category' ? t('modules:enter_category_name') : t('modules:enter_sub_category_name')}
-                                    className={`w-full h-[48px] border rounded-[10px] px-4 text-[14px] font-medium outline-none transition-all placeholder:text-gray-400 ${errors.categoryName ? 'border-red-500 ring-2 ring-red-500/10' : 'border-[#E5E7EB] focus:border-[#073318] focus:ring-4 focus:ring-[#073318]/5'}`}
+                                    className={`w-full h-[48px] border rounded-[10px] px-4 text-[14px] font-medium outline-none transition-all placeholder:text-gray-400 ${isView ? 'bg-gray-50 border-[#E5E7EB]' : errors.categoryName ? 'border-red-500 ring-2 ring-red-500/10' : 'border-[#E5E7EB] focus:border-[#073318] focus:ring-4 focus:ring-[#073318]/5'}`}
                                 />
                                 {errors.categoryName && <p className="text-red-500 text-[12px] font-bold mt-1">{errors.categoryName}</p>}
                             </div>
@@ -225,21 +226,23 @@ const CategoryForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onS
                             {type === 'Sub Category' && (
                                 <div className="space-y-2 relative" ref={parentDropdownRef}>
                                     <label className="text-[14px] font-bold text-[#4B5563]">{t('modules:category_under')} <span className="text-red-500">*</span></label>
-                                    <div 
-                                        className={`w-full h-[48px] border rounded-[10px] flex items-center justify-between px-4 cursor-pointer transition-all ${errors.parentCategory ? 'border-red-500 ring-2 ring-red-500/10' : ''} ${isParentDropdownOpen ? 'border-[#073318] ring-4 ring-[#073318]/5' : 'border-[#E5E7EB] hover:border-gray-300 bg-white'}`}
-                                        onClick={() => setIsParentDropdownOpen(!isParentDropdownOpen)}
+                                    <div
+                                        className={`w-full h-[48px] border rounded-[10px] flex items-center justify-between px-4 cursor-pointer transition-all ${isView ? 'bg-gray-50 cursor-not-allowed border-[#E5E7EB]' : errors.parentCategory ? 'border-red-500 ring-2 ring-red-500/10' : isParentDropdownOpen ? 'border-[#073318] ring-4 ring-[#073318]/5' : 'border-[#E5E7EB] hover:border-gray-300 bg-white'}`}
+                                        onClick={() => !isView && setIsParentDropdownOpen(!isParentDropdownOpen)}
                                     >
                                         <span className={`text-[14px] ${parentCategory ? 'text-[#111827] font-medium' : 'text-gray-400'}`}>
                                             {parentCategory ? parentCategory.name : t('modules:select_category')}
                                         </span>
-                                        <ChevronDown size={18} className={`text-gray-400 transition-transform duration-200 ${isParentDropdownOpen ? 'rotate-180' : ''}`} />
+                                        {!isView && (
+                                            <ChevronDown size={18} className={`text-gray-400 transition-transform duration-200 ${isParentDropdownOpen ? 'rotate-180' : ''}`} />
+                                        )}
                                     </div>
                                     {errors.parentCategory && <p className="text-red-500 text-[12px] font-bold mt-1">{errors.parentCategory}</p>}
 
-                                    {isParentDropdownOpen && (
+                                    {isParentDropdownOpen && !isView && (
                                         <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-white border border-[#E5E7EB] rounded-[12px] shadow-xl z-[110] py-2 max-h-[160px] overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
                                             {dropdownCategories.map((cat) => (
-                                                <div 
+                                                <div
                                                     key={cat.id}
                                                     className={`px-4 py-3 text-[14px] cursor-pointer transition-colors ${parentCategory?.id === cat.id ? 'bg-[#F9FAFB] text-[#073318] font-bold' : 'text-[#4B5563] hover:bg-gray-50'}`}
                                                     onClick={() => {
@@ -260,17 +263,11 @@ const CategoryForm = ({ mode = 'add', initialData = null, onBack, onSuccess, onS
                 </div>
 
                 {/* Footer Buttons - Only for Add Mode */}
-                {mode === 'add' && (
+                {mode === 'add' && !isView && (
                     <div className="px-8 py-6 bg-[#F9FAFB]/50 flex justify-end gap-3 border-t border-[#F3F4F6]">
                         {step === 1 ? (
                             <button
-                                onClick={() => {
-                                    if (!type) {
-                                        setErrors(prev => ({ ...prev, type: t('common:selection_required', 'Field is required') }));
-                                        return;
-                                    }
-                                    handleNext();
-                                }}
+                                onClick={handleNext}
                                 className={`px-10 h-[46px] rounded-[10px] text-[14px] font-bold transition-all shadow-md flex items-center justify-center min-w-[160px] ${!type ? 'bg-gray-400 text-white cursor-not-allowed shadow-none' : 'bg-[#073318] text-white hover:bg-[#04200f]'}`}
                             >
                                 {t('common:next')}

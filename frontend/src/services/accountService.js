@@ -41,6 +41,15 @@ export const exportAccounts = async (params) => {
     return response;
 };
 
+export const importAccounts = async (formData) => {
+    const response = await axiosInstance.post(`${API_PATH}/import`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+    return response.data;
+};
+
 export const generateCustomerCode = async () => {
     const response = await axiosInstance.get(`${API_PATH}/generate-customer-code`);
     return response.data;
@@ -49,6 +58,13 @@ export const generateCustomerCode = async () => {
 export const generateSupplierCode = async () => {
     const response = await axiosInstance.get(`${API_PATH}/generate-supplier-code`);
     return { supplierCode: response.data.supplierCode };
+};
+
+export const downloadSample = async () => {
+    const response = await axiosInstance.get(`${API_PATH}/sample`, {
+        responseType: 'blob'
+    });
+    return response;
 };
 
 export const generateAccountCode = async (groupName) => {
@@ -64,6 +80,8 @@ export default {
     toggleStatus,
     lookupPincode,
     exportAccounts,
+    importAccounts,
+    downloadSample,
     generateAccountCode,
     generateCustomerCode,
     generateSupplierCode

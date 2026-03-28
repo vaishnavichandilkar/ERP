@@ -181,6 +181,8 @@
     "sub_category_updated_successfully": "Sub Category updated successfully",
     "category_name_required": "Category name is required",
     "parent_category_required": "Parent category is required",
+    "move_to_category": "Do you want to move to Category",
+    "cannot_edit_category_with_children": "Cannot edit a category that has sub categories",
     "error_fetching_categories": "Failed to load categories",
     "drip_irrigation": "Drip Irrigation",
     "sprinklers": "Sprinklers",

@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Param, Patch, Post, Put, Delete, ParseIntPipe, UseGuards, Request, Query, Res } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Patch, Post, Put, Delete, ParseIntPipe, UseGuards, Request, Query, Res, UploadedFile, UseInterceptors, BadRequestException } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ProductMasterService } from '../services/product-master.service';
 import { CreateProductDto, UpdateProductDto, ToggleProductStatusDto } from '../dto/product.dto';
 import { JwtAuthGuard } from '../../../../common/guards/jwt-auth.guard';
@@ -24,6 +25,18 @@ export class ProductMasterController {
     @ApiResponse({ status: 200, description: 'Product Code generated successfully' })
     async generateCode(@Request() req) {
         return this.service.generateCodeForUser(req.user.userId);
+    }
+
+    @Get('sample')
+    @ApiOperation({ summary: 'Download Sample Excel file for Products' })
+    async downloadSample(@Res() res: Response) {
+        const file = await this.service.downloadSample();
+        res.set({
+            'Content-Type': file.mimetype,
+            'Content-Disposition': `attachment; filename="${file.filename}"`,
+            'Content-Length': file.buffer.length,
+        });
+        res.send(file.buffer);
     }
 
     @Get('export')
@@ -155,5 +168,30 @@ export class ProductMasterController {
     @ApiResponse({ status: 200, description: 'Product deleted' })
     async deleteProduct(@Request() req, @Param('id', ParseIntPipe) id: number) {
         return this.service.deleteProduct(id, req.user.userId);
+    }
+
+    @Post('import')
+    @ApiOperation({ summary: 'Import products from XLSX' })
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+      schema: {
+        type: 'object',
+        properties: {
+          file: {
+            type: 'string',
+            format: 'binary',
+          },
+        },
+      },
+    })
+    @UseInterceptors(FileInterceptor('file'))
+    async importProducts(
+      @UploadedFile() file: Express.Multer.File,
+      @Request() req,
+    ) {
+      if (!file) {
+        throw new BadRequestException('Excel file is required');
+      }
+      return this.service.importProducts(file.buffer, req.user.userId);
     }
 }

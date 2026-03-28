@@ -2,8 +2,8 @@ import axiosInstance from '../axiosInstance';
 
 const unitService = {
     // Get all units from the system library
-    getUnitLibrary: async () => {
-        const response = await axiosInstance.get('/master/unit-library');
+    getUnitLibrary: async (params) => {
+        const response = await axiosInstance.get('/master/unit-library', { params });
         return response.data;
     },
 
@@ -63,6 +63,15 @@ const unitService = {
     // Change unit status (Active / Inactive)
     updateUnitStatus: async (id, status) => {
         const response = await axiosInstance.patch(`/master/unit/${id}/status`, { status });
+        return response.data;
+    },
+
+    importUnits: async (formData) => {
+        const response = await axiosInstance.post('/master/unit/import', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
         return response.data;
     },
 };

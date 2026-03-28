@@ -1,53 +1,35 @@
-import React, { useState, useRef, useEffect } from "react";
-import {
-  Search,
-  Download,
-  Filter,
-  MoreVertical,
-  X,
-  FileText,
-  FileSpreadsheet,
-  Eye,
-  FileEdit,
-  ArrowLeft,
-  ArrowRight,
-  ChevronsUpDown,
-  CheckCircle2,
-  XCircle,
-  RefreshCw,
-  ChevronDown,
-} from "lucide-react";
-import { useTranslation } from "react-i18next";
-import ProductForm from "./components/ProductForm";
-import ViewProduct from "./components/ViewProduct";
-import { translateDynamic } from "../../../utils/i18nUtils";
-import SuccessToast from "./components/SuccessToast";
-import productService from "../../../services/productService";
+import React, { useState, useRef, useEffect } from 'react';
+import { Search, Download, Upload, Filter, MoreVertical, X, FileText, FileSpreadsheet, Eye, FileEdit, ArrowLeft, ArrowRight, ChevronsUpDown, CheckCircle2, XCircle, RefreshCw, ChevronDown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import ProductForm from './components/ProductForm';
+import ViewProduct from './components/ViewProduct';
+import { translateDynamic } from '../../../utils/i18nUtils';
+import SuccessToast from './components/SuccessToast';
+import productService from '../../../services/productService';
+import toast from 'react-hot-toast';
+import ImportModal from './components/ImportModal';
+
 
 const ProductMaster = () => {
-  const { t } = useTranslation(["modules", "common"]);
-  const defaultFilters = { uom: "", status: "", productType: "" };
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isExportOpen, setIsExportOpen] = useState(false);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [activeDropdown, setActiveDropdown] = useState(null);
-  const [filterInputs, setFilterInputs] = useState(defaultFilters);
-  const [appliedFilters, setAppliedFilters] = useState(defaultFilters);
-  const isFilterApplied = Object.values(appliedFilters).some(
-    (val) => val !== "",
-  );
-  const [currentView, setCurrentView] = useState({ type: "list", data: null });
-  const [showSuccessToast, setShowSuccessToast] = useState({
-    show: false,
-    message: "",
-    type: "success",
-  });
+    const { t } = useTranslation(['modules', 'common']);
+    const defaultFilters = { uom: '', status: '', productType: '' };
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isExportOpen, setIsExportOpen] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [activeDropdown, setActiveDropdown] = useState(null);
+    const [filterInputs, setFilterInputs] = useState(defaultFilters);
+    const [appliedFilters, setAppliedFilters] = useState(defaultFilters);
+    const isFilterApplied = Object.values(appliedFilters).some(val => val !== '');
+    const [currentView, setCurrentView] = useState({ type: 'list', data: null });
+    const [showSuccessToast, setShowSuccessToast] = useState({ show: false, message: '', type: 'success' });
+    const exportRef = useRef(null);
+    const dropdownRef = useRef(null);
 
   const showToast = (message, type = "success") => {
     setShowSuccessToast({ show: true, message, type });
   };
-  const exportRef = useRef(null);
-  const dropdownRef = useRef(null);
+
 
   const [tableData, setTableData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -103,6 +85,22 @@ const ProductMaster = () => {
     }
   };
 
+  const handleImportExcel = async (formData) => {
+    const loadingToast = toast.loading(t('common:importing', 'Importing data...'), { id: 'import-toast' });
+    
+    try {
+      await productService.importProducts(formData);
+      toast.dismiss('import-toast');
+      toast.success(t('common:import_success', 'Data imported successfully'));
+      fetchProducts();
+      return Promise.resolve();
+    } catch (error) {
+      toast.dismiss('import-toast');
+      toast.error(error?.response?.data?.message || t('common:import_failed', 'Failed to import data'));
+      return Promise.reject(error);
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
   }, [currentPage, itemsPerPage, searchQuery, appliedFilters]);
@@ -115,6 +113,44 @@ const ProductMaster = () => {
     e.stopPropagation();
     setActiveDropdown(activeDropdown === id ? null : id);
   };
+
+  const renderImportActions = () => (
+    <div className="relative flex items-center gap-3" ref={exportRef}>
+      <button
+        onClick={() => setIsImportModalOpen(true)}
+        className="flex items-center justify-center gap-2 px-4 h-[42px] border border-[#E5E7EB] rounded-[10px] text-[14px] font-bold text-[#4B5563] hover:bg-gray-50 transition-all duration-200 bg-white shadow-sm"
+      >
+        <Upload size={18} className="text-gray-400" />
+        {t('common:import', 'Import')}
+      </button>
+      <ImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImport={handleImportExcel}
+        onDownloadSample={async () => {
+          const response = await productService.downloadSample();
+          const url = window.URL.createObjectURL(new Blob([response.data]));
+          const link = document.createElement('a');
+          link.href = url;
+          link.setAttribute('download', 'Product_Master_Sample.xlsx');
+          document.body.appendChild(link);
+          link.click();
+          link.parentNode.removeChild(link);
+        }}
+        sampleFileName="Product_Master_Sample.xlsx"
+        sampleHeaders={['Product Name*', 'UOM*', 'Product Type*', 'Category*', 'Sub Category*', 'HSN Code*', 'Product Description', 'Status']}
+      />
+
+      <button
+        onClick={() => setIsExportOpen(!isExportOpen)}
+        className={`flex items-center justify-center gap-2 px-4 h-[42px] border rounded-[10px] text-[14px] font-bold transition-all duration-200 bg-white
+                ${isExportOpen ? 'border-[#073318] text-[#073318]' : 'border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
+      >
+        <Download size={18} className={isExportOpen ? 'text-[#073318]' : 'text-gray-400'} />
+        {t('common:export')}
+      </button>
+    </div>
+  );
 
   const handleToggleStatus = async (id, currentStatus) => {
     setLoading(true);

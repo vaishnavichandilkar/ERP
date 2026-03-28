@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Param, Patch, Post, Put, ParseIntPipe, UseGuards, Request } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Patch, Post, Put, ParseIntPipe, UseGuards, Request, UploadedFile, UseInterceptors, BadRequestException } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { GroupMasterService } from '../services/group.service';
 import { CreateGroupDto, UpdateGroupDto, UpdateGroupStatusDto } from '../dto/group-master.dto';
 import { JwtAuthGuard } from '../../../../common/guards/jwt-auth.guard';
@@ -52,5 +53,30 @@ export class GroupMasterController {
         @Body() dto: UpdateGroupStatusDto,
     ) {
         return this.groupService.updateStatus(id, dto, req.user.userId);
+    }
+
+    @Post('import')
+    @ApiOperation({ summary: 'Import groups from XLSX' })
+    @ApiConsumes('multipart/form-data')
+    @ApiBody({
+      schema: {
+        type: 'object',
+        properties: {
+          file: {
+            type: 'string',
+            format: 'binary',
+          },
+        },
+      },
+    })
+    @UseInterceptors(FileInterceptor('file'))
+    async importGroups(
+      @UploadedFile() file: Express.Multer.File,
+      @Request() req,
+    ) {
+      if (!file) {
+        throw new BadRequestException('Excel file is required');
+      }
+      return this.groupService.importGroups(file.buffer, req.user.userId);
     }
 }

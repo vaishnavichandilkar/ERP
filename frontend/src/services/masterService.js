@@ -42,6 +42,14 @@ const masterService = {
         const response = await axiosInstance.get('/group-master');
         return response.data;
     },
+    importGroups: async (formData) => {
+        const response = await axiosInstance.post('/group-master/import', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        return response.data;
+    },
 
     getGroupDropdown: async () => {
         const response = await axiosInstance.get('/group-master/dropdown');

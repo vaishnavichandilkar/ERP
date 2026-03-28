@@ -1,12 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchAllAccounts, toggleAccountStatus } from '../../../redux/account/accountSlice';
-import { Search, Download, Filter, MoreVertical, Eye, Edit3, CheckCircle2, ChevronDown, RefreshCw, ArrowLeft, ArrowRight, ChevronsUpDown, X, FileText, FileSpreadsheet, Plus, Database, Check } from 'lucide-react';
+import { Search, Download, Upload, Filter, MoreVertical, Eye, Edit3, CheckCircle2, ChevronDown, RefreshCw, ArrowLeft, ArrowRight, ChevronsUpDown, X, FileText, FileSpreadsheet, Plus, Database, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import accountService from '../../../services/accountService';
 import AddAccount from './components/AddAccount';
 import ViewAccount from './components/ViewAccount';
+import toast from 'react-hot-toast';
 import SuccessToast from './components/SuccessToast';
+import ImportModal from './components/ImportModal';
 
 const AccountMaster = () => {
     const { t } = useTranslation(['common', 'modules']);
@@ -14,6 +16,7 @@ const AccountMaster = () => {
     const dropdownRef = useRef(null);
 
     const [isExportOpen, setIsExportOpen] = useState(false);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const exportRef = useRef(null);
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -223,6 +226,24 @@ const AccountMaster = () => {
         }
     };
 
+    const handleImportExcel = async (formData) => {
+        const loadingToast = toast.loading(t('common:importing', 'Importing data...'));
+        
+        try {
+            await accountService.importAccounts(formData);
+            toast.dismiss(loadingToast);
+            toast.custom(() => (
+                <SuccessToast message={t('common:import_success', 'Data imported successfully')} />
+            ), { duration: 2000, position: 'top-right' });
+            handleRefresh();
+            return Promise.resolve();
+        } catch (error) {
+            toast.dismiss(loadingToast);
+            toast.error(error?.response?.data?.message || t('common:import_failed', 'Failed to import data'));
+            return Promise.reject(error);
+        }
+    };
+
     const handleAddAccount = () => {
         dispatch(fetchAllAccounts({ page: currentPage, limit: rowsPerPage, search: searchQuery, ...appliedFilters }));
         setCurrentView('list');
@@ -327,6 +348,31 @@ const AccountMaster = () => {
                     </div>
 
                     <div className="relative flex items-center gap-3" ref={exportRef}>
+                        <button
+                            onClick={() => setIsImportModalOpen(true)}
+                            className="flex items-center justify-center gap-2 px-4 h-[42px] border border-[#E5E7EB] rounded-[10px] text-[14px] font-bold text-[#4B5563] hover:bg-gray-50 transition-all duration-200 bg-white shadow-sm"
+                        >
+                            <Upload size={18} className="text-gray-400" />
+                            {t('common:import', 'Import')}
+                        </button>
+                        <ImportModal
+                            isOpen={isImportModalOpen}
+                            onClose={() => setIsImportModalOpen(false)}
+                            onImport={handleImportExcel}
+                            onDownloadSample={async () => {
+                                const response = await accountService.downloadSample();
+                                const url = window.URL.createObjectURL(new Blob([response.data]));
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.setAttribute('download', 'Account_Master_Sample.xlsx');
+                                document.body.appendChild(link);
+                                link.click();
+                                link.parentNode.removeChild(link);
+                            }}
+                            sampleFileName="Account_Master_Sample.xlsx"
+                            sampleHeaders={['Account Name*', 'Group Name*', 'GST NO', 'PAN NO*', 'Address1*', 'Address2', 'Pincode*', 'Area', 'Sub District', 'District', 'State', 'Country', 'Supplier Credit Days', 'Supplier Opening Balance', 'Customer Credit Days', 'Customer Opening Balance', 'Customer Type', 'MSME Enabled', 'MSME ID', 'Reg.Under', 'Reg.Type', 'Status']}
+                        />
+
                         <button 
                             onClick={() => setIsExportOpen(!isExportOpen)}
                             className={`flex items-center justify-center gap-2 px-4 h-[42px] border rounded-[10px] text-[14px] font-bold transition-all duration-200 bg-white
