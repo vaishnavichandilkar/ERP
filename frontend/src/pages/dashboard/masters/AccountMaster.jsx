@@ -408,81 +408,57 @@ const AccountMaster = () => {
                         <thead>
                             <tr>
                                 <th className="border-r border-white/10 uppercase tracking-tight">
-                                    <div className="flex items-center gap-2">
-                                        {t('modules:customer_code')}
-                                        <ChevronsUpDown size={14} className="text-gray-300" />
-                                    </div>
+                                    {t('modules:customer_code')}
                                 </th>
                                 <th className="border-r border-white/10 uppercase tracking-tight">
-                                    <div className="flex items-center gap-2">
-                                        {t('modules:supplier_code')}
-                                        <ChevronsUpDown size={14} className="text-gray-300" />
-                                    </div>
+                                    {t('modules:supplier_code')}
                                 </th>
                                 <th className="border-r border-white/10">
-                                    <div className="flex items-center gap-2 uppercase tracking-tight text-left">
+                                    <div className="flex items-center gap-1.5 cursor-pointer hover:text-[#073318] transition-colors uppercase tracking-tight text-left">
                                         {t('modules:account')}
-                                        <ChevronsUpDown size={14} className="text-gray-300" />
+                                        <ChevronsUpDown size={14} className="text-emerald-200/50" />
                                     </div>
                                 </th>
                                 <th className="border-r border-white/10 uppercase tracking-tight">
-                                    <div className="flex items-center gap-2">
-                                        {t('modules:account_type')}
-                                        <ChevronsUpDown size={14} className="text-gray-300" />
-                                    </div>
+                                    {t('modules:account_type')}
                                 </th>
                                 <th className="border-r border-white/10 uppercase tracking-tight">
-                                    <div className="flex items-center gap-2">
-                                        {t('modules:customer_type', 'Customer Type')}
-                                        <ChevronsUpDown size={14} className="text-gray-300" />
-                                    </div>
+                                    {t('modules:customer_type', 'Customer Type')}
                                 </th>
                                 <th className="border-r border-white/10 uppercase tracking-tight">
-                                    <div className="flex items-center gap-2">
-                                        {t('modules:customer_credit_days')}
-                                        <ChevronsUpDown size={14} className="text-gray-300" />
-                                    </div>
+                                    {t('modules:customer_credit_days')}
                                 </th>
                                 <th className="border-r border-white/10 uppercase tracking-tight">
-                                    <div className="flex items-center gap-2">
-                                        {t('modules:supplier_credit_days')}
-                                        <ChevronsUpDown size={14} className="text-gray-300" />
-                                    </div>
+                                    {t('modules:supplier_credit_days')}
                                 </th>
                                 <th className="border-r border-white/10">
-                                    <div className="flex items-center gap-2 uppercase tracking-tight">
+                                    <div className="flex items-center gap-1.5 cursor-pointer hover:text-[#073318] transition-colors uppercase tracking-tight">
                                         {t('modules:gst_no')}
-                                        <ChevronsUpDown size={14} className="text-gray-300" />
+                                        <ChevronsUpDown size={14} className="text-emerald-200/50" />
                                     </div>
                                 </th>
                                 <th className="border-r border-white/10">
-                                    <div className="flex items-center gap-2 uppercase tracking-tight">
+                                    <div className="flex items-center gap-1.5 cursor-pointer hover:text-[#073318] transition-colors uppercase tracking-tight">
                                         {t('modules:pan_no')}
-                                        <ChevronsUpDown size={14} className="text-gray-300" />
+                                        <ChevronsUpDown size={14} className="text-emerald-200/50" />
                                     </div>
                                 </th>
                                 <th className="border-r border-white/10 uppercase tracking-tight">
-                                    <div className="flex items-center gap-2">
-                                        {t('modules:customer_op_balance')}
-                                        <ChevronsUpDown size={14} className="text-gray-300" />
-                                    </div>
+                                    {t('modules:customer_op_balance')}
                                 </th>
                                 <th className="border-r border-white/10 uppercase tracking-tight">
-                                    <div className="flex items-center gap-2">
-                                        {t('modules:supplier_op_balance')}
-                                        <ChevronsUpDown size={14} className="text-gray-300" />
-                                    </div>
+                                    {t('modules:supplier_op_balance')}
                                 </th>
                                 <th className="border-r border-white/10">
-                                    <div className="flex items-center gap-2 uppercase tracking-tight">
+                                    <div className="flex items-center gap-1.5 cursor-pointer hover:text-[#073318] transition-colors uppercase tracking-tight">
                                         {t('common:address')}
-                                        <ChevronsUpDown size={14} className="text-gray-300" />
+                                        <ChevronsUpDown size={14} className="text-emerald-200/50" />
                                     </div>
                                 </th>
                                 <th className="border-r border-white/10">
-                                    <div className="flex items-center gap-2 uppercase tracking-tight">
+                                    <div className="flex items-center gap-1.5 cursor-pointer hover:text-[#073318] transition-colors uppercase tracking-tight">
                                         {t('common:status')}
-                                        <ChevronsUpDown size={14} className="text-gray-300" />
+                                        <ChevronsUpDown size={14} className="text-emerald-200/50" />
                                     </div>
                                 </th>
                                 <th className="text-center uppercase tracking-tight">{t('common:action')}</th>
@@ -639,19 +615,15 @@ const AccountMaster = () => {
             </div>
 
             {isFilterOpen && (
-                <div
-                    className="fixed inset-0 z-[60] bg-slate-900/20 backdrop-blur-[2px] transition-all duration-300 ease-in-out"
-                    onClick={() => setIsFilterOpen(false)}
-                />
-            )}
-
-            <div className={`fixed top-0 right-0 h-full w-full sm:w-[480px] bg-white shadow-2xl z-[70] transform transition-transform duration-300 ease-in-out flex flex-col ${isFilterOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-                <div className="flex items-center justify-between px-6 py-5 border-b border-[#04200f] bg-emerald-900">
-                    <h2 className="text-[20px] font-bold text-white tracking-tight">{t('common:apply_filters', 'Apply Filters')}</h2>
-                    <button onClick={() => setIsFilterOpen(false)} className="text-emerald-100 hover:text-white transition-colors p-1">
-                        <X size={20} />
-                    </button>
-                </div>
+                <div className="fixed inset-0 z-[100] flex justify-end">
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setIsFilterOpen(false)} />
+                    <div className="relative w-full max-w-[480px] h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+                        <div className="flex items-center justify-between px-6 py-5 border-b border-[#04200f] bg-emerald-900">
+                            <h2 className="text-[20px] font-bold text-white tracking-tight">{t('common:apply_filters', 'Apply Filters')}</h2>
+                            <button onClick={() => setIsFilterOpen(false)} className="text-emerald-100 hover:text-white transition-colors p-1">
+                                <X size={20} strokeWidth={1.5} />
+                            </button>
+                        </div>
 
                         <div className="flex-1 px-8 py-8 overflow-y-auto space-y-7">
                             <div className="space-y-2.5">
@@ -662,7 +634,7 @@ const AccountMaster = () => {
                                     value={filterInputs.gstNo}
                                     onChange={handleFilterChange}
                                     placeholder={t('modules:enter_gst_number')}
-                                    className="w-full h-[46px] border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] bg-white font-medium transition-all"
+                                    className="w-full h-[46px] border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#073318] bg-white font-medium transition-all"
                                 />
                             </div>
                             <div className="space-y-2.5">
@@ -673,7 +645,7 @@ const AccountMaster = () => {
                                     value={filterInputs.panNo}
                                     onChange={handleFilterChange}
                                     placeholder={t('modules:enter_pan_number')}
-                                    className="w-full h-[46px] border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] bg-white font-medium transition-all"
+                                    className="w-full h-[46px] border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#073318] bg-white font-medium transition-all"
                                 />
                             </div>
                             <div className="space-y-2.5">
@@ -717,7 +689,7 @@ const AccountMaster = () => {
                                     value={filterInputs.customerCreditDays}
                                     onChange={handleFilterChange}
                                     placeholder={t('modules:enter_credit_days', 'Enter credit days')}
-                                    className="w-full h-[46px] border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] bg-white font-medium transition-all"
+                                    className="w-full h-[46px] border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#073318] bg-white font-medium transition-all"
                                 />
                             </div>
                             <div className="space-y-2.5">
@@ -728,7 +700,7 @@ const AccountMaster = () => {
                                     value={filterInputs.supplierCreditDays}
                                     onChange={handleFilterChange}
                                     placeholder={t('modules:enter_credit_days', 'Enter credit days')}
-                                    className="w-full h-[46px] border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] bg-white font-medium transition-all"
+                                    className="w-full h-[46px] border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#073318] bg-white font-medium transition-all"
                                 />
                             </div>
                             <div className="space-y-2.5">
@@ -738,7 +710,7 @@ const AccountMaster = () => {
                                         name="status"
                                         value={filterInputs.status}
                                         onChange={handleFilterChange}
-                                        className="w-full h-[46px] border border-[#E5E7EB] rounded-[10px] pl-4 pr-10 text-[14px] text-[#111827] outline-none focus:border-[#014A36] appearance-none bg-white font-medium"
+                                        className="w-full h-[46px] border border-[#E5E7EB] rounded-[10px] pl-4 pr-10 text-[14px] text-[#111827] outline-none focus:border-[#073318] appearance-none bg-white font-medium"
                                     >
                                         <option value="">{t('common:all')}</option>
                                         <option value="Active">{t('common:active')}</option>
@@ -756,16 +728,18 @@ const AccountMaster = () => {
                                 onClick={handleClearFilter}
                                 className="flex-1 h-[46px] bg-white border border-[#E5E7EB] text-[#374151] text-[15px] font-semibold rounded-[10px] hover:bg-gray-50 transition-colors shadow-sm"
                             >
-                                Clear
+                                {t('common:clear', 'Clear')}
                             </button>
                             <button
                                 onClick={applyFilters}
-                                className="flex-1 h-[46px] bg-[#073318] text-white rounded-[10px] text-[15px] font-bold hover:bg-[#04200f] transition-colors shadow-sm"
+                                className="flex-1 h-[46px] bg-[#073318] text-white text-[15px] font-bold rounded-[10px] hover:bg-[#04200f] transition-all shadow-sm"
                             >
-                                {t('common:apply_filter') || 'Apply Filter'}
+                                {t('common:apply_filter')}
                             </button>
                         </div>
                     </div>
+                </div>
+            )}
             {toastMessage.show && (
                 <SuccessToast 
                     message={toastMessage.message} 

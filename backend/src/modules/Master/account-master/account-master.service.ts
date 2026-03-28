@@ -672,22 +672,19 @@ export class AccountMasterService {
       worksheet.spliceRows(1, 0, [], [], [], []);
 
       worksheet.mergeCells('A1:M1');
-      const titleCell = worksheet.getCell('A1');
-      titleCell.value = 'ERP';
-      titleCell.font = { size: 18, bold: true };
-      titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      worksheet.getCell('A1').value = 'ERP';
+      worksheet.getCell('A1').font = { size: 18, bold: true };
+      worksheet.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle' };
 
       worksheet.mergeCells('A2:M2');
-      const subtitleCell = worksheet.getCell('A2');
-      subtitleCell.value = 'Account Master Report';
-      subtitleCell.font = { size: 14 };
-      subtitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+      worksheet.getCell('A2').value = 'Account Master Report';
+      worksheet.getCell('A2').font = { size: 14 };
+      worksheet.getCell('A2').alignment = { horizontal: 'center', vertical: 'middle' };
 
       worksheet.mergeCells('A3:M3');
-      const timestampCell = worksheet.getCell('A3');
-      timestampCell.value = `Exported on: ${timestamp}`;
-      timestampCell.font = { size: 10 };
-      timestampCell.alignment = { horizontal: 'right', vertical: 'middle' };
+      worksheet.getCell('A3').value = `Exported on: ${timestamp}`;
+      worksheet.getCell('A3').font = { size: 10 };
+      worksheet.getCell('A3').alignment = { horizontal: 'right', vertical: 'middle' };
 
       // Professional Styling
       const headerRow = worksheet.getRow(5);
@@ -697,11 +694,14 @@ export class AccountMasterService {
         pattern: 'solid',
         fgColor: { argb: 'FF4472C4' } // Professional Blue
       };
-      headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
-      
-      // Auto-height for header row to avoid cut-off
-      headerRow.height = 25;
+      headerRow.alignment = { horizontal: 'center' };
 
+      // Add Autofilter
+      worksheet.autoFilter = {
+        from: { row: 5, column: 1 },
+        to: { row: 5, column: 13 },
+      };
+      
       const buffer = await workbook.xlsx.writeBuffer();
       return {
         buffer: Buffer.from(buffer),

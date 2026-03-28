@@ -42,7 +42,7 @@ const StatusPopup = ({ isOpen, activeTrigger, onClose }) => {
     // Close on click outside or ESC
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (popupRef.current && !popupRef.current.contains(event.target) && !event.target.closest('[data-status-trigger="true"]')) {
+            if (popupRef.current && !popupRef.current.contains(event.target)) {
                 onClose();
             }
         };

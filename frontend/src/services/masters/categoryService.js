@@ -57,13 +57,6 @@ const categoryService = {
     demoteCategory: async (id, newParentId) => {
         const response = await axiosInstance.post(`/category-master/category/${id}/demote?newParentId=${newParentId}`);
         return response.data;
-    },
-    exportCategories: async (format) => {
-        const response = await axiosInstance.get('/category-master/export', {
-            params: { format },
-            responseType: 'blob'
-        });
-        return response;
     }
 };
 

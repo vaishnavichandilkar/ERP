@@ -210,7 +210,6 @@ const ProductMaster = () => {
 
   const handleRefresh = async () => {
     fetchProducts();
-    showToast("Data refreshed successfully");
   };
 
   // Calculate which page numbers to show in the pagination bar (up to 4 pages as requested)
