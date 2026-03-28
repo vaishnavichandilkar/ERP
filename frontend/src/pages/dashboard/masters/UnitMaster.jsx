@@ -34,6 +34,7 @@ const UnitMaster = () => {
 
     const showToast = (message, type = 'success') => {
         setShowSuccessToast({ show: true, message, type });
+        setTimeout(() => setShowSuccessToast({ show: false, message: '', type: 'success' }), 3000);
     };
 
     const fetchUnits = async () => {
@@ -108,7 +109,6 @@ const UnitMaster = () => {
 
     const handleApplyFilter = () => {
         setAppliedFilters(filterInputs);
-        // Check if any filter is actually selected
         const hasFilters = filterInputs.unitName || filterInputs.status || filterInputs.gstUom;
         setIsFilterApplied(!!hasFilters);
         setIsFilterOpen(false);
@@ -157,25 +157,7 @@ const UnitMaster = () => {
         return pages;
     };
 
-<<<<<<< Updated upstream
-    const handleExportPDF = () => {
-        const tableRows = tableData.map((row, index) => [
-            startIndex + index + 1,
-            row.unit_name,
-            row.full_name_of_measurement || '-',
-            row.gst_uom,
-            row.status
-        ]);
-
-        exportToPDF(
-            'Unit Master Report',
-            ['Sr.No', 'Unit Name', 'Full Name of Measurement', 'GST UOM', 'Status'],
-            tableRows,
-            'unit-master.pdf'
-        );
-=======
     const handleExportPDF = async () => {
->>>>>>> Stashed changes
         setIsExportOpen(false);
         try {
             const params = { 
@@ -196,34 +178,11 @@ const UnitMaster = () => {
             showToast('PDF Exported Successfully');
         } catch (e) {
             console.error('Export failed', e);
-            let message = 'Export failed';
-            if (e.response && e.response.data instanceof Blob) {
-                const text = await e.response.data.text();
-                try {
-                    const errorData = JSON.parse(text);
-                    message = errorData.message || message;
-                } catch (err) {}
-            } else if (e.response?.data?.message) {
-                message = e.response.data.message;
-            }
-            showToast(message, 'error');
+            showToast('Export failed', 'error');
         }
     };
 
-<<<<<<< Updated upstream
-    const handleExportExcel = () => {
-        const excelData = tableData.map((row, index) => ({
-            'Sr.No': startIndex + index + 1,
-            'Unit Name': row.unit_name,
-            'Full Name of Measurement': row.full_name_of_measurement || '-',
-            'GST UOM': row.gst_uom,
-            'Status': row.status
-        }));
-
-        exportToExcel(excelData, 'Unit Master', 'unit-master.xlsx');
-=======
     const handleExportExcel = async () => {
->>>>>>> Stashed changes
         setIsExportOpen(false);
         try {
             const params = { 
@@ -244,31 +203,21 @@ const UnitMaster = () => {
             showToast('Excel Exported Successfully');
         } catch (e) {
             console.error('Export failed', e);
-            let message = 'Export failed';
-            if (e.response && e.response.data instanceof Blob) {
-                const text = await e.response.data.text();
-                try {
-                    const errorData = JSON.parse(text);
-                    message = errorData.message || message;
-                } catch (err) {}
-            } else if (e.response?.data?.message) {
-                message = e.response.data.message;
-            }
-            showToast(message, 'error');
+            showToast('Export failed', 'error');
         }
     };
 
     const handleImportExcel = async (formData) => {
         try {
-            toast.loading(t('common:importing', 'Importing...'), { id: 'import-toast' });
+            toast.loading(t('common:importing'), { id: 'import-toast' });
             await unitService.importUnits(formData);
             toast.dismiss('import-toast');
-            toast.success(t('common:import_success', 'Data imported successfully'));
+            toast.success(t('common:import_success'));
             fetchUnits();
             return Promise.resolve();
         } catch (error) {
             toast.dismiss('import-toast');
-            toast.error(error?.response?.data?.message || t('common:import_failed', 'Failed to import data'));
+            toast.error(error?.response?.data?.message || t('common:import_failed'));
             return Promise.reject(error);
         }
     };
@@ -287,26 +236,25 @@ const UnitMaster = () => {
                 <>
                     <div className="flex flex-col gap-1 mb-8">
                         <div className="flex items-center justify-between">
-                            <h1 className="text-[28px] font-bold text-[#111827] tracking-tight">{t('unit_master')}</h1>
+                            <h1 className="text-[28px] font-bold text-[#111827] tracking-tight">{t('modules:unit_master')}</h1>
                             <button
                                 onClick={() => setCurrentView({ type: 'add', data: null })}
                                 className="px-6 h-[44px] bg-[#073318] text-white rounded-[10px] text-[15px] font-bold hover:bg-[#04200f] transition-all shadow-sm flex items-center justify-center"
                             >
-                                {t('add_unit')}
+                                {t('modules:add_unit')}
                             </button>
                         </div>
-                        <p className="text-[#6B7280] text-[15px]">{t('unit_master_desc')}</p>
+                        <p className="text-[#6B7280] text-[15px]">{t('modules:unit_master_desc')}</p>
                     </div>
 
                     <div className="master-table-container">
-                        {/* Table Header Section */}
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 border-b border-[#F3F4F6]">
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 border-b border-[#F3F4F6] bg-white text-[#111827]">
                             <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
                                 <div className="relative w-full sm:w-[320px]">
                                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                                     <input
                                         type="text"
-                                        placeholder="Search By Anything..."
+                                        placeholder={t('common:search_placeholder')}
                                         value={searchQuery}
                                         onChange={(e) => {
                                             setSearchQuery(e.target.value);
@@ -328,7 +276,7 @@ const UnitMaster = () => {
                                 </div>
                                 <button
                                     onClick={() => isFilterApplied ? handleClearFilter() : setIsFilterOpen(true)}
-                                    className={`flex items-center gap-2 px-4 h-[42px] border rounded-[10px] text-[14px] font-semibold transition-all shadow-sm
+                                    className={`flex items-center gap-2 px-4 h-[42px] border rounded-[10px] text-[14px] font-bold transition-all shadow-sm
                                                 ${isFilterApplied
                                             ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'
                                             : 'bg-white border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
@@ -351,7 +299,7 @@ const UnitMaster = () => {
                                     className="flex items-center justify-center gap-2 px-4 h-[42px] border border-[#E5E7EB] rounded-[10px] text-[14px] font-bold text-[#4B5563] hover:bg-gray-50 transition-all duration-200 bg-white shadow-sm"
                                 >
                                     <Upload size={18} className="text-gray-400" />
-                                    {t('common:import', 'Import')}
+                                    {t('common:import')}
                                 </button>
                                 <ImportModal
                                     isOpen={isImportModalOpen}
@@ -363,7 +311,7 @@ const UnitMaster = () => {
 
                                 <button
                                     onClick={() => setIsExportOpen(!isExportOpen)}
-                                    className={`flex items-center justify-center gap-2 px-4 h-[42px] border rounded-[10px] text-[14px] font-semibold transition-all duration-200 bg-white
+                                    className={`flex items-center justify-center gap-2 px-4 h-[42px] border rounded-[10px] text-[14px] font-bold transition-all duration-200 bg-white
                                                         ${isExportOpen ? 'border-[#073318] text-[#073318]' : 'border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
                                 >
                                     <Download size={18} className={isExportOpen ? 'text-[#073318]' : 'text-gray-400'} />
@@ -372,11 +320,11 @@ const UnitMaster = () => {
 
                                 {isExportOpen && (
                                     <div className="absolute top-full right-0 mt-2 w-[160px] bg-white border border-gray-100 rounded-[12px] shadow-[0_10px_30px_rgba(0,0,0,0.1)] z-[50] py-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                                        <button onClick={handleExportPDF} className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#0A3622] transition-colors">
+                                        <button onClick={handleExportPDF} className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors">
                                             <FileText size={18} className="text-red-500" />
                                             {t('common:pdf')}
                                         </button>
-                                        <button onClick={handleExportExcel} className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#0A3622] transition-colors">
+                                        <button onClick={handleExportExcel} className="w-full px-4 py-2.5 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors">
                                             <FileSpreadsheet size={18} className="text-green-600" />
                                             {t('common:excel')}
                                         </button>
@@ -385,72 +333,44 @@ const UnitMaster = () => {
                             </div>
                         </div>
 
-                        <div className="master-table-wrapper">
-                            <table className="master-table min-w-[1000px]">
-                                <thead>
+                        <div className="overflow-x-auto overflow-y-hidden">
+                            <table className="min-w-full">
+                                <thead className="bg-emerald-900 text-white text-[14px] font-bold uppercase tracking-tight">
                                     <tr>
-                                        <th className="border-r border-white/10">
-                                            <div className="flex items-center gap-2 uppercase tracking-tight">
-                                                {t('common:sr_no')}
-                                                <ChevronsUpDown size={14} className="text-gray-300" />
-                                            </div>
+                                        <th className="px-6 py-5 text-left border-r border-white/10 uppercase tracking-tight">
+                                           <div className="flex items-center gap-2">{t('common:sr_no')} <ChevronsUpDown size={14} className="text-gray-300" /></div>
                                         </th>
-                                        <th className="border-r border-white/10">
-                                            <div className="flex items-center gap-2 uppercase tracking-tight">
-                                                {t('unit_name')}
-                                                <ChevronsUpDown size={14} className="text-gray-300" />
-                                            </div>
+                                        <th className="px-6 py-5 text-left border-r border-white/10 uppercase tracking-tight">
+                                           <div className="flex items-center gap-2">{t('modules:unit_name')} <ChevronsUpDown size={14} className="text-gray-300" /></div>
                                         </th>
-<<<<<<< Updated upstream
-                                        <th className="px-6 py-5 whitespace-nowrap border-r border-white/50 uppercase tracking-tight">Full Name of Measurement</th>
-                                        <th className="px-6 py-5 whitespace-nowrap border-r border-white/50">
-                                            <div className="flex items-center gap-1.5 cursor-pointer hover:text-[#073318] transition-colors uppercase tracking-tight">
-=======
-                                        <th className="border-r border-white/10">
-                                            <div className="flex items-center gap-2 uppercase tracking-tight">
->>>>>>> Stashed changes
-                                                {t('gst_uom')}
-                                                <ChevronsUpDown size={14} className="text-gray-300" />
-                                            </div>
+                                        <th className="px-6 py-5 text-left border-r border-white/10 uppercase tracking-tight">
+                                           <div className="flex items-center gap-2">{t('modules:gst_uom')} <ChevronsUpDown size={14} className="text-gray-300" /></div>
                                         </th>
-<<<<<<< Updated upstream
-                                        <th className="px-6 py-5 whitespace-nowrap border-r border-white/50 uppercase tracking-tight">
-                                            <div className="flex items-center gap-1.5 cursor-pointer hover:text-[#073318] transition-colors">
-                                                {t('common:status')}
-                                                <ChevronsUpDown size={14} className="text-emerald-200/50" />
-=======
-                                        <th className="border-r border-white/10 uppercase tracking-tight">
-                                            <div className="flex items-center gap-2">
-                                                Full Name of Measurement
-                                                <ChevronsUpDown size={14} className="text-gray-300" />
->>>>>>> Stashed changes
-                                            </div>
+                                        <th className="px-6 py-5 text-left border-r border-white/10 uppercase tracking-tight">
+                                           <div className="flex items-center gap-2">Full Name of Measurement <ChevronsUpDown size={14} className="text-gray-300" /></div>
                                         </th>
-                                        <th className="border-r border-white/10 uppercase tracking-tight">
-                                            <div className="flex items-center gap-2">
-                                                {t('common:status')}
-                                                <ChevronsUpDown size={14} className="text-gray-300" />
-                                            </div>
+                                        <th className="px-6 py-5 text-left border-r border-white/10 uppercase tracking-tight">
+                                           <div className="flex items-center gap-2">{t('common:status')} <ChevronsUpDown size={14} className="text-gray-300" /></div>
                                         </th>
-                                        <th className="text-center uppercase tracking-tight">ACTION</th>
+                                        <th className="px-6 py-5 text-center uppercase tracking-tight">{t('common:action')}</th>
                                     </tr>
                                 </thead>
-                                <tbody className="text-[14px] text-[#111827]">
+                                <tbody className="text-[14px] text-[#111827] divide-y divide-[#F3F4F6] bg-white">
                                     {loading ? (
                                         <tr>
-                                            <td colSpan="6" className="px-6 py-20 text-center text-gray-400">
+                                            <td colSpan="6" className="px-6 py-20 text-center">
                                                 <div className="flex flex-col items-center gap-3">
-                                                    <div className="w-10 h-10 border-4 border-[#0A3622]/10 border-t-[#0A3622] rounded-full animate-spin"></div>
-                                                    <span className="font-medium">{t('common:loading')}...</span>
+                                                    <div className="w-10 h-10 border-4 border-[#073318]/10 border-t-[#073318] rounded-full animate-spin"></div>
+                                                    <span className="font-bold text-gray-500">{t('common:loading')}...</span>
                                                 </div>
                                             </td>
                                         </tr>
                                     ) : tableData.length > 0 ? tableData.map((row, index) => (
-                                        <tr key={row.id} className="border-b border-[#F3F4F6] last:border-b-0 hover:bg-[#F9FAFB] transition-all group">
+                                        <tr key={row.id} className="hover:bg-gray-50 transition-colors group">
                                             <td className="px-6 py-5 text-gray-500 font-medium border-r border-[#F3F4F6]">{startIndex + index + 1}</td>
                                             <td className="px-6 py-5 font-bold text-[#111827] border-r border-[#F3F4F6]">{row.unit_name}</td>
-                                            <td className="px-6 py-5 text-[#6B7280] max-w-[300px] truncate border-r border-[#F3F4F6]">{row.full_name_of_measurement || '-'}</td>
                                             <td className="px-6 py-5 font-medium text-[#4B5563] border-r border-[#F3F4F6]">{row.gst_uom}</td>
+                                            <td className="px-6 py-5 text-[#6B7280] border-r border-[#F3F4F6]">{row.full_name_of_measurement || '-'}</td>
                                             <td className="px-6 py-5 border-r border-[#F3F4F6]">
                                                 <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-bold ${row.status === 'ACTIVE' ? 'bg-[#ECFDF5] text-[#059669]' : 'bg-[#FEF2F2] text-[#DC2626]'}`}>
                                                     <span className={`w-1.5 h-1.5 rounded-full ${row.status === 'ACTIVE' ? 'bg-[#059669]' : 'bg-[#DC2626]'}`}></span>
@@ -461,17 +381,16 @@ const UnitMaster = () => {
                                                 <button
                                                     onClick={(e) => toggleDropdown(row.id, e)}
                                                     data-dropdown-btn="true"
-                                                    className={`p-2 rounded-lg transition-all ${activeDropdown === row.id ? 'bg-gray-100 text-[#111827]' : 'text-gray-400 hover:bg-gray-100 hover:text-[#111827]'}`}
+                                                    className={`p-1.5 rounded-md transition-all duration-200 dropdown-trigger
+                                                        ${activeDropdown === row.id ? 'bg-gray-100 text-[#111827]' : 'text-gray-400 hover:text-[#073318] hover:bg-white border border-transparent'}`}
                                                 >
-                                                    <MoreVertical size={20} />
+                                                    <MoreVertical size={18} />
                                                 </button>
 
                                                 {activeDropdown === row.id && (
                                                     <div
-                                                        className={`absolute right-[80%] w-max min-w-[200px] bg-white border border-gray-100 rounded-[14px] shadow-[0_10px_40px_rgba(0,0,0,0.12)] z-[110] py-2 animate-in fade-in zoom-in-95 duration-200 text-left ${index >= tableData.length - 2 && tableData.length > 2
-                                                            ? 'bottom-0 mb-2'
-                                                            : 'top-0 mt-2'
-                                                            }`}
+                                                        className={`absolute right-[80%] w-max min-w-[200px] bg-white border border-gray-100 rounded-[14px] shadow-[0_10px_40px_rgba(0,0,0,0.12)] z-[110] py-2 animate-in zoom-in-95 duration-200 dropdown-menu text-left
+                                                            ${index >= tableData.length - 2 && tableData.length > 2 ? 'bottom-0 mb-2' : 'top-0 mt-2'}`}
                                                     >
                                                         <button
                                                             onClick={(e) => {
@@ -479,17 +398,16 @@ const UnitMaster = () => {
                                                                 setActiveDropdown(null);
                                                                 setCurrentView({ type: 'view', data: row });
                                                             }}
-                                                            className="w-full px-5 py-3 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#0A3622] transition-colors whitespace-nowrap font-bold"
+                                                            className="w-full px-5 py-3 flex items-center gap-3 text-[14px] font-bold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap"
                                                         >
-                                                            <Eye size={18} className="text-gray-400" />
-                                                            {t('view_and_edit_unit', 'View and Edit Unit')}
+                                                            <Eye size={18} className="text-[#073318]" />
+                                                            {t('modules:view_and_edit_unit')}
                                                         </button>
-                                                        <div className="h-[1px] bg-[#F3F4F6] mx-2 my-1" />
                                                         <button
                                                             onClick={() => handleToggleStatus(row.id, row.status)}
-                                                            className="w-full px-5 py-3 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#0A3622] transition-colors whitespace-nowrap font-bold"
+                                                            className="w-full px-5 py-3 flex items-center gap-3 text-[14px] font-bold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap"
                                                         >
-                                                            <CheckCircle2 size={18} className={row.status === 'ACTIVE' ? "text-gray-400" : "text-[#0A3622]"} />
+                                                            <CheckCircle2 size={18} className={row.status === 'ACTIVE' ? "text-gray-400" : "text-[#073318]"} />
                                                             {row.status === 'ACTIVE' ? t('common:inactive') : t('common:active')}
                                                         </button>
                                                     </div>
@@ -503,7 +421,7 @@ const UnitMaster = () => {
                                                     <div className="p-4 bg-gray-50 rounded-full">
                                                         <Database size={32} className="text-gray-300" />
                                                     </div>
-                                                    <p className="text-[#6B7280] font-medium">{t('no_units_found')}</p>
+                                                    <p className="text-[#6B7280] font-bold">{t('modules:no_units_found')}</p>
                                                 </div>
                                             </td>
                                         </tr>
@@ -513,7 +431,7 @@ const UnitMaster = () => {
                         </div>
 
                         <div className="flex flex-col sm:flex-row items-center justify-between px-8 py-6 border-t border-[#F3F4F6] bg-white gap-4">
-                            <div className="flex items-center gap-3 text-[14px] text-[#6B7280] font-medium">
+                            <div className="flex items-center gap-3 text-[14px] text-[#6B7280] font-bold">
                                 <span>{t('common:show')}</span>
                                 <div className="relative group">
                                     <select
@@ -522,20 +440,20 @@ const UnitMaster = () => {
                                             setItemsPerPage(Number(e.target.value));
                                             setCurrentPage(1);
                                         }}
-                                        className="appearance-none border border-[#E5E7EB] rounded-[8px] pl-3 pr-8 py-1.5 outline-none focus:border-[#0A3622] text-[#111827] bg-[#F9FAFB] cursor-pointer font-bold transition-all hover:bg-white"
+                                        className="appearance-none border border-[#E5E7EB] rounded-[8px] pl-3 pr-8 py-1.5 outline-none focus:border-[#073318] text-[#111827] bg-[#F9FAFB] cursor-pointer font-bold transition-all hover:bg-white"
                                     >
                                         <option value={5}>5</option>
                                         <option value={10}>10</option>
                                         <option value={20}>20</option>
                                         <option value={50}>50</option>
                                     </select>
-                                    <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none group-hover:text-[#0A3622]" />
+                                    <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none group-hover:text-[#073318]" />
                                 </div>
                                 <span>{t('common:per_page')}</span>
                             </div>
 
                             <div className="flex items-center gap-6">
-                                <span className="text-[#6B7280] text-[14px] font-medium">
+                                <span className="text-[#6B7280] text-[14px] font-bold">
                                     {totalItems > 0 ? `${startIndex + 1}-${endIndex} of ${totalItems}` : `0-0 of 0`}
                                 </span>
                                 <div className="flex items-center gap-1.5">
@@ -581,21 +499,21 @@ const UnitMaster = () => {
                     )}
 
                     <div className={`fixed top-0 right-0 h-full w-full sm:w-[480px] bg-white shadow-2xl z-[70] transform transition-transform duration-300 ease-in-out flex flex-col ${isFilterOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-                        <div className="flex items-center justify-between px-6 py-5 border-b border-[#04200f] bg-emerald-900">
-                            <h2 className="text-[20px] font-bold text-white tracking-tight">{t('apply_filters')}</h2>
+                        <div className="flex items-center justify-between px-6 py-5 bg-emerald-900">
+                            <h2 className="text-[20px] font-bold text-white tracking-tight">{t('common:apply_filters')}</h2>
                             <button onClick={() => setIsFilterOpen(false)} className="text-emerald-100 hover:text-white transition-colors p-1">
                                 <X size={20} />
                             </button>
                         </div>
 
-                        <div className="flex-1 px-8 py-8 overflow-y-auto space-y-7">
+                        <div className="flex-1 px-8 py-8 overflow-y-auto space-y-7 bg-white">
                             <div className="space-y-2.5">
-                                <label className="text-[14px] font-medium text-[#4B5563]">{t('select_gst_uom')}</label>
+                                <label className="text-[14px] font-bold text-[#4B5563]">{t('modules:select_gst_uom')}</label>
                                 <div className="relative">
                                     <select
                                         value={filterInputs.gstUom}
                                         onChange={(e) => setFilterInputs({ ...filterInputs, gstUom: e.target.value })}
-                                        className="w-full h-[46px] border border-[#E5E7EB] rounded-[10px] pl-4 pr-10 text-[14px] text-[#111827] outline-none focus:border-[#014A36] appearance-none bg-white font-medium"
+                                        className="w-full h-[46px] border border-[#E5E7EB] rounded-[10px] pl-4 pr-10 text-[14px] text-[#111827] outline-none focus:border-[#073318] appearance-none bg-white font-bold"
                                     >
                                         <option value="">{t('common:all')}</option>
                                         {gstUomOptions.map(u => (
@@ -609,12 +527,12 @@ const UnitMaster = () => {
                             </div>
 
                             <div className="space-y-2.5">
-                                <label className="text-[14px] font-medium text-[#4B5563]">{t('common:status')}</label>
+                                <label className="text-[14px] font-bold text-[#4B5563]">{t('common:status')}</label>
                                 <div className="relative">
                                     <select
                                         value={filterInputs.status}
                                         onChange={(e) => setFilterInputs({ ...filterInputs, status: e.target.value })}
-                                        className="w-full h-[46px] border border-[#E5E7EB] rounded-[10px] pl-4 pr-10 text-[14px] text-[#111827] outline-none focus:border-[#014A36] appearance-none bg-white font-medium"
+                                        className="w-full h-[46px] border border-[#E5E7EB] rounded-[10px] pl-4 pr-10 text-[14px] text-[#111827] outline-none focus:border-[#073318] appearance-none bg-white font-bold"
                                     >
                                         <option value="">{t('common:all')}</option>
                                         <option value="ACTIVE">{t('common:active')}</option>
@@ -627,21 +545,21 @@ const UnitMaster = () => {
                             </div>
 
                             <div className="space-y-2.5">
-                                <label className="text-[14px] font-medium text-[#4B5563]">{t('unit_name')}</label>
+                                <label className="text-[14px] font-bold text-[#4B5563]">{t('modules:unit_name')}</label>
                                 <input
                                     type="text"
                                     value={filterInputs.unitName}
                                     onChange={(e) => setFilterInputs({ ...filterInputs, unitName: e.target.value })}
                                     placeholder="Enter unit name"
-                                    className="w-full h-[46px] border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#014A36] bg-white font-medium"
+                                    className="w-full h-[46px] border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] text-[#111827] outline-none focus:border-[#073318] bg-white font-bold"
                                 />
                             </div>
                         </div>
 
-                        <div className="px-8 py-6 border-t border-[#E5E7EB] flex items-center gap-4 bg-white">
+                        <div className="px-8 py-6 border-t border-[#E5E7EB] flex items-center gap-4 bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
                             <button
                                 onClick={handleClearFilter}
-                                className="flex-1 h-[46px] bg-white border border-[#E5E7EB] text-[#374151] text-[15px] font-semibold rounded-[10px] hover:bg-gray-50 transition-colors shadow-sm"
+                                className="flex-1 h-[46px] bg-white border border-[#E5E7EB] text-[#374151] text-[15px] font-bold rounded-[10px] hover:bg-gray-50 transition-colors shadow-sm"
                             >
                                 Clear
                             </button>
@@ -649,17 +567,16 @@ const UnitMaster = () => {
                                 onClick={handleApplyFilter}
                                 className="flex-1 h-[46px] bg-[#073318] text-white rounded-[10px] text-[15px] font-bold hover:bg-[#04200f] transition-colors shadow-sm"
                             >
-                                {t('common:apply_filter') || 'Apply Filter'}
+                                {t('common:apply_filter')}
                             </button>
                         </div>
                     </div>
                 </>
             ) : (
                 <UnitForm
-                    mode={currentView.type}
+                    mode={currentView.type === 'view' ? 'edit' : currentView.type}
                     initialData={currentView.data}
                     onBack={() => setCurrentView({ type: 'list', data: null })}
-                    onEdit={(data) => setCurrentView({ type: 'edit', data })}
                     onSuccess={() => {
                         const message = currentView.type === 'add' ? 'Unit added successfully' : 'Unit edited successfully';
                         setCurrentView({ type: 'list', data: null });

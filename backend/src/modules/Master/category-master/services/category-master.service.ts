@@ -3,10 +3,7 @@ import { MasterStatus } from '@prisma/client';
 import { CategoryMasterRepository } from '../repositories/category-master.repository';
 import { CreateCategoryDto, CreateSubCategoryDto, ToggleStatusDto, UpdateCategoryDto, UpdateSubCategoryDto } from '../dto/category.dto';
 import * as ExcelJS from 'exceljs';
-<<<<<<< Updated upstream
-=======
 import * as PDFDocument from 'pdfkit';
->>>>>>> Stashed changes
 
 @Injectable()
 export class CategoryMasterService {
@@ -142,7 +139,6 @@ export class CategoryMasterService {
         return this.repository.updateSubCategoryContent(id, name, dto.category_id);
     }
 
-<<<<<<< Updated upstream
     async importCategories(buffer: Buffer, userId: number) {
         const workbook = new ExcelJS.Workbook();
         await workbook.xlsx.load(buffer as any);
@@ -265,7 +261,8 @@ export class CategoryMasterService {
         } catch (error) {
             throw new BadRequestException(error.message);
         }
-=======
+    }
+
     private flattenCategories(categories: any[]): any[] {
         const flat: any[] = [];
         categories.forEach(cat => {
@@ -397,6 +394,5 @@ export class CategoryMasterService {
             });
         }
         throw new BadRequestException('Format is required. Please use xlsx or pdf.');
->>>>>>> Stashed changes
     }
 }

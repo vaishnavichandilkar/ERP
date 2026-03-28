@@ -1,11 +1,6 @@
-<<<<<<< Updated upstream
-import { Body, Controller, Get, Param, Patch, Post, ParseIntPipe, Query, UseGuards, Request, UploadedFile, UseInterceptors, BadRequestException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Patch, Post, ParseIntPipe, Query, UseGuards, Request, UploadedFile, UseInterceptors, BadRequestException, Res } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody, ApiQuery } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
-=======
-import { Body, Controller, Get, Param, Patch, Post, ParseIntPipe, UseGuards, Request, Res, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
->>>>>>> Stashed changes
 import { CategoryMasterService } from '../services/category-master.service';
 import { CreateCategoryDto, CreateSubCategoryDto, ToggleStatusDto, UpdateCategoryDto, UpdateSubCategoryDto } from '../dto/category.dto';
 import { JwtAuthGuard } from '../../../../common/guards/jwt-auth.guard';
@@ -96,7 +91,6 @@ export class CategoryMasterController {
         return this.service.updateSubCategory(id, dto, req.user.userId);
     }
 
-<<<<<<< Updated upstream
     @Post('import')
     @ApiOperation({ summary: 'Import categories from XLSX' })
     @ApiConsumes('multipart/form-data')
@@ -139,7 +133,8 @@ export class CategoryMasterController {
         @Query('newParentId', ParseIntPipe) newParentId: number,
     ) {
         return this.service.demoteCategory(id, newParentId, req.user.userId);
-=======
+    }
+
     @Get('export')
     @ApiOperation({ summary: 'Export categories to XLSX or PDF' })
     @ApiQuery({ name: 'format', required: true, enum: ['xlsx', 'pdf'] })
@@ -157,6 +152,5 @@ export class CategoryMasterController {
         });
 
         res.send(file.buffer);
->>>>>>> Stashed changes
     }
 }

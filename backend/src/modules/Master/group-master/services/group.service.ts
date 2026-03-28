@@ -2,11 +2,7 @@ import { ConflictException, Injectable, NotFoundException, ForbiddenException, B
 import { GroupMasterRepository } from '../repositories/group.repository';
 import { CreateGroupDto, UpdateGroupDto, UpdateGroupStatusDto } from '../dto/group-master.dto';
 import * as ExcelJS from 'exceljs';
-<<<<<<< Updated upstream
-import { BadRequestException } from '@nestjs/common';
-=======
 import * as PDFDocument from 'pdfkit';
->>>>>>> Stashed changes
 
 @Injectable()
 export class GroupMasterService {
@@ -150,7 +146,6 @@ export class GroupMasterService {
         };
     }
 
-<<<<<<< Updated upstream
     async importGroups(buffer: Buffer, userId: number) {
         const workbook = new ExcelJS.Workbook();
         await workbook.xlsx.load(buffer as any);
@@ -283,7 +278,8 @@ export class GroupMasterService {
             message: `Imported ${importedRows} groups. ${failed > 0 ? failed + ' rows failed.' : ''}`,
             errors: failed > 0 ? errors : undefined,
         };
-=======
+    }
+
     private flattenGroups(groups: any[], level = 0): any[] {
         let flat: any[] = [];
         groups.forEach(item => {
@@ -440,6 +436,5 @@ export class GroupMasterService {
         }
 
         throw new BadRequestException('Invalid format');
->>>>>>> Stashed changes
     }
 }

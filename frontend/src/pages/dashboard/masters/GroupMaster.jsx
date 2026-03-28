@@ -1,15 +1,8 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-<<<<<<< Updated upstream
-import { Search, Download, Upload, Filter, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, CheckCircle2, XCircle, RefreshCw, ChevronDown, X, Eye } from 'lucide-react';
+import { Search, Download, Upload, Filter, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, CheckCircle2, XCircle, RefreshCw, ChevronDown, X, Eye, ChevronsUpDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import GroupForm from './components/GroupForm';
 import ImportModal from './components/ImportModal';
-import { exportToPDF, exportToExcel } from '../../../utils/exportUtils';
-=======
-import { Search, Download, Filter, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, CheckCircle2, XCircle, RefreshCw, ChevronDown, X, Eye, ChevronsUpDown } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-import GroupForm from './components/GroupForm';
->>>>>>> Stashed changes
 import masterService from '../../../services/masterService';
 import { translateDynamic } from '../../../utils/i18nUtils';
 import toast from 'react-hot-toast';
@@ -33,12 +26,8 @@ const GroupMaster = () => {
     const [toastState, setToastState] = useState(null);
 
     const showToast = (message, type = 'success') => {
-<<<<<<< Updated upstream
         setToastState({ message, type });
         setTimeout(() => setToastState(null), 3000);
-=======
-        setToast({ message, type });
->>>>>>> Stashed changes
     };
 
     const fetchGroups = async () => {
@@ -187,7 +176,6 @@ const GroupMaster = () => {
         }
     };
 
-<<<<<<< Updated upstream
     const handleImportExcel = async (formData) => {
         const loadingToast = toast.loading(t('common:importing', 'Importing data...'), { id: 'import-toast' });
         
@@ -204,10 +192,7 @@ const GroupMaster = () => {
         }
     };
 
-    const renderGroupRow = (group, depth = 0) => {
-=======
     const renderGroupRow = (group, depth = 0, index = 0, siblingsLength = 0) => {
->>>>>>> Stashed changes
         const hasChildren = group.children && group.children.length > 0;
         const isExpanded = expandedGroups[group.id] || (searchQuery && hasMatchingChild(group, searchQuery));
         const dropdownId = `dropdown-${group.id}`;
