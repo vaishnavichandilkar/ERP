@@ -3,7 +3,10 @@ import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { CreateUnitDto, UpdateUnitDto, UnitQueryDto, UpdateUnitStatusDto } from './dto/unit-master.dto';
 import { UnitSource, UnitStatus } from '@prisma/client';
 import * as ExcelJS from 'exceljs';
+<<<<<<< Updated upstream
+=======
 import * as PDFDocument from 'pdfkit';
+>>>>>>> Stashed changes
 
 @Injectable()
 export class UnitMasterService {
@@ -236,6 +239,7 @@ export class UnitMasterService {
 
     // deleteUnit removed as per request
 
+<<<<<<< Updated upstream
     async importUnits(buffer: Buffer, userId: number) {
         const workbook = new ExcelJS.Workbook();
         await workbook.xlsx.load(buffer as any);
@@ -358,8 +362,7 @@ export class UnitMasterService {
             message: `Imported ${importedRows} units. ${failed > 0 ? failed + ' rows failed.' : ''}`,
             errors: failed > 0 ? errors : undefined,
         };
-    }
-
+=======
     async exportUnits(format: string, query: UnitQueryDto, userId: number) {
         const result = await this.getUnitsList(userId, { ...query, page: '1', limit: '10000' });
         const units = result.data;
@@ -509,5 +512,6 @@ export class UnitMasterService {
             });
         }
         throw new BadRequestException('Format is required. Please use xlsx or pdf.');
+>>>>>>> Stashed changes
     }
 }
