@@ -74,6 +74,14 @@ const unitService = {
         });
         return response.data;
     },
+
+    exportUnits: async (params) => {
+        const response = await axiosInstance.get('/master/unit/export', {
+            params,
+            responseType: 'blob'
+        });
+        return response;
+    },
 };
 
 export default unitService;

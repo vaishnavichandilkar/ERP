@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Body, Put, Patch, Param, Query, ParseIntPipe, UseGuards, Request, UploadedFile, UseInterceptors, BadRequestException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Put, Patch, Param, Query, ParseIntPipe, UseGuards, Request, UploadedFile, UseInterceptors, BadRequestException, Res } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UnitMasterService } from './unit-master.service';
 import { CreateUnitDto, UpdateUnitDto, UnitQueryDto, UpdateUnitStatusDto } from './dto/unit-master.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
+import { Response } from 'express';
 
 @ApiTags('Unit Master')
 @Controller('master')
@@ -60,6 +61,25 @@ export class UnitMasterController {
         return this.service.getUnitsList(req.user.userId, query);
     }
 
+    @Get('unit/export')
+    @ApiOperation({ summary: 'Export units list to XLSX or PDF format' })
+    @ApiQuery({ name: 'format', required: true, enum: ['xlsx', 'pdf'], description: 'Export format' })
+    async exportUnits(
+        @Request() req,
+        @Res() res: Response,
+        @Query() query: UnitQueryDto,
+    ) {
+        const file = await this.service.exportUnits(query.format?.toLowerCase() || 'xlsx', query, req.user.userId);
+
+        res.set({
+            'Content-Type': file.mimetype,
+            'Content-Disposition': `attachment; filename="${file.filename}"`,
+            'Content-Length': file.buffer.length,
+        });
+
+        res.send(file.buffer);
+    }
+
     @Get('unit/:id')
     @ApiOperation({ summary: 'Get unit details by ID' })
     getUnitById(@Request() req, @Param('id', ParseIntPipe) id: number) {
@@ -74,6 +94,7 @@ export class UnitMasterController {
 
     @Patch('unit/:id/status')
     @ApiOperation({ summary: 'Change unit status' })
+    @ApiResponse({ status: 200, description: 'Unit status updated' })
     changeStatus(@Request() req, @Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUnitStatusDto) {
         return this.service.toggleStatus(req.user.userId, id, dto);
     }

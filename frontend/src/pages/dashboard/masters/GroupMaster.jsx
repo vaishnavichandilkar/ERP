@@ -1,5 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Search, Download, Upload, Filter, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, CheckCircle2, XCircle, RefreshCw, ChevronDown, X, Eye } from 'lucide-react';
+import { Search, Download, Filter, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, CheckCircle2, XCircle, RefreshCw, ChevronDown, X, Eye, ChevronsUpDown, Upload } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import GroupForm from './components/GroupForm';
 import ImportModal from './components/ImportModal';
@@ -145,42 +144,36 @@ const GroupMaster = () => {
     };
 
     // Export Logic
-    const handleExportPDF = () => {
-        const tableRows = [];
-        const prepareRows = (items, level = 0) => {
-            items.forEach((item, idx) => {
-                const indent = '  '.repeat(level);
-                tableRows.push([
-                    level === 0 ? `${idx + 1}.` : '',
-                    `${indent}${translateDynamic(item.group_name, t)}`
-                ]);
-                if (item.children && item.children.length > 0) {
-                    prepareRows(item.children, level + 1);
-                }
-            });
-        };
-        prepareRows(groups);
-        exportToPDF('Group Master Report', ['#', 'Group Name'], tableRows, 'group-master.pdf');
+    const handleExportPDF = async () => {
         setIsExportOpen(false);
+        try {
+            const response = await masterService.exportGroups({ format: 'pdf' });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'group-master.pdf');
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+        } catch (e) {
+            console.error('Export failed', e);
+        }
     };
 
-    const handleExportExcel = () => {
-        const data = [];
-        const prepareData = (items, level = 0) => {
-            items.forEach(item => {
-                data.push({
-                    'Level': level,
-                    'Group Name': translateDynamic(item.group_name, t),
-                    'Status': item.status
-                });
-                if (item.children && item.children.length > 0) {
-                    prepareData(item.children, level + 1);
-                }
-            });
-        };
-        prepareData(groups);
-        exportToExcel(data, 'Group Master', 'group-master.xlsx');
+    const handleExportExcel = async () => {
         setIsExportOpen(false);
+        try {
+            const response = await masterService.exportGroups({ format: 'xlsx' });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'group-master.xlsx');
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+        } catch (e) {
+            console.error('Export failed', e);
+        }
     };
 
     const handleImportExcel = async (formData) => {
@@ -199,7 +192,7 @@ const GroupMaster = () => {
         }
     };
 
-    const renderGroupRow = (group, depth = 0) => {
+    const renderGroupRow = (group, depth = 0, index = 0, siblingsLength = 0) => {
         const hasChildren = group.children && group.children.length > 0;
         const isExpanded = expandedGroups[group.id] || (searchQuery && hasMatchingChild(group, searchQuery));
         const dropdownId = `dropdown-${group.id}`;
@@ -208,13 +201,13 @@ const GroupMaster = () => {
         return (
             <React.Fragment key={group.id}>
                 <div
-                    className={`flex items-center justify-between px-4 py-4 border-b border-[#F3F4F6] transition-all duration-200 group-row
+                    className={`flex items-center justify-between py-4 border-b border-[#F3F4F6] transition-all duration-200 group-row
                         ${depth === 0 ? 'bg-[#F9FAFB]/50' : 'bg-white'}
                         hover:bg-gray-50`}
                 >
                     <div
                         className="flex items-center flex-1 cursor-pointer select-none gap-3"
-                        style={{ paddingLeft: `${depth * 28}px` }}
+                        style={{ paddingLeft: `${depth === 0 ? 36 : 36 + depth * 28}px` }}
                         onClick={() => hasChildren && toggleGroup(group.id)}
                     >
                         {/* Plus/Minus Toggle - Darker & bolder */}
@@ -248,18 +241,18 @@ const GroupMaster = () => {
                         </div>
                     </div>
 
-                    {/* Properly Aligned Actions Area */}
-                    <div className="flex items-center gap-6 shrink-0 ml-4">
-                        {/* Status Badge */}
-                        <div className="w-[100px] flex justify-end">
+                    {/* Properly Aligned Actions Area - Matching Header Structure */}
+                    <div className="flex items-stretch shrink-0">
+                        {/* Status Column */}
+                        <div className="w-[120px] flex items-center justify-center px-4">
                             <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-bold ${group.status === 'ACTIVE' ? 'bg-[#ECFDF5] text-[#059669]' : 'bg-[#FEF2F2] text-[#DC2626]'}`}>
                                 <span className={`w-1.5 h-1.5 rounded-full ${group.status === 'ACTIVE' ? 'bg-[#059669]' : 'bg-[#DC2626]'}`}></span>
                                 {group.status === 'ACTIVE' ? 'Active' : 'Inactive'}
                             </div>
                         </div>
 
-                        {/* Three-dot menu aligned to the right */}
-                        <div className="relative w-8 flex justify-center">
+                        {/* Action Column */}
+                        <div className="w-20 flex items-center justify-center px-4 relative">
                             {(!group.is_header || group.level !== 1) && (
                                 <>
                                     <button
@@ -268,13 +261,16 @@ const GroupMaster = () => {
                                             setActiveRowDropdown(activeRowDropdown === dropdownId ? null : dropdownId);
                                         }}
                                         className={`p-1.5 rounded-md transition-all duration-200 dropdown-trigger
-                                            ${activeRowDropdown === dropdownId ? 'bg-gray-100 text-[#073318]' : 'text-gray-400 hover:text-[#073318] hover:bg-white border border-transparent'}`}
+                                            ${activeRowDropdown === dropdownId ? 'bg-gray-100 text-[#111827]' : 'text-gray-400 hover:text-[#073318] hover:bg-white border border-transparent'}`}
                                     >
                                         <MoreVertical size={18} />
                                     </button>
 
                                     {activeRowDropdown === dropdownId && (
-                                        <div className="absolute right-0 top-full mt-1 w-max min-w-[200px] bg-white border border-gray-100 rounded-[14px] shadow-[0_10px_40px_rgba(0,0,0,0.12)] z-[100] py-2 animate-in zoom-in-95 duration-200 dropdown-menu">
+                                        <div 
+                                            className={`absolute right-[80%] w-max min-w-[200px] bg-white border border-gray-100 rounded-[14px] shadow-[0_10px_40px_rgba(0,0,0,0.12)] z-[110] py-2 animate-in zoom-in-95 duration-200 dropdown-menu text-left
+                                                ${index >= siblingsLength - 2 && siblingsLength > 2 ? 'bottom-0 mb-2' : 'top-0 mt-2'}`}
+                                        >
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -295,7 +291,7 @@ const GroupMaster = () => {
                 {/* Recursive Children with Indentation */}
                 {hasChildren && isExpanded && (
                     <div className="animate-in slide-in-from-top-2 duration-300">
-                        {group.children.map((child, childIndex) => renderGroupRow(child, depth + 1, childIndex))}
+                        {group.children.map((child, childIndex) => renderGroupRow(child, depth + 1, childIndex, group.children.length))}
                     </div>
                 )}
             </React.Fragment>
@@ -375,6 +371,7 @@ const GroupMaster = () => {
                                 fetchGroups();
                                 setSearchQuery('');
                                 handleClearFilter();
+                                showToast("Data refreshed successfully");
                             }}
                             className="flex items-center justify-center w-[42px] h-[42px] border border-[#E5E7EB] text-[#4B5563] rounded-[10px] hover:bg-gray-50 transition-colors bg-white shadow-sm"
                             title="Refresh Data"
@@ -431,11 +428,17 @@ const GroupMaster = () => {
                 </div>
 
                 <div className="min-w-full overflow-x-auto overflow-y-hidden">
-                    <div className="flex items-stretch justify-between bg-emerald-900 border-b border-emerald-950 text-[13px] font-bold text-white uppercase tracking-wider">
-                        <div className="flex-1 border-r border-white/50 pr-6 py-4 pl-9 flex items-center">{t('modules:group_master')}</div>
+                    <div className="flex items-stretch justify-between bg-emerald-900 border-b border-emerald-950 text-[14px] font-bold text-white uppercase tracking-tight">
+                        <div className="flex-1 border-r border-white/50 pr-6 py-5 pl-9 flex items-center gap-2">
+                            {t('modules:group_master')}
+                            <ChevronsUpDown size={14} className="text-gray-300" />
+                        </div>
                         <div className="flex items-stretch shrink-0">
-                            <div className="w-[120px] border-r border-white/50 flex items-center justify-center px-4">{t('common:status')}</div>
-                            <div className="w-20 flex items-center justify-center px-4">{t('common:action')}</div>
+                            <div className="w-[120px] border-r border-white/50 flex items-center justify-center px-4 gap-2">
+                                {t('common:status')}
+                                <ChevronsUpDown size={14} className="text-gray-300" />
+                            </div>
+                            <div className="w-20 flex items-center justify-center px-4 py-5">{t('common:action')}</div>
                         </div>
                     </div>
                     <div className="flex flex-col divide-y divide-[#F3F4F6]">
@@ -445,7 +448,7 @@ const GroupMaster = () => {
                                 <p className="text-[#6B7280] text-[14px] font-medium">{t('common:loading_groups') || 'Loading groups...'}</p>
                             </div>
                         ) : filteredData.length > 0 ? (
-                            filteredData.map(group => renderGroupRow(group))
+                            filteredData.map((group, index) => renderGroupRow(group, 0, index, filteredData.length))
                         ) : (
                             <div className="p-16 text-center">
                                 <Search size={40} className="mx-auto text-gray-200 mb-4" />
