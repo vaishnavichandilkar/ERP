@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
-import html2pdf from "html2pdf.js/dist/html2pdf";
+import html2pdf from "html2pdf.js";
 import { toast } from 'react-hot-toast';
 
 const POPrintPreview = () => {
