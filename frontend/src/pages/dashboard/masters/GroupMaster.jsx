@@ -393,8 +393,8 @@ const GroupMaster = () => {
                             isOpen={isImportModalOpen}
                             onClose={() => setIsImportModalOpen(false)}
                             onImport={handleImportExcel}
-                            sampleFileName="Group_Master_Sample.xlsx"
-                            sampleHeaders={['Level', 'Group Name', 'Under', 'Status']}
+                            onDownloadSample={() => masterService.downloadGroupSampleExcel()}
+                            sampleFileName="group_master_sample.xlsx"
                         />
 
                         <button

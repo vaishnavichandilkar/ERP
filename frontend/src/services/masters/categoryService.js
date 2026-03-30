@@ -58,12 +58,17 @@ const categoryService = {
         const response = await axiosInstance.post(`/category-master/category/${id}/demote?newParentId=${newParentId}`);
         return response.data;
     },
-    exportCategories: async (format) => {
-        const response = await axiosInstance.get('/category-master/export', {
-            params: { format },
+    downloadCategorySampleExcel: async () => {
+        const response = await axiosInstance.get('/category-master/sample-excel', {
             responseType: 'blob'
         });
-        return response;
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'category_master_sample.xlsx');
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
     }
 };
 

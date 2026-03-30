@@ -41,6 +41,8 @@ model User {
   sub_categories        SubCategory[]
   products              Product[]
   accounts              AccountMaster[]
+  purchaseOrders       PurchaseOrder[]
+  purchaseInvoices     PurchaseInvoice[]
   @@map("User")
 }
 
@@ -533,3 +535,117 @@ model Product {
   @@unique([product_code, created_by])
   @@map("products")
 }
+
+enum POStatus {
+  PENDING
+  INVOICE_GENERATED
+  DELETED
+}
+
+model PurchaseOrder {
+  id              Int                 @id @default(autoincrement())
+  poNumber        String              @unique
+  supplierName    String
+  address         String
+  creditDays      Int
+  poCreationDate  DateTime            @default(now())
+  expiryDate      DateTime
+  gstNumber       String?
+  panNumber       String?
+  status          POStatus            @default(PENDING)
+  totalAmount     Float               @default(0)
+  taxAmount       Float               @default(0)
+  grandTotal      Float               @default(0)
+  
+  items           PurchaseOrderItem[]
+  userId          Int 
+  user            User @relation(fields: [userId], references: [id]) 
+
+  purchaseInvoice PurchaseInvoice?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id              Int           @id @default(autoincrement())
+  purchaseOrderId Int
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  
+  productCode     String
+  productName     String
+  hsnCode         String
+  quantity        Float
+  rate            Float
+  uom             String
+  discountPercent Float
+  discountAmount  Float
+  taxPercent      Float
+  taxAmount       Float
+  beforeTaxAmount Float         @default(0)
+  totalAmount     Float
+  printDescription String?
+
+  @@map("purchase_order_items")
+}
+
+enum PIStatus {
+  GENERATED
+  DELETED
+}
+
+model PurchaseInvoice {
+  id                  Int                   @id @default(autoincrement())
+  invoiceNumber       String                @unique // System generated internal PI number
+  supplierInvoiceNumber String              // Physical invoice number provided by supplier
+  supplierInvoiceDate DateTime              // Date provided on supplier's physical invoice
+  invoiceDate         DateTime              @default(now()) // Keeping for compatibility, but user may use supplierInvoiceDate
+  bookingDate         DateTime              @default(now()) // Date invoice is recorded in system
+  
+  supplierName        String
+  address             String
+  poNumber            String?
+  challanNumber       String?
+  creditDays          Int
+  
+  status              PIStatus              @default(GENERATED)
+  uploadedFilePath    String?
+  
+  // Totals
+  totalQuantity       Float               @default(0)
+  taxableAmount       Float               @default(0)
+  cgstAmount          Float               @default(0)
+  sgstAmount          Float               @default(0)
+  grandTotal          Float               @default(0)
+  cumulativeBalance   Float               @default(0)
+
+  items               PurchaseInvoiceItem[]
+  
+  userId              Int 
+  user                User                  @relation(fields: [userId], references: [id]) 
+  
+  poId                Int?                  @unique
+  purchaseOrder       PurchaseOrder?        @relation(fields: [poId], references: [id])
+
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+
+  @@map("purchase_invoices")
+}
+
+model PurchaseInvoiceItem {
+  id                Int             @id @default(autoincrement())
+  purchaseInvoiceId Int
+  purchaseInvoice   PurchaseInvoice @relation(fields: [purchaseInvoiceId], references: [id], onDelete: Cascade)
+  
+  productCode       String
+  productName       String
+  quantity          Float
+  rate              Float
+  uom               String
+
+  
+  @@map("purchase_invoice_items")
+}
+

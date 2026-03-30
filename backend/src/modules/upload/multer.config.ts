@@ -23,6 +23,8 @@ export const multerConfig = {
                 } else {
                     finalPath = join(uploadBase, 'registration', 'others');
                 }
+            } else if (req.url.includes('/purchase-invoices')) {
+                finalPath = join(uploadBase, 'purchase-invoices');
             } else {
                 // Fallback or other upload paths
                 finalPath = uploadBase;

@@ -2,6 +2,7 @@
 > weighpro@1.0.0 build
 > nest build
 
+<<<<<<< Updated upstream
 node.exe : [96msrc/modules/Ma
 ster/account-master/account-ma
 ster.service.ts[0m:[93m506[
@@ -205,5 +206,7 @@ PincodeUncheckedUpdateInput)
 | (Without<...> & 
 PincodeUpdateInput); }'
 
+=======
+>>>>>>> Stashed changes
 Found 7 error(s).
 

@@ -326,8 +326,8 @@ const UnitMaster = () => {
                                     isOpen={isImportModalOpen}
                                     onClose={() => setIsImportModalOpen(false)}
                                     onImport={handleImportExcel}
-                                    sampleFileName="Unit_Master_Sample.xlsx"
-                                    sampleHeaders={['Unit Name', 'GST UOM', 'Full Name Of Measurement', 'Status']}
+                                    onDownloadSample={() => unitService.downloadUnitSampleExcel()}
+                                    sampleFileName="unit_master_sample.xlsx"
                                 />
 
                                 <button

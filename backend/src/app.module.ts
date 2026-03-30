@@ -14,6 +14,7 @@ import { SellerOnboardingModule } from './modules/seller-onboarding/seller-onboa
 import { SuperAdminModule } from './modules/superadmin/superadmin.module';
 import { MasterModule } from './modules/Master/master.module';
 import { ProfileModule } from './modules/profile/profile.module';
+import { PurchaseModule } from './modules/Purchase/purchase.module';
 import { AppController } from './app.controller';
 @Module({
     imports: [
@@ -30,6 +31,7 @@ import { AppController } from './app.controller';
         SuperAdminModule,
         MasterModule,
         ProfileModule,
+        PurchaseModule,
     ],
     controllers: [AppController],
     providers: [],

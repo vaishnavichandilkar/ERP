@@ -26,6 +26,6 @@ import { OtpModule } from '../otp/otp.module';
     ],
     controllers: [AuthController],
     providers: [AuthService, JwtStrategy, PrismaService],
-    exports: [AuthService],
+    exports: [AuthService, PassportModule, JwtModule],
 })
 export class AuthModule { }

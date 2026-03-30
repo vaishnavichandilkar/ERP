@@ -37,6 +37,19 @@ const masterService = {
         return response.data;
     },
 
+    downloadUnitSampleExcel: async () => {
+        const response = await axiosInstance.get('/master/unit/sample-excel', {
+            responseType: 'blob'
+        });
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'unit_master_sample.xlsx');
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    },
+
     // Group Master APIs
     getAllGroups: async () => {
         const response = await axiosInstance.get('/group-master');
@@ -71,18 +84,37 @@ const masterService = {
         return response.data;
     },
 
-    exportGroups: async (params) => {
-        const response = await axiosInstance.get('/group-master/export', {
-            params,
+    downloadGroupSampleExcel: async () => {
+        const response = await axiosInstance.get('/group-master/sample-excel', {
             responseType: 'blob'
         });
-        return response;
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'group_master_sample.xlsx');
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
     },
 
     // Aliases for transition
     createSubGroup: (data) => masterService.createGroup(data),
     updateSubGroup: (id, data) => masterService.updateGroup(id, data),
     updateSubGroupStatus: (id, status) => masterService.updateGroupStatus(id, status),
+
+    // Category Master APIs
+    downloadCategorySampleExcel: async () => {
+        const response = await axiosInstance.get('/category-master/sample-excel', {
+            responseType: 'blob'
+        });
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'category_master_sample.xlsx');
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    },
 };
 
 export default masterService;

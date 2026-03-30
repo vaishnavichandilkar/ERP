@@ -3,7 +3,6 @@ import { MasterStatus } from '@prisma/client';
 import { CategoryMasterRepository } from '../repositories/category-master.repository';
 import { CreateCategoryDto, CreateSubCategoryDto, ToggleStatusDto, UpdateCategoryDto, UpdateSubCategoryDto } from '../dto/category.dto';
 import * as ExcelJS from 'exceljs';
-import * as PDFDocument from 'pdfkit';
 
 @Injectable()
 export class CategoryMasterService {
@@ -168,6 +167,7 @@ export class CategoryMasterService {
                 const val = String(cell.value || '').trim().toLowerCase();
                 if (val === 'category' || val === 'category name') { colMap['categoryName'] = colNumber; foundHeaders = true; }
                 if (val === 'sub category' || val === 'sub category name') colMap['subCategoryName'] = colNumber;
+                if (val === 'status') colMap['status'] = colNumber;
             });
 
             if (foundHeaders) {
@@ -198,15 +198,22 @@ export class CategoryMasterService {
 
             try {
                 if (rawCategoryName) {
+                    // Handle status for category
+                    const statusStr = String(getVal(row, 'status')).trim().toLowerCase();
+                    const status = statusStr === 'inactive' ? MasterStatus.INACTIVE : MasterStatus.ACTIVE;
+
                     // Try to find or create category
                     let category = await this.repository.findCategoryByName(rawCategoryName, userId);
                     if (!category) {
                         category = await this.repository.createCategory({
                             name: rawCategoryName,
                             user_id: userId,
-                            status: MasterStatus.ACTIVE,
+                            status: status,
                         });
                         importedCategories++;
+                    } else if (status !== category.status) {
+                        // Update status if it changed
+                        await this.repository.toggleCategoryStatus(category.id, status);
                     }
                     currentCategoryId = category.id;
                 }
@@ -215,15 +222,22 @@ export class CategoryMasterService {
                     if (!currentCategoryId) {
                         throw new BadRequestException('Sub category found without a parent category preceding it');
                     }
+                    
+                    const statusStr = String(getVal(row, 'status')).trim().toLowerCase();
+                    const status = statusStr === 'inactive' ? MasterStatus.INACTIVE : MasterStatus.ACTIVE;
+
                     const existingSub = await this.repository.findSubCategoryByName(rawSubCategoryName, currentCategoryId, userId);
                     if (!existingSub) {
                         await this.repository.createSubCategory({
                             name: rawSubCategoryName,
                             category_id: currentCategoryId,
                             user_id: userId,
-                            status: MasterStatus.ACTIVE,
+                            status: status,
                         });
                         importedSubCategories++;
+                    } else if (status !== existingSub.status) {
+                        // Update subcategory status if it changed
+                        await this.repository.toggleSubCategoryStatus(existingSub.id, status);
                     }
                 }
             } catch (error) {
@@ -263,136 +277,27 @@ export class CategoryMasterService {
         }
     }
 
-    private flattenCategories(categories: any[]): any[] {
-        const flat: any[] = [];
-        categories.forEach(cat => {
-            flat.push({
-                type: 'Category',
-                category_name: cat.name,
-                sub_category: '-'
-            });
-            if (cat.sub_categories && cat.sub_categories.length > 0) {
-                cat.sub_categories.forEach(sub => {
-                    flat.push({
-                        type: 'Sub Category',
-                        category_name: cat.name,
-                        sub_category: sub.name
-                    });
-                });
-            }
+    async getSampleExcel() {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Sample Data');
+
+        worksheet.columns = [
+            { header: 'Category Name', key: 'category_name', width: 30 },
+            { header: 'Sub Category', key: 'sub_category', width: 30 },
+            { header: 'Status', key: 'status', width: 15 },
+        ];
+
+        // Add validation for status (column C)
+        (worksheet as any).dataValidations.add('C2:C100', {
+            type: 'list',
+            allowBlank: true,
+            formulae: ['"active,inactive"'],
+            showErrorMessage: true,
+            errorTitle: 'Invalid Status',
+            error: 'Please select from the list (active, inactive)'
         });
-        return flat;
-    }
 
-    async exportCategories(format: string, userId: number) {
-        const categories = await this.getCategoryListing(userId);
-        const flatData = this.flattenCategories(categories);
-
-        const now = new Date();
-        const pad = (n: number) => n.toString().padStart(2, '0');
-        const timestamp = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}, ${pad(now.getHours() % 12 || 12)}:${pad(now.getMinutes())}:${pad(now.getSeconds())} ${now.getHours() >= 12 ? 'pm' : 'am'}`;
-
-        if (format === 'xlsx') {
-            const workbook = new ExcelJS.Workbook();
-            const worksheet = workbook.addWorksheet('Category Master');
-
-            worksheet.columns = [
-                { header: 'Type', key: 'type', width: 20 },
-                { header: 'Category Name', key: 'category_name', width: 30 },
-                { header: 'Sub Category', key: 'sub_category', width: 30 },
-            ];
-
-            flatData.forEach(row => worksheet.addRow(row));
-
-            worksheet.spliceRows(1, 0, [], [], [], []);
-
-            worksheet.mergeCells('A1:C1');
-            worksheet.getCell('A1').value = 'ERP';
-            worksheet.getCell('A1').font = { size: 18, bold: true };
-            worksheet.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle' };
-
-            worksheet.mergeCells('A2:C2');
-            worksheet.getCell('A2').value = 'Category Master Report';
-            worksheet.getCell('A2').font = { size: 14 };
-            worksheet.getCell('A2').alignment = { horizontal: 'center', vertical: 'middle' };
-
-            worksheet.mergeCells('A3:C3');
-            worksheet.getCell('A3').value = `Exported on: ${timestamp}`;
-            worksheet.getCell('A3').font = { size: 10 };
-            worksheet.getCell('A3').alignment = { horizontal: 'right', vertical: 'middle' };
-
-            const headerRow = worksheet.getRow(5);
-            headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-            headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4472C4' } };
-            headerRow.alignment = { horizontal: 'center' };
-
-            worksheet.eachRow((row, rowNumber) => {
-                if (rowNumber >= 5) {
-                    row.eachCell(cell => {
-                        cell.border = {
-                            top: { style: 'thin' },
-                            left: { style: 'thin' },
-                            bottom: { style: 'thin' },
-                            right: { style: 'thin' }
-                        };
-                    });
-                }
-            });
-
-            const buffer = await workbook.xlsx.writeBuffer();
-            return {
-                buffer: Buffer.from(buffer),
-                filename: `category_master_${Date.now()}.xlsx`,
-                mimetype: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            };
-        }
-
-        if (format === 'pdf') {
-            return new Promise<any>((resolve) => {
-                const doc = new PDFDocument({ margin: 30, size: 'A4' });
-                const buffers: Buffer[] = [];
-                doc.on('data', buffers.push.bind(buffers));
-                doc.on('end', () => {
-                    resolve({
-                        buffer: Buffer.concat(buffers),
-                        filename: `category_master_${Date.now()}.pdf`,
-                        mimetype: 'application/pdf',
-                    });
-                });
-
-                doc.fontSize(18).font('Helvetica-Bold').text('ERP', { align: 'center' });
-                doc.fontSize(14).font('Helvetica').text('Category Master Report', { align: 'center' });
-                doc.moveDown(0.5);
-                doc.fontSize(10).text(`Exported on: ${timestamp}`, { align: 'right' });
-                doc.moveDown();
-
-                const tableTop = 120;
-                const colX = [50, 150, 350];
-                const headers = ['Type', 'Category Name', 'Sub Category'];
-
-                doc.rect(45, tableTop - 5, 500, 20).fill('#4472C4');
-                doc.fontSize(10).font('Helvetica-Bold').fillColor('#FFFFFF');
-                headers.forEach((h, i) => doc.text(h, colX[i], tableTop));
-
-                let y = tableTop + 20;
-                doc.fillColor('#000000').font('Helvetica');
-
-                flatData.forEach((row, index) => {
-                    if (y > 750) {
-                        doc.addPage();
-                        y = 50;
-                    }
-
-                    if (index % 2 === 1) doc.rect(45, y - 3, 500, 15).fill('#F2F2F2').fillColor('#000000');
-                    doc.fontSize(9);
-                    doc.text(row.type, colX[0], y);
-                    doc.text(row.category_name, colX[1], y);
-                    doc.text(row.sub_category, colX[2], y);
-                    y += 20;
-                });
-                doc.end();
-            });
-        }
-        throw new BadRequestException('Format is required. Please use xlsx or pdf.');
+        const buffer = await workbook.xlsx.writeBuffer();
+        return buffer;
     }
 }

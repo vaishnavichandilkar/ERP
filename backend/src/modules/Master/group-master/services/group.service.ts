@@ -1,8 +1,8 @@
 import { ConflictException, Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import { MasterStatus } from '@prisma/client';
 import { GroupMasterRepository } from '../repositories/group.repository';
 import { CreateGroupDto, UpdateGroupDto, UpdateGroupStatusDto } from '../dto/group-master.dto';
 import * as ExcelJS from 'exceljs';
-import * as PDFDocument from 'pdfkit';
 
 @Injectable()
 export class GroupMasterService {
@@ -146,6 +146,30 @@ export class GroupMasterService {
         };
     }
 
+    async getSampleExcel() {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Sample Data');
+
+        worksheet.columns = [
+            { header: 'Group Name', key: 'group_name', width: 30 },
+            { header: 'Group Under', key: 'group_under', width: 30 },
+            { header: 'Status', key: 'status', width: 15 },
+        ];
+
+        // Add validation for status (now in column C)
+        (worksheet as any).dataValidations.add('C2:C100', {
+            type: 'list',
+            allowBlank: true,
+            formulae: ['"active,inactive"'],
+            showErrorMessage: true,
+            errorTitle: 'Invalid Status',
+            error: 'Please select from the list (active, inactive)'
+        });
+
+        const buffer = await workbook.xlsx.writeBuffer();
+        return buffer;
+    }
+
     async importGroups(buffer: Buffer, userId: number) {
         const workbook = new ExcelJS.Workbook();
         await workbook.xlsx.load(buffer as any);
@@ -167,96 +191,109 @@ export class GroupMasterService {
         let headerRowIndex = -1;
         const colMap: Record<string, number> = {};
 
+        // Find headers
         for (let r = 1; r <= Math.min(rowCount, 10); r++) {
             const row = worksheet.getRow(r);
-            let foundHeaders = false;
+            let found = false;
             row.eachCell((cell, colNumber) => {
                 const val = String(cell.value || '').trim().toLowerCase();
-                if (val === 'level') colMap['level'] = colNumber;
-                if (val === 'group name') { colMap['groupName'] = colNumber; foundHeaders = true; }
-                if (val === 'under') colMap['under'] = colNumber;
+                if (val === 'group name') { colMap['groupName'] = colNumber; found = true; }
+                if (val === 'group under' || val === 'under') colMap['under'] = colNumber;
                 if (val === 'status') colMap['status'] = colNumber;
             });
-
-            if (foundHeaders) {
+            if (found) {
                 headerRowIndex = r;
                 break;
             }
         }
 
-        if (headerRowIndex === -1) {
-            throw new BadRequestException('Could not find Group Name column in the provided Excel file.');
+        if (headerRowIndex === -1 || !colMap['groupName']) {
+            throw new BadRequestException('Could not find "group name" column in the provided Excel file.');
         }
 
-        const getVal = (row: ExcelJS.Row, key: string, defaultVal: any = '') => {
+        const getVal = (row: ExcelJS.Row, key: string) => {
             const colIdx = colMap[key];
-            if (!colIdx) return defaultVal;
-            return row.getCell(colIdx).value;
+            if (!colIdx) return '';
+            const cell = row.getCell(colIdx);
+            return String(cell.value || '').trim();
         };
-        
-        // Track the virtual ID for each level
-        const lastIds: Record<number, string> = {};
 
-        // We need prisma instance to query level 1 directly
         const prisma = (this.groupRepository as any).prisma;
 
         for (let i = headerRowIndex + 1; i <= rowCount; i++) {
             const row = worksheet.getRow(i);
-            const levelValue = getVal(row, 'level', null);
-            const level = levelValue !== null && levelValue !== undefined ? Number(levelValue) : null;
-            const groupName = String(getVal(row, 'groupName')).trim();
+            const groupName = getVal(row, 'groupName');
+            const underName = getVal(row, 'under');
+            const statusStr = getVal(row, 'status').toLowerCase();
 
-            if (level === null || isNaN(level as number) || !groupName || groupName === '-') continue; // empty or header row
+            if (!groupName || groupName === '-') continue;
 
             try {
-                if (level === 0) {
-                    const existing1 = await prisma.group.findFirst({
+                const status = (statusStr === 'inactive') ? MasterStatus.INACTIVE : MasterStatus.ACTIVE;
+
+                if (!underName || underName.toLowerCase() === 'primary') {
+                    // Create Level 1 Group
+                    const existing = await prisma.group.findFirst({
                         where: { group_name: groupName, OR: [{ userId: null, is_header: true }, { userId }] }
                     });
-                    if (existing1) {
-                         lastIds[0] = `1_${existing1.id}`;
-                    } else {
-                         const newG = await this.groupRepository.createPrimaryGroup({ group_name: groupName, userId });
-                         lastIds[0] = `1_${newG.id}`;
-                         importedRows++;
+                    if (!existing) {
+                        await this.groupRepository.createPrimaryGroup({ group_name: groupName, userId });
+                        importedRows++;
+                    } else if (existing.userId === userId) {
+                        await prisma.group.update({ where: { id: existing.id }, data: { status } });
                     }
                 } else {
-                    const parentUid = lastIds[level - 1];
-                    if (!parentUid) {
-                        throw new BadRequestException(`No parent group found at level ${level - 1}`);
-                    }
-                    const parentInfo = await this.groupRepository.findGroupLevel(parentUid, userId);
+                    // Find parent group by name (searching levels 1 to 4)
+                    let parentInfo = null;
+
+                    // Search Level 1
+                    const p1 = await prisma.group.findFirst({ where: { group_name: underName, OR: [{ userId: null, is_header: true }, { userId }] } });
+                    if (p1) parentInfo = { level: 1, id: p1.id };
+
                     if (!parentInfo) {
-                        throw new NotFoundException(`Parent group ${parentUid} not found`);
+                        // Search Level 2
+                        const p2 = await prisma.subGroup.findFirst({ where: { subgroup_name: underName, userId } });
+                        if (p2) parentInfo = { level: 2, id: p2.id };
                     }
-                    const parent_raw_id = parentInfo.data.id;
+
+                    if (!parentInfo) {
+                        // Search Level 3
+                        const p3 = await prisma.subSubGroup.findFirst({ where: { name: underName, userId } });
+                        if (p3) parentInfo = { level: 3, id: p3.id };
+                    }
+
+                    if (!parentInfo) {
+                        // Search Level 4
+                        const p4 = await prisma.subSubSubGroup.findFirst({ where: { name: underName, userId } });
+                        if (p4) parentInfo = { level: 4, id: p4.id };
+                    }
+
+                    if (!parentInfo) {
+                        throw new BadRequestException(`Parent group "${underName}" not found`);
+                    }
+
                     const targetLevel = parentInfo.level + 1;
-                    
-                    if (targetLevel > 5) {
-                        throw new ForbiddenException('Maximum hierarchy level reached');
-                    }
-                    
-                    let existing = await this.groupRepository.findGroupByNameAndParent(groupName, targetLevel, parent_raw_id, userId);
-                    if (existing) {
-                        lastIds[level] = `${targetLevel}_${existing.id}`;
+                    const existing = await this.groupRepository.findGroupByNameAndParent(groupName, targetLevel, parentInfo.id, userId);
+
+                    if (!existing) {
+                        switch (targetLevel) {
+                            case 2:
+                                await this.groupRepository.createSubGroup({ subgroup_name: groupName, group_id: parentInfo.id, userId });
+                                break;
+                            case 3:
+                                await this.repositoryHelper(prisma.subSubGroup, { name: groupName, sub_group_id: parentInfo.id, userId, status });
+                                break;
+                            case 4:
+                                await this.repositoryHelper(prisma.subSubSubGroup, { name: groupName, sub_sub_group_id: parentInfo.id, userId, status });
+                                break;
+                            case 5:
+                                await this.repositoryHelper(prisma.subSubSubSubGroup, { name: groupName, sub_sub_sub_group_id: parentInfo.id, userId, status });
+                                break;
+                        }
+                        importedRows++;
                     } else {
-                         let data;
-                         switch (targetLevel) {
-                             case 2:
-                                 data = await this.groupRepository.createSubGroup({ subgroup_name: groupName, group_id: parent_raw_id, userId });
-                                 break;
-                             case 3:
-                                 data = await this.groupRepository.createSubSubGroup({ name: groupName, sub_group_id: parent_raw_id, userId });
-                                 break;
-                             case 4:
-                                 data = await this.groupRepository.createSubSubSubGroup({ name: groupName, sub_sub_group_id: parent_raw_id, userId });
-                                 break;
-                             case 5:
-                                 data = await this.groupRepository.createSubSubSubSubGroup({ name: groupName, sub_sub_sub_group_id: parent_raw_id, userId });
-                                 break;
-                         }
-                         lastIds[level] = `${targetLevel}_${data.id}`;
-                         importedRows++;
+                        // Update status
+                        await this.groupRepository.updateGroupStatus(existing.id, targetLevel, status, userId);
                     }
                 }
             } catch (error) {
@@ -265,176 +302,14 @@ export class GroupMasterService {
             }
         }
 
-        if (importedRows === 0 && failed > 0) {
-            throw new BadRequestException(`Import failed: ${errors[0]}`);
-        }
-
-        if (importedRows === 0 && failed === 0) {
-            throw new BadRequestException('No data found to import');
-        }
-
         return {
             success: true,
-            message: `Imported ${importedRows} groups. ${failed > 0 ? failed + ' rows failed.' : ''}`,
+            message: `Imported/Updated ${importedRows} groups. ${failed > 0 ? failed + ' rows failed.' : ''}`,
             errors: failed > 0 ? errors : undefined,
         };
     }
 
-    private flattenGroups(groups: any[], level = 0): any[] {
-        let flat: any[] = [];
-        groups.forEach(item => {
-            flat.push({
-                level: level,
-                group_name: item.group_name,
-                status: item.status === 'ACTIVE' ? 'Active' : 'Inactive'
-            });
-            if (item.children && item.children.length > 0) {
-                flat = flat.concat(this.flattenGroups(item.children, level + 1));
-            }
-        });
-        return flat;
-    }
-
-    async exportGroups(format: string, userId: number) {
-        const result = await this.getAllGroups(userId);
-        const groupTree = result.data;
-        const flatGroups = this.flattenGroups(groupTree);
-
-        const now = new Date();
-        const pad = (n: number) => n.toString().padStart(2, '0');
-        const hours = now.getHours();
-        const ampm = hours >= 12 ? 'pm' : 'am';
-        const formattedHours = hours % 12 || 12;
-        const timestamp = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}, ${pad(formattedHours)}:${pad(now.getMinutes())}:${pad(now.getSeconds())} ${ampm}`;
-
-        if (format === 'xlsx') {
-            const workbook = new ExcelJS.Workbook();
-            const worksheet = workbook.addWorksheet('Group Master');
-
-            worksheet.columns = [
-                { header: 'Level', key: 'level', width: 10 },
-                { header: 'Group Name', key: 'group_name', width: 40 },
-                { header: 'Status', key: 'status', width: 15 },
-            ];
-
-            flatGroups.forEach(group => {
-                worksheet.addRow(group);
-            });
-
-            // Add Header Section
-            worksheet.spliceRows(1, 0, [], [], [], []);
-
-            // Row 1: ERP
-            worksheet.mergeCells('A1:C1');
-            const row1 = worksheet.getCell('A1');
-            row1.value = 'ERP';
-            row1.font = { size: 18, bold: true };
-            row1.alignment = { horizontal: 'center', vertical: 'middle' };
-
-            // Row 2: Group Master Report
-            worksheet.mergeCells('A2:C2');
-            const row2 = worksheet.getCell('A2');
-            row2.value = 'Group Master Report';
-            row2.font = { size: 14 };
-            row2.alignment = { horizontal: 'center', vertical: 'middle' };
-
-            // Row 3: Exported On
-            worksheet.mergeCells('A3:C3');
-            const row3 = worksheet.getCell('A3');
-            row3.value = `Exported on: ${timestamp}`;
-            row3.font = { size: 10 };
-            row3.alignment = { horizontal: 'right', vertical: 'middle' };
-
-            // Column Header Styling (Row 5)
-            const headerRow = worksheet.getRow(5);
-            headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-            headerRow.fill = {
-                type: 'pattern',
-                pattern: 'solid',
-                fgColor: { argb: 'FF4472C4' } // Blue
-            };
-            headerRow.alignment = { horizontal: 'center' };
-
-            // Borders to all data cells
-            worksheet.eachRow((row, rowNumber) => {
-                if (rowNumber >= 5) {
-                    row.eachCell((cell) => {
-                        cell.border = {
-                            top: { style: 'thin' },
-                            left: { style: 'thin' },
-                            bottom: { style: 'thin' },
-                            right: { style: 'thin' }
-                        };
-                    });
-                }
-            });
-
-            // Alignments
-            worksheet.getColumn('level').alignment = { horizontal: 'center' };
-            worksheet.getColumn('status').alignment = { horizontal: 'center' };
-
-            const buffer = await workbook.xlsx.writeBuffer();
-            return {
-                buffer: Buffer.from(buffer),
-                filename: `group_master_${Date.now()}.xlsx`,
-                mimetype: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            };
-        }
-
-        if (format === 'pdf') {
-            return new Promise<any>((resolve) => {
-                const doc = new PDFDocument({ margin: 30, size: 'A4' });
-                const buffers: Buffer[] = [];
-                doc.on('data', buffers.push.bind(buffers));
-                doc.on('end', () => {
-                    resolve({
-                        buffer: Buffer.concat(buffers),
-                        filename: `group_master_${Date.now()}.pdf`,
-                        mimetype: 'application/pdf',
-                    });
-                });
-
-                // Header
-                doc.fontSize(18).font('Helvetica-Bold').text('ERP', { align: 'center' });
-                doc.fontSize(14).font('Helvetica').text('Group Master Report', { align: 'center' });
-                doc.moveDown(0.5);
-                doc.fontSize(10).text(`Exported on: ${timestamp}`, { align: 'right' });
-                doc.moveDown();
-
-                // Table
-                const tableTop = 120;
-                const colX = [50, 150, 450];
-                const headers = ['Level', 'Group Name', 'Status'];
-
-                // Draw Header
-                doc.rect(45, tableTop - 5, 500, 20).fill('#4472C4');
-                doc.fontSize(10).font('Helvetica-Bold').fillColor('#FFFFFF');
-                headers.forEach((h, i) => doc.text(h, colX[i], tableTop));
-
-                let y = tableTop + 20;
-                doc.fillColor('#000000').font('Helvetica');
-
-                flatGroups.forEach((group, index) => {
-                    if (y > 750) {
-                        doc.addPage();
-                        y = 50;
-                    }
-
-                    if (index % 2 === 1) {
-                        doc.rect(45, y - 3, 500, 15).fill('#F2F2F2').fillColor('#000000');
-                    }
-
-                    doc.fontSize(9);
-                    doc.text(String(group.level), colX[0], y);
-                    doc.text(group.group_name, colX[1], y);
-                    doc.text(group.status, colX[2], y);
-                    y += 20;
-                });
-
-                doc.end();
-            });
-        }
-
-        throw new BadRequestException('Invalid format');
+    private async repositoryHelper(model: any, data: any) {
+        return model.create({ data });
     }
 }

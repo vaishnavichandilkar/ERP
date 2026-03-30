@@ -75,12 +75,17 @@ const unitService = {
         return response.data;
     },
 
-    exportUnits: async (params) => {
-        const response = await axiosInstance.get('/master/unit/export', {
-            params,
+    downloadUnitSampleExcel: async () => {
+        const response = await axiosInstance.get('/master/unit/sample-excel', {
             responseType: 'blob'
         });
-        return response;
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'unit_master_sample.xlsx');
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
     },
 };
 

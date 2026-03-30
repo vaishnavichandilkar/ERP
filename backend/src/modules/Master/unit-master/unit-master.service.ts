@@ -3,7 +3,6 @@ import { PrismaService } from '../../../infrastructure/prisma/prisma.service';
 import { CreateUnitDto, UpdateUnitDto, UnitQueryDto, UpdateUnitStatusDto } from './dto/unit-master.dto';
 import { UnitSource, UnitStatus } from '@prisma/client';
 import * as ExcelJS from 'exceljs';
-import * as PDFDocument from 'pdfkit';
 
 @Injectable()
 export class UnitMasterService {
@@ -360,154 +359,28 @@ export class UnitMasterService {
         };
     }
 
-    async exportUnits(format: string, query: UnitQueryDto, userId: number) {
-        const result = await this.getUnitsList(userId, { ...query, page: '1', limit: '10000' });
-        const units = result.data;
+    async getSampleExcel() {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Sample Data');
 
-        if (units.length === 0) {
-            throw new BadRequestException('No data available to export');
-        }
+        worksheet.columns = [
+            { header: 'Unit Name', key: 'unit_name', width: 20 },
+            { header: 'GST UOM', key: 'gst_uom', width: 20 },
+            { header: 'Full Name', key: 'full_name', width: 40 },
+            { header: 'Status', key: 'status', width: 15 },
+        ];
 
-        const now = new Date();
-        const pad = (n: number) => n.toString().padStart(2, '0');
-        const hours = now.getHours();
-        const ampm = hours >= 12 ? 'pm' : 'am';
-        const formattedHours = hours % 12 || 12;
-        const d = pad(now.getDate());
-        const m = pad(now.getMonth() + 1);
-        const yyyy = now.getFullYear();
-        const hr = pad(formattedHours);
-        const min = pad(now.getMinutes());
-        const sec = pad(now.getSeconds());
-        const timestamp = `${d}/${m}/${yyyy}, ${hr}:${min}:${sec} ${ampm}`;
+        // Add validation for status (column D)
+        (worksheet as any).dataValidations.add('D2:D100', {
+            type: 'list',
+            allowBlank: true,
+            formulae: ['"active,inactive"'],
+            showErrorMessage: true,
+            errorTitle: 'Invalid Status',
+            error: 'Please select from the list (active, inactive)'
+        });
 
-        if (format === 'xlsx') {
-            const workbook = new ExcelJS.Workbook();
-            const worksheet = workbook.addWorksheet('Units');
-
-            worksheet.columns = [
-                { header: 'Sr. No', key: 'srNo', width: 10 },
-                { header: 'Unit Name', key: 'unitName', width: 25 },
-                { header: 'GST UOM', key: 'gstUom', width: 15 },
-                { header: 'Full Name', key: 'fullName', width: 30 },
-                { header: 'Status', key: 'status', width: 12 },
-            ];
-
-            units.forEach((unit, index) => {
-                worksheet.addRow({
-                    srNo: index + 1,
-                    unitName: unit.unit_name,
-                    gstUom: unit.gst_uom,
-                    fullName: unit.full_name_of_measurement || '-',
-                    status: unit.status === UnitStatus.ACTIVE ? 'Active' : 'Inactive',
-                });
-            });
-
-            worksheet.spliceRows(1, 0, [], [], [], []);
-
-            worksheet.mergeCells('A1:E1');
-            worksheet.getCell('A1').value = 'ERP';
-            worksheet.getCell('A1').font = { size: 18, bold: true };
-            worksheet.getCell('A1').alignment = { horizontal: 'center', vertical: 'middle' };
-
-            worksheet.mergeCells('A2:E2');
-            worksheet.getCell('A2').value = 'Unit Master Report';
-            worksheet.getCell('A2').font = { size: 14 };
-            worksheet.getCell('A2').alignment = { horizontal: 'center', vertical: 'middle' };
-
-            worksheet.mergeCells('A3:E3');
-            worksheet.getCell('A3').value = `Exported on: ${timestamp}`;
-            worksheet.getCell('A3').font = { size: 10 };
-            worksheet.getCell('A3').alignment = { horizontal: 'right', vertical: 'middle' };
-
-            const headerRow = worksheet.getRow(5);
-            headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-            headerRow.fill = {
-                type: 'pattern',
-                pattern: 'solid',
-                fgColor: { argb: 'FF4472C4' }
-            };
-            headerRow.alignment = { horizontal: 'center' };
-
-            // Add borders to all cells from header onwards
-            worksheet.eachRow((row, rowNumber) => {
-                if (rowNumber >= 5) {
-                    row.eachCell((cell) => {
-                        cell.border = {
-                            top: { style: 'thin' },
-                            left: { style: 'thin' },
-                            bottom: { style: 'thin' },
-                            right: { style: 'thin' }
-                        };
-                    });
-                }
-            });
-
-            // Alignments
-            worksheet.getColumn('srNo').alignment = { horizontal: 'center' };
-            worksheet.getColumn('status').alignment = { horizontal: 'center' };
-
-            const buffer = await workbook.xlsx.writeBuffer();
-            return {
-                buffer: Buffer.from(buffer),
-                filename: `units_export_${Date.now()}.xlsx`,
-                mimetype: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            };
-        }
-
-        if (format === 'pdf') {
-            return new Promise<any>((resolve, reject) => {
-                const doc = new PDFDocument({ margin: 20, size: 'A4' });
-                const buffers: Buffer[] = [];
-                doc.on('data', buffers.push.bind(buffers));
-                doc.on('end', () => {
-                    const pdfData = Buffer.concat(buffers);
-                    resolve({
-                        buffer: pdfData,
-                        filename: `units_export_${Date.now()}.pdf`,
-                        mimetype: 'application/pdf',
-                    });
-                });
-
-                doc.fontSize(18).font('Helvetica-Bold').text('ERP', { align: 'center' });
-                doc.fontSize(14).font('Helvetica').text('Unit Master Report', { align: 'center' });
-                doc.moveDown(0.5);
-                doc.fontSize(10).text(`Exported on: ${timestamp}`, { align: 'right' });
-                doc.moveDown();
-
-                const tableTop = 100;
-                const colX = [30, 80, 200, 300, 480];
-                const headers = ['Sr.', 'Unit Name', 'GST UOM', 'Full Name', 'Status'];
-
-                doc.rect(25, tableTop - 5, 545, 20).fill('#4472C4');
-                doc.fontSize(10).font('Helvetica-Bold').fillColor('#FFFFFF');
-                headers.forEach((h, i) => doc.text(h, colX[i], tableTop));
-
-                let y = tableTop + 20;
-                doc.fillColor('#000000').font('Helvetica');
-
-                units.forEach((unit: any, index) => {
-                    if (y > 750) {
-                        doc.addPage();
-                        y = 40;
-                        doc.rect(25, y - 5, 545, 20).fill('#4472C4');
-                        doc.fontSize(10).font('Helvetica-Bold').fillColor('#FFFFFF');
-                        headers.forEach((h, i) => doc.text(h, colX[i], y));
-                        y += 20;
-                        doc.fillColor('#000000').font('Helvetica');
-                    }
-                    if (index % 2 === 1) doc.rect(25, y - 3, 545, 15).fill('#F2F2F2').fillColor('#000000');
-                    doc.fontSize(9);
-                    doc.text((index + 1).toString(), colX[0], y);
-                    doc.text(unit.unit_name, colX[1], y);
-                    doc.text(unit.gst_uom, colX[2], y);
-                    doc.text(unit.full_name_of_measurement || '-', colX[3], y);
-                    doc.text(unit.status === UnitStatus.ACTIVE ? 'Active' : 'Inactive', colX[4], y);
-                    y += 18;
-                });
-                doc.end();
-            });
-        }
-        throw new BadRequestException('Format is required. Please use xlsx or pdf.');
+        const buffer = await workbook.xlsx.writeBuffer();
+        return buffer;
     }
 }

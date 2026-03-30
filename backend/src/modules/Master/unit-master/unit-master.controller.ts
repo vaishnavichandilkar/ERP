@@ -1,10 +1,10 @@
 import { Controller, Get, Post, Body, Put, Patch, Param, Query, ParseIntPipe, UseGuards, Request, UploadedFile, UseInterceptors, BadRequestException, Res } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { Response } from 'express';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { UnitMasterService } from './unit-master.service';
 import { CreateUnitDto, UpdateUnitDto, UnitQueryDto, UpdateUnitStatusDto } from './dto/unit-master.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
-import { Response } from 'express';
 
 @ApiTags('Unit Master')
 @Controller('master')
@@ -61,23 +61,16 @@ export class UnitMasterController {
         return this.service.getUnitsList(req.user.userId, query);
     }
 
-    @Get('unit/export')
-    @ApiOperation({ summary: 'Export units list to XLSX or PDF format' })
-    @ApiQuery({ name: 'format', required: true, enum: ['xlsx', 'pdf'], description: 'Export format' })
-    async exportUnits(
-        @Request() req,
-        @Res() res: Response,
-        @Query() query: UnitQueryDto,
-    ) {
-        const file = await this.service.exportUnits(query.format?.toLowerCase() || 'xlsx', query, req.user.userId);
-
+    @Get('unit/sample-excel')
+    @ApiOperation({ summary: 'Download sample Excel for unit import' })
+    async downloadSample(@Request() req, @Res() res: Response) {
+        const buffer = await this.service.getSampleExcel();
         res.set({
-            'Content-Type': file.mimetype,
-            'Content-Disposition': `attachment; filename="${file.filename}"`,
-            'Content-Length': file.buffer.length,
+            'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition': 'attachment; filename="unit_master_sample.xlsx"',
+            'Content-Length': (buffer as any).length,
         });
-
-        res.send(file.buffer);
+        res.end(buffer);
     }
 
     @Get('unit/:id')
@@ -94,7 +87,6 @@ export class UnitMasterController {
 
     @Patch('unit/:id/status')
     @ApiOperation({ summary: 'Change unit status' })
-    @ApiResponse({ status: 200, description: 'Unit status updated' })
     changeStatus(@Request() req, @Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUnitStatusDto) {
         return this.service.toggleStatus(req.user.userId, id, dto);
     }

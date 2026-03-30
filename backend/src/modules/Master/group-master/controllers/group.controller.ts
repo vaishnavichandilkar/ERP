@@ -1,10 +1,10 @@
-import { Body, Controller, Get, Param, Patch, Post, Put, ParseIntPipe, UseGuards, Request, UploadedFile, UseInterceptors, BadRequestException, Res, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody, ApiQuery } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Patch, Post, Put, ParseIntPipe, UseGuards, Request, UploadedFile, UseInterceptors, BadRequestException, Res } from '@nestjs/common';
+import { Response } from 'express';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { GroupMasterService } from '../services/group.service';
 import { CreateGroupDto, UpdateGroupDto, UpdateGroupStatusDto } from '../dto/group-master.dto';
 import { JwtAuthGuard } from '../../../../common/guards/jwt-auth.guard';
-import { Response } from 'express';
 
 @ApiTags('Group Master')
 @Controller('group-master')
@@ -56,6 +56,18 @@ export class GroupMasterController {
         return this.groupService.updateStatus(id, dto, req.user.userId);
     }
 
+    @Get('sample-excel')
+    @ApiOperation({ summary: 'Download sample Excel for group import' })
+    async downloadSample(@Request() req, @Res() res: Response) {
+        const buffer = await this.groupService.getSampleExcel();
+        res.set({
+            'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition': 'attachment; filename="group_master_sample.xlsx"',
+            'Content-Length': (buffer as any).length,
+        });
+        res.end(buffer);
+    }
+
     @Post('import')
     @ApiOperation({ summary: 'Import groups from XLSX' })
     @ApiConsumes('multipart/form-data')
@@ -79,24 +91,5 @@ export class GroupMasterController {
         throw new BadRequestException('Excel file is required');
       }
       return this.groupService.importGroups(file.buffer, req.user.userId);
-    }
-
-    @Get('export')
-    @ApiOperation({ summary: 'Export groups to XLSX or PDF' })
-    @ApiQuery({ name: 'format', required: true, enum: ['xlsx', 'pdf'] })
-    async exportGroups(
-        @Request() req,
-        @Res() res: Response,
-        @Query('format') format: string,
-    ) {
-        const file = await this.groupService.exportGroups(format.toLowerCase(), req.user.userId);
-        
-        res.set({
-            'Content-Type': file.mimetype,
-            'Content-Disposition': `attachment; filename="${file.filename}"`,
-            'Content-Length': file.buffer.length,
-        });
-
-        res.send(file.buffer);
     }
 }

@@ -392,8 +392,8 @@ const CategoryMaster = () => {
                             isOpen={isImportModalOpen}
                             onClose={() => setIsImportModalOpen(false)}
                             onImport={handleImportExcel}
-                            sampleFileName="Category_Master_Sample.xlsx"
-                            sampleHeaders={['Category Name', 'Sub Category']}
+                            onDownloadSample={() => categoryService.downloadCategorySampleExcel()}
+                            sampleFileName="category_master_sample.xlsx"
                         />
 
                         <button
