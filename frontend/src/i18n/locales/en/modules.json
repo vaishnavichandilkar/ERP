@@ -286,5 +286,17 @@
     "agreement_copy": "Agreement Copy",
     "medicine_license": "Medicine License",
     "pesticide_license": "Pesticide License",
-    "other": "Other"
+    "other": "Other",
+    "purchase_order": "Purchase Order",
+    "purchase_invoice": "Purchase Invoice",
+    "all": "All",
+    "pending": "Pending",
+    "expiring_soon": "Expiring soon",
+    "expired": "Expired",
+    "completed": "Completed",
+    "deleted": "Deleted",
+    "add_po": "Add PO",
+    "export": "Export",
+    "order": "Purchase Order",
+    "add": "Add PO"
 }

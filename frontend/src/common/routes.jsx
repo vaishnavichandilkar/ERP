@@ -21,6 +21,15 @@ import AccountMaster from '../pages/dashboard/masters/AccountMaster';
 import UnitMaster from '../pages/dashboard/masters/UnitMaster';
 import CategoryMaster from '../pages/dashboard/masters/CategoryMaster';
 import ProductMaster from '../pages/dashboard/masters/ProductMaster';
+
+// Purchase Pages
+import PurchaseLayout from '../pages/dashboard/purchase/PurchaseLayout';
+import PurchaseOrder from '../pages/dashboard/purchase/PurchaseOrder';
+import AddPO from '../pages/dashboard/purchase/AddPO';
+import ViewPO from '../pages/dashboard/purchase/ViewPO';
+import PurchaseInvoice from '../pages/dashboard/purchase/PurchaseInvoice';
+import POPrintPreview from '../pages/dashboard/purchase/POPrintPreview';
+
 import SystemSettings from '../features/settings/pages/SystemSettings';
 
 import { ROUTES } from '../constants/routes';
@@ -199,10 +208,45 @@ export const router = createBrowserRouter([
                                     }
                                 ]
                             },
-                            {
-                                path: 'purchase',
-                                element: <Placeholder title="Purchase" />
-                            },
+                             {
+                                 path: 'purchase',
+                                 element: <PurchaseLayout />,
+                                 children: [
+                                     {
+                                         index: true,
+                                         element: <PurchaseOrder />
+                                     },
+                                     {
+                                         path: 'order',
+                                         children: [
+                                             {
+                                                 index: true,
+                                                 element: <PurchaseOrder />
+                                             },
+                                             {
+                                                 path: 'add',
+                                                 element: <AddPO />
+                                             },
+                                             {
+                                                 path: 'edit/:id',
+                                                 element: <AddPO />
+                                             },
+                                             {
+                                                 path: 'view/:id',
+                                                 element: <ViewPO />
+                                             },
+                                             {
+                                                 path: 'print',
+                                                 element: <POPrintPreview />
+                                             }
+                                         ]
+                                     },
+                                     {
+                                         path: 'invoice',
+                                         element: <PurchaseInvoice />
+                                     }
+                                 ]
+                             },
                             {
                                 path: 'sales',
                                 element: <Placeholder title="Sales" />

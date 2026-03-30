@@ -1,35 +1,67 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Search, Download, Upload, Filter, MoreVertical, X, FileText, FileSpreadsheet, Eye, FileEdit, ArrowLeft, ArrowRight, ChevronsUpDown, CheckCircle2, XCircle, RefreshCw, ChevronDown } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-import ProductForm from './components/ProductForm';
-import ViewProduct from './components/ViewProduct';
-import { translateDynamic } from '../../../utils/i18nUtils';
-import SuccessToast from './components/SuccessToast';
-import productService from '../../../services/productService';
+import React, { useState, useRef, useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import {
+  Search,
+  Download,
+  Filter,
+  MoreVertical,
+  X,
+  FileText,
+  FileSpreadsheet,
+  Eye,
+  FileEdit,
+  ArrowLeft,
+  ArrowRight,
+  ChevronsUpDown,
+  CheckCircle2,
+  XCircle,
+  RefreshCw,
+  ChevronDown,
+  Upload
+} from "lucide-react";
+import { useTranslation } from "react-i18next";
+import ProductForm from "./components/ProductForm";
+import ViewProduct from "./components/ViewProduct";
+import { translateDynamic } from "../../../utils/i18nUtils";
+import SuccessToast from "./components/SuccessToast";
+import productService from "../../../services/productService";
 import toast from 'react-hot-toast';
 import ImportModal from './components/ImportModal';
 
-
 const ProductMaster = () => {
-    const { t } = useTranslation(['modules', 'common']);
-    const defaultFilters = { uom: '', status: '', productType: '' };
-    const [searchQuery, setSearchQuery] = useState('');
-    const [isExportOpen, setIsExportOpen] = useState(false);
-    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-    const [isFilterOpen, setIsFilterOpen] = useState(false);
-    const [activeDropdown, setActiveDropdown] = useState(null);
-    const [filterInputs, setFilterInputs] = useState(defaultFilters);
-    const [appliedFilters, setAppliedFilters] = useState(defaultFilters);
-    const isFilterApplied = Object.values(appliedFilters).some(val => val !== '');
-    const [currentView, setCurrentView] = useState({ type: 'list', data: null });
-    const [showSuccessToast, setShowSuccessToast] = useState({ show: false, message: '', type: 'success' });
-    const exportRef = useRef(null);
-    const dropdownRef = useRef(null);
+  const { t } = useTranslation(["modules", "common"]);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const defaultFilters = { uom: "", status: "", productType: "" };
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const [filterInputs, setFilterInputs] = useState(defaultFilters);
+  const [appliedFilters, setAppliedFilters] = useState(defaultFilters);
+  const isFilterApplied = Object.values(appliedFilters).some(
+    (val) => val !== "",
+  );
+  const [currentView, setCurrentView] = useState({ type: "list", data: null });
+  const [showSuccessToast, setShowSuccessToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+  const exportRef = useRef(null);
+  const dropdownRef = useRef(null);
 
   const showToast = (message, type = "success") => {
     setShowSuccessToast({ show: true, message, type });
   };
 
+  useEffect(() => {
+    const mode = searchParams.get("mode");
+    if (mode === "add") {
+      setCurrentView({ type: "add", data: null });
+    }
+  }, [searchParams]);
 
   const [tableData, setTableData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -851,7 +883,14 @@ const ProductMaster = () => {
         <ProductForm
           mode={currentView.type}
           initialData={currentView.data}
-          onBack={() => setCurrentView({ type: "list", data: null })}
+          onBack={() => {
+            const redirect = searchParams.get("redirect");
+            if (redirect) {
+              navigate(redirect);
+            } else {
+              setCurrentView({ type: "list", data: null });
+            }
+          }}
           onEdit={(data) => setCurrentView({ type: "edit", data })}
           onSuccess={() => {
             const msg =
@@ -859,8 +898,14 @@ const ProductMaster = () => {
                 ? "Product added successfully"
                 : "Product updated successfully";
             showToast(msg);
-            setCurrentView({ type: "list", data: null });
-            fetchProducts();
+            
+            const redirect = searchParams.get("redirect");
+            if (redirect && currentView.type === "add") {
+              setTimeout(() => navigate(redirect), 1500); // Redirect back after toast
+            } else {
+              setCurrentView({ type: "list", data: null });
+              fetchProducts();
+            }
           }}
         />
       )}

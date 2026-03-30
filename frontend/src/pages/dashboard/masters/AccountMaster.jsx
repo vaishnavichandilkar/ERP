@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchAllAccounts, toggleAccountStatus } from '../../../redux/account/accountSlice';
 import { Search, Download, Upload, Filter, MoreVertical, Eye, Edit3, CheckCircle2, ChevronDown, RefreshCw, ArrowLeft, ArrowRight, ChevronsUpDown, X, FileText, FileSpreadsheet, Plus, Database, Check } from 'lucide-react';
@@ -9,9 +10,14 @@ import ViewAccount from './components/ViewAccount';
 import toast from 'react-hot-toast';
 import SuccessToast from './components/SuccessToast';
 import ImportModal from './components/ImportModal';
+import * as XLSX from 'xlsx';
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
 
 const AccountMaster = () => {
     const { t } = useTranslation(['common', 'modules']);
+    const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
     const [dropdownIndex, setDropdownIndex] = useState(null);
     const dropdownRef = useRef(null);
 
@@ -55,6 +61,13 @@ const AccountMaster = () => {
     const dispatch = useDispatch();
     const { accounts, total: totalItems, totalPages, loading } = useSelector(state => state.account);
     const paginatedData = accounts || [];
+
+    useEffect(() => {
+        const mode = searchParams.get('mode');
+        if (mode === 'add') {
+            setCurrentView('add');
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -186,44 +199,51 @@ const AccountMaster = () => {
         showToast("Data refreshed successfully");
     };
 
-    const handleExportPDF = async () => {
+     const handleExportPDF = () => {
         setIsExportOpen(false);
-        try {
-            const params = { format: 'pdf', search: searchQuery, ...appliedFilters };
-            if (params.status === 'Active') params.status = 'ACTIVE';
-            else if (params.status === 'InActive') params.status = 'INACTIVE';
-            
-            const response = await accountService.exportAccounts(params);
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', 'account-master.pdf');
-            document.body.appendChild(link);
-            link.click();
-            link.parentNode.removeChild(link);
-        } catch (e) {
-            console.error('Export failed', e);
-        }
+        const doc = new jsPDF('landscape');
+        const tableColumn = ["Customer Code", "Supplier Code", "Account", "Type", "Credit Days", "GST No", "PAN No", "Balance", "Status"];
+        const tableRows = paginatedData.map(acc => [
+            acc.customerCode || '-',
+            acc.supplierCode || '-',
+            acc.accountName,
+            acc.groupName?.includes('SUNDRY_DEBTORS') ? 'Customer' : 'Supplier',
+            acc.customerCreditDays || 0,
+            acc.gstNo || '-',
+            acc.panNo || '-',
+            acc.customerOpeningBalance || 0,
+            acc.status
+        ]);
+
+        doc.autoTable({
+            head: [tableColumn],
+            body: tableRows,
+            startY: 20,
+            theme: 'grid',
+            headStyles: { fillColor: [7, 51, 24] },
+        });
+        doc.text("Account Master Report", 14, 15);
+        doc.save("account-master.pdf");
     };
 
-    const handleExportExcel = async () => {
+    const handleExportExcel = () => {
         setIsExportOpen(false);
-        try {
-            const params = { format: 'xlsx', search: searchQuery, ...appliedFilters };
-            if (params.status === 'Active') params.status = 'ACTIVE';
-            else if (params.status === 'InActive') params.status = 'INACTIVE';
-            
-            const response = await accountService.exportAccounts(params);
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', 'account-master.xlsx');
-            document.body.appendChild(link);
-            link.click();
-            link.parentNode.removeChild(link);
-        } catch (e) {
-            console.error('Export failed', e);
-        }
+        const dataToExport = paginatedData.map(acc => ({
+            "Customer Code": acc.customerCode || '',
+            "Supplier Code": acc.supplierCode || '',
+            "Account Name": acc.accountName,
+            "Account Type": acc.groupName || '',
+            "GST Number": acc.gstNo || '',
+            "PAN Number": acc.panNo || '',
+            "Credit Days": acc.customerCreditDays || 0,
+            "Opening Balance": acc.customerOpeningBalance || 0,
+            "Status": acc.status
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(dataToExport);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Accounts");
+        XLSX.writeFile(wb, "account-master.xlsx");
     };
 
     const handleImportExcel = async (formData) => {
@@ -266,6 +286,11 @@ const AccountMaster = () => {
 
     if (currentView === 'add' || currentView === 'edit') {
         const handleBack = () => {
+            const redirect = searchParams.get('redirect');
+            if (redirect && currentView === 'add') {
+                navigate(redirect);
+                return;
+            }
             if (previousView === 'view') {
                 setCurrentView('view');
             } else {
@@ -274,12 +299,27 @@ const AccountMaster = () => {
             }
             setPreviousView(null);
         };
+
+        const handleSuccess = () => {
+            showToast(currentView === 'add' ? t('common:added_successfully') : t('common:updated_successfully'));
+            const redirect = searchParams.get('redirect');
+            if (redirect && currentView === 'add') {
+                setTimeout(() => navigate(redirect), 1500);
+            } else {
+                if (currentView === 'add') {
+                    handleAddAccount();
+                } else {
+                    handleUpdateAccount();
+                }
+            }
+        };
+
         return <AddAccount 
             initialData={selectedAccount} 
             isEditMode={currentView === 'edit'} 
             onBack={handleBack} 
-            onAddAccount={handleAddAccount}
-            onUpdateAccount={handleUpdateAccount}
+            onAddAccount={handleSuccess}
+            onUpdateAccount={handleSuccess}
             onShowToast={showToast}
         />;
     }
@@ -535,7 +575,6 @@ const AccountMaster = () => {
 
                                         {dropdownIndex === index && (
                                             <div 
-                                                 
                                                 className={`absolute right-[80%] w-max min-w-[200px] bg-white border border-gray-100 rounded-[14px] shadow-[0_10px_40px_rgba(0,0,0,0.12)] z-[110] py-2 animate-in fade-in zoom-in-95 duration-200 text-left ${
                                                     index >= paginatedData.length - 2 && paginatedData.length > 2
                                                         ? 'bottom-0 mb-2'
