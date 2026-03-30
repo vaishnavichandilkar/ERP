@@ -1,3 +1,4 @@
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Search, Download, Filter, Plus, Minus, FileText, FileSpreadsheet, Maximize2, Minimize2, MoreVertical, CheckCircle2, XCircle, RefreshCw, ChevronDown, X, Eye, ChevronsUpDown, Upload } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import GroupForm from './components/GroupForm';
