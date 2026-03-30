@@ -24,9 +24,7 @@ const EditCategoryModal = ({ isOpen, onClose, data, onSuccess, onShowToast }) =>
             setIsPromotingToCategory(false);
             setIsDemotingToSubCategory(false);
             setParentCategory(null);
-            if (isSubCategory || isDemotingToSubCategory) {
-                fetchDropdownData();
-            }
+            fetchDropdownData();
         }
     }, [isOpen, data]);
 
@@ -36,21 +34,15 @@ const EditCategoryModal = ({ isOpen, onClose, data, onSuccess, onShowToast }) =>
             const dropdownData = await categoryService.getCategoriesDropdown(isSubCategory ? null : data.id);
             setDropdownCategories(dropdownData || []);
 
-            if (isSubCategory && (data.category_id || data.parent_id)) {
-                const pId = data.category_id || data.parent_id;
-                const parent = dropdownData?.find(c => c.id === pId);
+            const pId = data.category_id || data.parent_id || data.parentId;
+            if (isSubCategory && pId) {
+                const parent = dropdownData?.find(c => Number(c.id) === Number(pId));
                 if (parent) setParentCategory(parent);
             }
         } catch (err) {
             console.error('Error fetching categories:', err);
         }
     };
-
-    useEffect(() => {
-        if (isDemotingToSubCategory && dropdownCategories.length === 0) {
-            fetchDropdownData();
-        }
-    }, [isDemotingToSubCategory]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {

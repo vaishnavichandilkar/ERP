@@ -71,7 +71,7 @@ const CategoryMaster = () => {
             }
 
             // Only clear dropdown if NOT clicking on a dropdown button or item
-            if (!event.target.closest('[data-dropdown-item="true"]') && !event.target.closest('[data-dropdown-btn="true"]')) {
+            if (!event.target.closest('.dropdown-trigger') && !event.target.closest('.dropdown-menu')) {
                 setActiveRowDropdown(null);
             }
         };
@@ -453,7 +453,7 @@ const CategoryMaster = () => {
                             const isExpanded = expandedGroups[section.id] || isSearchExpanding;
 
                             return (
-                                <div key={section.id} className="flex flex-col border-b border-[#E5E7EB] last:border-b-0">
+                                <div key={section.id} className={`flex flex-col border-b border-[#E5E7EB] last:border-b-0 relative ${activeRowDropdown?.includes(section.id.toString()) ? 'z-[30]' : 'z-0'}`}>
                                     <div className="flex items-center justify-between py-4 bg-white hover:bg-gray-50/50 transition-colors group">
                                         <div
                                             className="flex items-center flex-1 cursor-pointer select-none gap-3 pl-6"
@@ -498,24 +498,21 @@ const CategoryMaster = () => {
                                                         className={`absolute right-[80%] w-max min-w-[200px] bg-white border border-gray-100 rounded-[14px] shadow-[0_10px_40px_rgba(0,0,0,0.12)] z-[110] py-2 animate-in zoom-in-95 duration-200 dropdown-menu text-left
                                                             ${paginatedIndex >= paginatedData.length - 1 && paginatedData.length > 1 ? 'bottom-0 mb-2' : 'top-0 mt-2'}`}
                                                     >
-                                                        <button
+                                                         <button
                                                             onClick={(e) => { 
                                                                 e.stopPropagation(); 
-                                                                setCurrentView({ 
-                                                                    type: 'form', 
-                                                                    mode: 'edit', 
-                                                                    data: { id: section.id, name: section.name, type: 'category' } 
-                                                                });
+                                                                setSelectedCategoryData({ ...section, type: 'category' });
+                                                                setIsEditModalOpen(true);
                                                                 setActiveRowDropdown(null);
                                                             }}
-                                                            className="w-full px-5 py-3 flex items-center gap-3 text-[14px] font-bold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap"
+                                                            className="w-full px-5 py-3 flex items-center gap-3 text-[14px] font-bold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap dropdown-item"
                                                         >
                                                             <Edit size={18} className="text-[#073318]" />
                                                             {t('modules:view_and_edit_category')}
                                                         </button>
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); handleToggleStatus(section.id, section.status, 'category'); }}
-                                                            className="w-full px-5 py-3 flex items-center gap-3 text-[14px] font-bold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap"
+                                                            className="w-full px-5 py-3 flex items-center gap-3 text-[14px] font-bold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap dropdown-item"
                                                         >
                                                             {section.status === 'INACTIVE' ? (
                                                                 <CheckCircle2 size={18} className="text-[#073318]" />
@@ -530,14 +527,14 @@ const CategoryMaster = () => {
                                         </div>
                                     </div>
 
-                                    <div className={`transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
+                                    <div className={`transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-[800px] opacity-100 overflow-visible' : 'max-h-0 opacity-0 overflow-hidden'}`}>
                                         <div className="flex flex-col bg-gray-50/30 border-t border-[#E5E7EB]/50">
                                             {section.items.map((item, itemIdx) => {
                                                 const dropdownId = `${section.id}-item-${itemIdx}`;
                                                 return (
                                                     <div
                                                         key={itemIdx}
-                                                        className="relative flex items-center justify-between py-3.5 pl-[52px] text-[13px] border-b border-[#E5E7EB]/50 last:border-b-0"
+                                                        className={`relative flex items-center justify-between py-3.5 pl-[52px] text-[13px] border-b border-[#E5E7EB]/50 last:border-b-0 ${activeRowDropdown === dropdownId ? 'z-[50]' : 'z-0'}`}
                                                     >
                                                         <div className="absolute inset-y-0 left-[52px] flex items-center">
                                                             <span className="font-medium text-[#4B5563]">
@@ -578,29 +575,21 @@ const CategoryMaster = () => {
                                                                         className={`absolute right-[80%] w-max min-w-[200px] bg-white border border-gray-100 rounded-[14px] shadow-[0_10px_40px_rgba(0,0,0,0.12)] z-[110] py-2 animate-in zoom-in-95 duration-200 dropdown-menu text-left
                                                                             ${itemIdx >= section.items.length - 1 && section.items.length > 1 ? 'bottom-0 mb-2' : 'top-0 mt-2'}`}
                                                                     >
-                                                                        <button
+                                                                         <button
                                                                             onClick={(e) => { 
                                                                                 e.stopPropagation(); 
-                                                                                setCurrentView({ 
-                                                                                    type: 'form', 
-                                                                                    mode: 'edit', 
-                                                                                    data: { 
-                                                                                        id: item.id, 
-                                                                                        name: item.name, 
-                                                                                        type: 'sub_category',
-                                                                                        parentCategoryId: section.id 
-                                                                                    } 
-                                                                                });
+                                                                                setSelectedCategoryData({ ...item, type: 'sub_category', parentId: section.id });
+                                                                                setIsEditModalOpen(true);
                                                                                 setActiveRowDropdown(null);
                                                                             }}
-                                                                            className="w-full px-5 py-3 flex items-center gap-3 text-[14px] font-bold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap"
+                                                                            className="w-full px-5 py-3 flex items-center gap-3 text-[14px] font-bold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap dropdown-item"
                                                                         >
                                                                             <Edit size={18} className="text-[#073318]" />
                                                                             {t('modules:view_and_edit_category')}
                                                                         </button>
                                                                         <button
                                                                             onClick={(e) => { e.stopPropagation(); handleToggleStatus(item.id, item.status, 'sub_category'); }}
-                                                                            className="w-full px-5 py-3 flex items-center gap-3 text-[14px] font-bold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap"
+                                                                            className="w-full px-5 py-3 flex items-center gap-3 text-[14px] font-bold text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors whitespace-nowrap dropdown-item"
                                                                         >
                                                                             {item.status === 'INACTIVE' ? (
                                                                                 <CheckCircle2 size={18} className="text-[#073318]" />
