@@ -65,7 +65,6 @@ const categoryService = {
         });
         return response;
     }
-    }
 };
 
 export default categoryService;

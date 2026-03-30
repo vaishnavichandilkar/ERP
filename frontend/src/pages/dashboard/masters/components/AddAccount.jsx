@@ -150,6 +150,7 @@ const FileUploadField = ({
   accept,
   maxMb,
   multiple = false,
+  onShowToast,
 }) => {
   const { t } = useTranslation(["common"]);
   const fileInputRef = useRef(null);
@@ -1676,6 +1677,7 @@ const AddAccount = ({
                     accept=".pdf, .jpg, .jpeg, .png"
                     maxMb={10}
                     onFileSelect={setMsmeFile}
+                    onShowToast={onShowToast}
                   />
                 </div>
               )}
