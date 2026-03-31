@@ -417,27 +417,29 @@ const PurchaseOrder = () => {
                           const expDate = parseDate(po.expiryDate);
                           const now = new Date();
                           
-                          // Set expiry to end of that day for fair comparison
                           const expiryEndOfDay = new Date(expDate);
                           expiryEndOfDay.setHours(23, 59, 59, 999);
-                          
                           const diffHrs = (expiryEndOfDay.getTime() - now.getTime()) / (1000 * 60 * 60);
 
+                          let statusTag;
                           if (status === 'INVOICE_GENERATED') {
-                            return <span className="px-3 py-1 bg-emerald-100 text-emerald-600 rounded-full text-[12px] font-bold uppercase shadow-sm">COMPLETED</span>;
+                            statusTag = <span className="px-3 py-1 bg-emerald-100 text-emerald-600 rounded-full text-[11px] font-bold uppercase shadow-sm">COMPLETED</span>;
+                          } else if (status === 'DELETED') {
+                            statusTag = <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-[11px] font-bold uppercase shadow-sm">DELETED</span>;
+                          } else {
+                            statusTag = <span className="px-3 py-1 bg-orange-100 text-orange-600 rounded-full text-[11px] font-bold uppercase shadow-sm">PENDING</span>;
                           }
-                          if (status === 'DELETED') {
-                            return <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-[12px] font-bold uppercase shadow-sm">DELETED</span>;
+
+                          let expiryTag = null;
+                          if (status === 'PENDING') {
+                            if (expiryEndOfDay < now) {
+                              expiryTag = <span className="px-2 py-0.5 bg-red-100 text-red-600 rounded-[4px] text-[10px] font-bold uppercase ml-2">EXPIRED</span>;
+                            } else if (diffHrs > 0 && diffHrs <= 48) {
+                              expiryTag = <span className="px-2 py-0.5 bg-amber-100 text-amber-600 rounded-[4px] text-[10px] font-bold uppercase ml-2">EXPIRING</span>;
+                            }
                           }
                           
-                          if (expiryEndOfDay < now) {
-                            return <span className="px-3 py-1 bg-red-100 text-red-600 rounded-full text-[12px] font-bold uppercase shadow-sm">EXPIRED</span>;
-                          }
-                          if (diffHrs > 0 && diffHrs <= 48) {
-                            return <span className="px-3 py-1 bg-amber-100 text-amber-600 rounded-full text-[12px] font-bold uppercase shadow-sm">EXPIRING SOON</span>;
-                          }
-                          
-                          return <span className="px-3 py-1 bg-orange-100 text-orange-600 rounded-full text-[12px] font-bold uppercase shadow-sm">PENDING</span>;
+                          return <div className="flex items-center flex-wrap gap-y-2">{statusTag}{expiryTag}</div>;
                         })()}
                     </td>
                     <td className="px-6 py-5 text-center relative" ref={el => dropdownRefs.current[po.id] = el}>
