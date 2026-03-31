@@ -578,7 +578,10 @@ const PurchaseOrder = () => {
                   {/* Modal Content */}
                   <div className="p-8 flex flex-col items-center gap-10">
                       {/* Download Sample */}
-                      <button className="flex items-center gap-2 px-6 py-3 bg-[#AFC9BD]/40 text-[#073318] rounded-[10px] text-[14px] font-bold hover:bg-[#AFC9BD]/60 transition-all">
+                      <button 
+                        onClick={handleDownloadSample}
+                        className="flex items-center gap-2 px-6 py-3 bg-[#AFC9BD]/40 text-[#073318] rounded-[10px] text-[14px] font-bold hover:bg-[#AFC9BD]/60 transition-all"
+                      >
                           <Download size={18} />
                           Download Sample
                       </button>
