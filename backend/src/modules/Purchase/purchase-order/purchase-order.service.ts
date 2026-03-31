@@ -134,15 +134,12 @@ export class PurchaseOrderService {
     switch (query.filter) {
       case 'pending':
         where.status = 'PENDING';
-        where.expiryDate = { gt: fortyEightHoursLater };
         break;
       case 'expiring': {
-        where.status = 'PENDING';
         where.expiryDate = { gte: now, lte: fortyEightHoursLater };
         break;
       }
       case 'expired':
-        where.status = 'PENDING';
         where.expiryDate = { lt: now };
         break;
       case 'completed':

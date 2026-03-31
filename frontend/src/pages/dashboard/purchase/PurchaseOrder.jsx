@@ -44,7 +44,7 @@ const PurchaseOrder = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   // Current date
-  const currentDate = new Date("2026-03-26");
+  const currentDate = new Date();
 
   // Local Storage Data Retrieval
   const [purchaseOrders, setPurchaseOrders] = useState([]);
@@ -74,11 +74,11 @@ const PurchaseOrder = () => {
             
             // Map tabs to backend statuses if needed
             if (activeTab !== "All") {
-                if (activeTab === "Pending") params.status = "PENDING";
-                if (activeTab === "Completed") params.status = "INVOICE_GENERATED";
-                if (activeTab === "Deleted") params.status = "DELETED";
-                // Note: "Expiring soon" and "Expired" logic handled by specific query params if backend supports them, 
-                // or we filter locally if the dataset is small. For now we assume typical status filters.
+                if (activeTab === "Pending") params.filter = "pending";
+                if (activeTab === "Completed") params.filter = "completed";
+                if (activeTab === "Deleted") params.filter = "deleted";
+                if (activeTab === "Expiring soon") params.filter = "expiring";
+                if (activeTab === "Expired") params.filter = "expired";
             }
 
             const response = await purchaseOrderService.getPurchaseOrders(params);
@@ -110,19 +110,9 @@ const PurchaseOrder = () => {
    * Filter Logic
    */
   const filteredData = useMemo(() => {
-    // With API integration, we mostly use purchaseOrders as is, 
-    // but we can still apply the special date-based status logic here 
-    // for "Expiring soon" and "Expired" if the backend doesn't filter by those.
-    return purchaseOrders.filter((po) => {
-      if (activeTab === "Expiring soon" || activeTab === "Expired") {
-        const poExpiryDate = new Date(po.expiryDate);
-        const diffHrs = (poExpiryDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60);
-        if (activeTab === "Expiring soon") return diffHrs >= 0 && diffHrs <= 48;
-        if (activeTab === "Expired") return diffHrs < 0;
-      }
-      return true;
-    });
-  }, [activeTab, purchaseOrders]);
+    // Backend handles all filtering now.
+    return purchaseOrders;
+  }, [purchaseOrders]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -447,7 +437,8 @@ const PurchaseOrder = () => {
                             onClick={() => navigate(ROUTES.PURCHASE_ORDER_VIEW.replace(':id', po.id))}
                             className="w-full px-5 py-3 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors font-bold"
                           >
-                            <Eye size={18} className="text-gray-400" /> View and Edit Order
+                            <Eye size={18} className="text-gray-400" /> 
+                            {po.status === 'PENDING' ? 'View and Edit Order' : 'View Order'}
                           </button>
                         </div>
                       )}

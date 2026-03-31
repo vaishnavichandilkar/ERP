@@ -157,7 +157,7 @@ const ViewPO = () => {
                         >
                             <ArrowLeft size={18} /> Back
                         </button>
-                        {!isLoading && formData.status !== 'DELETED' && (
+                        {!isLoading && formData.status === 'PENDING' && (
                             <button 
                                 onClick={() => navigate(ROUTES.PURCHASE_ORDER_EDIT.replace(':id', id))}
                                 className="flex items-center gap-2 px-6 h-[40px] bg-[#073318] text-white rounded-[10px] text-[14px] font-bold hover:bg-[#04200f] transition-all shadow-sm"
