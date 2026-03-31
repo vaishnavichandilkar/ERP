@@ -19,6 +19,7 @@ import {
   Upload,
   CloudUpload,
 } from "lucide-react";
+import toast from 'react-hot-toast';
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
@@ -35,7 +36,6 @@ const PurchaseOrder = () => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
   const dropdownRefs = useRef({});
   const exportRef = useRef(null);
 
@@ -155,12 +155,9 @@ const PurchaseOrder = () => {
    */
   const handleRefresh = () => {
     setIsRefreshing(true);
-    // Quick Simulation (400ms)
     setTimeout(() => {
         setIsRefreshing(false);
-        setShowSuccessToast(true);
-        // Auto-hide toast after 3s
-        setTimeout(() => setShowSuccessToast(false), 3000);
+        toast.success("Data refreshed successfully");
     }, 400);
   };
 
@@ -192,11 +189,10 @@ const PurchaseOrder = () => {
         link.click();
         link.remove();
         
-        setShowSuccessToast(true);
-        setTimeout(() => setShowSuccessToast(false), 3000);
+        toast.success(`Report exported as ${format.toUpperCase()}`);
     } catch (error) {
         console.error("Export error:", error);
-        // Fallback or Alert
+        toast.error("Export failed. Please try again.");
     } finally {
         setIsRefreshing(false);
     }
@@ -229,9 +225,15 @@ const PurchaseOrder = () => {
         await purchaseOrderService.importPurchaseOrders(formData);
         setIsImportModalOpen(false);
         setSelectedFile(null);
-        handleRefresh(); // Refresh the list
+        toast.success("Data imported successfully");
+        // Trigger data refresh from backend
+        // fetchData will run because isRefreshing changes or by directly calling it if needed.
+        // Actually handleRefresh simulates a small delay then calls it? No it just sets isRefreshing.
+        // I'll call handleRefresh.
+        handleRefresh();
     } catch (error) {
         console.error("Error importing PO:", error);
+        toast.error(error.response?.data?.message || "Import failed. Please verify your columns.");
     } finally {
         setIsRefreshing(false);
     }
@@ -264,22 +266,6 @@ const PurchaseOrder = () => {
         }
       `}</style>
       
-      {/* Toast Notification (Success Popup) */}
-      {showSuccessToast && (
-          <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[1000] animate-in slide-in-from-top-4 duration-300">
-              <div className="bg-[#073318] text-white px-6 py-2.5 rounded-full flex items-center gap-4 shadow-[0_4px_20px_rgba(0,0,0,0.15)] ring-1 ring-white/10">
-                  <CheckCircle2 size={20} className="text-emerald-400" />
-                  <span className="text-[15px] font-semibold tracking-tight">Data refreshed successfully</span>
-                  <button 
-                    onClick={() => setShowSuccessToast(false)}
-                    className="ml-2 hover:text-emerald-300 transition-colors"
-                  >
-                    <X size={16} />
-                  </button>
-              </div>
-          </div>
-      )}
-
       {/* Title Section */}
       <div className="flex items-center justify-between mb-2">
         <h1 className="text-[28px] font-bold text-[#111827] tracking-tight">
