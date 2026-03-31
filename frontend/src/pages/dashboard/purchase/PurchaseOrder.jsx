@@ -75,7 +75,6 @@ const PurchaseOrder = () => {
             // Map tabs to backend statuses if needed
             if (activeTab !== "All") {
                 if (activeTab === "Pending") params.status = "PENDING";
-                if (activeTab === "Approved") params.status = "APPROVED";
                 if (activeTab === "Completed") params.status = "INVOICE_GENERATED";
                 if (activeTab === "Deleted") params.status = "DELETED";
                 // Note: "Expiring soon" and "Expired" logic handled by specific query params if backend supports them, 
@@ -238,7 +237,7 @@ const PurchaseOrder = () => {
     }
   };
 
-  const statusTabs = ["All", "Pending", "Approved", "Expiring soon", "Expired", "Completed", "Deleted"];
+  const statusTabs = ["All", "Pending", "Expiring soon", "Expired", "Completed", "Deleted"];
 
   return (
     <div className="flex flex-col gap-1 w-full animate-in fade-in duration-300 relative">
