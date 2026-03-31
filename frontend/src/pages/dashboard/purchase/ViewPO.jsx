@@ -151,20 +151,20 @@ const ViewPO = () => {
                 <div className="flex items-center justify-between px-8 py-6 border-b border-[#F3F4F6]">
                     <h2 className="text-[20px] font-bold text-[#111827]">View PO {isLoading ? '' : `- ${formData.po_number}`}</h2>
                     <div className="flex items-center gap-3">
-                        {!isLoading && (formData.status === 'PENDING' || formData.status === 'APPROVED') && (
-                            <button 
-                                onClick={() => navigate(ROUTES.PURCHASE_ORDER_EDIT.replace(':id', id))}
-                                className="px-8 h-[40px] bg-[#073318] text-white rounded-[10px] text-[14px] font-bold hover:bg-[#04200f] transition-all shadow-sm"
-                            >
-                                Edit PO
-                            </button>
-                        )}
                         <button 
                             onClick={() => navigate(-1)}
                             className="flex items-center gap-2 px-6 h-[40px] border border-[#E5E7EB] rounded-[10px] text-[14px] font-bold text-[#4B5563] hover:bg-gray-50 transition-all font-outfit"
                         >
                             <ArrowLeft size={18} /> Back
                         </button>
+                        {!isLoading && formData.status !== 'DELETED' && (
+                            <button 
+                                onClick={() => navigate(ROUTES.PURCHASE_ORDER_EDIT.replace(':id', id))}
+                                className="flex items-center gap-2 px-6 h-[40px] bg-[#073318] text-white rounded-[10px] text-[14px] font-bold hover:bg-[#04200f] transition-all shadow-sm"
+                            >
+                                <Edit3 size={18} /> Edit
+                            </button>
+                        )}
                     </div>
                 </div>
 
