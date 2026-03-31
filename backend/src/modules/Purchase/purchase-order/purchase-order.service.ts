@@ -608,24 +608,62 @@ export class PurchaseOrderService {
       if (!supplierName || supplierName === '-') continue;
 
       try {
-        // Find Supplier
-        const supplier = await this.prisma.accountMaster.findFirst({
+        // Find or Auto-Create Supplier
+        let supplier = await this.prisma.accountMaster.findFirst({
           where: { accountName: { equals: supplierName, mode: 'insensitive' }, userId }
         });
-        if (!supplier) throw new Error(`Supplier '${supplierName}' not found in Account Master`);
+        
+        if (!supplier) {
+          // Auto-create basic supplier if missing
+          supplier = await this.prisma.accountMaster.create({
+            data: {
+              accountName: supplierName,
+              groupName: ["Sundry Creditors"],
+              panNo: "AUTOIMPORT", // Placeholder
+              addressLine1: "Direct Import",
+              pincode: "000000",
+              state: "Maharashtra", // Default state
+              prefix: "Mr",
+              contactPersonName: supplierName,
+              mobileNo: "0000000000",
+              userId
+            }
+          });
+        }
 
-        // Find Product
+        // Find or Auto-Create Product
         const productCode = String(getVal(row, 'productCode') || '').trim();
-        const product = await this.prisma.product.findFirst({
+        const productName = String(getVal(row, 'productName') || productCode).trim();
+        let product = await this.prisma.product.findFirst({
           where: { product_code: { equals: productCode, mode: 'insensitive' }, created_by: userId }
         });
-        if (!product) throw new Error(`Product Code '${productCode}' not found in Product Master`);
+
+        if (!product) {
+          // Get first available defaults for mandatory master refs
+          const firstUom = await this.prisma.unitMaster.findFirst();
+          const firstCat = await this.prisma.category.findFirst();
+          const firstSub = await this.prisma.subCategory.findFirst();
+
+          product = await this.prisma.product.create({
+            data: {
+              product_name: productName,
+              product_code: productCode,
+              uom_id: firstUom?.id || 1,
+              category_id: firstCat?.id || 1,
+              sub_category_id: firstSub?.id || 1,
+              product_type: "Goods",
+              hsn_code: "0000",
+              tax_rate: parseFloat(String(getVal(row, 'taxPercent') || 0)),
+              created_by: userId
+            }
+          });
+        }
 
         // Prepare PO Data
         const dto: CreatePurchaseOrderDto = {
           supplierId: supplier.id,
           creditDays: parseInt(String(getVal(row, 'creditDays') || supplier.supplierCreditDays || 0), 10),
-          expiryDate: new Date(String(getVal(row, 'expiryDate'))).toISOString().split('T')[0],
+          expiryDate: new Date(String(getVal(row, 'expiryDate')) || new Date()).toISOString().split('T')[0],
           items: [{
             productCode: product.product_code,
             productName: product.product_name,
