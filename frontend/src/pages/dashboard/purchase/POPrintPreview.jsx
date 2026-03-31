@@ -37,11 +37,11 @@ const POPrintPreview = () => {
         items = []
     } = poData;
 
-    const subTotal = items.reduce((sum, item) => sum + (parseFloat(item.before_tax) || 0), 0);
-    const totalTax = items.reduce((sum, item) => sum + (parseFloat(item.tax_amount) || 0), 0);
+    const subTotal = items.reduce((sum, item) => sum + (parseFloat(item.before_tax || (item.quantity * item.rate - (item.discountAmount || 0))) || 0), 0);
+    const totalTax = items.reduce((sum, item) => sum + (parseFloat(item.tax_amount || ((item.quantity * item.rate - (item.discountAmount || 0)) * (item.taxPercent || 0) / 100)) || 0), 0);
     const cgst = totalTax / 2;
     const sgst = totalTax / 2;
-    const totalAmount = items.reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0);
+    const totalAmount = items.reduce((sum, item) => sum + (parseFloat(item.total_amount || ((item.quantity * item.rate - (item.discountAmount || 0)) * (1 + (item.taxPercent || 0) / 100))) || 0), 0);
 
     const numberToWords = (num) => {
         const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
@@ -297,14 +297,16 @@ const POPrintPreview = () => {
                                     {items.map((item, idx) => (
                                         <tr key={item.id} className="text-[12px] font-semibold h-[40px]">
                                             <td className="border-b border-r border-black text-center">{idx + 1}</td>
-                                            <td className="border-b border-r border-black px-4 font-black">{item.product_name}</td>
-                                            <td className="border-b border-r border-black text-center">{item.hsn}</td>
-                                            <td className="border-b border-r border-black text-center">{item.tax_percent}</td>
+                                            <td className="border-b border-r border-black px-4 font-black">{item.productName || item.product_name}</td>
+                                            <td className="border-b border-r border-black text-center">{item.hsnCode || item.hsn}</td>
+                                            <td className="border-b border-r border-black text-center">{item.taxPercent || item.tax_percent}</td>
                                             <td className="border-b border-r border-black text-center">{item.quantity}</td>
                                             <td className="border-b border-r border-black text-center uppercase">{item.uom}</td>
                                             <td className="border-b border-r border-black text-center">{item.rate}</td>
-                                            <td className="border-b border-r border-black text-center">{item.discount_percent || 0}</td>
-                                            <td className="border-b border-black text-right px-4 font-black">{(parseFloat(item.before_tax)).toFixed(2)}</td>
+                                            <td className="border-b border-r border-black text-center">{item.discountPercent || item.discount_percent || 0}</td>
+                                            <td className="border-b border-black text-right px-4 font-black">
+                                                {(parseFloat(item.before_tax || (item.quantity * item.rate - (item.discountAmount || 0)))).toFixed(2)}
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>

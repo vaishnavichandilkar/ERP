@@ -24,71 +24,7 @@ import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 import { ROUTES } from "../../../constants/routes";
 
-/**
- * MOCK DATA
- */
-const MOCK_POS = [
-  {
-    id: 1,
-    po_no: "PO00001",
-    supplier_name: "Shree Agro Traders",
-    po_creation_date: "08-03-2026",
-    expiry_date: "30-03-2026",
-    po_amount: 22500.0,
-    gst_number: "27ABCDE1234F1Z5",
-    credit_days: 30,
-    tax_amount: 1125.0,
-    total_amount: 23625.0,
-    status: "Pending",
-    items: [
-        { id: 1, product_code: 'PRD-001', product_name: 'Premium Maize Silage', quantity: 5.0, rate: 4500.0, uom: 'Ton', discount_amount: 0.0, discount_percent: 0.0, hsn: '23099090', tax_percent: 5, before_tax: 22500.0, tax_amount: 1125.0, total_amount: 23625.0, description: 'High Quality Silage' }
-    ]
-  },
-  {
-    id: 2,
-    po_no: "PO00004",
-    supplier_name: "Global Industrial",
-    po_creation_date: "01-03-2026",
-    expiry_date: "12-03-2026",
-    po_amount: 15000.0,
-    gst_number: "27PQRSX5678L1Z2",
-    credit_days: 15,
-    tax_amount: 1800.0,
-    total_amount: 16800.0,
-    status: "Invoice Generated",
-    items: []
-  },
-  {
-    id: 3,
-    po_no: "PO00005",
-    supplier_name: "Metro Supplies Co.",
-    po_creation_date: "09-03-2026",
-    expiry_date: "10-03-2026",
-    po_amount: 37500.0,
-    gst_number: "27LMNOP4321K2Z7",
-    credit_days: 30,
-    tax_amount: 2925.0,
-    total_amount: 40425.0,
-    status: "Deleted",
-    items: []
-  },
-  {
-    id: 6,
-    po_no: "PO00010",
-    supplier_name: "Apex Solutions",
-    po_creation_date: "10-03-2026",
-    expiry_date: "25-03-2026",
-    po_amount: 15000.0,
-    gst_number: "27AAACS1234A1Z5",
-    credit_days: 45,
-    tax_amount: 810.0,
-    total_amount: 15810.0,
-    status: "Approved",
-    items: [
-        { id: 1, product_code: 'PRD-002', product_name: 'Organic Fertilizer Mix', quantity: 12.0, rate: 1250.0, uom: 'Bag', discount_amount: 0.0, discount_percent: 0.0, hsn: '31010299', tax_percent: 12, before_tax: 15000.0, tax_amount: 1800.0, total_amount: 16800.0, description: 'Organic Crop Fertilizer' }
-    ]
-  }
-];
+import purchaseOrderService from "../../../services/purchaseOrderService";
 
 const PurchaseOrder = () => {
   const navigate = useNavigate();
@@ -111,15 +47,54 @@ const PurchaseOrder = () => {
   const currentDate = new Date("2026-03-26");
 
   // Local Storage Data Retrieval
-  const [purchaseOrders, setPurchaseOrders] = useState(() => {
-    const savedData = localStorage.getItem('purchase_orders');
-    if (savedData) {
-      return JSON.parse(savedData);
-    } else {
-      localStorage.setItem('purchase_orders', JSON.stringify(MOCK_POS));
-      return MOCK_POS;
-    }
-  });
+  const [purchaseOrders, setPurchaseOrders] = useState([]);
+  const [totalItemsCount, setTotalItemsCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Helper date formatting
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "-";
+    const date = new Date(dateStr);
+    const d = String(date.getDate()).padStart(2, '0');
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const y = date.getFullYear();
+    return `${d}-${m}-${y}`;
+  };
+
+  // Fetch logic from API
+  useEffect(() => {
+    const fetchData = async () => {
+        setIsLoading(true);
+        try {
+            const params = {
+                page: currentPage,
+                limit: itemsPerPage,
+                search: searchQuery,
+            };
+            
+            // Map tabs to backend statuses if needed
+            if (activeTab !== "All") {
+                if (activeTab === "Pending") params.status = "PENDING";
+                if (activeTab === "Approved") params.status = "APPROVED";
+                if (activeTab === "Completed") params.status = "INVOICE_GENERATED";
+                if (activeTab === "Deleted") params.status = "DELETED";
+                // Note: "Expiring soon" and "Expired" logic handled by specific query params if backend supports them, 
+                // or we filter locally if the dataset is small. For now we assume typical status filters.
+            }
+
+            const response = await purchaseOrderService.getPurchaseOrders(params);
+            const data = Array.isArray(response) ? response : (response.data || []);
+            setPurchaseOrders(data);
+            setTotalItemsCount(response.meta?.total || data.length);
+        } catch (error) {
+            console.error("Error fetching purchase orders:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    fetchData();
+  }, [currentPage, itemsPerPage, searchQuery, activeTab, isRefreshing]);
 
   // Helper date parsing
   const parseDate = (dateStr) => {
@@ -136,30 +111,19 @@ const PurchaseOrder = () => {
    * Filter Logic
    */
   const filteredData = useMemo(() => {
+    // With API integration, we mostly use purchaseOrders as is, 
+    // but we can still apply the special date-based status logic here 
+    // for "Expiring soon" and "Expired" if the backend doesn't filter by those.
     return purchaseOrders.filter((po) => {
-      const searchStr = searchQuery.toLowerCase();
-      const matchesSearch =
-        po.po_no.toLowerCase().includes(searchStr) ||
-        po.supplier_name.toLowerCase().includes(searchStr) ||
-        (po.gst_number || "").toLowerCase().includes(searchStr);
-
-      if (!matchesSearch) return false;
-
-      const poExpiryDate = parseDate(po.expiry_date);
-      const diffHrs = (poExpiryDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60);
-
-      switch (activeTab) {
-        case "All": return true;
-        case "Pending": return po.status === "Pending";
-        case "Expiring soon": return diffHrs >= 0 && diffHrs <= 48;
-        case "Expired": return diffHrs < 0;
-        case "Completed": return po.status === "Invoice Generated";
-        case "Approved": return po.status === "Approved";
-        case "Deleted": return po.status === "Deleted";
-        default: return true;
+      if (activeTab === "Expiring soon" || activeTab === "Expired") {
+        const poExpiryDate = new Date(po.expiryDate);
+        const diffHrs = (poExpiryDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60);
+        if (activeTab === "Expiring soon") return diffHrs >= 0 && diffHrs <= 48;
+        if (activeTab === "Expired") return diffHrs < 0;
       }
+      return true;
     });
-  }, [activeTab, searchQuery, purchaseOrders]);
+  }, [activeTab, purchaseOrders]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -178,10 +142,10 @@ const PurchaseOrder = () => {
   }, [activeDropdown]);
 
   // Derived pagination data
-  const totalItems = filteredData.length;
+  // Derived pagination data
+  const totalItems = totalItemsCount;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentItems = filteredData.slice(startIndex, startIndex + itemsPerPage);
+  const currentItems = filteredData; // API handles pagination slice, but we can use filteredData here if we did local date filters.
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) setCurrentPage(page);
@@ -207,17 +171,17 @@ const PurchaseOrder = () => {
   const handleExportPDF = () => {
     setIsExportOpen(false);
     const doc = new jsPDF("landscape");
-    const tableColumn = ["PO No", "Supplier Name", "Creation Date", "Expiry Date", "Amount", "GST No", "Credit Days", "Tax", "Total", "Status"];
+    const tableColumn = ["PO No", "Supplier Name", "Creation Date", "Expiry Date", "Amount", "GST No", "Credit Days", "Tax Amount", "Grand Total", "Status"];
     const tableRows = filteredData.map(po => [
-      po.po_no,
-      po.supplier_name,
-      po.po_creation_date,
-      po.expiry_date,
-      po.po_amount,
-      po.gst_number,
-      po.credit_days,
-      po.tax_amount.toFixed(2),
-      po.total_amount.toFixed(2),
+      po.poNumber || "-",
+      po.supplierName || "-",
+      formatDate(po.poCreationDate),
+      formatDate(po.expiryDate),
+      (po.totalAmount || 0).toFixed(2),
+      po.gstNumber || "-",
+      po.creditDays || 0,
+      (po.taxAmount || 0).toFixed(2),
+      (po.grandTotal || 0).toFixed(2),
       po.status
     ]);
 
@@ -230,28 +194,60 @@ const PurchaseOrder = () => {
       styles: { fontSize: 8 },
     });
     doc.text("Purchase Orders Report", 14, 15);
-    doc.save("purchase-orders.pdf");
+    doc.save(`purchase-orders-${activeTab.toLowerCase()}.pdf`);
   };
 
   const handleExportExcel = () => {
     setIsExportOpen(false);
     const dataToExport = filteredData.map(po => ({
-      "PO No": po.po_no,
-      "Supplier Name": po.supplier_name,
-      "Creation Date": po.po_creation_date,
-      "Expiry Date": po.expiry_date,
-      "PO Amount": po.po_amount,
-      "GST Number": po.gst_number,
-      "Credit Days": po.credit_days,
-      "Tax Amount": po.tax_amount,
-      "Total Amount": po.total_amount,
+      "PO No": po.poNumber || "-",
+      "Supplier Name": po.supplierName || "-",
+      "Creation Date": formatDate(po.poCreationDate),
+      "Expiry Date": formatDate(po.expiryDate),
+      "Base Amount": po.totalAmount || 0,
+      "GST Number": po.gstNumber || "-",
+      "Credit Days": po.creditDays || 0,
+      "Tax Amount": po.taxAmount || 0,
+      "Grand Total": po.grandTotal || 0,
       "Status": po.status
     }));
 
     const ws = XLSX.utils.json_to_sheet(dataToExport);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Purchase Orders");
-    XLSX.writeFile(wb, "purchase-orders.xlsx");
+    XLSX.writeFile(wb, `purchase-orders-${activeTab.toLowerCase()}.xlsx`);
+  };
+
+  const handleDownloadSample = async () => {
+    try {
+      const response = await purchaseOrderService.downloadSample();
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'PO_Import_Sample.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error("Error downloading sample:", error);
+    }
+  };
+
+  const handleSubmitImport = async () => {
+    if (!selectedFile) return;
+    try {
+        setIsRefreshing(true);
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        await purchaseOrderService.importPurchaseOrders(formData);
+        setIsImportModalOpen(false);
+        setSelectedFile(null);
+        handleRefresh(); // Refresh the list
+    } catch (error) {
+        console.error("Error importing PO:", error);
+    } finally {
+        setIsRefreshing(false);
+    }
   };
 
   const statusTabs = ["All", "Pending", "Approved", "Expiring soon", "Expired", "Completed", "Deleted"];
@@ -422,20 +418,47 @@ const PurchaseOrder = () => {
               </tr>
             </thead>
             <tbody className={`text-[14px] text-[#111827] transition-opacity duration-300 ${isRefreshing ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
-              {currentItems.length > 0 ? (
-                currentItems.map((po, index) => (
-                  <tr key={po.id} className="border-b border-[#F3F4F6] last:border-b-0 hover:bg-[#F9FAFB] transition-colors group">
-                    <td className="px-6 py-5 font-bold border-r border-[#F3F4F6]">{po.po_no}</td>
-                    <td className="px-6 py-5 font-bold border-r border-[#F3F4F6]">{po.supplier_name}</td>
-                    <td className="px-6 py-5 text-[#4B5563] border-r border-[#F3F4F6]">{po.po_creation_date}</td>
-                    <td className="px-6 py-5 text-[#4B5563] border-r border-[#F3F4F6]">{po.expiry_date}</td>
-                    <td className="px-6 py-5 font-medium border-r border-[#F3F4F6] text-[#4B5563]">{po.po_amount}</td>
-                    <td className="px-6 py-5 text-[#4B5563] border-r border-[#F3F4F6]">{po.gst_number}</td>
-                    <td className="px-6 py-5 text-[#4B5563] border-r border-[#F3F4F6]">{po.credit_days}</td>
-                    <td className="px-6 py-5 text-[#4B5563] border-r border-[#F3F4F6]">{po.tax_amount.toFixed(2)}</td>
-                    <td className="px-6 py-5 font-bold border-r border-[#F3F4F6] text-[#111827]">{po.total_amount.toFixed(2)}</td>
+              {(isLoading ? Array(5).fill({}) : currentItems).length > 0 ? (
+                (isLoading ? Array(5).fill({}) : currentItems).map((po, index) => (
+                  <tr key={po.id || index} className={`border-b border-[#F3F4F6] last:border-b-0 hover:bg-[#F9FAFB] transition-colors group ${isLoading ? 'animate-pulse' : ''}`}>
+                    <td className="px-6 py-5 font-bold border-r border-[#F3F4F6]">
+                        {isLoading ? <div className="h-4 bg-gray-200 rounded w-20"></div> : po.poNumber}
+                    </td>
+                    <td className="px-6 py-5 font-bold border-r border-[#F3F4F6]">
+                        {isLoading ? <div className="h-4 bg-gray-200 rounded w-40"></div> : po.supplierName}
+                    </td>
                     <td className="px-6 py-5 text-[#4B5563] border-r border-[#F3F4F6]">
-                      {po.status}
+                        {isLoading ? <div className="h-4 bg-gray-200 rounded w-24"></div> : formatDate(po.poCreationDate)}
+                    </td>
+                    <td className="px-6 py-5 text-[#4B5563] border-r border-[#F3F4F6]">
+                        {isLoading ? <div className="h-4 bg-gray-200 rounded w-24"></div> : formatDate(po.expiryDate)}
+                    </td>
+                    <td className="px-6 py-5 font-medium border-r border-[#F3F4F6] text-[#4B5563]">
+                        {isLoading ? <div className="h-4 bg-gray-200 rounded w-16"></div> : (po.totalAmount || 0).toFixed(2)}
+                    </td>
+                    <td className="px-6 py-5 text-[#4B5563] border-r border-[#F3F4F6]">
+                        {isLoading ? <div className="h-4 bg-gray-200 rounded w-32"></div> : (po.gstNumber || '-')}
+                    </td>
+                    <td className="px-6 py-5 text-[#4B5563] border-r border-[#F3F4F6]">
+                        {isLoading ? <div className="h-4 bg-gray-200 rounded w-8"></div> : (po.creditDays || 0)}
+                    </td>
+                    <td className="px-6 py-5 text-[#4B5563] border-r border-[#F3F4F6]">
+                        {isLoading ? <div className="h-4 bg-gray-200 rounded w-16"></div> : (po.taxAmount || 0).toFixed(2)}
+                    </td>
+                    <td className="px-6 py-5 font-bold border-r border-[#F3F4F6] text-[#111827]">
+                        {isLoading ? <div className="h-4 bg-gray-200 rounded w-20"></div> : (po.grandTotal || 0).toFixed(2)}
+                    </td>
+                    <td className="px-6 py-5 text-[#4B5563] border-r border-[#F3F4F6]">
+                        {isLoading ? <div className="h-4 bg-gray-200 rounded w-20"></div> : (
+                            <span className={`px-3 py-1 rounded-full text-[12px] font-bold uppercase
+                                ${po.status === 'PENDING' ? 'bg-orange-100 text-orange-600' : 
+                                  po.status === 'INVOICE_GENERATED' ? 'bg-emerald-100 text-emerald-600' : 
+                                  po.status === 'APPROVED' ? 'bg-blue-100 text-blue-600' : 
+                                  'bg-gray-100 text-gray-600'}`}
+                            >
+                                {po.status}
+                            </span>
+                        )}
                     </td>
                     <td className="px-6 py-5 text-center relative" ref={el => dropdownRefs.current[po.id] = el}>
                       <button
@@ -446,22 +469,13 @@ const PurchaseOrder = () => {
                       </button>
 
                       {activeDropdown === po.id && (
-                        <div className={`absolute right-[80%] w-max min-w-[200px] bg-white border border-gray-100 rounded-[14px] shadow-[0_10px_40px_rgba(0,0,0,0.12)] z-[110] py-2 animate-in duration-200 text-left ${index >= currentItems.length - 2 ? 'bottom-0 mb-2' : 'top-0 mt-2'}`}>
-                          {po.status === "Pending" ? (
-                            <button 
-                              onClick={() => navigate(ROUTES.PURCHASE_ORDER_VIEW.replace(':id', po.id))}
-                              className="w-full px-5 py-3 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors font-bold"
-                            >
-                              <FileEdit size={18} className="text-gray-400" /> View & Edit PO
-                            </button>
-                          ) : (
-                            <button 
-                              onClick={() => navigate(ROUTES.PURCHASE_ORDER_VIEW.replace(':id', po.id))}
-                              className="w-full px-5 py-3 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors font-bold"
-                            >
-                              <Eye size={18} className="text-gray-400" /> View PO
-                            </button>
-                          )}
+                        <div className={`absolute right-4 w-max min-w-[180px] bg-white border border-gray-100 rounded-[14px] shadow-[0_10px_40px_rgba(0,0,0,0.12)] z-[110] py-2 animate-in duration-200 text-left ${index >= currentItems.length - 2 ? 'bottom-0 mb-2' : 'top-0 mt-2'}`}>
+                          <button 
+                            onClick={() => navigate(ROUTES.PURCHASE_ORDER_VIEW.replace(':id', po.id))}
+                            className="w-full px-5 py-3 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors font-bold border-b border-gray-50 last:border-0"
+                          >
+                            <Eye size={18} className="text-gray-400" /> View Order
+                          </button>
                         </div>
                       )}
                     </td>
@@ -503,7 +517,7 @@ const PurchaseOrder = () => {
           <div className="flex items-center gap-6">
             <span className="text-[#6B7280] text-[14px] font-medium">
               {totalItems > 0 
-                ? `${startIndex + 1}–${Math.min(startIndex + itemsPerPage, totalItems)} of ${totalItems}`
+                ? `${((currentPage - 1) * itemsPerPage) + 1}–${Math.min(currentPage * itemsPerPage, totalItems)} of ${totalItems}`
                 : '0-0 of 0'}
             </span>
             <div className="flex items-center gap-1.5">
@@ -592,13 +606,15 @@ const PurchaseOrder = () => {
 
                       {/* Submit Action */}
                       <button 
+                        onClick={handleSubmitImport}
+                        disabled={!selectedFile || isRefreshing}
                         className={`flex items-center gap-2 px-10 py-3 rounded-[12px] text-[15px] font-bold transition-all shadow-sm
-                          ${selectedFile 
-                            ? 'bg-[#AFC9BD] text-white hover:bg-[#9BB7AB] shadow-[#AFC9BD]/20' 
+                          ${selectedFile && !isRefreshing
+                            ? 'bg-[#073318] text-white hover:bg-[#04200f] shadow-[#073318]/20' 
                             : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
                       >
                           <CloudUpload size={20} />
-                          Submit
+                          {isRefreshing ? 'Importing...' : 'Submit'}
                       </button>
                   </div>
               </div>

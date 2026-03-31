@@ -13,48 +13,7 @@ import {
     ChevronsUpDown
 } from 'lucide-react';
 
-const MOCK_SUPPLIERS = [
-    { 
-        id: 1, 
-        name: "Shree Agro Traders", 
-        address: "Market Yard, Wing A, Shop 12, Pune, Maharashtra",
-        credit_days: 30,
-        gst_no: "27ABCDE1234F1Z5",
-        pan_no: "ABCDE1234F"
-    },
-    { 
-        id: 2, 
-        name: "Global Industrial", 
-        address: "Plot 45, MIDC Area, Bhosari, Pune",
-        credit_days: 15,
-        gst_no: "27PQRSX5678L1Z2",
-        pan_no: "PQRSX5678L"
-    }
-];
-
-const MOCK_PRODUCTS = [
-    { id: 101, code: '101', name: 'Premium Maize Silage', rate: 4500.00, uom: 'Ton', hsn: '23099090', tax: 5, category: 'Animal Feed', sub_category: 'Silage' },
-    { id: 102, code: '102', name: 'Organic Fertilizer Mix', rate: 1250.00, uom: 'Bag', hsn: '31010299', tax: 12, category: 'Fertilizers', sub_category: 'Organic' },
-];
-
-const MOCK_POS = [
-    {
-      id: 1,
-      po_no: "PO00010",
-      supplier_name: "Apex Solutions",
-      po_creation_date: "2026-03-08",
-      expiry_date: "2026-03-30",
-      gst_number: "27AAACS1234A1Z5",
-      credit_days: 30,
-      pan_number: "ABCDE1234F",
-      address: "Market Yard, Wing A, Shop 12, Pune, Maharashtra",
-      status: "Approved",
-      items: [
-          { id: 1, product_code: '101', product_name: 'Premium Maize Silage', quantity: 5.0, rate: 4500.0, uom: 'Ton', discount_amount: 0.0, discount_percent: 0.0, hsn: '23099090', tax_percent: 5, before_tax: 22500.0, tax_amount: 1125.0, total_amount: 23625.0, description: 'High Quality Silage' },
-          { id: 2, product_code: '102', product_name: 'Organic Fertilizer Mix', quantity: 12.0, rate: 1250.0, uom: 'Bag', discount_amount: 0.0, discount_percent: 0.0, hsn: '31010299', tax_percent: 12, before_tax: 15000.0, tax_amount: 1800.0, total_amount: 16800.0, description: 'Organic Crop Fertilizer' }
-      ]
-    }
-];
+import purchaseOrderService from '../../../services/purchaseOrderService';
 
 const InfoTableRow = ({ label1, value1, label2, value2, isEditMode, renderEdit1, renderEdit2 }) => (
     <div className={`flex flex-col sm:flex-row border-[#E5E7EB] border-b last:border-0 font-outfit`}>
@@ -78,123 +37,76 @@ const ViewPO = () => {
     const { id } = useParams();
     const isEditMode = false;
     
-    const [purchaseOrder, setPurchaseOrder] = useState(() => {
-        const storedPOs = JSON.parse(localStorage.getItem('purchase_orders') || '[]');
-        return storedPOs.find(po => String(po.id) === String(id)) || MOCK_POS[0];
-    });
-
+    const [isLoading, setIsLoading] = useState(true);
+    const [purchaseOrder, setPurchaseOrder] = useState(null);
     const [formData, setFormData] = useState({
-        supplier_name: purchaseOrder.supplier_name,
-        credit_days: purchaseOrder.credit_days,
-        address: purchaseOrder.address,
-        creation_date: purchaseOrder.po_creation_date,
-        expiry_date: purchaseOrder.expiry_date,
-        po_number: purchaseOrder.po_no,
-        gst_number: purchaseOrder.gst_number,
-        pan_number: purchaseOrder.pan_number,
-        status: purchaseOrder.status
+        supplier_name: '',
+        credit_days: '',
+        address: '',
+        creation_date: '',
+        expiry_date: '',
+        po_number: '',
+        gst_number: '',
+        pan_number: '',
+        status: ''
     });
+    const [items, setItems] = useState([]);
 
-    const [items, setItems] = useState(purchaseOrder.items || []);
-    const [supplierSearch, setSupplierSearch] = useState(purchaseOrder.supplier_name);
-    const [isSupplierDropdownOpen, setIsSupplierDropdownOpen] = useState(false);
-    const [tableSearch, setTableSearch] = useState('');
-    const [isProductSearchOpen, setIsProductSearchOpen] = useState(false);
+    useEffect(() => {
+        const fetchPO = async () => {
+            setIsLoading(true);
+            try {
+                const response = await purchaseOrderService.getPurchaseOrderById(id);
+                const po = response.data || response;
+                setPurchaseOrder(po);
+                setFormData({
+                    supplier_name: po.supplierName,
+                    credit_days: po.creditDays,
+                    address: po.address,
+                    creation_date: po.poCreationDate,
+                    expiry_date: po.expiryDate,
+                    po_number: po.poNumber,
+                    gst_number: po.gstNumber,
+                    pan_number: po.panNumber,
+                    status: po.status
+                });
+                setItems(po.items || []);
+            } catch (error) {
+                console.error("Error fetching PO details:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        if (id) fetchPO();
+    }, [id]);
 
+    const formatDate = (dateStr) => {
+        if (!dateStr) return "-";
+        const date = new Date(dateStr);
+        const d = String(date.getDate()).padStart(2, '0');
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const y = date.getFullYear();
+        return `${d}-${m}-${y}`;
+    };
 
-    const filteredSuppliers = useMemo(() => {
-        return MOCK_SUPPLIERS.filter(s => 
-            s.name.toLowerCase().includes(supplierSearch.toLowerCase()) ||
-            s.gst_no.toLowerCase().includes(supplierSearch.toLowerCase())
-        );
-    }, [supplierSearch]);
-
-    const filteredProducts = useMemo(() => {
-        return MOCK_PRODUCTS.filter(p => 
-            p.name.toLowerCase().includes(tableSearch.toLowerCase()) ||
-            p.code.toLowerCase().includes(tableSearch.toLowerCase())
-        );
-    }, [tableSearch]);
+    const filteredSuppliers = []; 
+    const filteredProducts = [];  
+    const isSupplierDropdownOpen = false;
+    const isProductSearchOpen = false;
+    const supplierSearch = "";
+    const tableSearch = "";
 
     const handleSelectSupplier = (supplier) => {
-        setFormData({
-            ...formData,
-            supplier_name: supplier.name,
-            address: supplier.address,
-            credit_days: supplier.credit_days,
-            gst_number: supplier.gst_no,
-            pan_number: supplier.pan_no
-        });
-        setIsSupplierDropdownOpen(false);
-        setSupplierSearch(supplier.name);
+        // Placeholder for future edit mode
     };
 
     const handleQuickAddProduct = (product) => {
-        const newItem = {
-            id: Date.now(), 
-            product_code: product.code, 
-            product_name: product.name, 
-            quantity: 1.0, 
-            rate: product.rate, 
-            uom: product.uom, 
-            discount_amount: 0.0, 
-            discount_percent: 0.0, 
-            hsn: product.hsn, 
-            tax_percent: product.tax, 
-            before_tax: product.rate.toFixed(2), 
-            tax_amount: (product.rate * product.tax / 100).toFixed(2), 
-            total_amount: (product.rate * (1 + product.tax / 100)).toFixed(2),
-            description: '' 
-        };
-        setItems([...items, newItem]);
-        setTableSearch('');
-        setIsProductSearchOpen(false);
+        // Placeholder for future edit mode
     };
 
-    const handleItemChange = (index, field, value) => {
-        const newItems = [...items];
-        const item = newItems[index];
-        item[field] = value;
-
-        if (field === 'quantity' || field === 'rate' || field === 'discount_amount' || field === 'discount_percent' || field === 'tax_percent') {
-            const qty = parseFloat(item.quantity) || 0;
-            const rate = parseFloat(item.rate) || 0;
-            let discAmt = parseFloat(item.discount_amount) || 0;
-            let discPct = parseFloat(item.discount_percent) || 0;
-            const taxPct = parseFloat(item.tax_percent) || 0;
-
-            const baseAmount = qty * rate;
-
-            if (field === 'discount_percent' && baseAmount > 0) {
-                discAmt = (baseAmount * discPct) / 100;
-                item.discount_amount = discAmt.toFixed(2);
-            } else if (field === 'discount_amount' && baseAmount > 0) {
-                discPct = (discAmt / baseAmount) * 100;
-                item.discount_percent = discPct.toFixed(2);
-            }
-
-            const amountBeforeTax = baseAmount - discAmt;
-            const taxAmt = (amountBeforeTax * taxPct) / 100;
-            const finalAmout = amountBeforeTax + taxAmt;
-
-            item.before_tax = amountBeforeTax.toFixed(2);
-            item.tax_amount = taxAmt.toFixed(2);
-            item.total_amount = finalAmout.toFixed(2);
-        }
-
-        setItems(newItems);
+    const handleItemChange = () => {
+        // Placeholder for future edit mode
     };
-
-    const removeItem = (index) => {
-        if (items.length > 1) {
-            setItems(items.filter((_, i) => i !== index));
-        }
-    };
-
-    const totalBillAmount = items.reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0);
-    const totalQty = items.reduce((sum, item) => sum + (parseFloat(item.quantity) || 0), 0);
-    const totalBefTax = items.reduce((sum, item) => sum + (parseFloat(item.before_tax) || 0), 0);
-    const totalTaxAmt = items.reduce((sum, item) => sum + (parseFloat(item.tax_amount) || 0), 0);
 
     const handlePrintPreview = () => {
         const fullPOData = {
@@ -237,11 +149,11 @@ const ViewPO = () => {
             <div className="bg-white rounded-[16px] border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden">
                 {/* Card Header Section */}
                 <div className="flex items-center justify-between px-8 py-6 border-b border-[#F3F4F6]">
-                    <h2 className="text-[20px] font-bold text-[#111827]">View PO</h2>
+                    <h2 className="text-[20px] font-bold text-[#111827]">View PO {isLoading ? '' : `- ${formData.po_number}`}</h2>
                     <div className="flex items-center gap-3">
-                        {(purchaseOrder.status === 'Pending' || purchaseOrder.status === 'Approved') && (
+                        {!isLoading && (formData.status === 'PENDING' || formData.status === 'APPROVED') && (
                             <button 
-                                onClick={() => navigate(ROUTES.PURCHASE_ORDER_EDIT.replace(':id', purchaseOrder.id))}
+                                onClick={() => navigate(ROUTES.PURCHASE_ORDER_EDIT.replace(':id', id))}
                                 className="px-8 h-[40px] bg-[#073318] text-white rounded-[10px] text-[14px] font-bold hover:bg-[#04200f] transition-all shadow-sm"
                             >
                                 Edit PO
@@ -257,102 +169,20 @@ const ViewPO = () => {
                 </div>
 
                 {/* Information Section */}
-                {isEditMode ? (
-                    <div className="p-8">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-                            <div className="space-y-2">
-                                <label className="text-[14px] font-semibold text-[#374151]">Supplier Name <span className="text-red-500">*</span></label>
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        placeholder="Select supplier name"
-                                        value={supplierSearch}
-                                        onFocus={() => setIsSupplierDropdownOpen(true)}
-                                        onChange={(e) => {
-                                            setSupplierSearch(e.target.value);
-                                            setIsSupplierDropdownOpen(true);
-                                        }}
-                                        className="w-full h-[48px] bg-white border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] outline-none focus:border-[#073318] transition-all"
-                                    />
-                                    {isSupplierDropdownOpen && (
-                                        <div className="absolute top-full left-0 w-full mt-1 bg-white border border-[#E5E7EB] rounded-[10px] shadow-lg z-[70] overflow-hidden">
-                                            <div className="max-h-[200px] overflow-y-auto custom-scrollbar">
-                                                {filteredSuppliers.map(s => (
-                                                    <button 
-                                                        key={s.id} 
-                                                        onClick={() => handleSelectSupplier(s)} 
-                                                        className="w-full text-left px-4 py-3 hover:bg-gray-50 text-[14px] border-b border-[#F3F4F6] last:border-0"
-                                                    >
-                                                        {s.name}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[14px] font-semibold text-[#374151]">Credit Days <span className="text-red-500">*</span></label>
-                                <input 
-                                    type="number" 
-                                    value={formData.credit_days} 
-                                    onChange={(e) => setFormData({ ...formData, credit_days: e.target.value })} 
-                                    className="w-full h-[48px] bg-white border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] outline-none focus:border-[#073318]" 
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[14px] font-semibold text-[#374151]">Address <span className="text-red-500">*</span></label>
-                                <input 
-                                    type="text" 
-                                    value={formData.address} 
-                                    onChange={(e) => setFormData({ ...formData, address: e.target.value })} 
-                                    className="w-full h-[48px] bg-white border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] outline-none focus:border-[#073318]" 
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[14px] font-semibold text-[#374151]">PO Creation Date</label>
-                                <input 
-                                    type="text" 
-                                    value={formData.creation_date} 
-                                    readOnly 
-                                    className="w-full h-[48px] bg-gray-50 border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] text-gray-500" 
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[14px] font-semibold text-[#374151]">Expiry Date <span className="text-red-500">*</span></label>
-                                <input 
-                                    type="date" 
-                                    value={formData.expiry_date} 
-                                    onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })} 
-                                    className="w-full h-[48px] bg-white border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] outline-none focus:border-[#073318]" 
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[14px] font-semibold text-[#374151]">GST Number <span className="text-red-500">*</span></label>
-                                <input 
-                                    type="text" 
-                                    value={formData.gst_number} 
-                                    onChange={(e) => setFormData({ ...formData, gst_number: e.target.value })} 
-                                    className="w-full h-[48px] bg-white border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] outline-none focus:border-[#073318]" 
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[14px] font-semibold text-[#374151]">PAN Number <span className="text-red-500">*</span></label>
-                                <input 
-                                    type="text" 
-                                    value={formData.pan_number} 
-                                    onChange={(e) => setFormData({ ...formData, pan_number: e.target.value })} 
-                                    className="w-full h-[48px] bg-white border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] outline-none focus:border-[#073318]" 
-                                />
-                            </div>
+                {isLoading ? (
+                    <div className="p-8 space-y-4 animate-pulse">
+                        <div className="h-4 bg-gray-100 rounded w-1/4"></div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="h-10 bg-gray-50 rounded"></div>
+                            <div className="h-10 bg-gray-50 rounded"></div>
                         </div>
                     </div>
                 ) : (
                     <div className="p-8 border-b border-[#F3F4F6]">
                         <div className="border border-[#E5E7EB] rounded-[12px] overflow-hidden shadow-sm">
                             <InfoTableRow label1="Supplier Name:" value1={formData.supplier_name} label2="Credit Days:" value2={formData.credit_days} />
-                            <InfoTableRow label1="Address:" value1={formData.address} label2="PO Creation Date:" value2={formData.creation_date} />
-                            <InfoTableRow label1="Expiry Date:" value1={formData.expiry_date} label2="GST Number:" value2={formData.gst_number} />
+                            <InfoTableRow label1="Address:" value1={formData.address} label2="PO Creation Date:" value2={formatDate(formData.creation_date)} />
+                            <InfoTableRow label1="Expiry Date:" value1={formatDate(formData.expiry_date)} label2="GST Number:" value2={formData.gst_number} />
                             <div className="flex border-b border-[#E5E7EB] last:border-0 font-outfit">
                                 <div className="w-1/4 py-3.5 px-6 text-[13px] text-[#6B7280] border-r border-[#E5E7EB] bg-gray-50/10 font-semibold">PAN Number:</div>
                                 <div className="flex-1 py-3.5 px-6 text-[13px] text-[#111827] bg-white">{formData.pan_number || '-'}</div>
@@ -431,103 +261,60 @@ const ViewPO = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[#F3F4F6]">
-                                {items.map((item, index) => (
+                                {isLoading ? Array(2).fill({}).map((_, i) => (
+                                    <tr key={i} className="animate-pulse">
+                                        <td colSpan={14} className="px-4 py-6 border-b border-gray-100"><div className="h-4 bg-gray-50 rounded w-full"></div></td>
+                                    </tr>
+                                )) : items.map((item, index) => (
                                     <tr key={item.id} className="hover:bg-gray-50/50 transition-colors group h-[60px]">
                                         <td className="px-4 py-4 text-center text-[13px] text-[#6B7280]">{index + 1}</td>
-                                        <td className="px-4 py-4 text-[13px] border-l border-[#F3F4F6] text-[#111827]">{item.product_code}</td>
-                                        <td className="px-4 py-4 text-[13px] border-l border-[#F3F4F6] font-bold text-[#111827]">{item.product_name}</td>
+                                        <td className="px-4 py-4 text-[13px] border-l border-[#F3F4F6] text-[#111827]">{item.productCode}</td>
+                                        <td className="px-4 py-4 text-[13px] border-l border-[#F3F4F6] font-bold text-[#111827]">{item.productName}</td>
                                         <td className="px-2 py-2 border-l border-[#F3F4F6]">
-                                            {isEditMode ? (
-                                                <input 
-                                                    type="number" 
-                                                    value={item.quantity} 
-                                                    onChange={(e) => handleItemChange(index, 'quantity', e.target.value)} 
-                                                    className="w-full h-[36px] bg-white border border-[#E5E7EB] rounded-[8px] px-2 text-right text-[13px] outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/10" 
-                                                />
-                                            ) : (
-                                                <div className="px-2 text-right text-[13px] font-medium">{parseFloat(item.quantity).toFixed(2)}</div>
-                                            )}
+                                            <div className="px-2 text-right text-[13px] font-medium">{parseFloat(item.quantity).toFixed(2)}</div>
                                         </td>
                                         <td className="px-4 py-4 text-center text-[13px] border-l border-[#F3F4F6] text-[#6B7280]">{item.uom}</td>
                                         <td className="px-2 py-2 border-l border-[#F3F4F6]">
-                                            {isEditMode ? (
-                                                <input 
-                                                    type="number" 
-                                                    value={item.rate} 
-                                                    onChange={(e) => handleItemChange(index, 'rate', e.target.value)} 
-                                                    className="w-full h-[36px] bg-white border border-[#E5E7EB] rounded-[8px] px-2 text-right text-[13px] outline-none focus:border-[#073318]" 
-                                                />
-                                            ) : (
-                                                <div className="px-2 text-right text-[13px]">{parseFloat(item.rate).toFixed(2)}</div>
-                                            )}
+                                            <div className="px-2 text-right text-[13px]">{parseFloat(item.rate).toFixed(2)}</div>
                                         </td>
                                         <td className="px-2 py-2 border-l border-[#F3F4F6]">
-                                            {isEditMode ? (
-                                                <input 
-                                                    type="number" 
-                                                    value={item.discount_amount} 
-                                                    onChange={(e) => handleItemChange(index, 'discount_amount', e.target.value)} 
-                                                    className="w-full h-[36px] bg-white border border-[#E5E7EB] rounded-[8px] px-2 text-right text-[13px] outline-none focus:border-[#073318]" 
-                                                />
-                                            ) : (
-                                                <div className="px-2 text-right text-[13px]">{parseFloat(item.discount_amount).toFixed(2)}</div>
-                                            )}
+                                            <div className="px-2 text-right text-[13px]">{parseFloat(item.discountAmount).toFixed(2)}</div>
                                         </td>
                                         <td className="px-2 py-2 border-l border-[#F3F4F6]">
-                                            {isEditMode ? (
-                                                <input 
-                                                    type="number" 
-                                                    value={item.discount_percent} 
-                                                    onChange={(e) => handleItemChange(index, 'discount_percent', e.target.value)} 
-                                                    className="w-full h-[36px] bg-white border border-[#E5E7EB] rounded-[8px] px-2 text-right text-[13px] outline-none focus:border-[#073318]" 
-                                                />
-                                            ) : (
-                                                <div className="px-2 text-right text-[13px]">{parseFloat(item.discount_percent).toFixed(2)}%</div>
-                                            )}
+                                            <div className="px-2 text-right text-[13px]">{parseFloat(item.discountPercent).toFixed(2)}%</div>
                                         </td>
-                                        <td className="px-4 py-4 text-[13px] border-l border-[#F3F4F6] text-[#6B7280]">{item.hsn}</td>
-                                        <td className="px-4 py-4 text-right text-[13px] border-l border-[#F3F4F6] text-[#6B7280]">{item.tax_percent}%</td>
-                                        <td className="px-4 py-4 text-right text-[13px] border-l border-[#F3F4F6] text-[#6B7280]">{parseFloat(item.before_tax).toFixed(2)}</td>
-                                        <td className="px-4 py-4 text-right text-[13px] border-l border-[#F3F4F6] text-[#6B7280]">{parseFloat(item.tax_amount).toFixed(2)}</td>
-                                        <td className="px-4 py-4 text-right text-[13px] border-l border-[#F3F4F6] font-bold text-[#073318]">₹ {parseFloat(item.total_amount).toFixed(2)}</td>
+                                        <td className="px-4 py-4 text-[13px] border-l border-[#F3F4F6] text-[#6B7280]">{item.hsnCode}</td>
+                                        <td className="px-4 py-4 text-right text-[13px] border-l border-[#F3F4F6] text-[#6B7280]">{item.taxPercent}%</td>
+                                        <td className="px-4 py-4 text-right text-[13px] border-l border-[#F3F4F6] text-[#6B7280]">{(item.quantity * item.rate - item.discountAmount).toFixed(2)}</td>
+                                        <td className="px-4 py-4 text-right text-[13px] border-l border-[#F3F4F6] text-[#6B7280]">{parseFloat(((item.quantity * item.rate - item.discountAmount) * item.taxPercent / 100)).toFixed(2)}</td>
+                                        <td className="px-4 py-4 text-right text-[13px] border-l border-[#F3F4F6] font-bold text-[#073318]">₹ {(((item.quantity * item.rate - item.discountAmount) * (1 + item.taxPercent / 100))).toFixed(2)}</td>
                                         <td className="px-4 py-4 border-l border-[#F3F4F6]">
-                                            {isEditMode ? (
-                                                <input 
-                                                    type="text" 
-                                                    value={item.description} 
-                                                    onChange={(e) => handleItemChange(index, 'description', e.target.value)} 
-                                                    className="w-full h-[36px] border border-transparent rounded-[8px] px-2 text-[12px] hover:border-gray-200 focus:border-[#073318] transition-all bg-gray-50/50" 
-                                                />
-                                            ) : (
-                                                <div className="text-[12px] text-[#6B7280] truncate max-w-[200px]" title={item.description}>{item.description || '-'}</div>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-4 text-center border-l border-[#F3F4F6]">
-                                            {isEditMode && items.length > 1 && (
-                                                <button 
-                                                    onClick={() => removeItem(index)} 
-                                                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            )}
+                                            <div className="text-[12px] text-[#6B7280] truncate max-w-[200px]" title={item.printDescription}>{item.description || item.printDescription || '-'}</div>
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                             <tfoot className="bg-[#F9FAFB] border-t-2 border-[#E5E7EB] font-bold">
                                 <tr>
-                                    <td colSpan={3} className="px-4 py-5 text-[14px] text-[#111827]">Total Summary</td>
-                                    <td className="px-4 py-4 text-right text-[14px] text-[#111827] border-l border-[#F3F4F6]">{totalQty.toFixed(2)}</td>
+                                    <td colSpan={3} className="px-4 py-5 text-[14px]">Total Summary</td>
+                                    <td className="px-4 py-4 border-l border-[#F3F4F6] text-right">
+                                        {isLoading ? <div className="h-4 bg-gray-100 rounded w-12 ml-auto"></div> : items.reduce((s, i) => s + (parseFloat(i.quantity) || 0), 0).toFixed(2)}
+                                    </td>
                                     <td className="border-l border-[#F3F4F6]"></td>
                                     <td className="border-l border-[#F3F4F6]"></td>
                                     <td className="border-l border-[#F3F4F6]"></td>
                                     <td className="border-l border-[#F3F4F6]"></td>
                                     <td className="border-l border-[#F3F4F6]"></td>
                                     <td className="border-l border-[#F3F4F6]"></td>
-                                    <td className="px-4 py-4 text-right text-[14px] text-[#111827] border-l border-[#F3F4F6]">{totalBefTax.toFixed(2)}</td>
-                                    <td className="px-4 py-4 text-right text-[14px] text-[#111827] border-l border-[#F3F4F6]">{totalTaxAmt.toFixed(2)}</td>
-                                    <td className="px-4 py-4 text-right text-[16px] text-[#073318] border-l border-[#F3F4F6]">₹ {totalBillAmount.toFixed(2)}</td>
+                                    <td className="px-4 py-4 border-l border-[#F3F4F6] text-right">
+                                        {isLoading ? <div className="h-4 bg-gray-100 rounded w-16 ml-auto"></div> : items.reduce((s, i) => s + (parseFloat(i.quantity * i.rate - i.discountAmount) || 0), 0).toFixed(2)}
+                                    </td>
+                                    <td className="px-4 py-4 border-l border-[#F3F4F6] text-right">
+                                        {isLoading ? <div className="h-4 bg-gray-100 rounded w-16 ml-auto"></div> : items.reduce((s, i) => s + (parseFloat((i.quantity * i.rate - i.discountAmount) * i.taxPercent / 100) || 0), 0).toFixed(2)}
+                                    </td>
+                                    <td className="px-4 py-4 border-l border-[#F3F4F6] text-right text-[#073318]">
+                                        {isLoading ? <div className="h-5 bg-[#073318]/10 rounded w-24 ml-auto"></div> : `₹ ${items.reduce((s, i) => s + (parseFloat((i.quantity * i.rate - i.discountAmount) * (1 + i.taxPercent / 100)) || 0), 0).toFixed(2)}`}
+                                    </td>
                                     <td colSpan={2} className="border-l border-[#F3F4F6]"></td>
                                 </tr>
                             </tfoot>

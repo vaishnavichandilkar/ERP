@@ -17,40 +17,11 @@ import {
     Hash,
     ChevronsUpDown
 } from 'lucide-react';
+import purchaseOrderService from '../../../services/purchaseOrderService';
+import accountService from '../../../services/accountService';
+import productService from '../../../services/productService';
 
-const MOCK_SUPPLIERS = [
-    { 
-        id: 1, 
-        name: "SilverPeak Traders", 
-        address: "123, Industrial Area, Phase II, Pune, Maharashtra - 411026",
-        credit_days: 30,
-        gst_no: "27AAACS1234A1Z5",
-        pan_no: "AAACS1234A"
-    },
-    { 
-        id: 2, 
-        name: "BlueStone Supplies", 
-        address: "G-45, Market Yard, Sangli, Maharashtra - 416416",
-        credit_days: 15,
-        gst_no: "27BBBSX5678B2Z1",
-        pan_no: "BBBSX5678B"
-    },
-    { 
-        id: 3, 
-        name: "GreenLeaf Distributors", 
-        address: "Near Railway Station, Nashik, Maharashtra - 422001",
-        credit_days: 45,
-        gst_no: "27CCCDY9101C3Z9",
-        pan_no: "CCCDY9101C"
-    }
-];
-
-const MOCK_PRODUCTS = [
-    { id: 1, code: "PRD-001", name: "Premium Basmati Rice", uom: "KG", hsn: "10063010", tax: 5, rate: 85, category: "Grains", sub_category: "Rice" },
-    { id: 2, code: "PRD-002", name: "Refined Sunflower Oil", uom: "LR", hsn: "15121910", tax: 12, rate: 120, category: "Oils", sub_category: "Refined" },
-    { id: 3, code: "PRD-003", name: "Whole Wheat Flour", uom: "KG", hsn: "11010000", tax: 0, rate: 45, category: "Flour", sub_category: "Wheat" },
-    { id: 4, code: "PRD-004", name: "Organic Green Tea", uom: "PK", hsn: "09021010", tax: 5, rate: 250, category: "Beverages", sub_category: "Tea" },
-];
+// Mock data removed in favor of API calls
 
 const AddPO = () => {
     const navigate = useNavigate();
@@ -59,7 +30,9 @@ const AddPO = () => {
 
     const [isSupplierDropdownOpen, setIsSupplierDropdownOpen] = useState(false);
     const [supplierSearch, setSupplierSearch] = useState('');
+    const [suppliers, setSuppliers] = useState([]);
     const [formData, setFormData] = useState({
+        supplier_id: '',
         supplier_name: '',
         address: '',
         po_number: '', 
@@ -91,143 +64,156 @@ const AddPO = () => {
 
     const [tableSearch, setTableSearch] = useState('');
     const [isProductSearchOpen, setIsProductSearchOpen] = useState(false);
+    const [products, setProducts] = useState([]);
+
+    // Fetch Suppliers
+    useEffect(() => {
+        const fetchSuppliers = async () => {
+            try {
+                // Requirement 1: Sundry Creditors (Mapping to SUNDRY_CREDITORS for backend compatibility)
+                const response = await accountService.getAllAccounts({ groupName: 'SUNDRY_CREDITORS' });
+                // Account API returns: { data: [...], total: ... }
+                setSuppliers(response.data || []);
+            } catch (error) {
+                console.error("Error fetching suppliers:", error);
+            }
+        };
+        fetchSuppliers();
+    }, []);
+
+    // Fetch Products (Requirement 6: Search from Product Master)
+    useEffect(() => {
+        const fetchProducts = async () => {
+            if (!tableSearch.trim()) {
+                setProducts([]);
+                return;
+            }
+            try {
+                const response = await productService.getProducts({ search: tableSearch });
+                // Product API returns: { products: [...], total: ... }
+                setProducts(response.products || []); 
+            } catch (error) {
+                console.error("Error fetching products:", error);
+            }
+        };
+        const timer = setTimeout(fetchProducts, 300);
+        return () => clearTimeout(timer);
+    }, [tableSearch]);
 
     // Initial load for Edit Mode or PO Number generation
     useEffect(() => {
-        const storedPOs = JSON.parse(localStorage.getItem('purchase_orders') || '[]');
-
-        if (isEditMode) {
-            const poToEdit = storedPOs.find(p => String(p.id) === String(id));
-            if (poToEdit) {
-                setFormData({
-                    supplier_name: poToEdit.supplier_name,
-                    address: poToEdit.address,
-                    po_number: poToEdit.po_no,
-                    gst_number: poToEdit.gst_number,
-                    credit_days: poToEdit.credit_days,
-                    creation_date: poToEdit.po_creation_date ? poToEdit.po_creation_date.split('-').reverse().join('-') : formData.creation_date,
-                    expiry_date: poToEdit.expiry_date ? poToEdit.expiry_date.split('-').reverse().join('-') : '',
-                    pan_number: poToEdit.pan_number || ''
-                });
-                setSupplierSearch(poToEdit.supplier_name);
-                if (poToEdit.items) {
-                    setItems(poToEdit.items);
-                } else {
-                    // Fallback mock items if needed
-                    setItems([{ id: Date.now(), product_name: 'Existing Product', quantity: 1, rate: poToEdit.po_amount, total_amount: poToEdit.total_amount }]);
+        const loadInitialData = async () => {
+            if (isEditMode) {
+                try {
+                    const poToEdit = await purchaseOrderService.getPurchaseOrderById(id);
+                    if (poToEdit) {
+                        setFormData({
+                            supplier_id: poToEdit.supplierId,
+                            supplier_name: poToEdit.supplierName,
+                            address: poToEdit.address,
+                            po_number: poToEdit.poNumber,
+                            gst_number: poToEdit.gstNumber,
+                            credit_days: poToEdit.creditDays,
+                            creation_date: poToEdit.poCreationDate ? poToEdit.poCreationDate.split('T')[0] : formData.creation_date,
+                            expiry_date: poToEdit.expiryDate ? poToEdit.expiryDate.split('T')[0] : '',
+                            pan_number: poToEdit.panNumber || ''
+                        });
+                        setSupplierSearch(poToEdit.supplierName);
+                        if (poToEdit.items) {
+                            setItems(poToEdit.items.map(item => ({
+                                id: item.id,
+                                product_id: item.productId,
+                                product_code: item.productCode,
+                                product_name: item.productName,
+                                quantity: item.quantity,
+                                rate: item.rate,
+                                uom: item.uom,
+                                discount_amount: item.discountAmount,
+                                discount_percent: item.discountPercent,
+                                hsn: item.hsnCode,
+                                tax_percent: item.taxPercent,
+                                before_tax: (item.quantity * item.rate - item.discountAmount).toFixed(2),
+                                tax_amount: item.taxAmount.toFixed(2),
+                                total_amount: item.totalAmount.toFixed(2),
+                                description: item.printDescription || ''
+                            })));
+                        }
+                    }
+                } catch (error) {
+                    toast.error("Purchase Order not found");
+                    navigate(ROUTES.PURCHASE_ORDER);
                 }
             } else {
-                toast.error("Purchase Order not found");
-                navigate(ROUTES.PURCHASE_ORDER);
+                try {
+                    const response = await purchaseOrderService.getNextNumber();
+                    setFormData(prev => ({ ...prev, po_number: response.poNumber }));
+                } catch (error) {
+                    console.error("Error fetching next PO number:", error);
+                }
             }
-        } else {
-            // Auto-generate next PO number
-            const lastPO = storedPOs.reduce((max, po) => {
-                const num = parseInt(po.po_no.replace('PO', '')) || 0;
-                return num > max ? num : max;
-            }, 0);
-            const nextID = String(lastPO + 1).padStart(5, '0');
-            setFormData(prev => ({ ...prev, po_number: `PO${nextID}` }));
-        }
-    }, [id, isEditMode]);
-
-    // Save functionality
-    const handleSave = () => {
-        // Validation
-        if (!formData.supplier_name || !formData.address || !formData.credit_days) {
-            toast.error("Please fill all required supplier details");
-            return;
-        }
-
-        if (items.length === 0 || !items[0].product_name) {
-            toast.error("Please add at least one product");
-            return;
-        }
-
-        const storedPOs = JSON.parse(localStorage.getItem('purchase_orders') || '[]');
-        
-        const totalAmount = items.reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0);
-        const taxAmount = items.reduce((sum, item) => sum + (parseFloat(item.tax_amount) || 0), 0);
-
-        const newPOData = {
-            id: isEditMode ? Number(id) : Date.now(),
-            po_no: formData.po_number,
-            supplier_name: formData.supplier_name,
-            address: formData.address,
-            po_creation_date: formData.creation_date.split('-').reverse().join('-'),
-            expiry_date: formData.expiry_date ? formData.expiry_date.split('-').reverse().join('-') : '',
-            po_amount: totalAmount - taxAmount,
-            gst_number: formData.gst_number,
-            pan_number: formData.pan_number,
-            credit_days: Number(formData.credit_days),
-            tax_amount: taxAmount,
-            total_amount: totalAmount,
-            status: isEditMode ? (storedPOs.find(p => String(p.id) === String(id))?.status || "Pending") : "Pending",
-            items: items
         };
-
-        let updatedPOs;
-        if (isEditMode) {
-            updatedPOs = storedPOs.map(po => String(po.id) === String(id) ? newPOData : po);
-            toast.success("Purchase Order updated successfully");
-        } else {
-            updatedPOs = [newPOData, ...storedPOs];
-            toast.success("Purchase Order saved successfully");
-        }
-
-        localStorage.setItem('purchase_orders', JSON.stringify(updatedPOs));
-        navigate(ROUTES.PURCHASE_ORDER);
-    };
+        loadInitialData();
+    }, [id, isEditMode]);
 
     // Filtered suppliers for dropdown
     const filteredSuppliers = useMemo(() => {
-        return MOCK_SUPPLIERS.filter(s => 
-            s.name.toLowerCase().includes(supplierSearch.toLowerCase())
+        return (suppliers || []).filter(s => 
+            s.accountName?.toLowerCase().includes(supplierSearch.toLowerCase())
         );
-    }, [supplierSearch]);
+    }, [supplierSearch, suppliers]);
 
     // Filter products for the main search bar
     const filteredProducts = useMemo(() => {
-        if (!tableSearch.trim()) return [];
-        const term = tableSearch.toLowerCase();
-        return MOCK_PRODUCTS.filter(p => 
-            p.name.toLowerCase().includes(term) ||
-            p.code.toLowerCase().includes(term) ||
-            p.category.toLowerCase().includes(term) ||
-            p.sub_category.toLowerCase().includes(term) ||
-            p.hsn.toLowerCase().includes(term) ||
-            p.tax.toString().includes(term)
-        );
-    }, [tableSearch]);
+        return products; // Now fetched via API based on search term directly
+    }, [products]);
 
-    const handleSelectSupplier = (supplier) => {
-        setFormData({
-            ...formData,
-            supplier_name: supplier.name,
-            address: supplier.address,
-            gst_number: supplier.gst_no,
-            credit_days: supplier.credit_days,
-            pan_number: supplier.pan_no
-        });
+    const handleSelectSupplier = async (supplier) => {
+        try {
+            // Requirement 1: Optionally fetch fresh details for PO creation
+            const details = await purchaseOrderService.getSupplierDetails(supplier.id);
+            setFormData({
+                ...formData,
+                supplier_id: supplier.id,
+                supplier_name: details.supplierName,
+                address: details.address,
+                gst_number: details.gstNumber || '',
+                credit_days: details.creditDays || '',
+                pan_number: details.panNumber || ''
+            });
+            setSupplierSearch(details.supplierName);
+        } catch (error) {
+            // Fallback to local data if fresh fetch fails
+            setFormData({
+                ...formData,
+                supplier_id: supplier.id,
+                supplier_name: supplier.accountName,
+                address: supplier.addressLine1 + (supplier.addressLine2 ? ', ' + supplier.addressLine2 : ''),
+                gst_number: supplier.gstNo || '',
+                credit_days: supplier.supplierCreditDays || '',
+                pan_number: supplier.panNo || ''
+            });
+            setSupplierSearch(supplier.accountName);
+        }
         setIsSupplierDropdownOpen(false);
-        setSupplierSearch(supplier.name);
     };
 
     const handleQuickAddProduct = (product) => {
+        // Requirement 7: product.purchaseRate, product.uom, product.hsn, product.taxPercent
         const newItem = {
             id: Date.now(), 
-            product_code: product.code, 
-            product_name: product.name, 
+            product_id: product.id,
+            product_code: product.product_code, 
+            product_name: product.product_name, 
             quantity: 1, 
-            rate: product.rate, 
-            uom: product.uom, 
+            rate: product.purchaseRate || 0, 
+            uom: product.uom?.unit_name || 'NOS', 
             discount_amount: 0, 
             discount_percent: 0, 
-            hsn: product.hsn, 
-            tax_percent: product.tax, 
-            before_tax: product.rate.toFixed(2), 
-            tax_amount: (product.rate * product.tax / 100).toFixed(2), 
-            total_amount: (product.rate * (1 + product.tax / 100)).toFixed(2),
+            hsn: product.hsn_code, 
+            tax_percent: product.tax_rate || 0, 
+            before_tax: (product.purchaseRate || 0).toFixed(2), 
+            tax_amount: ((product.purchaseRate || 0) * (product.tax_rate || 0) / 100).toFixed(2), 
+            total_amount: ((product.purchaseRate || 0) * (1 + (product.tax_rate || 0) / 100)).toFixed(2),
             description: '' 
         };
         
@@ -244,38 +230,100 @@ const AddPO = () => {
 
     const handleItemChange = (index, field, value) => {
         const newItems = [...items];
-        const item = newItems[index];
+        const item = { ...newItems[index] };
         item[field] = value;
 
-        // Auto Calculations
-        if (field === 'quantity' || field === 'rate' || field === 'discount_amount' || field === 'discount_percent' || field === 'tax_percent') {
-            const qty = parseFloat(item.quantity) || 0;
-            const rate = parseFloat(item.rate) || 0;
-            let discAmt = parseFloat(item.discount_amount) || 0;
-            let discPct = parseFloat(item.discount_percent) || 0;
-            const taxPct = parseFloat(item.tax_percent) || 0;
+        // Numerical values
+        let qty = parseFloat(item.quantity) || 0;
+        let rate = parseFloat(item.rate) || 0;
+        let discAmt = parseFloat(item.discount_amount) || 0;
+        let discPct = parseFloat(item.discount_percent) || 0;
+        let taxPct = parseFloat(item.tax_percent) || 0;
 
-            const baseAmount = qty * rate;
+        const baseAmount = qty * rate;
 
-            // Sync Discount Amount and Percent
-            if (field === 'discount_percent' && baseAmount > 0) {
-                discAmt = (baseAmount * discPct) / 100;
-                item.discount_amount = discAmt.toFixed(2);
-            } else if (field === 'discount_amount' && baseAmount > 0) {
-                discPct = (discAmt / baseAmount) * 100;
-                item.discount_percent = discPct.toFixed(2);
-            }
-
-            const amountBeforeTax = baseAmount - discAmt;
-            const taxAmt = (amountBeforeTax * taxPct) / 100;
-            const finalAmout = amountBeforeTax + taxAmt;
-
-            item.before_tax = amountBeforeTax.toFixed(2);
-            item.tax_amount = taxAmt.toFixed(2);
-            item.total_amount = finalAmout.toFixed(2);
+        // Discount Conversion Logic
+        if (field === 'discount_percent') {
+            // Discount % changed -> calculate Discount Amount
+            discAmt = (baseAmount * discPct) / 100;
+            item.discount_amount = discAmt.toFixed(2);
+        } else if (field === 'discount_amount') {
+            // Discount Amount changed -> calculate Discount %
+            discPct = baseAmount > 0 ? (discAmt / baseAmount) * 100 : 0;
+            item.discount_percent = discPct.toFixed(2);
+        } else if (field === 'quantity' || field === 'rate') {
+            // Quantity or Rate changed -> keep Discount % lead, update Amount
+            discAmt = (baseAmount * discPct) / 100;
+            item.discount_amount = discAmt.toFixed(2);
         }
 
+        // 1. Before Tax Amount = (Quantity × Rate) - Discount Amount
+        const beforeTax = baseAmount - discAmt;
+        item.before_tax = beforeTax.toFixed(2);
+
+        // 2. Tax Amount = (Before Tax Amount × Tax %) / 100
+        const taxAmt = (beforeTax * taxPct) / 100;
+        item.tax_amount = taxAmt.toFixed(2);
+
+        // 3. Total Amount = Before Tax Amount + Tax Amount
+        const totalPerItem = beforeTax + taxAmt;
+        item.total_amount = totalPerItem.toFixed(2);
+
+        newItems[index] = item;
         setItems(newItems);
+    };
+
+    // Save functionality
+    const handleSave = async () => {
+        // Validation
+        if (!formData.supplier_name || !formData.address || !formData.credit_days) {
+            toast.error("Please fill all required supplier details");
+            return;
+        }
+
+        if (items.length === 0 || !items[0].product_name) {
+            toast.error("Please add at least one product");
+            return;
+        }
+
+        const poPayload = {
+            supplierId: Number(formData.supplier_id),
+            creditDays: Number(formData.credit_days),
+            address: formData.address,
+            gstNo: formData.gst_number,
+            panNo: formData.pan_number,
+            poNumber: formData.po_number,
+            poCreationDate: formData.creation_date,
+            expiryDate: formData.expiry_date,
+            items: items.filter(item => item.product_name).map(item => ({
+                productId: item.product_id,
+                productCode: item.product_code,
+                productName: item.product_name,
+                hsnCode: item.hsn,
+                quantity: parseFloat(item.quantity),
+                rate: parseFloat(item.rate),
+                uom: item.uom,
+                discount: parseFloat(item.discount_amount) || 0, // Mapping 'discount' from req 8 to discount_amount
+                discountPercent: parseFloat(item.discount_percent) || 0,
+                discountAmount: parseFloat(item.discount_amount) || 0,
+                taxPercent: parseFloat(item.tax_percent) || 0,
+                printDescription: item.description || ''
+            }))
+        };
+
+        try {
+            if (isEditMode) {
+                await purchaseOrderService.updatePurchaseOrder(id, poPayload);
+                toast.success("Purchase Order updated successfully");
+            } else {
+                await purchaseOrderService.createPurchaseOrder(poPayload);
+                toast.success("Purchase Order saved successfully");
+            }
+            navigate(ROUTES.PURCHASE_ORDER);
+        } catch (error) {
+            console.error("Error saving PO:", error);
+            toast.error(error.response?.data?.message || "Failed to save Purchase Order");
+        }
     };
 
     const addNewRow = () => {
@@ -306,17 +354,27 @@ const AddPO = () => {
     const handlePrintPreview = () => {
         const fullPOData = {
             ...formData,
-            items: items.map(item => ({
-                ...item,
-                before_tax: (parseFloat(item.quantity || 0) * parseFloat(item.rate || 0)).toFixed(2),
-                tax_amount: ((parseFloat(item.quantity || 0) * parseFloat(item.rate || 0)) * (parseFloat(item.tax_percent || 0) / 100)).toFixed(2),
-                total_amount: ((parseFloat(item.quantity || 0) * parseFloat(item.rate || 0)) * (1 + parseFloat(item.tax_percent || 0) / 100)).toFixed(2)
-            }))
+            items: items.map(item => {
+                const qty = parseFloat(item.quantity) || 0;
+                const rate = parseFloat(item.rate) || 0;
+                const discAmt = parseFloat(item.discount_amount) || 0;
+                const taxPct = parseFloat(item.tax_percent) || 0;
+                const beforeTax = (qty * rate) - discAmt;
+                const taxAmt = (beforeTax * taxPct) / 100;
+                const total = beforeTax + taxAmt;
+                
+                return {
+                    ...item,
+                    before_tax: beforeTax.toFixed(2),
+                    tax_amount: taxAmt.toFixed(2),
+                    total_amount: total.toFixed(2)
+                };
+            })
         };
         navigate(ROUTES.PURCHASE_ORDER_PRINT, { state: { poData: fullPOData } });
     };
 
-    const totalBillAmount = items.reduce((sum, item) => sum + (parseFloat(item.total_amount) || 0), 0);
+    const totalBillAmount = items.reduce((sum, item) => sum + (Number(item.total_amount) || 0), 0);
 
     return (
         <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-20">
@@ -365,8 +423,8 @@ const AddPO = () => {
                                                             onClick={() => handleSelectSupplier(s)}
                                                             className="w-full text-left px-4 py-3 hover:bg-gray-50 text-[14px] transition-colors border-b border-[#F3F4F6] last:border-0"
                                                         >
-                                                            <div className="font-bold text-[#111827] font-outfit">{s.name}</div>
-                                                            <div className="text-[12px] text-gray-400 font-outfit">{s.gst_no}</div>
+                                                            <div className="font-bold text-[#111827] font-outfit">{s.accountName}</div>
+                                                            <div className="text-[12px] text-gray-400 font-outfit">{s.gstNo}</div>
                                                         </button>
                                                     ))
                                                 ) : (
@@ -396,8 +454,8 @@ const AddPO = () => {
                                 type="number"
                                 placeholder="Enter credit days"
                                 value={formData.credit_days}
-                                onChange={(e) => setFormData({ ...formData, credit_days: e.target.value })}
-                                className="w-full h-[48px] bg-white border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] outline-none focus:border-[#073318] transition-all"
+                                readOnly // Requirement 2: Read Only
+                                className="w-full h-[48px] bg-[#F9FAFB] border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] outline-none cursor-not-allowed"
                             />
                         </div>
 
@@ -408,8 +466,8 @@ const AddPO = () => {
                                 type="text"
                                 placeholder="Enter address"
                                 value={formData.address}
-                                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                className="w-full h-[48px] bg-white border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] outline-none focus:border-[#073318] transition-all"
+                                readOnly // Requirement 2: Read Only
+                                className="w-full h-[48px] bg-[#F9FAFB] border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] outline-none cursor-not-allowed"
                             />
                         </div>
 
@@ -419,8 +477,8 @@ const AddPO = () => {
                                 type="date"
                                 placeholder="Enter Date"
                                 value={formData.creation_date}
-                                onChange={(e) => setFormData({ ...formData, creation_date: e.target.value })}
-                                className="w-full h-[48px] bg-white border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] outline-none focus:border-[#073318] transition-all"
+                                readOnly // Requirement 3: Auto Fill + Read Only (Typical)
+                                className="w-full h-[48px] bg-[#F9FAFB] border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] outline-none cursor-not-allowed"
                             />
                         </div>
 
@@ -454,8 +512,8 @@ const AddPO = () => {
                                 type="text"
                                 placeholder="Enter GST number"
                                 value={formData.gst_number}
-                                onChange={(e) => setFormData({ ...formData, gst_number: e.target.value })}
-                                className="w-full h-[48px] bg-white border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] outline-none focus:border-[#073318] transition-all"
+                                readOnly // Requirement 2: Read Only
+                                className="w-full h-[48px] bg-[#F9FAFB] border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] outline-none cursor-not-allowed"
                             />
                         </div>
 
@@ -465,8 +523,8 @@ const AddPO = () => {
                                 type="text"
                                 placeholder="Enter PAN number"
                                 value={formData.pan_number}
-                                onChange={(e) => setFormData({ ...formData, pan_number: e.target.value })}
-                                className="w-full h-[48px] bg-white border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] outline-none focus:border-[#073318] transition-all"
+                                readOnly // Requirement 2: Read Only
+                                className="w-full h-[48px] bg-[#F9FAFB] border border-[#E5E7EB] rounded-[10px] px-4 text-[14px] outline-none cursor-not-allowed"
                             />
                         </div>
                     </div>
@@ -505,18 +563,18 @@ const AddPO = () => {
                                             >
                                                 <div className="flex flex-col items-start gap-0.5">
                                                     <div className="flex items-center gap-2">
-                                                        <span className="font-bold text-[#111827] text-[14px]">{p.name}</span>
-                                                        <span className="px-1.5 py-0.5 bg-gray-100 rounded text-[10px] font-bold text-gray-500 uppercase">{p.code}</span>
+                                                        <span className="font-bold text-[#111827] text-[14px]">{p.product_name}</span>
+                                                        <span className="px-1.5 py-0.5 bg-gray-100 rounded text-[10px] font-bold text-gray-500 uppercase">{p.product_code}</span>
                                                     </div>
                                                     <div className="flex items-center gap-3 text-[12px] text-gray-400">
-                                                        <span>HSN: <span className="text-gray-600 font-medium">{p.hsn}</span></span>
-                                                        <span>Tax: <span className="text-gray-600 font-medium">{p.tax}%</span></span>
-                                                        <span>Rate: <span className="text-[#073318] font-bold">₹{p.rate}</span></span>
+                                                        <span>HSN: <span className="text-gray-600 font-medium">{p.hsn_code}</span></span>
+                                                        <span>Tax: <span className="text-gray-600 font-medium">{p.tax_rate}%</span></span>
+                                                        <span>Rate: <span className="text-[#073318] font-bold">₹{p.rate || 0}</span></span>
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
-                                                    <span className="text-[12px] font-semibold text-[#6B7280]">{p.category}</span>
-                                                    <div className="text-[10px] text-gray-400 font-medium">{p.sub_category}</div>
+                                                    <span className="text-[12px] font-semibold text-[#6B7280]">{p.category?.name}</span>
+                                                    <div className="text-[10px] text-gray-400 font-medium">{p.sub_category?.name}</div>
                                                 </div>
                                             </button>
                                         ))}
@@ -628,20 +686,26 @@ const AddPO = () => {
                                         />
                                     </td>
                                     <td className="px-2 py-2 border-l border-[#F3F4F6]">
-                                        <input 
-                                            type="number" 
-                                            value={item.discount_amount || ''}
-                                            onChange={(e) => handleItemChange(index, 'discount_amount', e.target.value)}
-                                            className="w-full h-[36px] bg-white border border-[#E5E7EB] rounded-[8px] px-2 text-[13px] outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/10 text-right transition-all shadow-sm"
-                                        />
+                                        <div className="relative">
+                                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[12px] text-gray-400 font-bold">₹</span>
+                                            <input 
+                                                type="number" 
+                                                value={item.discount_amount || ''}
+                                                onChange={(e) => handleItemChange(index, 'discount_amount', e.target.value)}
+                                                className="w-full h-[36px] bg-white border border-[#E5E7EB] rounded-[8px] pl-5 pr-2 text-[13px] outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/10 text-right transition-all shadow-sm"
+                                            />
+                                        </div>
                                     </td>
                                     <td className="px-2 py-2 border-l border-[#F3F4F6]">
-                                        <input 
-                                            type="number" 
-                                            value={item.discount_percent || ''}
-                                            onChange={(e) => handleItemChange(index, 'discount_percent', e.target.value)}
-                                            className="w-full h-[36px] bg-white border border-[#E5E7EB] rounded-[8px] px-2 text-[13px] outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/10 text-right font-medium text-[#073318] transition-all shadow-sm"
-                                        />
+                                        <div className="relative">
+                                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[12px] text-[#073318] font-bold">%</span>
+                                            <input 
+                                                type="number" 
+                                                value={item.discount_percent || ''}
+                                                onChange={(e) => handleItemChange(index, 'discount_percent', e.target.value)}
+                                                className="w-full h-[36px] bg-white border border-[#E5E7EB] rounded-[8px] pl-2 pr-5 text-[13px] outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/10 text-right font-medium text-[#073318] transition-all shadow-sm"
+                                            />
+                                        </div>
                                     </td>
                                     <td className="px-2 py-2 border-l border-[#F3F4F6]">
                                         <input 

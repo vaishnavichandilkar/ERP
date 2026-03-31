@@ -15,6 +15,11 @@ export class CreatePurchaseOrderItemDto {
   productCode: string;
 
   @ApiProperty()
+  @IsInt()
+  @IsOptional()
+  productId?: number;
+
+  @ApiProperty()
   @IsString()
   @IsNotEmpty()
   productName: string;
@@ -38,6 +43,11 @@ export class CreatePurchaseOrderItemDto {
   @IsString()
   @IsNotEmpty()
   uom: string;
+
+  @ApiProperty()
+  @IsNumber()
+  @IsOptional()
+  discount?: number;
 
   @ApiProperty()
   @IsNumber()
@@ -70,6 +80,31 @@ export class CreatePurchaseOrderDto {
   @IsInt()
   @IsNotEmpty()
   creditDays: number;
+
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  address?: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  gstNo?: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  panNo?: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsOptional()
+  poNumber?: string;
+
+  @ApiProperty()
+  @IsDateString()
+  @IsOptional()
+  poCreationDate?: string;
 
   @ApiProperty()
   @IsDateString()

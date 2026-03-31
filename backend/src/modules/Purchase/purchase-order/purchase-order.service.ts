@@ -23,6 +23,11 @@ export class PurchaseOrderService {
     return `PO${(lastNumber + 1).toString().padStart(5, '0')}`;
   }
 
+  async getNextNumber() {
+    const poNumber = await this.generatePONumber();
+    return { poNumber };
+  }
+
   async getSupplierDetails(supplierId: number) {
     const supplier = await this.prisma.accountMaster.findUnique({
       where: { id: supplierId },
@@ -72,7 +77,9 @@ export class PurchaseOrderService {
 
   async create(createDto: CreatePurchaseOrderDto, userId: number) {
     const supplier = await this.getSupplierDetails(createDto.supplierId);
-    const poNumber = await this.generatePONumber();
+    
+    // Requirement 4 & 8: Prefer passed poNumber (if validly unique) or generate new
+    const poNumber = createDto.poNumber || await this.generatePONumber();
 
     const processedItems = createDto.items.map(item => this.calculateItemValues(item));
 
@@ -85,11 +92,12 @@ export class PurchaseOrderService {
         data: {
           poNumber,
           supplierName: supplier.supplierName,
-          address: supplier.address,
+          address: createDto.address || supplier.address,
           creditDays: createDto.creditDays,
+          poCreationDate: createDto.poCreationDate ? new Date(createDto.poCreationDate) : new Date(),
           expiryDate: new Date(createDto.expiryDate),
-          gstNumber: supplier.gstNumber,
-          panNumber: supplier.panNumber,
+          gstNumber: createDto.gstNo || supplier.gstNumber,
+          panNumber: createDto.panNo || supplier.panNumber,
           totalAmount,
           taxAmount: totalTaxAmount,
           grandTotal,
@@ -533,8 +541,16 @@ export class PurchaseOrderService {
   }
 
   async importPurchaseOrders(buffer: Buffer, userId: number) {
+    if (!buffer || buffer.length === 0) {
+      throw new BadRequestException('Empty or invalid file uploaded');
+    }
+
     const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.load(buffer as any);
+    try {
+      await workbook.xlsx.load(buffer as any);
+    } catch (error) {
+      throw new BadRequestException('Invalid Excel file format. Please upload a valid .xlsx file.');
+    }
     const worksheet = workbook.getWorksheet(1);
 
     if (!worksheet) {

@@ -20,6 +20,12 @@ export class PurchaseOrderController {
     return this.service.create(createDto, req.user.userId);
   }
 
+  @Get('next-number')
+  @ApiOperation({ summary: 'Generate next available PO Number' })
+  async getNextNumber() {
+    return this.service.getNextNumber();
+  }
+
   @Get('sample-excel')
   @ApiOperation({ summary: 'Download PO Sample Excel File' })
   async downloadSample(@Res() res: Response) {
