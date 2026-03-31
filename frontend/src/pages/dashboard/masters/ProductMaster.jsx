@@ -438,6 +438,31 @@ const ProductMaster = () => {
 
               <div className="relative flex items-center gap-3" ref={exportRef}>
                 <button
+                  onClick={() => setIsImportModalOpen(true)}
+                  className="flex items-center justify-center gap-2 px-4 h-[42px] border border-[#E5E7EB] rounded-[10px] text-[14px] font-bold text-[#4B5563] hover:bg-gray-50 transition-all duration-200 bg-white shadow-sm"
+                >
+                  <Upload size={18} className="text-gray-400" />
+                  {t('common:import', 'Import')}
+                </button>
+                <ImportModal
+                  isOpen={isImportModalOpen}
+                  onClose={() => setIsImportModalOpen(false)}
+                  onImport={handleImportExcel}
+                  onDownloadSample={async () => {
+                    const response = await productService.downloadSample();
+                    const url = window.URL.createObjectURL(new Blob([response.data]));
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', 'Product_Master_Sample.xlsx');
+                    document.body.appendChild(link);
+                    link.click();
+                    link.parentNode.removeChild(link);
+                  }}
+                  sampleFileName="Product_Master_Sample.xlsx"
+                  sampleHeaders={['Product Name*', 'UOM*', 'Product Type*', 'Category*', 'Sub Category*', 'HSN Code*', 'Product Description', 'Status']}
+                />
+
+                <button
                   onClick={() => setIsExportOpen(!isExportOpen)}
                   className={`flex items-center justify-center gap-2 px-4 h-[42px] border rounded-[10px] text-[14px] font-bold transition-all duration-200 bg-white
                                                         ${isExportOpen ? "border-[#073318] text-[#073318]" : "border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50"}`}
