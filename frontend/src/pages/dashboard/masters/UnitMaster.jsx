@@ -275,7 +275,7 @@ const UnitMaster = () => {
                                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                                     <input
                                         type="text"
-                                        placeholder="Search By Anything..."
+                                        placeholder={t('common:search_by_anything')}
                                         value={searchQuery}
                                         onChange={(e) => {
                                             setSearchQuery(e.target.value);
@@ -303,7 +303,7 @@ const UnitMaster = () => {
                                             : 'bg-white border-[#E5E7EB] text-[#4B5563] hover:bg-gray-50'}`}
                                 >
                                     <Filter size={18} className={isFilterApplied ? "text-red-500" : "text-gray-400"} />
-                                    {isFilterApplied ? 'Clear' : t('common:filter')}
+                                    {isFilterApplied ? t('common:clear') : t('common:filter')}
                                 </button>
                                 <button
                                     onClick={handleRefresh}
@@ -320,7 +320,7 @@ const UnitMaster = () => {
                                     className="flex items-center justify-center gap-2 px-4 h-[42px] border border-[#E5E7EB] rounded-[10px] text-[14px] font-bold text-[#4B5563] hover:bg-gray-50 transition-all duration-200 bg-white shadow-sm"
                                 >
                                     <Upload size={18} className="text-gray-400" />
-                                    {t('common:import', 'Import')}
+                                    {t('common:import')}
                                 </button>
                                 <ImportModal
                                     isOpen={isImportModalOpen}
@@ -366,19 +366,19 @@ const UnitMaster = () => {
                                         </th>
                                         <th className="border-r border-white/10">
                                             <div className="flex items-center gap-2 uppercase tracking-tight">
-                                                {t('unit_name')}
+                                                {t('modules:unit_name')}
                                                 <ChevronsUpDown size={14} className="text-gray-300" />
                                             </div>
                                         </th>
                                         <th className="border-r border-white/10">
                                             <div className="flex items-center gap-2 uppercase tracking-tight">
-                                                {t('gst_uom')}
+                                                {t('modules:gst_uom')}
                                                 <ChevronsUpDown size={14} className="text-gray-300" />
                                             </div>
                                         </th>
                                         <th className="border-r border-white/10 uppercase tracking-tight">
                                             <div className="flex items-center gap-2">
-                                                Full Name of Measurement
+                                                {t('modules:full_name_of_measurement')}
                                                 <ChevronsUpDown size={14} className="text-gray-300" />
                                             </div>
                                         </th>
@@ -388,7 +388,7 @@ const UnitMaster = () => {
                                                 <ChevronsUpDown size={14} className="text-gray-300" />
                                             </div>
                                         </th>
-                                        <th className="text-center uppercase tracking-tight">ACTION</th>
+                                        <th className="text-center uppercase tracking-tight">{t('common:action')}</th>
                                     </tr>
                                 </thead>
                                 <tbody className="text-[14px] text-[#111827]">
@@ -410,7 +410,7 @@ const UnitMaster = () => {
                                             <td className="px-6 py-5 border-r border-[#F3F4F6]">
                                                 <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-bold ${row.status === 'ACTIVE' ? 'bg-[#ECFDF5] text-[#059669]' : 'bg-[#FEF2F2] text-[#DC2626]'}`}>
                                                     <span className={`w-1.5 h-1.5 rounded-full ${row.status === 'ACTIVE' ? 'bg-[#059669]' : 'bg-[#DC2626]'}`}></span>
-                                                    {row.status === 'ACTIVE' ? 'Active' : 'Inactive'}
+                                                    {row.status === 'ACTIVE' ? t('common:active') : t('common:inactive')}
                                                 </div>
                                             </td>
                                             <td className={`px-6 py-5 text-center relative ${activeDropdown === row.id ? 'z-[100]' : ''}`} ref={activeDropdown === row.id ? dropdownRef : null}>
@@ -438,7 +438,7 @@ const UnitMaster = () => {
                                                             className="w-full px-5 py-3 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#0A3622] transition-colors whitespace-nowrap font-bold"
                                                         >
                                                             <Eye size={18} className="text-gray-400" />
-                                                            {t('view_and_edit_unit', 'View and Edit Unit')}
+                                                            {t('modules:view_and_edit_unit')}
                                                         </button>
                                                         <div className="h-[1px] bg-[#F3F4F6] mx-2 my-1" />
                                                         <button

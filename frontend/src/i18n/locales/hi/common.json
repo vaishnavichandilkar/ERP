@@ -62,5 +62,10 @@
     "click_to_upload": "अपलोड करने के लिए क्लिक करें",
     "or_drag_drop": "या खींचें और छोड़ें",
     "file_limit_info": "PDF, JPG, PNG (अधि. {{max}}MB)",
-    "file_size_error": "कुछ फाइलें {{max}}MB सीमा से अधिक हो गई हैं।"
+    "file_size_error": "कुछ फाइलें {{max}}MB सीमा से अधिक हो गई हैं।",
+    "import": "आयात करें",
+    "search_by_anything": "कुछ भी खोजें...",
+    "search_by_name": "नाम से खोजें...",
+    "clear": "साफ़ करें",
+    "loading": "लोड हो रहा है"
 }
