@@ -216,7 +216,23 @@ export class PurchaseOrderService {
         data.totalAmount = processedItems.reduce((sum, item) => sum + (item.quantity * item.rate) - item.discountAmount, 0);
         data.taxAmount = processedItems.reduce((sum, item) => sum + item.taxAmount, 0);
         data.grandTotal = processedItems.reduce((sum, item) => sum + item.totalAmount, 0);
-        data.items = { create: processedItems };
+        
+        data.items = { 
+          create: processedItems.map(item => ({
+            productCode: item.productCode,
+            productName: item.productName,
+            hsnCode: item.hsnCode,
+            quantity: item.quantity,
+            rate: item.rate,
+            uom: item.uom,
+            discountPercent: item.discountPercent,
+            discountAmount: item.discountAmount,
+            taxPercent: item.taxPercent,
+            taxAmount: item.taxAmount,
+            totalAmount: item.totalAmount,
+            printDescription: item.printDescription
+          }))
+        };
 
         await tx.purchaseOrderItem.deleteMany({ where: { purchaseOrderId: id } });
       }
