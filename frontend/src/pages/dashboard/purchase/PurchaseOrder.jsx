@@ -412,16 +412,29 @@ const PurchaseOrder = () => {
                         {isLoading ? <div className="h-4 bg-gray-200 rounded w-20"></div> : (po.grandTotal || 0).toFixed(2)}
                     </td>
                     <td className="px-6 py-5 text-[#4B5563] border-r border-[#F3F4F6]">
-                        {isLoading ? <div className="h-4 bg-gray-200 rounded w-20"></div> : (
-                            <span className={`px-3 py-1 rounded-full text-[12px] font-bold uppercase
-                                ${po.status === 'PENDING' ? 'bg-orange-100 text-orange-600' : 
-                                  po.status === 'INVOICE_GENERATED' ? 'bg-emerald-100 text-emerald-600' : 
-                                  po.status === 'APPROVED' ? 'bg-blue-100 text-blue-600' : 
-                                  'bg-gray-100 text-gray-600'}`}
-                            >
-                                {po.status}
-                            </span>
-                        )}
+                        {isLoading ? <div className="h-4 bg-gray-200 rounded w-20"></div> : (() => {
+                          const status = po.status;
+                          const expiryDate = new Date(po.expiryDate);
+                          const now = new Date();
+                          const diffHrs = (expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+                          if (status === 'INVOICE_GENERATED') {
+                            return <span className="px-3 py-1 bg-emerald-100 text-emerald-600 rounded-full text-[12px] font-bold uppercase shadow-sm">COMPLETED</span>;
+                          }
+                          if (status === 'DELETED') {
+                            return <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-[12px] font-bold uppercase shadow-sm">DELETED</span>;
+                          }
+                          
+                          // Handle Pending with Expiry logic
+                          if (diffHrs < 0) {
+                            return <span className="px-3 py-1 bg-red-100 text-red-600 rounded-full text-[12px] font-bold uppercase shadow-sm">EXPIRED</span>;
+                          }
+                          if (diffHrs <= 48) {
+                            return <span className="px-3 py-1 bg-amber-100 text-amber-600 rounded-full text-[12px] font-bold uppercase shadow-sm">EXPIRING SOON</span>;
+                          }
+                          
+                          return <span className="px-3 py-1 bg-orange-100 text-orange-600 rounded-full text-[12px] font-bold uppercase shadow-sm">PENDING</span>;
+                        })()}
                     </td>
                     <td className="px-6 py-5 text-center relative" ref={el => dropdownRefs.current[po.id] = el}>
                       <button
