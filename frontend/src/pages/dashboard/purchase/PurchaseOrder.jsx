@@ -456,12 +456,18 @@ const PurchaseOrder = () => {
                       </button>
 
                       {activeDropdown === po.id && (
-                        <div className={`absolute right-4 w-max min-w-[180px] bg-white border border-gray-100 rounded-[14px] shadow-[0_10px_40px_rgba(0,0,0,0.12)] z-[110] py-2 animate-in duration-200 text-left ${index >= currentItems.length - 2 ? 'bottom-0 mb-2' : 'top-0 mt-2'}`}>
+                        <div className={`absolute right-4 w-max min-w-[200px] bg-white border border-gray-100 rounded-[14px] shadow-[0_10px_40px_rgba(0,0,0,0.12)] z-[110] py-1 animate-in duration-200 text-left ${index >= currentItems.length - 2 ? 'bottom-0 mb-2' : 'top-0 mt-2'}`}>
                           <button 
                             onClick={() => navigate(ROUTES.PURCHASE_ORDER_VIEW.replace(':id', po.id))}
+                            className="w-full px-5 py-3 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors font-bold border-b border-gray-50"
+                          >
+                            <Eye size={18} className="text-gray-400" /> View PO
+                          </button>
+                          <button 
+                            onClick={() => navigate(ROUTES.PURCHASE_ORDER_EDIT.replace(':id', po.id))}
                             className="w-full px-5 py-3 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors font-bold border-b border-gray-50 last:border-0"
                           >
-                            <Eye size={18} className="text-gray-400" /> View Order
+                            <FileEdit size={18} className="text-gray-400" /> Edit PO
                           </button>
                         </div>
                       )}
