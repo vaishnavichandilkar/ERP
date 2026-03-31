@@ -651,7 +651,7 @@ export class PurchaseOrderService {
               uom_id: firstUom?.id || 1,
               category_id: firstCat?.id || 1,
               sub_category_id: firstSub?.id || 1,
-              product_type: "Goods",
+              product_type: "GOODS",
               hsn_code: "0000",
               tax_rate: parseFloat(String(getVal(row, 'taxPercent') || 0)),
               created_by: userId
@@ -660,10 +660,20 @@ export class PurchaseOrderService {
         }
 
         // Prepare PO Data
+        const expiryVal = getVal(row, 'expiryDate');
+        let finalExpiry: Date;
+        if (expiryVal instanceof Date) {
+          finalExpiry = expiryVal;
+        } else if (typeof expiryVal === 'string' || typeof expiryVal === 'number') {
+          finalExpiry = new Date(expiryVal);
+        } else {
+          finalExpiry = new Date();
+        }
+
         const dto: CreatePurchaseOrderDto = {
           supplierId: supplier.id,
           creditDays: parseInt(String(getVal(row, 'creditDays') || supplier.supplierCreditDays || 0), 10),
-          expiryDate: new Date(String(getVal(row, 'expiryDate')) || new Date()).toISOString().split('T')[0],
+          expiryDate: finalExpiry.toISOString().split('T')[0],
           items: [{
             productCode: product.product_code,
             productName: product.product_name,
