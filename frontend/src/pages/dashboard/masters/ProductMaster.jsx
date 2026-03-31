@@ -386,7 +386,7 @@ const ProductMaster = () => {
                   />
                   <input
                     type="text"
-                    placeholder="Search By Anything..."
+                    placeholder={t('common:search_by_anything')}
                     value={searchQuery}
                     onChange={(e) => {
                       setSearchQuery(e.target.value);

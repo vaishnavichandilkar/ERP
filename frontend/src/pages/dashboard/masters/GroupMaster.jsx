@@ -235,7 +235,7 @@ const GroupMaster = () => {
                                 {translateDynamic(group.group_name, t)}
                                 {group.is_header && group.level === 1 && (
                                     <span className="ml-2 px-1.5 py-0.5 bg-gray-100 text-[#6B7280] text-[9px] font-bold rounded uppercase tracking-wider">
-                                        Header
+                                        {t('common:header', 'Header')}
                                     </span>
                                 )}
                             </span>
@@ -248,7 +248,7 @@ const GroupMaster = () => {
                         <div className="w-[120px] flex items-center justify-center px-4">
                             <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-bold ${group.status === 'ACTIVE' ? 'bg-[#ECFDF5] text-[#059669]' : 'bg-[#FEF2F2] text-[#DC2626]'}`}>
                                 <span className={`w-1.5 h-1.5 rounded-full ${group.status === 'ACTIVE' ? 'bg-[#059669]' : 'bg-[#DC2626]'}`}></span>
-                                {group.status === 'ACTIVE' ? 'Active' : 'Inactive'}
+                                {group.status === 'ACTIVE' ? t('common:active') : t('common:inactive')}
                             </div>
                         </div>
 
@@ -346,7 +346,7 @@ const GroupMaster = () => {
                             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                             <input
                                 type="text"
-                                placeholder="Search By Anything..."
+                                placeholder={t('common:search_by_anything')}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full h-[42px] bg-white border border-[#E5E7EB] rounded-[10px] pl-10 pr-10 text-[14px] outline-none focus:border-[#073318] focus:ring-1 focus:ring-[#073318]/10 transition-all placeholder:text-gray-400 shadow-sm"
@@ -446,7 +446,7 @@ const GroupMaster = () => {
                         {isLoading ? (
                             <div className="p-16 text-center">
                                 <div className="inline-block w-8 h-8 border-2 border-[#073318] border-t-transparent rounded-full animate-spin mb-4" />
-                                <p className="text-[#6B7280] text-[14px] font-medium">{t('common:loading_groups') || 'Loading groups...'}</p>
+                                <p className="text-[#6B7280] text-[14px] font-medium">{t('common:loading')}...</p>
                             </div>
                         ) : filteredData.length > 0 ? (
                             filteredData.map((group, index) => renderGroupRow(group, 0, index, filteredData.length))

@@ -298,5 +298,6 @@
     "add_po": "Add PO",
     "export": "Export",
     "order": "Purchase Order",
-    "add": "Add PO"
+    "add": "Add PO",
+    "customer_type": "Customer Type"
 }
