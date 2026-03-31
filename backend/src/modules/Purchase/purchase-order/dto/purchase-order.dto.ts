@@ -121,7 +121,37 @@ export class UpdatePurchaseOrderDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsInt()
+  supplierId?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsInt()
   creditDays?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  gstNo?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  panNo?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  poNumber?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsDateString()
+  poCreationDate?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()

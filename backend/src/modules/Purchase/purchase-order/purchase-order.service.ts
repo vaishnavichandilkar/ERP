@@ -189,36 +189,41 @@ export class PurchaseOrderService {
     }
 
     return this.prisma.$transaction(async (tx) => {
+      const data: any = {
+        creditDays: updateDto.creditDays ?? po.creditDays,
+        expiryDate: updateDto.expiryDate ? new Date(updateDto.expiryDate) : po.expiryDate,
+        status: updateDto.status ?? (po.status as any),
+        address: updateDto.address ?? po.address,
+        gstNumber: updateDto.gstNo ?? po.gstNumber,
+        panNumber: updateDto.panNo ?? po.panNumber,
+        poNumber: updateDto.poNumber ?? po.poNumber,
+        poCreationDate: updateDto.poCreationDate ? new Date(updateDto.poCreationDate) : po.poCreationDate,
+      };
+
+      if (updateDto.supplierId) {
+        const supplier = await tx.accountMaster.findUnique({ where: { id: updateDto.supplierId } });
+        if (supplier) {
+          data.supplierName = supplier.accountName;
+          // Only override if not explicitly provided in DTO
+          if (!updateDto.address) data.address = supplier.addressLine1;
+          if (!updateDto.gstNo) data.gstNumber = supplier.gstNo;
+          if (!updateDto.panNo) data.panNumber = supplier.panNo;
+        }
+      }
+
       if (updateDto.items) {
         const processedItems = updateDto.items.map(item => this.calculateItemValues(item));
-        const totalAmount = processedItems.reduce((sum, item) => sum + (item.quantity * item.rate) - item.discountAmount, 0);
-        const totalTaxAmount = processedItems.reduce((sum, item) => sum + item.taxAmount, 0);
-        const grandTotal = processedItems.reduce((sum, item) => sum + item.totalAmount, 0);
+        data.totalAmount = processedItems.reduce((sum, item) => sum + (item.quantity * item.rate) - item.discountAmount, 0);
+        data.taxAmount = processedItems.reduce((sum, item) => sum + item.taxAmount, 0);
+        data.grandTotal = processedItems.reduce((sum, item) => sum + item.totalAmount, 0);
+        data.items = { create: processedItems };
 
         await tx.purchaseOrderItem.deleteMany({ where: { purchaseOrderId: id } });
-
-        return tx.purchaseOrder.update({
-          where: { id },
-          data: {
-            creditDays: updateDto.creditDays ?? po.creditDays,
-            expiryDate: updateDto.expiryDate ? new Date(updateDto.expiryDate) : po.expiryDate,
-            status: updateDto.status ?? (po.status as any),
-            totalAmount,
-            taxAmount: totalTaxAmount,
-            grandTotal,
-            items: { create: processedItems },
-          },
-          include: { items: true },
-        });
       }
 
       return tx.purchaseOrder.update({
         where: { id },
-        data: {
-          creditDays: updateDto.creditDays ?? po.creditDays,
-          expiryDate: updateDto.expiryDate ? new Date(updateDto.expiryDate) : po.expiryDate,
-          status: updateDto.status ?? (po.status as any),
-        },
+        data,
         include: { items: true },
       });
     });
