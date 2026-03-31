@@ -157,14 +157,36 @@ const ViewPO = () => {
                         >
                             <ArrowLeft size={18} /> Back
                         </button>
-                        {!isLoading && formData.status === 'PENDING' && (
-                            <button 
-                                onClick={() => navigate(ROUTES.PURCHASE_ORDER_EDIT.replace(':id', id))}
-                                className="flex items-center gap-2 px-6 h-[40px] bg-[#073318] text-white rounded-[10px] text-[14px] font-bold hover:bg-[#04200f] transition-all shadow-sm"
-                            >
-                                <Edit3 size={18} /> Edit
-                            </button>
-                        )}
+                        {(() => {
+                            if (isLoading || formData.status !== 'PENDING') return null;
+                            
+                            // Check Expiry
+                            const parseDate = (d) => {
+                                if (!d) return new Date();
+                                const parts = String(d).split('-');
+                                if (parts.length === 3) {
+                                    const [day, month, year] = parts.map(Number);
+                                    return new Date(year, month - 1, day);
+                                }
+                                return new Date(d);
+                            };
+                            
+                            const expDate = parseDate(formData.expiry_date);
+                            const expiryEndOfDay = new Date(expDate);
+                            expiryEndOfDay.setHours(23, 59, 59, 999);
+                            const isExpired = expiryEndOfDay < new Date();
+
+                            if (isExpired) return null;
+
+                            return (
+                                <button 
+                                    onClick={() => navigate(ROUTES.PURCHASE_ORDER_EDIT.replace(':id', id))}
+                                    className="flex items-center gap-2 px-6 h-[40px] bg-[#073318] text-white rounded-[10px] text-[14px] font-bold hover:bg-[#04200f] transition-all shadow-sm"
+                                >
+                                    <Edit3 size={18} /> Edit
+                                </button>
+                            );
+                        })()}
                     </div>
                 </div>
 

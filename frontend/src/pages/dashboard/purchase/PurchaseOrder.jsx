@@ -414,9 +414,14 @@ const PurchaseOrder = () => {
                     <td className="px-6 py-5 text-[#4B5563] border-r border-[#F3F4F6]">
                         {isLoading ? <div className="h-4 bg-gray-200 rounded w-20"></div> : (() => {
                           const status = po.status;
-                          const expiryDate = new Date(po.expiryDate);
+                          const expDate = parseDate(po.expiryDate);
                           const now = new Date();
-                          const diffHrs = (expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+                          
+                          // Set expiry to end of that day for fair comparison
+                          const expiryEndOfDay = new Date(expDate);
+                          expiryEndOfDay.setHours(23, 59, 59, 999);
+                          
+                          const diffHrs = (expiryEndOfDay.getTime() - now.getTime()) / (1000 * 60 * 60);
 
                           if (status === 'INVOICE_GENERATED') {
                             return <span className="px-3 py-1 bg-emerald-100 text-emerald-600 rounded-full text-[12px] font-bold uppercase shadow-sm">COMPLETED</span>;
@@ -425,11 +430,10 @@ const PurchaseOrder = () => {
                             return <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-[12px] font-bold uppercase shadow-sm">DELETED</span>;
                           }
                           
-                          // Handle Pending with Expiry logic
-                          if (diffHrs < 0) {
+                          if (expiryEndOfDay < now) {
                             return <span className="px-3 py-1 bg-red-100 text-red-600 rounded-full text-[12px] font-bold uppercase shadow-sm">EXPIRED</span>;
                           }
-                          if (diffHrs <= 48) {
+                          if (diffHrs > 0 && diffHrs <= 48) {
                             return <span className="px-3 py-1 bg-amber-100 text-amber-600 rounded-full text-[12px] font-bold uppercase shadow-sm">EXPIRING SOON</span>;
                           }
                           
@@ -451,7 +455,14 @@ const PurchaseOrder = () => {
                             className="w-full px-5 py-3 flex items-center gap-3 text-[14px] text-gray-700 hover:bg-[#F9FAFB] hover:text-[#073318] transition-colors font-bold"
                           >
                             <Eye size={18} className="text-gray-400" /> 
-                            {po.status === 'PENDING' ? 'View and Edit Order' : 'View Order'}
+                            {(() => {
+                               const expDate = parseDate(po.expiryDate);
+                               const expiryEndOfDay = new Date(expDate);
+                               expiryEndOfDay.setHours(23, 59, 59, 999);
+                               const isExpired = expiryEndOfDay < new Date();
+                               
+                               return (po.status === 'PENDING' && !isExpired) ? 'View and Edit Order' : 'View Order';
+                            })()}
                           </button>
                         </div>
                       )}
