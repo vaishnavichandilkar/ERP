@@ -125,8 +125,10 @@ export class PurchaseOrderService {
   }
 
   async findAll(query: { filter?: 'all' | 'pending' | 'expiring' | 'expired' | 'completed' | 'deleted', search?: string }) {
-    const now = new Date();
-    const fortyEightHoursLater = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const fortyEightHoursLater = new Date(startOfToday.getTime() + 48 * 60 * 60 * 1000);
+    fortyEightHoursLater.setHours(23, 59, 59, 999);
 
     const where: Prisma.PurchaseOrderWhereInput = {};
 
@@ -134,13 +136,14 @@ export class PurchaseOrderService {
     switch (query.filter) {
       case 'pending':
         where.status = 'PENDING';
+        where.expiryDate = { gte: startOfToday };
         break;
       case 'expiring': {
-        where.expiryDate = { gte: now, lte: fortyEightHoursLater };
+        where.expiryDate = { gte: startOfToday, lte: fortyEightHoursLater };
         break;
       }
       case 'expired':
-        where.expiryDate = { lt: now };
+        where.expiryDate = { lt: startOfToday };
         break;
       case 'completed':
         where.status = 'INVOICE_GENERATED';
@@ -149,7 +152,7 @@ export class PurchaseOrderService {
         where.status = 'DELETED';
         break;
       default:
-        // 'all' or undefined: exclude DELETED by default unless clicking 'deleted' tab specifically
+        // 'all' or undefined: exclude DELETED by default
         where.status = { not: 'DELETED' };
         break;
     }
