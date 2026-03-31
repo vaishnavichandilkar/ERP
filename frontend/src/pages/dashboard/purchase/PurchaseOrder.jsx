@@ -168,55 +168,43 @@ const PurchaseOrder = () => {
   /**
    * Export Logic
    */
-  const handleExportPDF = () => {
-    setIsExportOpen(false);
-    const doc = new jsPDF("landscape");
-    const tableColumn = ["PO No", "Supplier Name", "Creation Date", "Expiry Date", "Amount", "GST No", "Credit Days", "Tax Amount", "Grand Total", "Status"];
-    const tableRows = filteredData.map(po => [
-      po.poNumber || "-",
-      po.supplierName || "-",
-      formatDate(po.poCreationDate),
-      formatDate(po.expiryDate),
-      (po.totalAmount || 0).toFixed(2),
-      po.gstNumber || "-",
-      po.creditDays || 0,
-      (po.taxAmount || 0).toFixed(2),
-      (po.grandTotal || 0).toFixed(2),
-      po.status
-    ]);
+  /**
+   * Universal Export Handler (Backend Driven)
+   */
+  const handleExport = async (format) => {
+    try {
+        setIsExportOpen(false);
+        setIsRefreshing(true);
+        
+        const params = {
+            format,
+            filter: activeTab === "All" ? "all" : activeTab.toLowerCase(),
+            search: searchQuery
+        };
 
-    doc.autoTable({
-      head: [tableColumn],
-      body: tableRows,
-      startY: 20,
-      theme: 'grid',
-      headStyles: { fillColor: [7, 51, 24], fontSize: 10 },
-      styles: { fontSize: 8 },
-    });
-    doc.text("Purchase Orders Report", 14, 15);
-    doc.save(`purchase-orders-${activeTab.toLowerCase()}.pdf`);
+        const response = await purchaseOrderService.exportPurchaseOrders(params);
+        
+        // Trigger download
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `purchase_orders_${activeTab.toLowerCase()}.${format === 'xlsx' ? 'xlsx' : 'pdf'}`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        
+        setShowSuccessToast(true);
+        setTimeout(() => setShowSuccessToast(false), 3000);
+    } catch (error) {
+        console.error("Export error:", error);
+        // Fallback or Alert
+    } finally {
+        setIsRefreshing(false);
+    }
   };
 
-  const handleExportExcel = () => {
-    setIsExportOpen(false);
-    const dataToExport = filteredData.map(po => ({
-      "PO No": po.poNumber || "-",
-      "Supplier Name": po.supplierName || "-",
-      "Creation Date": formatDate(po.poCreationDate),
-      "Expiry Date": formatDate(po.expiryDate),
-      "Base Amount": po.totalAmount || 0,
-      "GST Number": po.gstNumber || "-",
-      "Credit Days": po.creditDays || 0,
-      "Tax Amount": po.taxAmount || 0,
-      "Grand Total": po.grandTotal || 0,
-      "Status": po.status
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(dataToExport);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Purchase Orders");
-    XLSX.writeFile(wb, `purchase-orders-${activeTab.toLowerCase()}.xlsx`);
-  };
+  const handleExportPDF = () => handleExport('pdf');
+  const handleExportExcel = () => handleExport('xlsx');
 
   const handleDownloadSample = async () => {
     try {
