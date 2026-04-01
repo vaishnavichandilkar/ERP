@@ -446,7 +446,7 @@ export class PurchaseOrderService {
     });
   }
 
-  async exportPurchaseOrders(format: string, query: { filter?: any, search?: string }) {
+  async exportPurchaseOrders(format: string, query: { filter?: any; search?: string }) {
     const orders = await this.findAll(query);
 
     if (orders.length === 0) {
@@ -455,53 +455,107 @@ export class PurchaseOrderService {
 
     const now = new Date();
     const pad = (n: number) => n.toString().padStart(2, '0');
-    const timestamp = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}, ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    const timestamp = `${pad(now.getDate())}-${pad(now.getMonth() + 1)}-${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+    const formatDate = (date: Date) => {
+      const d = new Date(date);
+      return `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()}`;
+    };
+
+    const getDerivedStatus = (order: any) => {
+      const status = order.status;
+      const expDate = new Date(order.expiryDate);
+      expDate.setHours(23, 59, 59, 999);
+      const currentTime = new Date();
+
+      if (status === 'INVOICE_GENERATED') return 'COMPLETED';
+      if (status === 'DELETED') return 'DELETED';
+      if (expDate < currentTime) return 'EXPIRED';
+
+      const diffHrs = (expDate.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
+      if (diffHrs > 0 && diffHrs <= 48) return 'EXPIRING SOON';
+
+      return 'PENDING';
+    };
 
     if (format === 'xlsx') {
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Purchase Orders');
 
       worksheet.columns = [
-        { header: 'PO Number', key: 'poNumber', width: 15 },
+        { header: 'PO No', key: 'poNumber', width: 15 },
         { header: 'Supplier Name', key: 'supplierName', width: 30 },
-        { header: 'Creation Date', key: 'poCreationDate', width: 15 },
-        { header: 'Expiry Date', key: 'expiryDate', width: 15 },
+        { header: 'Creation Date', key: 'poCreationDate', width: 18 },
+        { header: 'Expiry Date', key: 'expiryDate', width: 18 },
+        { header: 'Amount', key: 'totalAmount', width: 15 },
+        { header: 'GST Number', key: 'gstNumber', width: 22 },
         { header: 'Credit Days', key: 'creditDays', width: 12 },
-        { header: 'Total Amount', key: 'totalAmount', width: 15 },
         { header: 'Tax Amount', key: 'taxAmount', width: 15 },
-        { header: 'Grand Total', key: 'grandTotal', width: 15 },
-        { header: 'Discount Amount', key: 'discountAmount', width: 15 },
-        { header: 'Status', key: 'status', width: 15 },
+        { header: 'Total Amount', key: 'grandTotal', width: 15 },
+        { header: 'Status', key: 'derivedStatus', width: 18 },
       ];
 
-      orders.forEach(order => {
-        // Since order.items is included, we might want to sum items. But PO table has its own totals.
-        // Usually, summary export doesn't show line-item detail unless we expand it.
-        // For now, let's just add the column.
+      orders.forEach((order) => {
         worksheet.addRow({
           poNumber: order.poNumber,
           supplierName: order.supplierName,
-          poCreationDate: new Date(order.poCreationDate).toLocaleDateString(),
-          expiryDate: new Date(order.expiryDate).toLocaleDateString(),
-          creditDays: order.creditDays,
-          totalAmount: order.totalAmount,
-          taxAmount: order.taxAmount,
-          grandTotal: order.grandTotal,
-          discountAmount: order.items.reduce((sum, item) => sum + (item.discountAmount || 0), 0),
-          status: order.status,
-          printDescription: order.items.map(item => item.printDescription).filter(Boolean).join(', '),
+          poCreationDate: formatDate(order.poCreationDate),
+          expiryDate: formatDate(order.expiryDate),
+          totalAmount: Number(order.totalAmount || 0).toFixed(2),
+          gstNumber: order.gstNumber || '-',
+          creditDays: order.creditDays || 0,
+          taxAmount: Number(order.taxAmount || 0).toFixed(2),
+          grandTotal: Number(order.grandTotal || 0).toFixed(2),
+          derivedStatus: getDerivedStatus(order),
         });
       });
 
-      // Styling
-      worksheet.spliceRows(1, 0, [], [], [], []);
-      worksheet.mergeCells('A1:I1');
-      worksheet.getCell('A1').value = 'ERP - Purchase Orders Report';
-      worksheet.getCell('A1').font = { size: 16, bold: true };
-      worksheet.getCell('A1').alignment = { horizontal: 'center' };
+      // Splice rows at the top for Title and Timestamp
+      worksheet.spliceRows(1, 0, 
+        ['Purchase Orders Report'],
+        [`Exported on: ${timestamp}`],
+        [] // Spacer row
+      );
 
-      worksheet.getRow(5).font = { bold: true };
-      
+      // Style and Merge Title
+      worksheet.mergeCells('A1:J1');
+      const titleCell = worksheet.getCell('A1');
+      titleCell.font = { size: 16, bold: true, color: { argb: 'FF073318' } };
+      titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+      // Style and Merge Timestamp
+      worksheet.mergeCells('A2:J2');
+      const timeCell = worksheet.getCell('A2');
+      timeCell.font = { size: 10, italic: true, color: { argb: 'FF666666' } };
+      timeCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+      // The actual table header is now on Row 4
+      const headerRow = worksheet.getRow(4);
+      headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      headerRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF073318' },
+      };
+      headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+
+      // Add borders to all cells from Row 4 onwards
+      worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber >= 4) {
+          row.eachCell((cell) => {
+            cell.border = {
+              top: { style: 'thin' },
+              left: { style: 'thin' },
+              bottom: { style: 'thin' },
+              right: { style: 'thin' },
+            };
+            if (rowNumber > 4) {
+              cell.alignment = { horizontal: 'left', vertical: 'middle' };
+            }
+          });
+        }
+      });
+
       const buffer = await workbook.xlsx.writeBuffer();
       return {
         buffer: Buffer.from(buffer),
@@ -512,7 +566,7 @@ export class PurchaseOrderService {
 
     if (format === 'pdf') {
       return new Promise<any>((resolve) => {
-        const doc = new PDFDocument({ margin: 30, size: 'A4', layout: 'landscape' });
+        const doc = new PDFDocument({ margin: 20, size: 'A4', layout: 'landscape' });
         const buffers: Buffer[] = [];
         doc.on('data', buffers.push.bind(buffers));
         doc.on('end', () => {
@@ -523,35 +577,70 @@ export class PurchaseOrderService {
           });
         });
 
-        doc.fontSize(20).text('Purchase Orders Report', { align: 'center' });
-        doc.fontSize(10).text(`Exported on: ${timestamp}`, { align: 'right' });
+        // Header Title
+        doc.fillColor('#073318').fontSize(20).font('Helvetica-Bold').text('Purchase Orders Report', { align: 'center' });
+        doc.moveDown(0.5);
+        doc.fillColor('#666666').fontSize(10).font('Helvetica').text(`Exported on: ${timestamp}`, { align: 'right' });
         doc.moveDown();
 
-        const tableTop = 100;
-        const colX = [30, 100, 250, 330, 410, 480, 560, 640, 720];
-        const headers = ['PO No', 'Supplier', 'Date', 'Expiry', 'Cr.Days', 'Total', 'Tax', 'Grand', 'Status'];
+        // Table Header Styling (Account Master Format)
+        const tableTop = 80;
+        const colX = [20, 80, 220, 290, 360, 420, 520, 580, 650, 720];
+        const colW = [60, 140, 70, 70, 60, 100, 60, 70, 70, 70];
+        const headers = ['PO No', 'Supplier Name', 'Cr. Date', 'Exp. Date', 'Amount', 'GST Number', 'Cr. Days', 'Tax Amt', 'Total Amt', 'Status'];
 
-        doc.fontSize(10).font('Helvetica-Bold');
-        headers.forEach((h, i) => doc.text(h, colX[i], tableTop));
+        // Draw Header Background
+        doc.rect(20, tableTop - 5, 780, 25).fill('#073318');
         
-        doc.font('Helvetica').fontSize(8);
-        let y = tableTop + 20;
+        doc.fillColor('#FFFFFF').fontSize(9).font('Helvetica-Bold');
+        headers.forEach((h, i) => {
+          doc.text(h, colX[i] + 2, tableTop + 5, { width: colW[i], align: 'left' });
+        });
 
-        orders.forEach(order => {
-          if (y > 500) {
-            doc.addPage({ layout: 'landscape' });
-            y = 50;
+        doc.fillColor('#000000').font('Helvetica').fontSize(8);
+        let y = tableTop + 25;
+
+        orders.forEach((order, index) => {
+          if (y > 520) {
+            doc.addPage({ layout: 'landscape', margin: 20 });
+            y = 40;
+            // Redraw Header on new page
+            doc.rect(20, y - 5, 780, 25).fill('#073318');
+            doc.fillColor('#FFFFFF').fontSize(9).font('Helvetica-Bold');
+            headers.forEach((h, i) => doc.text(h, colX[i] + 2, y + 5));
+            doc.fillColor('#000000').font('Helvetica').fontSize(8);
+            y += 25;
           }
-          doc.text(order.poNumber, colX[0], y);
-          doc.text(order.supplierName.substring(0, 25), colX[1], y);
-          doc.text(new Date(order.poCreationDate).toLocaleDateString(), colX[2], y);
-          doc.text(new Date(order.expiryDate).toLocaleDateString(), colX[3], y);
-          doc.text(order.creditDays.toString(), colX[4], y);
-          doc.text(order.totalAmount.toString(), colX[5], y);
-          doc.text(order.taxAmount.toString(), colX[6], y);
-          doc.text(order.grandTotal.toString(), colX[7], y);
-          doc.text(order.status, colX[8], y);
-          y += 20;
+
+          // Alternating row background
+          if (index % 2 === 1) {
+            doc.save().fillColor('#F9FAFB').rect(20, y - 2, 780, 18).fill().restore();
+          }
+
+          doc.text(order.poNumber, colX[0] + 2, y + 2);
+          doc.text(order.supplierName.substring(0, 30), colX[1] + 2, y + 2);
+          doc.text(formatDate(order.poCreationDate), colX[2] + 2, y + 2);
+          doc.text(formatDate(order.expiryDate), colX[3] + 2, y + 2);
+          doc.text(Number(order.totalAmount || 0).toFixed(2), colX[4] + 2, y + 2);
+          doc.text(order.gstNumber || '-', colX[5] + 2, y + 2);
+          doc.text((order.creditDays || 0).toString(), colX[6] + 2, y + 2);
+          doc.text(Number(order.taxAmount || 0).toFixed(2), colX[7] + 2, y + 2);
+          doc.text(Number(order.grandTotal || 0).toFixed(2), colX[8] + 2, y + 2);
+          
+          const status = getDerivedStatus(order);
+          // Status color coding
+          if (status === 'EXPIRED' || status === 'DELETED') doc.fillColor('#DC2626');
+          else if (status === 'COMPLETED') doc.fillColor('#059669');
+          else if (status === 'EXPIRING SOON') doc.fillColor('#D97706');
+          else doc.fillColor('#EA580C'); // PENDING
+          
+          doc.font('Helvetica-Bold').text(status, colX[9] + 2, y + 2);
+          doc.fillColor('#000000').font('Helvetica');
+
+          // Draw horizontal line
+          doc.moveTo(20, y + 15).lineTo(800, y + 15).strokeColor('#F3F4F6').lineWidth(0.5).stroke();
+          
+          y += 18;
         });
 
         doc.end();
@@ -739,9 +828,7 @@ export class PurchaseOrderService {
     ];
     worksheet.addRow(headers);
     
-    // Add 2 sample rows
-    worksheet.addRow(['ABC Industrial Ltd', 30, '2026-12-31', 'PD00001', 10, 500, 5, 250, 18, 'High Quality Silage']);
-    worksheet.addRow(['XYZ Components', 45, '2026-10-15', 'PD00002', 20, 150, 0, 0, 12, 'Organic Crop Fertilizer']);
+    // Removed sample rows as requested
 
     const headerRow = worksheet.getRow(1);
     headerRow.font = { bold: true };

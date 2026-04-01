@@ -367,8 +367,8 @@ const PurchaseOrder = () => {
             <thead>
               <tr className="bg-emerald-900 border-b border-emerald-950 text-[14px] font-bold text-white uppercase tracking-tight">
                 {[
-                  "PO  No", "Supplier  Name", "Creation  Date", "Expiry  Date", "Amount", 
-                  "GST  Number", "Credit  Days", "Tax  Amount", "Total  Amount", "Status"
+                  "PO No", "Supplier Name", "Creation Date", "Expiry Date", "Amount", 
+                  "GST Number", "Credit Days", "Tax Amount", "Total Amount", "Status"
                 ].map((col) => (
                   <th key={col} className="px-6 py-5 border-r border-white/50 whitespace-nowrap tracking-tight">
                     <div className="flex items-center gap-1.5 cursor-pointer hover:text-white/80 transition-colors uppercase tracking-tight">
